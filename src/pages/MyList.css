@@ -1,0 +1,330 @@
+.mylist-page {
+    padding: 24px 48px;
+    min-height: 100vh;
+}
+
+.mylist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.mylist-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.mylist-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mylist-sort-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mylist-sort-select:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.mylist-sort-select:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.mylist-sort-select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.mylist-clear-btn {
+    background: rgba(229, 9, 20, 0.2);
+    border: 1px solid rgba(229, 9, 20, 0.5);
+    border-radius: 8px;
+    color: #e50914;
+    padding: 10px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mylist-clear-btn:hover {
+    background: rgba(229, 9, 20, 0.3);
+    border-color: #e50914;
+}
+
+.mylist-count {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+/* Empty State */
+.mylist-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.mylist-empty svg {
+    margin-bottom: 24px;
+    opacity: 0.5;
+}
+
+.mylist-empty h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 8px 0;
+}
+
+.mylist-empty p {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Grid */
+.mylist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+/* Card */
+.mylist-card {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.mylist-card:hover {
+    transform: scale(1.03);
+}
+
+.mylist-card:focus {
+    outline: 2px solid #e50914;
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.mylist-card-image-container {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.mylist-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.mylist-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 40%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
+}
+
+.mylist-card:hover .mylist-card-overlay {
+    opacity: 1;
+}
+
+.mylist-remove-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.mylist-remove-btn:hover {
+    background: #e50914;
+    transform: scale(1.1);
+}
+
+.mylist-card-type {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.mylist-card-info {
+    padding: 0 4px;
+}
+
+.mylist-card-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #fff;
+    margin: 0 0 4px 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mylist-card-rating {
+    font-size: 0.75rem;
+    color: #ffc107;
+}
+
+/* Mobile */
+@media (max-width: 639px) {
+    .mylist-page {
+        padding: 16px;
+    }
+
+    .mylist-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mylist-title {
+        font-size: 1.5rem;
+    }
+
+    .mylist-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .mylist-card-title {
+        font-size: 0.75rem;
+    }
+}
+
+/* Tablet */
+@media (min-width: 640px) and (max-width: 1023px) {
+    .mylist-page {
+        padding: 24px;
+    }
+
+    .mylist-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+    .mylist-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+/* 4K */
+@media (min-width: 3840px) {
+    .mylist-page {
+        padding: 72px 144px;
+    }
+
+    .mylist-title {
+        font-size: 6rem;
+    }
+
+    .mylist-header {
+        margin-bottom: 72px;
+        gap: 48px;
+    }
+
+    .mylist-sort-select,
+    .mylist-clear-btn {
+        padding: 30px 48px;
+        font-size: 2.625rem;
+        border-radius: 24px;
+    }
+
+    .mylist-count {
+        font-size: 2.625rem;
+        margin-bottom: 48px;
+    }
+
+    .mylist-empty svg {
+        width: 192px;
+        height: 192px;
+        margin-bottom: 72px;
+    }
+
+    .mylist-empty h3 {
+        font-size: 4.5rem;
+    }
+
+    .mylist-empty p {
+        font-size: 3rem;
+    }
+
+    .mylist-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 60px;
+    }
+
+    .mylist-card-image-container {
+        border-radius: 24px;
+        margin-bottom: 24px;
+    }
+
+    .mylist-card-type {
+        font-size: 1.95rem;
+        padding: 12px 24px;
+        border-radius: 12px;
+        bottom: 24px;
+        left: 24px;
+    }
+
+    .mylist-card-title {
+        font-size: 2.625rem;
+    }
+
+    .mylist-card-rating {
+        font-size: 2.25rem;
+    }
+
+    .mylist-remove-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .mylist-remove-btn svg {
+        width: 60px;
+        height: 60px;
+    }
+}

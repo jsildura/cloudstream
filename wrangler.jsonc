@@ -1,0 +1,15 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "streamflix",
+	"compatibility_date": "2025-11-01",
+	"pages_build_output_dir": "./dist",
+	"observability": {
+		"enabled": true
+	},
+	"kv_namespaces": [
+		{
+			"binding": "VISITOR_STATS",
+			"id": "12b87ad5668f4714a4b87829926baf29"
+		}
+	]
+}

@@ -1,0 +1,388 @@
+/* ========================================
+   VISITOR STATISTICS WIDGET
+   Floating compact/expanded stats panel
+   ======================================== */
+
+.visitor-stats {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 13px;
+}
+
+/* Compact View - Always Visible Bar */
+.visitor-stats-compact {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(10, 25, 40, 0.95) 0%, rgba(5, 15, 30, 0.98) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    border-radius: 6px;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 212, 255, 0.1);
+}
+
+.visitor-stats-compact:hover {
+    border-color: rgba(0, 212, 255, 0.5);
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 212, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.visitor-icon {
+    font-size: 14px;
+    color: #00d4ff;
+}
+
+.visitor-count {
+    font-weight: 700;
+    color: #00d4ff;
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+.visitor-label {
+    color: #4ade80;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.visitor-expand-arrow {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
+    transition: transform 0.3s ease;
+    margin-left: 4px;
+}
+
+.visitor-expand-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+/* Expanded View - Full Stats Panel */
+.visitor-stats-expanded {
+    background: linear-gradient(135deg, rgba(10, 25, 40, 0.98) 0%, rgba(5, 15, 30, 0.99) 100%);
+    border: 1px solid rgba(0, 212, 255, 0.25);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    padding: 12px 14px;
+    margin-top: -1px;
+    animation: slideDown 0.3s ease;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.visitor-stats.expanded .visitor-stats-compact {
+    border-radius: 6px 6px 0 0;
+}
+
+/* Stats Rows */
+.visitor-stats-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 0;
+    color: #e0e0e0;
+}
+
+.stat-icon {
+    width: 18px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.stat-label {
+    color: #00d4ff;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: #00d4ff;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+.stat-value.loading {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* Error State */
+.visitor-stats-error {
+    color: #ff6b6b;
+    font-size: 12px;
+    padding: 8px;
+    text-align: center;
+}
+
+/* Divider */
+.visitor-stats-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+    margin: 10px 0;
+}
+
+/* Section Title */
+.visitor-stats-section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #00d4ff;
+    font-weight: 600;
+    padding: 4px 0 8px 0;
+    font-size: 12px;
+}
+
+/* Region List */
+.visitor-regions {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.visitor-regions::-webkit-scrollbar {
+    width: 4px;
+}
+
+.visitor-regions::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.visitor-regions::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.3);
+    border-radius: 2px;
+}
+
+.region-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 0;
+    font-size: 12px;
+}
+
+.region-flag {
+    font-size: 14px;
+    width: 20px;
+}
+
+.region-name {
+    color: #00d4ff;
+    flex: 1;
+}
+
+.region-count {
+    color: #00d4ff;
+    font-weight: 600;
+}
+
+/* ========================================
+   RESPONSIVE - Mobile
+   ======================================== */
+@media (max-width: 768px) {
+    .visitor-stats {
+        bottom: 10px;
+        left: 10px;
+        font-size: 12px;
+    }
+
+    .visitor-stats-compact {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .visitor-count {
+        font-size: 13px;
+    }
+
+    .visitor-label {
+        font-size: 12px;
+    }
+
+    .visitor-stats-expanded {
+        padding: 10px 12px;
+        max-width: calc(100vw - 40px);
+    }
+
+    .visitor-regions {
+        max-height: 150px;
+    }
+}
+
+/* ========================================
+   RESPONSIVE - 1080p TV
+   ======================================== */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .visitor-stats {
+        bottom: 30px;
+        left: 30px;
+        font-size: 20px;
+    }
+
+    .visitor-stats-compact {
+        padding: 12px 21px;
+        gap: 12px;
+        border-radius: 9px;
+    }
+
+    .visitor-icon {
+        font-size: 21px;
+    }
+
+    .visitor-count {
+        font-size: 21px;
+    }
+
+    .visitor-label {
+        font-size: 20px;
+    }
+
+    .visitor-expand-arrow {
+        font-size: 15px;
+    }
+
+    .visitor-stats-expanded {
+        padding: 18px 21px;
+        border-radius: 0 0 9px 9px;
+    }
+
+    .visitor-stats-row {
+        padding: 6px 0;
+        gap: 9px;
+    }
+
+    .stat-icon {
+        width: 27px;
+        font-size: 18px;
+    }
+
+    .visitor-stats-section-title {
+        font-size: 18px;
+        padding: 6px 0 12px 0;
+    }
+
+    .region-row {
+        font-size: 18px;
+        gap: 9px;
+        padding: 3px 0;
+    }
+
+    .region-flag {
+        font-size: 21px;
+        width: 30px;
+    }
+
+    .visitor-regions {
+        max-height: 300px;
+        gap: 4px;
+    }
+}
+
+/* ========================================
+   RESPONSIVE - 4K TV (3x scale)
+   ======================================== */
+@media (min-width: 3840px) {
+    .visitor-stats {
+        bottom: 60px;
+        left: 60px;
+        font-size: 39px;
+    }
+
+    .visitor-stats-compact {
+        padding: 24px 42px;
+        gap: 24px;
+        border-radius: 18px;
+        border-width: 3px;
+    }
+
+    .visitor-icon {
+        font-size: 42px;
+    }
+
+    .visitor-count {
+        font-size: 42px;
+    }
+
+    .visitor-label {
+        font-size: 39px;
+    }
+
+    .visitor-expand-arrow {
+        font-size: 30px;
+        margin-left: 12px;
+    }
+
+    .visitor-stats-expanded {
+        padding: 36px 42px;
+        border-radius: 0 0 18px 18px;
+        border-width: 3px;
+    }
+
+    .visitor-stats-row {
+        padding: 12px 0;
+        gap: 18px;
+    }
+
+    .stat-icon {
+        width: 54px;
+        font-size: 36px;
+    }
+
+    .visitor-stats-divider {
+        height: 3px;
+        margin: 30px 0;
+    }
+
+    .visitor-stats-section-title {
+        font-size: 36px;
+        padding: 12px 0 24px 0;
+        gap: 18px;
+    }
+
+    .region-row {
+        font-size: 36px;
+        gap: 18px;
+        padding: 6px 0;
+    }
+
+    .region-flag {
+        font-size: 42px;
+        width: 60px;
+    }
+
+    .visitor-regions {
+        max-height: 600px;
+        gap: 9px;
+    }
+
+    .visitor-regions::-webkit-scrollbar {
+        width: 12px;
+    }
+}

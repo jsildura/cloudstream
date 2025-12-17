@@ -1,0 +1,819 @@
+:root {
+  --netflix-red: #e50914;
+  --netflix-dark-red: #b2070f;
+  --netflix-black: #000000;
+  --netflix-dark-gray: #181818;
+  --netflix-medium-gray: #2f2f2f;
+  --netflix-light-gray: #808080;
+  --netflix-white: #ffffff;
+  --netflix-hover-gray: #404040;
+  --netflix-border: rgba(255, 255, 255, 0.1);
+  --netflix-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  --netflix-gradient: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  --netflix-banner-overlay: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+  --netflix-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--netflix-black);
+  color: var(--netflix-white);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.4;
+  overflow-x: hidden;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--netflix-black);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--netflix-medium-gray);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--netflix-light-gray);
+}
+
+/* ========================================
+   TV REMOTE / KEYBOARD NAVIGATION
+   Focus-visible styles for D-pad navigation
+   ======================================== */
+
+/* Global focus-visible for all interactive elements */
+*:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  transition: outline-offset 0.15s ease;
+}
+
+/* Remove default focus outline when using mouse */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Skip to content link for accessibility */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #e50914;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  z-index: 9999;
+  transition: top 0.3s ease;
+}
+
+.skip-link:focus {
+  top: 10px;
+}
+
+/* Interactive elements - larger focus ring for TV */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.25);
+}
+
+/* Cards - special focus treatment */
+.movie-card:focus-visible {
+  outline: 4px solid #e50914;
+  outline-offset: 4px;
+  transform: scale(1.02) translateY(-5px);
+  box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+}
+
+/* Carousel buttons focus */
+.carousel-btn:focus-visible,
+[class*="-carousel-btn"]:focus-visible,
+[class*="-carousel-prev"]:focus-visible,
+[class*="-carousel-next"]:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Navigation links */
+.nav-link:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 4px;
+  background: rgba(229, 9, 20, 0.2);
+}
+
+/* Search input focus */
+input:focus-visible,
+.search-input:focus-visible,
+.navbar-search-input:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  border-color: #e50914;
+}
+
+/* Load more buttons */
+.load-more-btn:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+  transform: scale(1.02);
+}
+
+/* Back buttons */
+.back-button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Modal close buttons */
+.modal-close:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Smooth focus transition for all elements */
+a,
+button,
+input,
+[tabindex],
+.movie-card,
+.nav-link {
+  transition: outline-offset 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+/* Streaming service cards focus-visible */
+.netflix-movie-card:focus-visible,
+.disneyplus-card:focus-visible,
+.primevideo-card:focus-visible,
+.appletv-card:focus-visible,
+.hbo-card:focus-visible,
+.viu-card:focus-visible,
+.collection-card:focus-visible {
+  outline: 4px solid #e50914;
+  outline-offset: 4px;
+  transform: scale(1.02);
+  box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+}
+
+/* Watch page focus-visible styles */
+.recommendation-item:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  background: rgba(229, 9, 20, 0.15);
+}
+
+.episode-card:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  background: rgba(229, 9, 20, 0.25);
+}
+
+.episode-card.active:focus-visible {
+  outline-color: #fff;
+}
+
+.server-dropdown:focus-visible,
+.season-dropdown:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  border-color: #e50914;
+}
+
+.cast-scroll-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.back-browse-btn:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 4px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.video-container:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 4px;
+  box-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
+}
+
+.trailer-container:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 4px;
+  box-shadow: 0 0 30px rgba(229, 9, 20, 0.3);
+}
+
+.btn {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-decoration: none;
+  -webkit-transition: all 0.3s ease;
+  -o-transition: all 0.3s ease;
+  transition: all 0.3s ease;
+  -webkit-box-shadow: var(--netflix-card-shadow);
+  box-shadow: var(--netflix-card-shadow);
+}
+
+.btn-primary {
+  background: -o-linear-gradient(315deg, #e50914, #b2070f);
+  background: linear-gradient(135deg, #e50914, #b2070f);
+  color: var(--netflix-white);
+  border: 2px solid transparent;
+}
+
+.btn-primary:hover {
+  background: -o-linear-gradient(315deg, #b2070f, #e50914);
+  background: linear-gradient(135deg, #b2070f, #e50914);
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+  -webkit-box-shadow: 0 12px 40px rgba(229, 9, 20, 0.4);
+  box-shadow: 0 12px 40px rgba(229, 9, 20, 0.4);
+}
+
+.btn-secondary {
+  background-color: rgba(109, 109, 110, 0.7);
+  color: var(--netflix-white);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(109, 109, 110, 0.9);
+  border-color: var(--netflix-white);
+  -webkit-transform: translateY(-2px);
+  -ms-transform: translateY(-2px);
+  transform: translateY(-2px);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: -o-linear-gradient(315deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 20, 0.9));
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(20, 20, 20, 0.9));
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+}
+
+.loading-screen {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: column;
+  flex-direction: column;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--netflix-black);
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--netflix-medium-gray);
+  border-top: 4px solid var(--netflix-red);
+  border-radius: 50%;
+  -webkit-animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.loading-screen p {
+  color: var(--netflix-light-gray);
+  font-size: 1.1rem;
+}
+
+.error-page {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: var(--netflix-black);
+}
+
+.error-content {
+  text-align: center;
+  padding: 40px;
+  background-color: var(--netflix-dark-gray);
+  border-radius: 8px;
+  border: 2px solid var(--netflix-red);
+}
+
+.error-content h1 {
+  color: var(--netflix-red);
+  margin-bottom: 1rem;
+}
+
+.back-home-btn {
+  background-color: var(--netflix-red);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 1rem;
+  -webkit-transition: background-color 0.3s ease;
+  -o-transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease;
+}
+
+.back-home-btn:hover {
+  background-color: var(--netflix-dark-red);
+}
+
+@media (max-width: 768px) {
+  .banner-title {
+    font-size: 2rem !important;
+  }
+
+  .banner-buttons {
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    gap: 0.5rem !important;
+  }
+
+  /* Button size overrides for mobile */
+  .btn {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.75rem !important;
+    gap: 0.35rem !important;
+    width: auto !important;
+    min-width: 90px !important;
+    max-width: 150px !important;
+    display: inline-flex !important;
+    justify-content: center !important;
+    flex: 0 0 auto !important;
+  }
+
+  .btn-play-now {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.75rem !important;
+    min-width: 90px !important;
+    max-width: 150px !important;
+    justify-content: center !important;
+  }
+
+  .btn-secondary {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    min-width: 90px !important;
+    max-width: 150px !important;
+    justify-content: center !important;
+  }
+
+  .grid-container {
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 15px;
+    padding: 10px 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner-slider {
+    height: 60vh;
+  }
+
+  .banner-title {
+    font-size: 2rem !important;
+  }
+
+  .banner-buttons {
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -ms-flex-direction: column;
+    flex-direction: column;
+  }
+
+  .grid-container {
+    display: -ms-grid;
+    display: grid;
+    -ms-grid-columns: 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 15px;
+    padding: 10px 5px;
+  }
+}
+
+/* ========================================
+   ANDROID TV GLOBAL OPTIMIZATIONS
+   ======================================== */
+
+/* 720p Android TV (1280x720) - Small TVs (32-40 inch) */
+@media (min-width: 1280px) and (max-width: 1919px) {
+
+  /* Base Typography */
+  * {
+    -webkit-tap-highlight-color: rgba(229, 9, 20, 0.3);
+  }
+
+  /* Buttons */
+  .btn {
+    min-width: 120px;
+    min-height: 48px;
+    border-width: 2px;
+  }
+
+  .btn:focus {
+    outline-offset: 3px;
+  }
+
+  /* Scrollbar - Larger for TV */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+  }
+}
+
+/* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch) */
+@media (min-width: 1920px) and (max-width: 2559px) {
+
+  /* Base Typography */
+  * {
+    -webkit-tap-highlight-color: rgba(229, 9, 20, 0.3);
+  }
+
+  h1 {
+    font-size: 2.8rem;
+  }
+
+  h2 {
+    font-size: 2.2rem;
+  }
+
+  h3 {
+    font-size: 1.8rem;
+  }
+
+  /* Buttons */
+  .btn {
+    min-width: 140px;
+    min-height: 52px;
+    border-width: 2px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font-weight: 600;
+  }
+
+  .btn:focus {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+  }
+
+  /* Loading Screen */
+  .loading-spinner {
+    width: 70px;
+    height: 70px;
+    border-width: 6px;
+  }
+
+  .loading-screen p {
+    font-size: 1.3rem;
+  }
+
+  /* Error Page */
+  .error-content h1 {
+    font-size: 3rem;
+  }
+
+  .error-content p {
+    font-size: 1.2rem;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 7px;
+  }
+}
+
+/* 2K Android TV (2560x1440) - Premium TVs (55-65 inch) */
+@media (min-width: 2560px) and (max-width: 3839px) {
+
+  /* Base Typography */
+  * {
+    -webkit-tap-highlight-color: rgba(229, 9, 20, 0.3);
+  }
+
+  h1 {
+    font-size: 3.2rem;
+  }
+
+  h2 {
+    font-size: 2.5rem;
+  }
+
+  h3 {
+    font-size: 2rem;
+  }
+
+  /* Buttons */
+  .btn {
+    min-width: 150px;
+    min-height: 54px;
+    border-width: 2px;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .btn:focus {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+    box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+  }
+
+  /* Loading Screen */
+  .loading-spinner {
+    width: 80px;
+    height: 80px;
+    border-width: 7px;
+  }
+
+  .loading-screen p {
+    font-size: 1.4rem;
+  }
+
+  /* Error Page */
+  .error-content {
+    padding: 50px;
+  }
+
+  .error-content h1 {
+    font-size: 3.2rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .error-content p {
+    font-size: 1.3rem;
+  }
+
+  .back-home-btn {
+    padding: 17px 34px;
+    font-size: 1.25rem;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    backdrop-filter: blur(6px);
+  }
+
+  /* Scrollbar - Large */
+  ::-webkit-scrollbar {
+    width: 15px;
+    height: 15px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 7.5px;
+  }
+
+  /* Focus Improvements for D-pad Navigation */
+  *:focus-visible {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+  }
+}
+
+/* 4K Android TV (3840x2160) - Large TVs (65+ inch) */
+@media (min-width: 3840px) {
+
+  /* Base Typography */
+  * {
+    -webkit-tap-highlight-color: rgba(229, 9, 20, 0.3);
+  }
+
+  h1 {
+    font-size: 3.5rem;
+  }
+
+  h2 {
+    font-size: 2.8rem;
+  }
+
+  h3 {
+    font-size: 2.2rem;
+  }
+
+  /* Buttons - 3x scaled from 720p */
+  .btn {
+    min-width: 480px;
+    /* 160px × 3 */
+    min-height: 168px;
+    /* 56px × 3 */
+    padding: 36px 72px;
+    /* 12px × 3, 24px × 3 */
+    gap: 24px;
+    /* 8px × 3 */
+    font-size: 3rem;
+    /* 1rem × 3 */
+    border-width: 6px;
+    /* 2px × 3 */
+    border-radius: 12px;
+    /* 4px × 3 */
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    /* 0.5px × 3 */
+    border-width: 6px;
+    /* 2px × 3 */
+  }
+
+  .btn:focus {
+    outline: 5px solid #e50914;
+    outline-offset: 5px;
+    box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.2);
+  }
+
+  /* Loading Screen */
+  .loading-spinner {
+    width: 90px;
+    height: 90px;
+    border-width: 8px;
+  }
+
+  .loading-screen p {
+    font-size: 1.5rem;
+  }
+
+  /* Error Page */
+  .error-content {
+    padding: 60px;
+  }
+
+  .error-content h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .error-content p {
+    font-size: 1.4rem;
+  }
+
+  .back-home-btn {
+    padding: 18px 36px;
+    font-size: 1.3rem;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    backdrop-filter: blur(8px);
+  }
+
+  /* Scrollbar - Extra Large */
+  ::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+  }
+
+  /* Focus Improvements for D-pad Navigation */
+  *:focus-visible {
+    outline: 5px solid #e50914;
+    outline-offset: 5px;
+  }
+
+  /* Enhanced focus for cards on 4K */
+  .movie-card:focus-visible {
+    outline: 6px solid #e50914;
+    outline-offset: 8px;
+    transform: scale(1.03) translateY(-10px);
+    box-shadow: 0 0 60px rgba(229, 9, 20, 0.5);
+  }
+
+  /* Carousel buttons - 4K sized */
+  .carousel-btn:focus-visible,
+  [class*="-carousel-btn"]:focus-visible,
+  [class*="-carousel-prev"]:focus-visible,
+  [class*="-carousel-next"]:focus-visible {
+    outline: 5px solid #fff;
+    outline-offset: 6px;
+  }
+
+  /* Navigation - 4K */
+  .nav-link:focus-visible {
+    outline: 5px solid #e50914;
+    outline-offset: 6px;
+  }
+
+  /* Load more - 4K */
+  .load-more-btn:focus-visible {
+    outline: 5px solid currentColor;
+    outline-offset: 8px;
+  }
+
+  /* Back button - 4K */
+  .back-button:focus-visible {
+    outline: 5px solid #fff;
+    outline-offset: 6px;
+  }
+
+  /* Search bar - prevent double border on focus */
+  .search-bar-wrapper input:focus-visible,
+  .search-bar-wrapper input:focus {
+    outline: none;
+    /* Use box-shadow instead of outline to prevent double border */
+    box-shadow: 0 0 0 5px rgba(229, 9, 20, 0.5);
+  }
+}

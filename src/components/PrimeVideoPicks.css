@@ -1,0 +1,566 @@
+.primevideo-section {
+    padding: 24px 0;
+    margin-bottom: 20px;
+}
+
+/* Header with Prime Video branding */
+.primevideo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.primevideo-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.primevideo-header-accent {
+    height: 24px;
+    width: 4px;
+    background: #00a8e1;
+    /* Prime Video cyan/blue */
+    border-radius: 50px;
+}
+
+.primevideo-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.primevideo-logo {
+    height: 24px;
+    object-fit: contain;
+    margin-left: 8px;
+}
+
+.primevideo-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.primevideo-view-all:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.primevideo-view-all svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Genre Filter Buttons */
+.primevideo-genre-filters {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.primevideo-genre-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.primevideo-genre-btn:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.primevideo-genre-btn.active {
+    color: #fff;
+    border-bottom-color: #00a8e1;
+}
+
+.primevideo-genre-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.primevideo-genre-btn .genre-label {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .primevideo-genre-btn .genre-label {
+        display: block;
+    }
+}
+
+/* Mobile optimization */
+@media (max-width: 639px) {
+    .primevideo-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .primevideo-header-left {
+        gap: 6px;
+    }
+
+    .primevideo-title {
+        font-size: 0.8rem;
+    }
+
+    .primevideo-header-accent {
+        height: 14px;
+        width: 2px;
+    }
+
+    .primevideo-genre-filters {
+        display: flex;
+    }
+
+    .primevideo-genre-btn {
+        padding: 4px 8px;
+        height: 28px;
+    }
+
+    .primevideo-genre-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .primevideo-view-all {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+        height: 28px;
+        gap: 4px;
+    }
+
+    .primevideo-view-all svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Carousel */
+.primevideo-carousel {
+    position: relative;
+    width: 100%;
+}
+
+.primevideo-carousel-viewport {
+    overflow: hidden;
+}
+
+.primevideo-carousel-track {
+    display: flex;
+    margin-left: -8px;
+    transition: transform 0.33s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (min-width: 768px) {
+    .primevideo-carousel-track {
+        margin-left: -16px;
+    }
+}
+
+.primevideo-carousel-slide {
+    min-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 8px;
+    /* Mobile: 3 poster cards per view */
+    flex-basis: 33.333333%;
+}
+
+@media (min-width: 640px) {
+    .primevideo-carousel-slide {
+        /* Small tablet: 4 items per view */
+        flex-basis: 25%;
+    }
+}
+
+@media (min-width: 768px) {
+    .primevideo-carousel-slide {
+        /* Tablet: 4 items per view */
+        flex-basis: 25%;
+        padding-left: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .primevideo-carousel-slide {
+        /* Desktop: 5 items per view */
+        flex-basis: 20%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .primevideo-carousel-slide {
+        /* Desktop XL: 6 items per view */
+        flex-basis: 16.666667%;
+    }
+}
+
+/* Card */
+.primevideo-card {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.primevideo-card:hover .primevideo-card-image {
+    transform: scale(1.05);
+}
+
+.primevideo-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+    z-index: 10;
+}
+
+.primevideo-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.primevideo-card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 12px;
+    z-index: 20;
+}
+
+.primevideo-card-title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* Navigation buttons */
+.primevideo-carousel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    position: absolute;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    z-index: 10;
+}
+
+.primevideo-carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.primevideo-carousel-btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.primevideo-carousel-btn svg {
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.primevideo-carousel-prev {
+    left: 8px;
+}
+
+.primevideo-carousel-next {
+    right: 8px;
+}
+
+/* Loading State */
+.primevideo-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+}
+
+.primevideo-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #00a8e1;
+    border-radius: 50%;
+    animation: primevideo-spin 1s linear infinite;
+}
+
+@keyframes primevideo-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4K Android TV (3840x2160) - 3x scaled from 720p */
+@media (min-width: 3840px) {
+    .primevideo-section {
+        padding: 72px 0;
+        margin-bottom: 60px;
+    }
+
+    .primevideo-header {
+        margin-bottom: 48px;
+    }
+
+    .primevideo-header-left {
+        gap: 36px;
+    }
+
+    .primevideo-header-accent {
+        height: 72px;
+        width: 12px;
+    }
+
+    .primevideo-title {
+        font-size: 4.5rem;
+    }
+
+    .primevideo-logo {
+        height: 72px;
+        margin-left: 24px;
+    }
+
+    .primevideo-view-all {
+        gap: 12px;
+        font-size: 2.625rem;
+    }
+
+    .primevideo-view-all svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .primevideo-carousel-track {
+        margin-left: -48px;
+    }
+
+    .primevideo-carousel-slide {
+        padding-left: 48px;
+    }
+
+    .primevideo-card {
+        border-radius: 24px;
+    }
+
+    .primevideo-card-info {
+        padding: 36px;
+    }
+
+    .primevideo-card-title {
+        font-size: 2.625rem;
+    }
+
+    .primevideo-carousel-btn {
+        height: 96px;
+        width: 96px;
+        font-size: 42px;
+        gap: 24px;
+    }
+
+    .primevideo-carousel-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .primevideo-carousel-prev {
+        left: 24px;
+    }
+
+    .primevideo-carousel-next {
+        right: 24px;
+    }
+
+    .primevideo-loading {
+        height: 540px;
+    }
+
+    .primevideo-loading .loading-spinner {
+        width: 120px;
+        height: 120px;
+        border-width: 9px;
+    }
+
+    /* Genre Buttons - 3x scaling */
+    .primevideo-genre-btn {
+        gap: 18px;
+        padding: 24px 48px;
+        font-size: 2.625rem;
+        height: 120px;
+        border-bottom-width: 6px;
+    }
+
+    .primevideo-genre-btn svg {
+        width: 54px;
+        height: 54px;
+    }
+
+    /* View All button - 3x scaling */
+    .primevideo-view-all {
+        gap: 18px;
+        font-size: 2.625rem;
+        padding: 24px 48px;
+        height: 120px;
+        border-bottom-width: 6px;
+    }
+
+    .primevideo-view-all svg {
+        width: 54px;
+        height: 54px;
+    }
+}
+
+/* 1080p Display (1920px - 2559px) - 1.5x scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .primevideo-section {
+        padding: 36px 0;
+        margin-bottom: 30px;
+    }
+
+    .primevideo-header {
+        margin-bottom: 24px;
+    }
+
+    .primevideo-header-left {
+        gap: 18px;
+    }
+
+    .primevideo-header-accent {
+        height: 36px;
+        width: 6px;
+    }
+
+    .primevideo-title {
+        font-size: 2.25rem;
+    }
+
+    .primevideo-genre-btn {
+        gap: 9px;
+        padding: 12px 24px;
+        font-size: 1.3125rem;
+        height: 60px;
+        border-bottom-width: 3px;
+    }
+
+    .primevideo-genre-btn svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .primevideo-view-all {
+        gap: 9px;
+        font-size: 1.3125rem;
+        padding: 12px 24px;
+        height: 60px;
+        border-bottom-width: 3px;
+    }
+
+    .primevideo-view-all svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .primevideo-logo {
+        height: 36px;
+        margin-left: 12px;
+    }
+
+    .primevideo-carousel-track {
+        margin-left: -24px;
+    }
+
+    .primevideo-carousel-slide {
+        padding-left: 24px;
+    }
+
+    .primevideo-card {
+        border-radius: 12px;
+    }
+
+    .primevideo-card-info {
+        padding: 18px;
+    }
+
+    .primevideo-card-title {
+        font-size: 1.3125rem;
+    }
+
+    .primevideo-carousel-btn {
+        height: 48px;
+        width: 48px;
+        font-size: 21px;
+        gap: 12px;
+    }
+
+    .primevideo-carousel-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .primevideo-carousel-prev {
+        left: 12px;
+    }
+
+    .primevideo-carousel-next {
+        right: 12px;
+    }
+
+    .primevideo-loading {
+        height: 270px;
+    }
+
+    .primevideo-loading .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 4.5px;
+    }
+}

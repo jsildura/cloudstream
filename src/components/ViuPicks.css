@@ -1,0 +1,550 @@
+.viu-section {
+    padding: 24px 0;
+    margin-bottom: 20px;
+}
+
+.viu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.viu-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.viu-header-accent {
+    height: 24px;
+    width: 4px;
+    background: #f5a623;
+    /* VIU golden/yellow */
+    border-radius: 50px;
+}
+
+.viu-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.viu-logo {
+    height: 24px;
+    object-fit: contain;
+    margin-left: 8px;
+}
+
+.viu-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.viu-view-all:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.viu-view-all svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Genre Filter Buttons */
+.viu-genre-filters {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.viu-genre-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.viu-genre-btn:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.viu-genre-btn.active {
+    color: #fff;
+    border-bottom-color: #f5a623;
+}
+
+.viu-genre-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.viu-genre-btn .genre-label {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .viu-genre-btn .genre-label {
+        display: block;
+    }
+}
+
+/* Mobile optimization */
+@media (max-width: 639px) {
+    .viu-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .viu-header-left {
+        gap: 6px;
+    }
+
+    .viu-title {
+        font-size: 0.8rem;
+    }
+
+    .viu-header-accent {
+        height: 14px;
+        width: 2px;
+    }
+
+    .viu-genre-filters {
+        display: flex;
+    }
+
+    .viu-genre-btn {
+        padding: 4px 8px;
+        height: 28px;
+    }
+
+    .viu-genre-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .viu-view-all {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+        height: 28px;
+        gap: 4px;
+    }
+
+    .viu-view-all svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+.viu-carousel {
+    position: relative;
+    width: 100%;
+}
+
+.viu-carousel-viewport {
+    overflow: hidden;
+}
+
+.viu-carousel-track {
+    display: flex;
+    margin-left: -8px;
+    transition: transform 0.33s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (min-width: 768px) {
+    .viu-carousel-track {
+        margin-left: -16px;
+    }
+}
+
+.viu-carousel-slide {
+    min-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 8px;
+    /* Mobile: 3 poster cards per view */
+    flex-basis: 33.333333%;
+}
+
+@media (min-width: 640px) {
+    .viu-carousel-slide {
+        /* Small tablet: 4 items per view */
+        flex-basis: 25%;
+    }
+}
+
+@media (min-width: 768px) {
+    .viu-carousel-slide {
+        /* Tablet: 4 items per view */
+        flex-basis: 25%;
+        padding-left: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .viu-carousel-slide {
+        /* Desktop: 5 items per view */
+        flex-basis: 20%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .viu-carousel-slide {
+        /* Desktop XL: 6 items per view */
+        flex-basis: 16.666667%;
+    }
+}
+
+.viu-card {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.viu-card:hover .viu-card-image {
+    transform: scale(1.05);
+}
+
+.viu-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+    z-index: 10;
+}
+
+.viu-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.viu-card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 12px;
+    z-index: 20;
+}
+
+.viu-card-title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.viu-carousel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    z-index: 10;
+}
+
+.viu-carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.viu-carousel-btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.viu-carousel-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.viu-carousel-prev {
+    left: 8px;
+}
+
+.viu-carousel-next {
+    right: 8px;
+}
+
+.viu-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+}
+
+.viu-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #f5a623;
+    border-radius: 50%;
+    animation: viu-spin 1s linear infinite;
+}
+
+@keyframes viu-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4K scaling */
+@media (min-width: 3840px) {
+    .viu-section {
+        padding: 72px 0;
+        margin-bottom: 60px;
+    }
+
+    .viu-header {
+        margin-bottom: 48px;
+    }
+
+    .viu-header-left {
+        gap: 36px;
+    }
+
+    .viu-header-accent {
+        height: 72px;
+        width: 12px;
+    }
+
+    .viu-title {
+        font-size: 4.5rem;
+    }
+
+    .viu-logo {
+        height: 72px;
+        margin-left: 24px;
+    }
+
+    .viu-view-all {
+        gap: 12px;
+        font-size: 2.625rem;
+    }
+
+    .viu-view-all svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .viu-carousel-track {
+        margin-left: -48px;
+    }
+
+    .viu-carousel-slide {
+        padding-left: 48px;
+    }
+
+    .viu-card {
+        border-radius: 24px;
+    }
+
+    .viu-card-info {
+        padding: 36px;
+    }
+
+    .viu-card-title {
+        font-size: 2.625rem;
+    }
+
+    .viu-carousel-btn {
+        height: 96px;
+        width: 96px;
+    }
+
+    .viu-carousel-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .viu-carousel-prev {
+        left: 24px;
+    }
+
+    .viu-carousel-next {
+        right: 24px;
+    }
+
+    .viu-loading {
+        height: 540px;
+    }
+
+    .viu-loading .loading-spinner {
+        width: 120px;
+        height: 120px;
+        border-width: 9px;
+    }
+
+    /* Genre Buttons - 3x scaling */
+    .viu-genre-btn {
+        gap: 18px;
+        padding: 24px 48px;
+        font-size: 2.625rem;
+        height: 120px;
+        border-bottom-width: 6px;
+    }
+
+    .viu-genre-btn svg {
+        width: 54px;
+        height: 54px;
+    }
+
+    /* View All button - 3x scaling */
+    .viu-view-all {
+        gap: 18px;
+        font-size: 2.625rem;
+        padding: 24px 48px;
+        height: 120px;
+        border-bottom-width: 6px;
+    }
+
+    .viu-view-all svg {
+        width: 54px;
+        height: 54px;
+    }
+}
+
+/* 1080p Display (1920px - 2559px) - 1.5x scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .viu-section {
+        padding: 36px 0;
+        margin-bottom: 30px;
+    }
+
+    .viu-header {
+        margin-bottom: 24px;
+    }
+
+    .viu-header-left {
+        gap: 18px;
+    }
+
+    .viu-header-accent {
+        height: 36px;
+        width: 6px;
+    }
+
+    .viu-title {
+        font-size: 2.25rem;
+    }
+
+    .viu-genre-btn {
+        gap: 9px;
+        padding: 12px 24px;
+        font-size: 1.3125rem;
+        height: 60px;
+        border-bottom-width: 3px;
+    }
+
+    .viu-genre-btn svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .viu-view-all {
+        gap: 9px;
+        font-size: 1.3125rem;
+        padding: 12px 24px;
+        height: 60px;
+        border-bottom-width: 3px;
+    }
+
+    .viu-view-all svg {
+        width: 27px;
+        height: 27px;
+    }
+
+    .viu-logo {
+        height: 36px;
+        margin-left: 12px;
+    }
+
+    .viu-carousel-track {
+        margin-left: -24px;
+    }
+
+    .viu-carousel-slide {
+        padding-left: 24px;
+    }
+
+    .viu-card {
+        border-radius: 12px;
+    }
+
+    .viu-card-info {
+        padding: 18px;
+    }
+
+    .viu-card-title {
+        font-size: 1.3125rem;
+    }
+
+    .viu-carousel-btn {
+        height: 48px;
+        width: 48px;
+    }
+
+    .viu-carousel-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .viu-carousel-prev {
+        left: 12px;
+    }
+
+    .viu-carousel-next {
+        right: 12px;
+    }
+
+    .viu-loading {
+        height: 270px;
+    }
+
+    .viu-loading .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 4.5px;
+    }
+}
