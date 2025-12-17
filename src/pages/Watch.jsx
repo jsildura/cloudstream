@@ -29,6 +29,7 @@ const Watch = () => {
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [warningExpanded, setWarningExpanded] = useState(false);
 
   const watchContainerRef = useRef(null);
   const dragStartY = useRef(0);
@@ -564,15 +565,25 @@ const Watch = () => {
         </svg>
       </button>
 
-      {/* Playback Warning Note */}
-      <div className={`watch-playback-warning${!controlsVisible ? ' controls-hidden' : ''}`}>
+      {/* Playback Warning Icon - Toggle Button */}
+      <button
+        className={`watch-playback-warning-icon${!controlsVisible ? ' controls-hidden' : ''}`}
+        onClick={() => setWarningExpanded(!warningExpanded)}
+        aria-label="Show playback help"
+      >
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
           <path d="M12 9v4"></path>
           <path d="M12 17h.01"></path>
         </svg>
-        <span>Switch servers if the video doesn't start</span>
-      </div>
+      </button>
+
+      {/* Playback Warning Tooltip - Appears Below Icon */}
+      {warningExpanded && (
+        <div className={`watch-playback-warning-tooltip${!controlsVisible ? ' controls-hidden' : ''}`}>
+          Switch servers if the video doesn't start
+        </div>
+      )}
 
       {/* Custom Fullscreen Button */}
       <button className={`watch-overlay-btn watch-fullscreen-btn${!controlsVisible ? ' controls-hidden' : ''}`} onClick={() => {
