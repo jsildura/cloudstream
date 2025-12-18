@@ -3,7 +3,7 @@ import './AdblockModal.css';
 
 const AdblockModal = () => {
     // TODO: Re-enable adblock detection when project is complete
-    // Remove or comment out the return null below to re-enable
+    // Remove or comment out the "return null;" below to re-enable
     return null;
 
     const [adblockDetected, setAdblockDetected] = useState(false);

@@ -25,6 +25,8 @@ import BotProtection from './components/BotProtection';
 import VisitorTracker from './components/VisitorTracker';
 import { ToastProvider } from './contexts/ToastContext';
 import Toast from './components/Toast';
+import useTVNavigation from './hooks/useTVNavigation';
+
 
 function App() {
   const [searchResults, setSearchResults] = useState([]);
@@ -33,6 +35,9 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { searchTMDB, movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
   const navigate = useNavigate();
+
+  // Enable TV remote / D-pad arrow key navigation
+  useTVNavigation();
 
   const handleSearch = async (query) => {
     if (!query.trim()) {

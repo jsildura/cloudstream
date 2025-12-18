@@ -113,41 +113,130 @@
     }
 }
 
-/* 4K */
-@media (min-width: 3840px) {
+/* 1080p - 2x scaled from 720p */
+@media (min-width: 1920px) and (max-width: 2559px) {
     .toast-container {
-        top: 240px;
-        right: 72px;
-        gap: 36px;
+        top: 48px;
+        /* 24px × 2 */
+        right: 48px;
+        /* 24px × 2 */
+        gap: 24px;
+        /* 12px × 2 */
     }
 
     .toast {
-        padding: 42px 48px;
-        gap: 36px;
-        border-radius: 36px;
-        font-size: 2.7rem;
-        min-width: 840px;
-        max-width: 1200px;
+        padding: 28px 32px;
+        /* 14px × 2, 16px × 2 */
+        gap: 24px;
+        /* 12px × 2 */
+        border-radius: 24px;
+        /* 12px × 2 */
+        font-size: 1.8rem;
+        /* 0.9rem × 2 */
+        min-width: 560px;
+        /* 280px × 2 */
+        max-width: 800px;
+        /* 400px × 2 */
+        border-width: 2px;
+        /* 1px × 2 */
     }
 
     .toast-icon {
-        width: 84px;
-        height: 84px;
+        width: 56px;
+        /* 28px × 2 */
+        height: 56px;
+        /* 28px × 2 */
     }
 
     .toast-icon svg {
-        width: 54px;
-        height: 54px;
+        width: 36px;
+        /* 18px × 2 */
+        height: 36px;
+        /* 18px × 2 */
+    }
+
+    .toast-message {
+        font-size: 1.8rem;
+        /* 0.9rem × 2 */
     }
 
     .toast-close {
-        width: 84px;
-        height: 84px;
-        border-radius: 18px;
+        width: 56px;
+        /* 28px × 2 */
+        height: 56px;
+        /* 28px × 2 */
+        border-radius: 12px;
+        /* 6px × 2 */
     }
 
     .toast-close svg {
-        width: 48px;
-        height: 48px;
+        width: 32px;
+        /* 16px × 2 */
+        height: 32px;
+        /* 16px × 2 */
+    }
+}
+
+/* 4K - 4x scaled from 720p */
+@media (min-width: 3840px) {
+    .toast-container {
+        top: 96px;
+        /* 24px × 4 */
+        right: 96px;
+        /* 24px × 4 */
+        gap: 48px;
+        /* 12px × 4 */
+    }
+
+    .toast {
+        padding: 56px 64px;
+        /* 14px × 4, 16px × 4 */
+        gap: 48px;
+        /* 12px × 4 */
+        border-radius: 48px;
+        /* 12px × 4 */
+        font-size: 3.6rem;
+        /* 0.9rem × 4 */
+        min-width: 1120px;
+        /* 280px × 4 */
+        max-width: 1600px;
+        /* 400px × 4 */
+        border-width: 4px;
+        /* 1px × 4 */
+    }
+
+    .toast-icon {
+        width: 112px;
+        /* 28px × 4 */
+        height: 112px;
+        /* 28px × 4 */
+    }
+
+    .toast-icon svg {
+        width: 72px;
+        /* 18px × 4 */
+        height: 72px;
+        /* 18px × 4 */
+    }
+
+    .toast-message {
+        font-size: 3.6rem;
+        /* 0.9rem × 4 */
+    }
+
+    .toast-close {
+        width: 112px;
+        /* 28px × 4 */
+        height: 112px;
+        /* 28px × 4 */
+        border-radius: 24px;
+        /* 6px × 4 */
+    }
+
+    .toast-close svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
     }
 }

@@ -109,57 +109,112 @@
     right: 8px;
 }
 
-/* 4K Android TV (3840x2160) - 3x scaled from 720p */
-@media (min-width: 3840px) {
+/* 1080p Android TV (1920x1080) - 2x scaled from 720p */
+@media (min-width: 1920px) and (max-width: 3839px) {
     .popular-collections {
-        padding: 72px 0;
-        /* 24px × 3 */
-        margin-bottom: 60px;
-        /* 20px × 3 */
+        padding: 48px 0;
+        /* 24px × 2 */
+        margin-bottom: 40px;
+        /* 20px × 2 */
     }
 
     .popular-collections-title {
-        font-size: 4.5rem;
-        /* 1.5rem × 3 */
-        margin-bottom: 72px;
-        /* 24px × 3 */
+        font-size: 3rem;
+        /* 1.5rem × 2 */
+        margin-bottom: 48px;
+        /* 24px × 2 */
     }
 
     .collections-carousel-track {
-        margin-left: -48px;
-        /* 16px × 3 */
+        margin-left: -32px;
+        /* 16px × 2 */
     }
 
     .collections-carousel-slide {
-        padding-left: 48px;
-        /* 16px × 3 */
+        padding-left: 32px;
+        /* 16px × 2 */
     }
 
     .collections-carousel-btn {
-        height: 96px;
-        /* 32px × 3 */
-        width: 96px;
-        /* 32px × 3 */
-        font-size: 42px;
-        /* 14px × 3 */
-        gap: 24px;
-        /* 8px × 3 */
+        height: 64px;
+        /* 32px × 2 */
+        width: 64px;
+        /* 32px × 2 */
+        font-size: 28px;
+        /* 14px × 2 */
+        gap: 16px;
+        /* 8px × 2 */
     }
 
     .collections-carousel-btn svg {
-        width: 48px;
-        /* 16px × 3 */
-        height: 48px;
-        /* 16px × 3 */
+        width: 32px;
+        /* 16px × 2 */
+        height: 32px;
+        /* 16px × 2 */
     }
 
     .collections-carousel-prev {
-        left: 24px;
-        /* 8px × 3 */
+        left: 16px;
+        /* 8px × 2 */
     }
 
     .collections-carousel-next {
-        right: 24px;
-        /* 8px × 3 */
+        right: 16px;
+        /* 8px × 2 */
+    }
+}
+
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
+@media (min-width: 3840px) {
+    .popular-collections {
+        padding: 96px 0;
+        /* 24px × 4 */
+        margin-bottom: 80px;
+        /* 20px × 4 */
+    }
+
+    .popular-collections-title {
+        font-size: 6rem;
+        /* 1.5rem × 4 */
+        margin-bottom: 96px;
+        /* 24px × 4 */
+    }
+
+    .collections-carousel-track {
+        margin-left: -64px;
+        /* 16px × 4 */
+    }
+
+    .collections-carousel-slide {
+        padding-left: 64px;
+        /* 16px × 4 */
+    }
+
+    .collections-carousel-btn {
+        height: 128px;
+        /* 32px × 4 */
+        width: 128px;
+        /* 32px × 4 */
+        font-size: 56px;
+        /* 14px × 4 */
+        gap: 32px;
+        /* 8px × 4 */
+    }
+
+    .collections-carousel-btn svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
+    }
+
+    .collections-carousel-prev {
+        left: 32px;
+        /* 8px × 4 */
+    }
+
+    .collections-carousel-next {
+        right: 32px;
+        /* 8px × 4 */
     }
 }

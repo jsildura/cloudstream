@@ -169,7 +169,7 @@ const DisneyPlusPicks = () => {
             <div className="disneyplus-header">
                 <div className="disneyplus-header-left">
                     <div className="disneyplus-header-accent"></div>
-                    <h2 className="disneyplus-title">Disney+ Picks</h2>
+                    <h2 className="disneyplus-title">Disney+ Exclusives</h2>
                 </div>
 
                 {/* Genre Filter Buttons */}

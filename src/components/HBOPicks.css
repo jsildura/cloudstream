@@ -129,7 +129,7 @@
     }
 
     .hbo-title {
-        font-size: 0.8rem;
+        font-size: 1rem;
     }
 
     .hbo-header-accent {
@@ -330,222 +330,302 @@
     }
 }
 
-/* 4K Android TV */
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
 @media (min-width: 3840px) {
     .hbo-section {
-        padding: 72px 0;
-        margin-bottom: 60px;
+        padding: 96px 0;
+        /* 24px × 4 */
+        margin-bottom: 80px;
+        /* 20px × 4 */
     }
 
     .hbo-header {
-        margin-bottom: 48px;
+        margin-bottom: 64px;
+        /* 16px × 4 */
     }
 
     .hbo-header-left {
-        gap: 36px;
+        gap: 48px;
+        /* 12px × 4 */
     }
 
     .hbo-header-accent {
-        height: 72px;
-        width: 12px;
+        height: 96px;
+        /* 24px × 4 */
+        width: 16px;
+        /* 4px × 4 */
     }
 
     .hbo-title {
-        font-size: 4.5rem;
+        font-size: 6rem;
+        /* 1.5rem × 4 */
     }
 
     .hbo-logo {
+        height: 96px;
+        /* 24px × 4 */
+        margin-left: 32px;
+        /* 8px × 4 */
+    }
+
+    .hbo-view-all {
+        gap: 16px;
+        /* 4px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+    }
+
+    .hbo-view-all svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
+    }
+
+    .hbo-carousel-track {
+        margin-left: -64px;
+        /* 16px × 4 */
+    }
+
+    .hbo-carousel-slide {
+        padding-left: 64px;
+        /* 16px × 4 */
+    }
+
+    .hbo-card {
+        border-radius: 32px;
+        /* 8px × 4 */
+    }
+
+    .hbo-card-info {
+        padding: 48px;
+        /* 12px × 4 */
+    }
+
+    .hbo-card-title {
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+    }
+
+    .hbo-carousel-btn {
+        height: 128px;
+        /* 32px × 4 */
+        width: 128px;
+        /* 32px × 4 */
+    }
+
+    .hbo-carousel-btn svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
+    }
+
+    .hbo-carousel-prev {
+        left: 32px;
+        /* 8px × 4 */
+    }
+
+    .hbo-carousel-next {
+        right: 32px;
+        /* 8px × 4 */
+    }
+
+    .hbo-loading {
+        height: 720px;
+        /* 180px × 4 */
+    }
+
+    .hbo-loading .loading-spinner {
+        width: 160px;
+        /* 40px × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-width: 12px;
+        /* 3px × 4 */
+    }
+
+    /* Genre Buttons - 4x scaling */
+    .hbo-genre-btn {
+        gap: 24px;
+        /* 6px × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-bottom-width: 8px;
+        /* 2px × 4 */
+    }
+
+    .hbo-genre-btn svg {
+        width: 72px;
+        /* 18px × 4 */
         height: 72px;
-        margin-left: 24px;
+        /* 18px × 4 */
+    }
+
+    /* View All button - 4x scaling */
+    .hbo-view-all {
+        gap: 24px;
+        /* 6px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-bottom-width: 8px;
+        /* 2px × 4 */
+    }
+
+    .hbo-view-all svg {
+        width: 72px;
+        /* 18px × 4 */
+        height: 72px;
+        /* 18px × 4 */
+    }
+}
+
+/* 1080p Display (1920px - 2559px) - 2x scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .hbo-section {
+        padding: 48px 0;
+        /* 24px × 2 */
+        margin-bottom: 40px;
+        /* 20px × 2 */
+    }
+
+    .hbo-header {
+        margin-bottom: 32px;
+        /* 16px × 2 */
+    }
+
+    .hbo-header-left {
+        gap: 24px;
+        /* 12px × 2 */
+    }
+
+    .hbo-header-accent {
+        height: 48px;
+        /* 24px × 2 */
+        width: 8px;
+        /* 4px × 2 */
+    }
+
+    .hbo-title {
+        font-size: 3rem;
+        /* 1.5rem × 2 */
+    }
+
+    .hbo-genre-btn {
+        gap: 12px;
+        /* 6px × 2 */
+        padding: 16px 32px;
+        /* 8px × 2, 16px × 2 */
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-bottom-width: 4px;
+        /* 2px × 2 */
+    }
+
+    .hbo-genre-btn svg {
+        width: 36px;
+        /* 18px × 2 */
+        height: 36px;
+        /* 18px × 2 */
     }
 
     .hbo-view-all {
         gap: 12px;
-        font-size: 2.625rem;
+        /* 6px × 2 */
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
+        padding: 16px 32px;
+        /* 8px × 2, 16px × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-bottom-width: 4px;
+        /* 2px × 2 */
     }
 
     .hbo-view-all svg {
-        width: 48px;
-        height: 48px;
-    }
-
-    .hbo-carousel-track {
-        margin-left: -48px;
-    }
-
-    .hbo-carousel-slide {
-        padding-left: 48px;
-    }
-
-    .hbo-card {
-        border-radius: 24px;
-    }
-
-    .hbo-card-info {
-        padding: 36px;
-    }
-
-    .hbo-card-title {
-        font-size: 2.625rem;
-    }
-
-    .hbo-carousel-btn {
-        height: 96px;
-        width: 96px;
-    }
-
-    .hbo-carousel-btn svg {
-        width: 48px;
-        height: 48px;
-    }
-
-    .hbo-carousel-prev {
-        left: 24px;
-    }
-
-    .hbo-carousel-next {
-        right: 24px;
-    }
-
-    .hbo-loading {
-        height: 540px;
-    }
-
-    .hbo-loading .loading-spinner {
-        width: 120px;
-        height: 120px;
-        border-width: 9px;
-    }
-
-    /* Genre Buttons - 3x scaling */
-    .hbo-genre-btn {
-        gap: 18px;
-        padding: 24px 48px;
-        font-size: 2.625rem;
-        height: 120px;
-        border-bottom-width: 6px;
-    }
-
-    .hbo-genre-btn svg {
-        width: 54px;
-        height: 54px;
-    }
-
-    /* View All button - 3x scaling */
-    .hbo-view-all {
-        gap: 18px;
-        font-size: 2.625rem;
-        padding: 24px 48px;
-        height: 120px;
-        border-bottom-width: 6px;
-    }
-
-    .hbo-view-all svg {
-        width: 54px;
-        height: 54px;
-    }
-}
-
-/* 1080p Display (1920px - 2559px) - 1.5x scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
-    .hbo-section {
-        padding: 36px 0;
-        margin-bottom: 30px;
-    }
-
-    .hbo-header {
-        margin-bottom: 24px;
-    }
-
-    .hbo-header-left {
-        gap: 18px;
-    }
-
-    .hbo-header-accent {
+        width: 36px;
+        /* 18px × 2 */
         height: 36px;
-        width: 6px;
-    }
-
-    .hbo-title {
-        font-size: 2.25rem;
-    }
-
-    .hbo-genre-btn {
-        gap: 9px;
-        padding: 12px 24px;
-        font-size: 1.3125rem;
-        height: 60px;
-        border-bottom-width: 3px;
-    }
-
-    .hbo-genre-btn svg {
-        width: 27px;
-        height: 27px;
-    }
-
-    .hbo-view-all {
-        gap: 9px;
-        font-size: 1.3125rem;
-        padding: 12px 24px;
-        height: 60px;
-        border-bottom-width: 3px;
-    }
-
-    .hbo-view-all svg {
-        width: 27px;
-        height: 27px;
+        /* 18px × 2 */
     }
 
     .hbo-logo {
-        height: 36px;
-        margin-left: 12px;
+        height: 48px;
+        /* 24px × 2 */
+        margin-left: 16px;
+        /* 8px × 2 */
     }
 
     .hbo-carousel-track {
-        margin-left: -24px;
+        margin-left: -32px;
+        /* 16px × 2 */
     }
 
     .hbo-carousel-slide {
-        padding-left: 24px;
+        padding-left: 32px;
+        /* 16px × 2 */
     }
 
     .hbo-card {
-        border-radius: 12px;
+        border-radius: 16px;
+        /* 8px × 2 */
     }
 
     .hbo-card-info {
-        padding: 18px;
+        padding: 24px;
+        /* 12px × 2 */
     }
 
     .hbo-card-title {
-        font-size: 1.3125rem;
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
     }
 
     .hbo-carousel-btn {
-        height: 48px;
-        width: 48px;
+        height: 64px;
+        /* 32px × 2 */
+        width: 64px;
+        /* 32px × 2 */
     }
 
     .hbo-carousel-btn svg {
-        width: 24px;
-        height: 24px;
+        width: 32px;
+        /* 16px × 2 */
+        height: 32px;
+        /* 16px × 2 */
     }
 
     .hbo-carousel-prev {
-        left: 12px;
+        left: 16px;
+        /* 8px × 2 */
     }
 
     .hbo-carousel-next {
-        right: 12px;
+        right: 16px;
+        /* 8px × 2 */
     }
 
     .hbo-loading {
-        height: 270px;
+        height: 360px;
+        /* 180px × 2 */
     }
 
     .hbo-loading .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border-width: 4.5px;
+        width: 80px;
+        /* 40px × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-width: 6px;
+        /* 3px × 2 */
     }
 }

@@ -169,7 +169,7 @@ const PrimeVideoPicks = () => {
             <div className="primevideo-header">
                 <div className="primevideo-header-left">
                     <div className="primevideo-header-accent"></div>
-                    <h2 className="primevideo-title">Prime Video Featured</h2>
+                    <h2 className="primevideo-title">Prime Video Picks</h2>
                 </div>
 
                 {/* Genre Filter Buttons */}

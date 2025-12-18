@@ -1286,6 +1286,27 @@
   transform: scale(0.95);
 }
 
+/* TV Navigation Focus Styles for Modal */
+.modal-close-new:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  background: rgba(229, 9, 20, 0.3);
+}
+
+.modal-btn-play:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  background: rgba(229, 9, 20, 0.2);
+  box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
+}
+
+.modal-btn-icon-only:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  background: rgba(229, 9, 20, 0.2);
+  box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+}
+
 /* Metadata Row */
 .modal-meta-row {
   display: flex;
@@ -1433,7 +1454,8 @@
 
 @media (min-width: 1024px) {
   .modal-right-col {
-    flex: 0 0 35%;
+    flex: 0 0 30%;
+    /* adjusted from 35% for better layout */
   }
 }
 
@@ -2437,43 +2459,138 @@
 /* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch) */
 @media (min-width: 1920px) and (max-width: 2559px) {
 
-  /* Navbar */
+  /* Navbar - 2x scaled from 720p */
   .navbar {
-    height: 85px;
+    height: 136px;
+    /* 68px × 2 */
     padding: 0 3%;
   }
 
+  .navbar-container {
+    max-width: 100%;
+    /* Full width for 1080p */
+  }
+
   .logo {
-    font-size: 2.2rem;
+    font-size: 3.6rem;
+    /* 1.8rem × 2 */
   }
 
   .navbar-links {
-    gap: 1.5rem;
+    gap: 2.5rem;
+    /* ~20px × 2 */
   }
+
+  .navbar-links svg {
+    width: 28px;
+    height: 28px;
+  }
+
 
   .navbar-links .nav-link {
-    font-size: 1.2rem;
-    padding: 12px 22px;
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    padding: 16px 24px;
+    /* 8px 12px × 2 */
   }
 
-  /* Search */
+  .navbar-logo {
+    margin-right: 50px;
+    /* 25px × 2 */
+  }
+
+  .navbar-logo img {
+    height: 72px;
+    /* 36px × 2 */
+    margin-right: 20px;
+    /* 10px × 2 */
+  }
+
+  /* Search - 2x scaled */
   .search-bar-wrapper {
-    width: 400px;
-    margin-top: 3rem
+    width: 600px;
+    /* 300px × 2 */
+    margin-top: 4rem;
   }
 
   .navbar-search-input {
-    font-size: 1.1rem;
-    padding: 12px 18px;
-    border-radius: 20px
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    padding: 20px 32px;
+    /* ~10px 16px × 2 */
+    border-radius: 40px;
+    /* 20px × 2 */
+  }
+
+  /* Search Results Dropdown - 2x scaled */
+  .search-results-dropdown {
+    border-radius: 16px;
+    /* 8px × 2 */
+    margin-top: 20px;
+    /* 10px × 2 */
+    border-width: 2px;
+    /* 1px × 2 */
+    max-height: 800px;
+    /* 400px × 2 */
+  }
+
+  .search-results-list {
+    padding: 20px 0;
+    /* 10px × 2 */
   }
 
   .search-result-item {
-    padding: 16px;
+    padding: 30px 40px;
+    /* 15px 20px × 2 */
+    border-bottom-width: 2px;
+  }
+
+  .search-result-poster {
+    width: 80px;
+    /* 40px × 2 */
+    height: 120px;
+    /* 60px × 2 */
+    border-radius: 8px;
+    /* 4px × 2 */
+    margin-right: 24px;
+    /* 12px × 2 */
+  }
+
+  .poster-placeholder {
+    font-size: 1.6rem;
+    /* 0.8rem × 2 */
+    padding: 20px;
+    /* 10px × 2 */
   }
 
   .search-result-title {
-    font-size: 1.05rem;
+    font-size: 2rem;
+    /* 1rem × 2 */
+    margin-bottom: 12px;
+    /* 6px × 2 */
+  }
+
+  .search-result-meta {
+    gap: 24px;
+    /* 12px × 2 */
+    font-size: 1.7rem;
+    /* 0.85rem × 2 */
+  }
+
+  .search-result-type {
+    padding: 4px 16px;
+    /* 2px 8px × 2 */
+    border-radius: 24px;
+    /* 12px × 2 */
+    font-size: 1.5rem;
+    /* 0.75rem × 2 */
+  }
+
+  .search-no-results,
+  .search-loading {
+    padding: 40px;
+    /* 20px × 2 */
+    font-size: 1.8rem;
   }
 
   /* Modal */
@@ -2550,6 +2667,8 @@
   .footer-container {
     max-width: 1800px;
     /* 1200px × 1.5 */
+    margin: 0 auto;
+    /* Center the container horizontally */
   }
 
   .footer-content {
@@ -2572,6 +2691,388 @@
     /* 0.9rem × 1.5 */
     padding: 0.75rem 0;
     /* 0.5rem × 1.5 */
+  }
+
+  /* New Footer Elements - 2x scaled for 1080p with centering */
+  .footer-social-icons {
+    margin-bottom: 3rem;
+    /* 1.5rem × 2 */
+    gap: 4rem;
+    /* 2rem × 2 */
+    justify-content: center;
+  }
+
+  .social-icon svg {
+    width: 48px;
+    /* 24px × 2 */
+    height: 48px;
+  }
+
+  .footer-nav-links {
+    margin-bottom: 2.5rem;
+    /* 1.25rem × 2 */
+    gap: 2.5rem;
+    /* 1.25rem × 2 */
+    justify-content: center;
+  }
+
+  .footer-nav-link {
+    font-size: 2rem;
+    /* ~1rem × 2 */
+  }
+
+  .footer-disclaimer {
+    font-size: 1.5rem;
+    /* 0.75rem × 2 */
+    line-height: 1.625;
+    margin-top: 2rem;
+    /* 1rem × 2 */
+    margin-bottom: 2rem;
+    max-width: 1800px;
+    /* 900px × 2 */
+    padding: 0 1rem;
+    /* 0.5rem × 2 */
+    text-align: center;
+  }
+
+  .footer-brand {
+    font-size: 1.5rem;
+  }
+
+  .footer-copyright {
+    font-size: 1.5rem;
+    /* 0.75rem × 2 */
+    text-align: center;
+  }
+
+  /* Row Headers - 2x scaled from 720p */
+  .row h2 {
+    font-size: 2.8rem;
+    /* 1.4rem × 2 */
+    margin-bottom: 20px;
+    /* 10px × 2 */
+  }
+
+  /* Movie Cards - 2x scaled from 720p */
+  .movie-card {
+    border-radius: 16px;
+    /* 8px × 2 */
+  }
+
+  .movie-card:hover {
+    transform: scale(1) translateY(-20px);
+    /* -10px × 2 */
+  }
+
+  .card-image-container {
+    border-radius: 16px;
+    /* 8px × 2 */
+  }
+
+  .card-hover-overlay {
+    gap: 20px;
+    /* 10px × 2 */
+  }
+
+  .play-hover-btn {
+    padding: 20px 40px;
+    /* 10px × 2, 20px × 2 */
+    border-radius: 12px;
+    /* 6px × 2 */
+    gap: 10px;
+    /* 5px × 2 */
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+  }
+
+  .play-icon {
+    font-size: 2rem;
+  }
+
+  .add-to-list-btn {
+    padding: 16px;
+    /* 8px × 2 */
+    width: 80px;
+    /* 40px × 2 */
+    height: 80px;
+    /* 40px × 2 */
+    font-size: 2.4rem;
+    /* 1.2rem × 2 */
+    border-width: 4px;
+    /* 2px × 2 */
+  }
+
+  .card-content {
+    padding: 20px 0;
+    /* 10px × 2 */
+  }
+
+  .card-title {
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    margin-bottom: 10px;
+    /* 5px × 2 */
+  }
+
+  .card-meta {
+    gap: 20px;
+    /* 10px × 2 */
+    font-size: 1.6rem;
+    /* 0.8rem × 2 */
+  }
+
+  .rating,
+  .year {
+    font-size: 1.6rem;
+    /* 0.8rem × 2 */
+  }
+
+  /* Grid Container - 2x scaled gap */
+  .grid-container {
+    gap: 32px;
+    /* 16px × 2 */
+  }
+
+  /* ========================================
+     MODAL 1080p UPSCALING (2x)
+     ======================================== */
+
+  /* Modal Container */
+  .modal-content-new {
+    border-radius: 32px 32px 0 0;
+    /* 16px × 2 */
+    max-width: 1800px;
+    /* 900px × 2 */
+    box-shadow:
+      0 -16px 60px rgba(0, 0, 0, 0.7),
+      /* -8px × 2, 30px × 2 */
+      0 -40px 120px rgba(0, 0, 0, 0.5),
+      /* -20px × 2, 60px × 2 */
+      0 -80px 200px rgba(0, 0, 0, 0.3);
+    /* -40px × 2, 100px × 2 */
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 2 */
+  }
+
+  .modal-content-new::before {
+    top: -100px;
+    /* -50px × 2 */
+    height: 100px;
+    /* 50px × 2 */
+  }
+
+  /* Drawer Bar */
+  .modal-drawer-bar {
+    height: 88px;
+    /* 44px × 2 */
+    border-radius: 32px 32px 0 0;
+    /* 16px × 2 */
+  }
+
+  .modal-drawer-handle {
+    width: 80px;
+    /* 40px × 2 */
+    height: 10px;
+    /* 5px × 2 */
+    border-radius: 6px;
+    /* 3px × 2 */
+  }
+
+  .modal-drawer-bar:hover .modal-drawer-handle {
+    width: 100px;
+    /* 50px × 2 */
+  }
+
+  /* Close Button */
+  .modal-close-new {
+    top: 32px;
+    /* 16px × 2 */
+    right: 32px;
+    /* 16px × 2 */
+    width: 88px;
+    /* 44px × 2 */
+    height: 88px;
+    /* 44px × 2 */
+    font-size: 2.4rem;
+    /* 1.2rem × 2 */
+  }
+
+  /* Scrollable Container */
+  .modal-scroll-container {
+    border-radius: 32px 32px 0 0;
+    /* 16px × 2 */
+  }
+
+  /* Hero Section */
+  .modal-backdrop-container {
+    min-height: 560px;
+    /* 280px × 2 */
+  }
+
+  /* Logo Overlay */
+  .modal-logo-overlay {
+    bottom: 64px;
+    /* 32px × 2 */
+    left: 64px;
+    /* 32px × 2 */
+  }
+
+  .modal-logo-img {
+    height: 200px;
+    /* 100px × 2 */
+  }
+
+  /* Title Overlay */
+  .modal-title-overlay {
+    font-size: 4rem;
+    /* 2rem × 2 */
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+    /* 2px × 2, 8px × 2 */
+  }
+
+  /* Body Section */
+  .modal-body-new {
+    padding: 48px 80px 80px;
+    /* 24px × 2, 40px × 2, 40px × 2 */
+    gap: 48px;
+    /* 24px × 2 */
+  }
+
+  /* Action Buttons Row */
+  .modal-actions-row {
+    gap: 24px;
+    /* 12px × 2 */
+    margin-bottom: 16px;
+    /* 8px × 2 */
+  }
+
+  .modal-btn-play {
+    gap: 16px;
+    /* 8px × 2 */
+    padding: 1rem 2rem;
+    /* 0.5rem × 2, 1rem × 2 */
+    border-radius: 12px;
+    /* 6px × 2 */
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 2 */
+  }
+
+  .modal-btn-icon {
+    font-size: 1.7rem;
+    /* 0.85rem × 2 */
+  }
+
+  .modal-btn-icon-only {
+    width: 88px;
+    /* 44px × 2 */
+    height: 88px;
+    /* 44px × 2 */
+    border-radius: 16px;
+    /* 8px × 2 */
+    font-size: 2.2rem;
+    /* 1.1rem × 2 */
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 2 */
+  }
+
+  .modal-btn-icon-only svg {
+    width: 40px;
+    /* 20px × 2 */
+    height: 40px;
+    /* 20px × 2 */
+  }
+
+  /* Metadata Row */
+  .modal-meta-row {
+    gap: 24px;
+    /* 12px × 2 */
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+    padding: 20px 0;
+    /* 10px × 2 */
+  }
+
+  .modal-rating {
+    gap: 8px;
+    /* 4px × 2 */
+  }
+
+  .star-icon {
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+  }
+
+  /* Content Rating Badges */
+  .content-rating-badge {
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+  }
+
+  /* Main Layout */
+  .modal-main-layout {
+    gap: 40px;
+    /* 40px adjusted for layout */
+  }
+
+  .modal-right-col {
+    gap: 40px;
+    /* 20px × 2 */
+  }
+
+  /* Description */
+  .modal-description-new {
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+  }
+
+  /* Info Items */
+  .modal-info-item {
+    gap: 8px;
+    /* 4px × 2 */
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+  }
+
+  .modal-info-label {
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+  }
+
+  .modal-info-value {
+    font-size: 1.9rem;
+    /* 0.95rem × 2 */
+  }
+
+  /* Section Styling */
+  .modal-section {
+    margin-top: 64px;
+    /* 32px × 2 */
+  }
+
+  .modal-section-title {
+    font-size: 2.5rem;
+    /* 1.25rem × 2 */
+    margin: 0 0 24px 0;
+    /* 12px × 2 */
+    padding-left: 48px;
+    /* 24px × 2 */
+    border-left-width: 8px;
+    /* 4px × 2 */
+    gap: 16px;
+    /* 8px × 2 */
+  }
+
+  /* Collection Grid */
+  .modal-collection-grid {
+    gap: 40px;
+    /* 20px × 2 */
+  }
+
+  .modal-collection-item {
+    border-radius: 8px;
+    /* 4px × 2 */
   }
 }
 
@@ -2694,142 +3195,152 @@
 /* 4K Android TV (3840x2160) - Large TVs (65+ inch) */
 @media (min-width: 3840px) {
 
-  /* Navbar */
+  /* Navbar - 4x scaled from 720p */
   .navbar {
-    height: 225px;
-    /* 75px × 3 */
-    padding: 0 3%;
+    height: 300px;
+    /* 75px × 4 */
+    padding: 0 4%;
   }
 
   .navbar-container {
-    max-width: 5400px;
-    /* 1800px × 3 - Prevent elements from getting too cramped */
+    max-width: 100%;
+    /* 1800px × 4 */
     justify-content: flex-start;
   }
 
   .navbar-links {
     white-space: nowrap;
-    /* Prevent text wrapping on nav links */
   }
 
   .logo {
-    font-size: 5.4rem;
-    /* 1.8rem × 3 */
+    font-size: 7.2rem;
+    /* 1.8rem × 4 */
   }
 
   .navbar-logo {
-    margin-right: 75px;
-    /* 25px × 3 - Spacing between logo and nav links */
+    margin-right: 100px;
+    /* 25px × 4 */
   }
 
   .navbar-logo img {
-    height: 108px;
-    /* 36px × 3 - Critical for proper logo sizing */
-    margin-right: 30px;
-    /* 10px × 3 - Spacing between logo image and text */
+    height: 144px;
+    /* 36px × 4 */
+    margin-right: 40px;
+    /* 10px × 4 */
   }
 
   .navbar-links {
-    gap: 3rem;
+    gap: 4rem;
+    /* 1rem × 4 */
+  }
+
+  .navbar-links svg {
+    width: 64px;
+    /* 16px × 4 */
+    height: 64px;
+    /* 16px × 4 */
   }
 
   .navbar-links .nav-link {
-    font-size: 3.15rem;
-    /* 1.05rem × 3 */
-    padding: 30px 54px;
-    /* 10px × 3, 18px × 3 */
+    font-size: 4rem;
+    padding: 30px 62px;
+    /* 10px × 4, 18px × 4 */
   }
 
-  /* Search */
+  /* Search - 4x scaled */
   .search-bar-wrapper {
-    width: 1050px;
-    margin-top: 7rem;
-    /* 350px × 3 */
+    width: 1100px;
+    /* Adjusted for proper fit */
+    margin-top: 9rem;
   }
 
   .navbar-search-input {
-    font-size: 3rem;
-    /* 1rem × 3 */
-    padding: 30px 48px;
-    border-radius: 50px;
-    /* 10px × 3, 16px × 3 */
+    font-size: 4rem;
+    /* 1rem × 4 */
+    padding: 32px 56px;
+    /* Slightly smaller for navbar fit */
+    border-radius: 64px;
+    /* 16px × 4 */
   }
 
-  /* Search Results Dropdown - 3x scaled from 720p */
+  /* Search Results Dropdown - 4x scaled from 720p */
   .search-results-dropdown {
-    border-radius: 24px;
-    /* 8px × 3 */
-    margin-top: 30px;
-    /* 10px × 3 */
-    border-width: 3px;
-    /* 1px × 3 */
-    max-height: 1200px;
-    /* 400px × 3 */
+    border-radius: 32px;
+    /* 8px × 4 */
+    margin-top: 40px;
+    /* 10px × 4 */
+    border-width: 4px;
+    /* 1px × 4 */
+    max-height: 1600px;
+    /* 400px × 4 */
   }
 
   .search-results-list {
-    padding: 30px 0;
-    /* 10px × 3 */
+    padding: 40px 0;
+    /* 10px × 4 */
   }
 
   .search-result-item {
-    padding: 30px 45px;
-    /* 10px × 3, 15px × 3 */
-    border-bottom-width: 3px;
-    /* 1px × 3 */
+    padding: 40px 60px;
+    /* 10px × 4, 15px × 4 */
+    border-bottom-width: 4px;
+    /* 1px × 4 */
   }
 
   .search-result-poster {
-    width: 120px;
-    /* 40px × 3 */
-    height: 180px;
-    /* 60px × 3 */
-    border-radius: 12px;
-    /* 4px × 3 */
-    margin-right: 36px;
-    /* 12px × 3 */
+    width: 160px;
+    /* 40px × 4 */
+    height: 240px;
+    /* 60px × 4 */
+    border-radius: 16px;
+    /* 4px × 4 */
+    margin-right: 48px;
+    /* 12px × 4 */
   }
 
   .poster-placeholder {
-    font-size: 3.6rem;
-    /* 1.2rem × 3 */
+    font-size: 4.8rem;
+    /* 1.2rem × 4 */
   }
 
   .poster-placeholder span {
-    font-size: 2.4rem;
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
   }
 
   .search-result-title {
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-    margin-bottom: 12px;
-    /* 4px × 3 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+    margin-bottom: 16px;
+    /* 4px × 4 */
   }
 
   .search-result-meta {
-    gap: 24px;
-    /* 8px × 3 */
-    font-size: 2.4rem;
-    /* 0.8rem × 3 */
+    gap: 32px;
+    /* 8px × 4 */
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
   }
 
   .search-result-type,
   .search-result-year {
-    font-size: 2.4rem;
-    /* 0.8rem × 3 */
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
   }
 
   .search-no-results {
-    padding: 60px;
-    /* 20px × 3 */
+    padding: 80px;
+    /* 20px × 4 */
   }
 
   .search-no-results p {
-    font-size: 2.7rem;
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
   }
 
   .search-loading p {
-    font-size: 2.7rem;
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
   }
 
   /* Modal - 3x scaled from 720p */
@@ -2952,44 +3463,71 @@
     padding: 28px;
   }
 
-  /* Footer - 3x scaled from 720p */
+  /* Footer - 4x scaled from 720p */
   .footer {
-    padding: 6rem 0;
-    /* 2rem × 3 */
-    border-top-width: 3px;
+    padding: 8rem 0;
+    /* 2rem × 4 */
+    font-size: 4rem;
+    /* 1rem × 4 */
+    margin-top: 20rem;
+    /* 5rem × 4 */
   }
 
   .footer-container {
+    max-width: 4800px;
+    /* 1200px × 4 */
+    margin: 0 auto;
+    padding: 0 4rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .footer-social-icons {
+    margin-bottom: 6rem;
+    /* 1.5rem × 4 */
+    gap: 8rem;
+    /* 2rem × 4 */
+  }
+
+  .social-icon svg {
+    width: 96px;
+    /* 24px × 4 */
+    height: 96px;
+    /* 24px × 4 */
+  }
+
+  .footer-nav-links {
+    margin-bottom: 5rem;
+    /* 1.25rem × 4 */
+    gap: 5rem;
+    /* 1.25rem × 4 */
+  }
+
+  .footer-nav-link {
+    font-size: 4rem;
+    /* 1rem × 4 */
+  }
+
+  .footer-disclaimer {
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
     max-width: 3600px;
-    /* 1200px × 3 */
-    padding: 0 4%;
+    /* 900px × 4 */
+    margin-top: 4rem;
+    /* 1rem × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
+    padding: 0 2rem;
+    /* 0.5rem × 4 */
+    line-height: 1.8;
   }
 
-  .footer-content {
-    gap: 3rem;
-    /* 1rem × 3 */
-  }
-
-  .footer-left p {
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-  }
-
-  .footer-right {
-    gap: 6rem;
-    /* 2rem × 3 */
-  }
-
-  .footer-link {
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-    padding: 1.5rem 0;
-    /* 0.5rem × 3 */
-  }
-
-  .footer-link::after {
-    height: 3px;
-    /* 1px × 3 */
+  .footer-copyright {
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
   }
 
   /* Watch Page Layout - Scaled from 720p (3x) */
@@ -3038,95 +3576,373 @@
     font-size: 3rem;
   }
 
-  /* Row Section - 3x scaled from 720p */
+  /* Row Section - 4x scaled from 720p */
   .row {
-    margin-bottom: 120px;
-    /* 40px × 3 */
+    margin-bottom: 160px;
+    /* 40px × 4 */
   }
 
   .row-header {
-    margin-bottom: 45px;
-    /* 15px × 3 */
+    margin-bottom: 60px;
+    /* 15px × 4 */
   }
 
   .row h2 {
-    font-size: 4.2rem;
-    /* 1.4rem × 3 */
-    margin-bottom: 30px;
-    /* 10px × 3 */
+    font-size: 5.6rem;
+    /* 1.4rem × 4 */
+    margin-bottom: 40px;
+    /* 10px × 4 */
   }
 
-  /* Movie Cards - 3x scaled from 720p */
+  /* Movie Cards - 4x scaled from 720p */
   .movie-card {
-    border-radius: 24px;
-    /* 8px × 3 */
+    border-radius: 32px;
+    /* 8px × 4 */
   }
 
   .movie-card:hover {
-    transform: scale(1) translateY(-30px);
-    /* -10px × 3 */
+    transform: scale(1) translateY(-40px);
+    /* -10px × 4 */
   }
 
   .card-image-container {
-    border-radius: 24px;
-    /* 8px × 3 */
+    border-radius: 32px;
+    /* 8px × 4 */
   }
 
   .card-hover-overlay {
-    gap: 30px;
-    /* 10px × 3 */
+    gap: 40px;
+    /* 10px × 4 */
   }
 
   .play-hover-btn {
-    padding: 30px 60px;
-    /* 10px × 3, 20px × 3 */
-    border-radius: 18px;
-    /* 6px × 3 */
-    gap: 15px;
-    /* 5px × 3 */
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
+    padding: 40px 80px;
+    /* 10px × 4, 20px × 4 */
+    border-radius: 24px;
+    /* 6px × 4 */
+    gap: 20px;
+    /* 5px × 4 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
   }
 
   .play-icon {
-    font-size: 3rem;
+    font-size: 4rem;
+    /* 1rem × 4 */
   }
 
   .add-to-list-btn {
-    padding: 24px;
-    /* 8px × 3 */
-    width: 120px;
-    /* 40px × 3 */
-    height: 120px;
-    /* 40px × 3 */
-    font-size: 3.6rem;
-    /* 1.2rem × 3 */
-    border-width: 6px;
-    /* 2px × 3 */
+    padding: 32px;
+    /* 8px × 4 */
+    width: 160px;
+    /* 40px × 4 */
+    height: 160px;
+    /* 40px × 4 */
+    font-size: 4.8rem;
+    /* 1.2rem × 4 */
+    border-width: 8px;
+    /* 2px × 4 */
   }
 
   .card-content {
-    padding: 30px 0;
-    /* 10px × 3 */
+    padding: 40px 0;
+    /* 10px × 4 */
   }
 
   .card-title {
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-    margin-bottom: 15px;
-    /* 5px × 3 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+    margin-bottom: 20px;
+    /* 5px × 4 */
   }
 
   .card-meta {
-    gap: 30px;
-    /* 10px × 3 */
-    font-size: 2.4rem;
-    /* 0.8rem × 3 */
+    gap: 40px;
+    /* 10px × 4 */
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
   }
 
   .rating,
   .year {
-    font-size: 2.4rem;
-    /* 0.8rem × 3 */
+    font-size: 3.2rem;
+    /* 0.8rem × 4 */
+  }
+
+  /* ========================================
+     MODAL 4K UPSCALING (3x)
+     ======================================== */
+
+  /* Modal Container */
+  .modal-content-new {
+    border-radius: 48px 48px 0 0;
+    /* 16px × 3 */
+    width: 98%;
+    max-width: 2700px;
+    /* 900px × 3 */
+    max-height: 85vh;
+    box-shadow:
+      0 -24px 90px rgba(0, 0, 0, 0.7),
+      /* -8px × 3, 30px × 3 */
+      0 -60px 180px rgba(0, 0, 0, 0.5),
+      /* -20px × 3, 60px × 3 */
+      0 -120px 300px rgba(0, 0, 0, 0.3);
+    /* -40px × 3, 100px × 3 */
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 3 */
+  }
+
+  .modal-content-new::before {
+    top: -150px;
+    /* -50px × 3 */
+    height: 150px;
+    /* 50px × 3 */
+  }
+
+  /* Drawer Bar */
+  .modal-drawer-bar {
+    height: 132px;
+    /* 44px × 3 */
+    border-radius: 48px 48px 0 0;
+    /* 16px × 3 */
+  }
+
+  .modal-drawer-handle {
+    width: 120px;
+    /* 40px × 3 */
+    height: 15px;
+    /* 5px × 3 */
+    border-radius: 9px;
+    /* 3px × 3 */
+  }
+
+  .modal-drawer-bar:hover .modal-drawer-handle {
+    width: 150px;
+    /* 50px × 3 */
+  }
+
+  /* Close Button */
+  .modal-close-new {
+    top: 48px;
+    /* 16px × 3 */
+    right: 48px;
+    /* 16px × 3 */
+    width: 132px;
+    /* 44px × 3 */
+    height: 132px;
+    /* 44px × 3 */
+    font-size: 3.6rem;
+    /* 1.2rem × 3 */
+  }
+
+  /* Scrollable Container */
+  .modal-scroll-container {
+    max-height: 85vh;
+    border-radius: 48px 48px 0 0;
+    /* 16px × 3 */
+  }
+
+  /* Hero Section */
+  .modal-backdrop-container {
+    min-height: 840px;
+    /* 280px × 3 */
+    max-height: 55vh;
+  }
+
+  /* Logo Overlay */
+  .modal-logo-overlay {
+    bottom: 96px;
+    /* 32px × 3 */
+    left: 96px;
+    /* 32px × 3 */
+    width: 50%;
+  }
+
+  .modal-logo-img {
+    height: 300px;
+    /* 100px × 3 */
+  }
+
+  /* Title Overlay */
+  .modal-title-overlay {
+    font-size: 6rem;
+    /* 2rem × 3 */
+    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.8);
+    /* 2px × 3, 8px × 3 */
+  }
+
+  /* Body Section */
+  .modal-body-new {
+    padding: 72px 120px 120px;
+    /* 24px × 3, 40px × 3, 40px × 3 */
+    gap: 72px;
+    /* 24px × 3 */
+  }
+
+  /* Action Buttons Row */
+  .modal-actions-row {
+    gap: 36px;
+    /* 12px × 3 */
+    margin-bottom: 24px;
+    /* 8px × 3 */
+  }
+
+  .modal-btn-play {
+    gap: 24px;
+    /* 8px × 3 */
+    padding: 2.5rem 3rem;
+    /* 0.5rem × 3, 1rem × 3 */
+    border-radius: 18px;
+    /* 6px × 3 */
+    font-size: 3rem;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 3 */
+  }
+
+  .modal-btn-icon {
+    font-size: 2.55rem;
+    /* 0.85rem × 3 */
+  }
+
+  .modal-btn-icon-only {
+    width: 132px;
+    /* 44px × 3 */
+    height: 132px;
+    /* 44px × 3 */
+    border-radius: 24px;
+    /* 8px × 3 */
+    font-size: 3.3rem;
+    /* 1.1rem × 3 */
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    /* 1px × 3 */
+  }
+
+  .modal-btn-icon-only svg {
+    width: 60px;
+    /* 20px × 3 */
+    height: 60px;
+    /* 20px × 3 */
+    stroke-width: 2;
+    /* 2 */
+  }
+
+  /* Metadata Row */
+  .modal-meta-row {
+    gap: 36px;
+    /* 12px × 3 */
+    font-size: 2.85rem;
+    /* 0.95rem × 3 */
+    padding: 30px 0;
+    /* 10px × 3 */
+  }
+
+  .modal-rating {
+    gap: 12px;
+    /* 4px × 3 */
+  }
+
+  .star-icon {
+    font-size: 2.7rem;
+    /* 0.9rem × 3 */
+  }
+
+  /* Content Rating Badges */
+  .content-rating-badge {
+    font-size: 2.85rem;
+    /* 0.95rem × 3 */
+  }
+
+  /* Main Layout */
+  .modal-main-layout {
+    gap: 60px;
+    /* adjusted for layout balance */
+  }
+
+  .modal-left-col {
+    flex: 0 0 65%;
+  }
+
+  .modal-right-col {
+    flex: 0 0 30%;
+    /* adjusted for layout balance */
+    gap: 60px;
+    /* 20px × 3 */
+  }
+
+  /* Description */
+  .modal-description-new {
+    font-size: 2.85rem;
+    /* 0.95rem × 3 */
+    line-height: 1.6;
+  }
+
+  /* Info Items */
+  .modal-info-item {
+    gap: 12px;
+    /* 4px × 3 */
+    font-size: 2.85rem;
+    /* 0.95rem × 3 - added for consistency */
+  }
+
+  .modal-info-label {
+    font-size: 2.85rem;
+    /* 0.95rem × 3 */
+  }
+
+  .modal-info-value {
+    font-size: 2.85rem;
+    /* 0.95rem × 3 */
+  }
+
+  /* Section Styling */
+  .modal-section {
+    margin-top: 96px;
+    /* 32px × 3 */
+  }
+
+  .modal-section-title {
+    font-size: 3.75rem;
+    /* 1.25rem × 3 */
+    margin: 0 0 36px 0;
+    /* 12px × 3 */
+    padding-left: 72px;
+    /* 24px × 3 */
+    border-left-width: 12px;
+    /* 4px × 3 */
+    gap: 24px;
+    /* 8px × 3 */
+  }
+
+  /* Collection Grid */
+  .modal-collection-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 60px;
+    /* 20px × 3 */
+  }
+
+  .modal-collection-item {
+    border-radius: 12px;
+    /* 4px × 3 */
+  }
+
+  /* Select Filter Button - 4x scaled from 720p */
+  .select-filter-btn {
+    gap: 32px !important;
+    /* 8px × 4 */
+    padding: 32px 64px !important;
+    /* 8px × 4, 16px × 4 */
+    border-radius: 24px !important;
+    /* 6px × 4 */
+    font-size: 3.6rem !important;
+    /* 0.9rem × 4 */
+    border-width: 4px !important;
+    /* 1px × 4 */
+  }
+
+  .select-filter-btn svg {
+    width: 64px !important;
+    /* 16px × 4 */
+    height: 64px !important;
+    /* 16px × 4 */
   }
 }

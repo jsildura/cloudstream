@@ -668,7 +668,26 @@
   }
 }
 
+/* 1080p - 2x scaled banner nav buttons */
+@media (min-width: 1920px) {
+  .banner-nav-btn {
+    width: 88px;
+    height: 88px;
+    font-size: 2.5rem;
+    border-width: 2px;
+  }
+
+  .banner-nav-prev {
+    left: 40px;
+  }
+
+  .banner-nav-next {
+    right: 40px;
+  }
+}
+
 /* ===== MOBILE POSTER CAROUSEL ===== */
+
 
 /* Hide mobile elements on desktop */
 .mobile-poster-carousel,
@@ -2852,6 +2871,315 @@ select.filter-dropdown {
     font-size: 1.35rem;
     /* 0.9rem × 1.5 */
   }
+
+  /* Watch Overlay Buttons - 2x scaled from 720p */
+  .watch-overlay-btn {
+    gap: 16px !important;
+    /* 8px × 2 */
+    padding: 20px 40px !important;
+    /* 10px × 2, 20px × 2 */
+    border-radius: 16px !important;
+    /* 8px × 2 */
+    font-size: 28px !important;
+    /* 14px × 2 */
+    border-width: 2px !important;
+    /* 1px × 2 */
+  }
+
+  .watch-overlay-btn svg {
+    width: 40px !important;
+    /* 20px × 2 */
+    height: 40px !important;
+    /* 20px × 2 */
+  }
+
+  .watch-back-btn {
+    top: 32px !important;
+    /* 16px × 2 */
+    left: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-server-btn {
+    top: 32px !important;
+    /* 16px × 2 */
+    right: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-server-btn svg {
+    width: 36px !important;
+    /* 18px × 2 */
+    height: 36px !important;
+    /* 18px × 2 */
+  }
+
+  .watch-fullscreen-btn {
+    top: 32px !important;
+    /* 16px × 2 */
+    right: 280px !important;
+    /* 140px × 2 */
+    padding: 20px 24px !important;
+    /* 10px × 2, 12px × 2 */
+  }
+
+  .watch-fullscreen-btn svg {
+    width: 36px !important;
+    /* 18px × 2 */
+    height: 36px !important;
+    /* 18px × 2 */
+  }
+
+  /* Playback Warning Icon - 2x scaled */
+  .watch-playback-warning-icon {
+    top: 32px !important;
+    /* 16px × 2 */
+    right: 400px !important;
+    /* 200px × 2 */
+    padding: 18px !important;
+    /* 9px × 2 */
+    border-radius: 16px !important;
+    /* 8px × 2 */
+    border-width: 2px !important;
+    /* 1px × 2 */
+  }
+
+  .watch-playback-warning-icon svg {
+    width: 28px !important;
+    /* 14px × 2 */
+    height: 28px !important;
+    /* 14px × 2 */
+  }
+
+  /* Playback Warning Tooltip - 2x scaled */
+  .watch-playback-warning-tooltip {
+    top: 122px !important;
+    /* 61px × 2 */
+    right: 320px !important;
+    /* 160px × 2 */
+    left: auto !important;
+    transform: translateX(0) !important;
+    max-width: 560px !important;
+    /* 280px × 2 */
+    padding: 20px 32px !important;
+    /* 10px × 2, 16px × 2 */
+    border-radius: 16px !important;
+    /* 8px × 2 */
+    font-size: 24px !important;
+    /* 12px × 2 */
+    white-space: nowrap !important;
+  }
+
+  .watch-playback-warning-tooltip::before {
+    top: -12px !important;
+    /* -6px × 2 */
+    left: auto !important;
+    right: 100px !important;
+    /* 50px × 2 */
+    transform: translateX(0) !important;
+    border-left: 12px solid transparent !important;
+    /* 6px × 2 */
+    border-right: 12px solid transparent !important;
+    /* 6px × 2 */
+    border-bottom: 12px solid rgba(234, 179, 8, 1) !important;
+    /* 6px × 2 */
+  }
+
+  /* Watch Lazy Content - 2x scaled from 720p */
+  .watch-lazy-content {
+    gap: 24px !important;
+    /* 12px × 2 */
+    padding: 40px !important;
+    /* 20px × 2 */
+  }
+
+  .watch-play-button {
+    width: 200px !important;
+    /* 100px × 2 */
+    height: 200px !important;
+    /* 100px × 2 */
+    border-width: 6px !important;
+    /* 3px × 2 */
+    margin-bottom: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-play-button svg {
+    width: 88px !important;
+    /* 44px × 2 */
+    height: 88px !important;
+    /* 44px × 2 */
+  }
+
+  .watch-lazy-title {
+    font-size: 48px !important;
+    /* 24px × 2 */
+    max-width: 1200px !important;
+    /* 600px × 2 */
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8) !important;
+    /* 2px × 2, 10px × 2 */
+  }
+
+  .watch-lazy-episode {
+    font-size: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-lazy-hint {
+    font-size: 28px !important;
+    /* 14px × 2 */
+    margin: 16px 0 0 0 !important;
+    /* 8px × 2 */
+  }
+
+  /* Watch Drawer - 2x scaled from 720p */
+  .watch-drawer {
+    max-width: 1200px !important;
+    /* 600px × 2 */
+    border-radius: 32px 32px 0 0 !important;
+    /* 16px × 2 */
+    padding: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-drawer-handle {
+    padding: 32px 0 !important;
+    /* 16px × 2 */
+    margin-bottom: 16px !important;
+    /* 8px × 2 */
+  }
+
+  .watch-drawer-handle::before {
+    width: 80px !important;
+    /* 40px × 2 */
+    height: 10px !important;
+    /* 5px × 2 */
+    border-radius: 6px !important;
+    /* 3px × 2 */
+  }
+
+  /* Sandbox Toggle Row - 2x scaled */
+  .watch-sandbox-row {
+    padding: 32px !important;
+    /* 16px × 2 */
+    border-radius: 24px !important;
+    /* 12px × 2 */
+    margin-bottom: 32px !important;
+    /* 16px × 2 */
+    gap: 32px !important;
+    /* 16px × 2 */
+  }
+
+  .watch-sandbox-title {
+    font-size: 28px !important;
+    /* 14px × 2 */
+    margin: 0 0 8px 0 !important;
+    /* 4px × 2 */
+  }
+
+  .watch-sandbox-label {
+    font-size: 24px !important;
+    /* 12px × 2 */
+  }
+
+  .watch-sandbox-desc {
+    font-size: 24px !important;
+    /* 12px × 2 */
+  }
+
+  /* Toggle Switch - 2x scaled */
+  .watch-toggle {
+    width: 88px !important;
+    /* 44px × 2 */
+    height: 48px !important;
+    /* 24px × 2 */
+  }
+
+  .watch-toggle-slider {
+    border-radius: 24px !important;
+    /* 12px × 2 */
+  }
+
+  .watch-toggle-slider::before {
+    width: 36px !important;
+    /* 18px × 2 */
+    height: 36px !important;
+    /* 18px × 2 */
+    left: 6px !important;
+    /* 3px × 2 */
+    bottom: 6px !important;
+    /* 3px × 2 */
+  }
+
+  .watch-toggle input:checked+.watch-toggle-slider::before {
+    transform: translateX(40px) !important;
+    /* 20px × 2 */
+  }
+
+  /* Server List - 2x scaled */
+  .watch-server-list {
+    margin-bottom: 32px !important;
+    /* 16px × 2 */
+    gap: 16px !important;
+    /* 8px × 2 */
+  }
+
+  .watch-server-list-title {
+    font-size: 28px !important;
+    /* 14px × 2 */
+    margin: 0 0 24px 0 !important;
+    /* 12px × 2 */
+  }
+
+  /* Server Card - 2x scaled */
+  .watch-server-card {
+    gap: 24px !important;
+    /* 12px × 2 */
+    padding: 28px !important;
+    /* 14px × 2 */
+    border-radius: 24px !important;
+    /* 12px × 2 */
+    border-width: 2px !important;
+    /* 1px × 2 */
+    min-height: 140px !important;
+    /* 70px × 2 */
+  }
+
+  .watch-server-icon svg {
+    width: 48px !important;
+    /* 24px × 2 */
+    height: 48px !important;
+    /* 24px × 2 */
+  }
+
+  .watch-server-name {
+    font-size: 28px !important;
+    /* 14px × 2 */
+    margin: 0 0 8px 0 !important;
+    /* 4px × 2 */
+  }
+
+  .watch-server-recommended {
+    font-size: 22px !important;
+    /* 11px × 2 */
+  }
+
+  .watch-server-desc {
+    font-size: 22px !important;
+    /* 11px × 2 */
+  }
+
+  /* Drawer Close Button - 2x scaled */
+  .watch-drawer-close {
+    padding: 28px !important;
+    /* 14px × 2 */
+    border-radius: 20px !important;
+    /* 10px × 2 */
+    font-size: 28px !important;
+    /* 14px × 2 */
+    border-width: 2px !important;
+    /* 1px × 2 */
+  }
 }
 
 /* 2K Android TV (2560x1440) - Premium TVs (55-65 inch) */
@@ -3770,6 +4098,11 @@ select.filter-dropdown {
     transform: scale(1.02);
   }
 
+  /* Exclude banner nav buttons from scale transform - keep stable */
+  .banner-nav-btn:hover {
+    transform: translateY(-50%);
+  }
+
   /* Season Episode Badge - 3x scaled */
   .season-episode-badge {
     padding: 1.5rem 3rem;
@@ -3778,6 +4111,315 @@ select.filter-dropdown {
     /* 20px × 3 */
     font-size: 2.7rem;
     /* 0.9rem × 3 */
+  }
+
+  /* Watch Overlay Buttons - 4x scaled from 720p */
+  .watch-overlay-btn {
+    gap: 32px !important;
+    /* 8px × 4 */
+    padding: 40px 80px !important;
+    /* 10px × 4, 20px × 4 */
+    border-radius: 32px !important;
+    /* 8px × 4 */
+    font-size: 56px !important;
+    /* 14px × 4 */
+    border-width: 4px !important;
+    /* 1px × 4 */
+  }
+
+  .watch-overlay-btn svg {
+    width: 80px !important;
+    /* 20px × 4 */
+    height: 80px !important;
+    /* 20px × 4 */
+  }
+
+  .watch-back-btn {
+    top: 64px !important;
+    /* 16px × 4 */
+    left: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-server-btn {
+    top: 64px !important;
+    /* 16px × 4 */
+    right: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-server-btn svg {
+    width: 72px !important;
+    /* 18px × 4 */
+    height: 72px !important;
+    /* 18px × 4 */
+  }
+
+  .watch-fullscreen-btn {
+    top: 64px !important;
+    /* 16px × 4 */
+    right: 560px !important;
+    /* 140px × 4 */
+    padding: 40px 48px !important;
+    /* 10px × 4, 12px × 4 */
+  }
+
+  .watch-fullscreen-btn svg {
+    width: 72px !important;
+    /* 18px × 4 */
+    height: 72px !important;
+    /* 18px × 4 */
+  }
+
+  /* Playback Warning Icon - 4x scaled */
+  .watch-playback-warning-icon {
+    top: 64px !important;
+    /* 16px × 4 */
+    right: 800px !important;
+    /* 200px × 4 */
+    padding: 36px !important;
+    /* 9px × 4 */
+    border-radius: 32px !important;
+    /* 8px × 4 */
+    border-width: 4px !important;
+    /* 1px × 4 */
+  }
+
+  .watch-playback-warning-icon svg {
+    width: 56px !important;
+    /* 14px × 4 */
+    height: 56px !important;
+    /* 14px × 4 */
+  }
+
+  /* Playback Warning Tooltip - 4x scaled */
+  .watch-playback-warning-tooltip {
+    top: 244px !important;
+    /* 61px × 4 */
+    right: 640px !important;
+    /* 160px × 4 */
+    left: auto !important;
+    transform: translateX(0) !important;
+    max-width: 1120px !important;
+    /* 280px × 4 */
+    padding: 40px 64px !important;
+    /* 10px × 4, 16px × 4 */
+    border-radius: 32px !important;
+    /* 8px × 4 */
+    font-size: 48px !important;
+    /* 12px × 4 */
+    white-space: nowrap !important;
+  }
+
+  .watch-playback-warning-tooltip::before {
+    top: -24px !important;
+    /* -6px × 4 */
+    left: auto !important;
+    right: 200px !important;
+    /* 50px × 4 */
+    transform: translateX(0) !important;
+    border-left: 24px solid transparent !important;
+    /* 6px × 4 */
+    border-right: 24px solid transparent !important;
+    /* 6px × 4 */
+    border-bottom: 24px solid rgba(234, 179, 8, 1) !important;
+    /* 6px × 4 */
+  }
+
+  /* Watch Lazy Content - 4x scaled from 720p */
+  .watch-lazy-content {
+    gap: 48px !important;
+    /* 12px × 4 */
+    padding: 80px !important;
+    /* 20px × 4 */
+  }
+
+  .watch-play-button {
+    width: 400px !important;
+    /* 100px × 4 */
+    height: 400px !important;
+    /* 100px × 4 */
+    border-width: 12px !important;
+    /* 3px × 4 */
+    margin-bottom: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-play-button svg {
+    width: 176px !important;
+    /* 44px × 4 */
+    height: 176px !important;
+    /* 44px × 4 */
+  }
+
+  .watch-lazy-title {
+    font-size: 96px !important;
+    /* 24px × 4 */
+    max-width: 2400px !important;
+    /* 600px × 4 */
+    text-shadow: 0 8px 40px rgba(0, 0, 0, 0.8) !important;
+    /* 2px × 4, 10px × 4 */
+  }
+
+  .watch-lazy-episode {
+    font-size: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-lazy-hint {
+    font-size: 56px !important;
+    /* 14px × 4 */
+    margin: 32px 0 0 0 !important;
+    /* 8px × 4 */
+  }
+
+  /* Watch Drawer - 4x scaled from 720p */
+  .watch-drawer {
+    max-width: 2400px !important;
+    /* 600px × 4 */
+    border-radius: 64px 64px 0 0 !important;
+    /* 16px × 4 */
+    padding: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-drawer-handle {
+    padding: 64px 0 !important;
+    /* 16px × 4 */
+    margin-bottom: 32px !important;
+    /* 8px × 4 */
+  }
+
+  .watch-drawer-handle::before {
+    width: 160px !important;
+    /* 40px × 4 */
+    height: 20px !important;
+    /* 5px × 4 */
+    border-radius: 12px !important;
+    /* 3px × 4 */
+  }
+
+  /* Sandbox Toggle Row - 4x scaled */
+  .watch-sandbox-row {
+    padding: 64px !important;
+    /* 16px × 4 */
+    border-radius: 48px !important;
+    /* 12px × 4 */
+    margin-bottom: 64px !important;
+    /* 16px × 4 */
+    gap: 64px !important;
+    /* 16px × 4 */
+  }
+
+  .watch-sandbox-title {
+    font-size: 56px !important;
+    /* 14px × 4 */
+    margin: 0 0 16px 0 !important;
+    /* 4px × 4 */
+  }
+
+  .watch-sandbox-label {
+    font-size: 48px !important;
+    /* 12px × 4 */
+  }
+
+  .watch-sandbox-desc {
+    font-size: 48px !important;
+    /* 12px × 4 */
+  }
+
+  /* Toggle Switch - 4x scaled */
+  .watch-toggle {
+    width: 176px !important;
+    /* 44px × 4 */
+    height: 96px !important;
+    /* 24px × 4 */
+  }
+
+  .watch-toggle-slider {
+    border-radius: 48px !important;
+    /* 12px × 4 */
+  }
+
+  .watch-toggle-slider::before {
+    width: 72px !important;
+    /* 18px × 4 */
+    height: 72px !important;
+    /* 18px × 4 */
+    left: 12px !important;
+    /* 3px × 4 */
+    bottom: 12px !important;
+    /* 3px × 4 */
+  }
+
+  .watch-toggle input:checked+.watch-toggle-slider::before {
+    transform: translateX(80px) !important;
+    /* 20px × 4 */
+  }
+
+  /* Server List - 4x scaled */
+  .watch-server-list {
+    margin-bottom: 64px !important;
+    /* 16px × 4 */
+    gap: 32px !important;
+    /* 8px × 4 */
+  }
+
+  .watch-server-list-title {
+    font-size: 56px !important;
+    /* 14px × 4 */
+    margin: 0 0 48px 0 !important;
+    /* 12px × 4 */
+  }
+
+  /* Server Card - 4x scaled */
+  .watch-server-card {
+    gap: 48px !important;
+    /* 12px × 4 */
+    padding: 56px !important;
+    /* 14px × 4 */
+    border-radius: 48px !important;
+    /* 12px × 4 */
+    border-width: 4px !important;
+    /* 1px × 4 */
+    min-height: 280px !important;
+    /* 70px × 4 */
+  }
+
+  .watch-server-icon svg {
+    width: 96px !important;
+    /* 24px × 4 */
+    height: 96px !important;
+    /* 24px × 4 */
+  }
+
+  .watch-server-name {
+    font-size: 56px !important;
+    /* 14px × 4 */
+    margin: 0 0 16px 0 !important;
+    /* 4px × 4 */
+  }
+
+  .watch-server-recommended {
+    font-size: 44px !important;
+    /* 11px × 4 */
+  }
+
+  .watch-server-desc {
+    font-size: 44px !important;
+    /* 11px × 4 */
+  }
+
+  /* Drawer Close Button - 4x scaled */
+  .watch-drawer-close {
+    padding: 56px !important;
+    /* 14px × 4 */
+    border-radius: 40px !important;
+    /* 10px × 4 */
+    font-size: 56px !important;
+    /* 14px × 4 */
+    border-width: 4px !important;
+    /* 1px × 4 */
   }
 }
 
@@ -4084,6 +4726,9 @@ select.filter-dropdown {
   padding: 16px 0;
   margin-bottom: 8px;
   cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .watch-drawer-handle::before {
@@ -4415,6 +5060,49 @@ select.filter-dropdown {
   transform: scale(0.95);
 }
 
+/* TV Navigation Focus Styles for Watch Page */
+.watch-overlay-btn:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  background: rgba(229, 9, 20, 0.3);
+  border-color: #e50914;
+}
+
+.watch-play-button:focus-visible {
+  outline: 4px solid #e50914;
+  outline-offset: 4px;
+  transform: scale(1.05);
+  background: rgba(229, 9, 20, 0.25);
+  border-color: #e50914;
+  box-shadow: 0 0 40px rgba(229, 9, 20, 0.5);
+  animation: none;
+}
+
+.watch-playback-warning-icon:focus-visible {
+  outline: 3px solid #fbbf24;
+  outline-offset: 3px;
+  background: rgba(234, 179, 8, 0.4);
+}
+
+.watch-server-card:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 2px;
+  background: rgba(229, 9, 20, 0.15);
+  border-color: #e50914;
+}
+
+.watch-drawer-close:focus-visible {
+  outline: 3px solid #e50914;
+  outline-offset: 3px;
+  background: rgba(229, 9, 20, 0.2);
+}
+
+.watch-toggle:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
 @keyframes pulse {
 
   0%,
@@ -4452,6 +5140,9 @@ select.filter-dropdown {
   margin: 8px 0 0 0;
 }
 
+/*--------------------*/
+/* Media Queries Here*/
+/*--------------------*/
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .watch-overlay-btn {
@@ -4545,7 +5236,8 @@ select.filter-dropdown {
   }
 }
 
-@media (min-width: 769px) and (max-width: 2559px) {
+/* Tablet/Desktop (769px - 1919px) - Tooltip positioning */
+@media (min-width: 769px) and (max-width: 1919px) {
   .watch-playback-warning-tooltip {
     top: 61px;
     right: 160px;
@@ -4564,120 +5256,102 @@ select.filter-dropdown {
   }
 }
 
-@media (min-width: 2560px) and (max-width: 4840px) {
-  .watch-playback-warning-tooltip {
-    top: 61px;
-    right: 160px;
-    left: auto;
-    transform: translateX(0);
-    max-width: 280px;
-    font-size: 12px;
-    padding: 10px 16px;
-    white-space: nowrap;
-  }
-
-  .watch-playback-warning-tooltip::before {
-    left: auto;
-    right: 50px;
-    transform: translateX(0);
-  }
-}
-
-/* ===== 1080p Display (1920px - 2559px) - Banner Content 1.5x Scaling ===== */
+/* ===== 1080p Display (1920px - 2559px) - Banner Content 2x Scaling ===== */
 @media (min-width: 1920px) and (max-width: 2559px) {
 
   /* Banner Desktop Content Container */
   .banner-content.banner-desktop-content {
-    padding: 1.5rem;
+    padding: 2rem;
+    /* 1rem × 2 */
   }
 
-  /* Banner Title - 1.5x scaling */
+  /* Banner Title - 2x scaling */
   .banner-title-new {
-    font-size: 5.25rem;
-    /* 3.5rem × 1.5 */
-    letter-spacing: -4.5px;
-    /* -3px × 1.5 */
-    margin-bottom: 1.5rem;
-    /* 1rem × 1.5 */
-    text-shadow: 0 3px 12px rgba(0, 0, 0, 0.7);
+    font-size: 7rem;
+    /* 3.5rem × 2 */
+    letter-spacing: -6px;
+    /* -3px × 2 */
+    margin-bottom: 2rem;
+    /* 1rem × 2 */
+    text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
   }
 
-  /* Banner Badges - 1.5x scaling */
+  /* Banner Badges - 2x scaling */
   .banner-badges {
-    gap: 1.125rem;
-    /* 0.75rem × 1.5 */
-    margin-bottom: 1.5rem;
-    /* 1rem × 1.5 */
+    gap: 1.5rem;
+    /* 0.75rem × 2 */
+    margin-bottom: 2rem;
+    /* 1rem × 2 */
   }
 
   .banner-badge {
-    border-radius: 21px;
-    /* 14px × 1.5 */
-    border-width: 1.5px;
-    padding: 0.375rem 1.275rem;
-    /* 0.25rem × 1.5, 0.85rem × 1.5 */
-    font-size: 1.3125rem;
-    /* 0.875rem × 1.5 */
+    border-radius: 28px;
+    /* 14px × 2 */
+    border-width: 2px;
+    padding: 0.5rem 1.7rem;
+    /* 0.25rem × 2, 0.85rem × 2 */
+    font-size: 1.75rem;
+    /* 0.875rem × 2 */
   }
 
-  /* Banner Description - 1.5x scaling */
+  /* Banner Description - 2x scaling */
   .banner-description-new {
-    font-size: 1.5rem;
-    /* 1rem × 1.5 */
-    margin-bottom: 2.25rem;
-    /* 1.5rem × 1.5 */
-    max-width: 825px;
-    /* 550px × 1.5 */
+    font-size: 2rem;
+    /* 1rem × 2 */
+    margin-bottom: 3rem;
+    /* 1.5rem × 2 */
+    max-width: 1100px;
+    /* 550px × 2 */
   }
 
-  /* Banner Buttons Container - 1.5x scaling */
+  /* Banner Buttons Container - 2x scaling */
   .banner-buttons-new {
-    gap: 1.125rem;
-    /* 0.75rem × 1.5 */
+    gap: 1.5rem;
+    /* 0.75rem × 2 */
   }
 
-  /* Play Now Button - 1.5x scaling */
+  /* Play Now Button - 2x scaling */
   .btn-play-now-new {
-    gap: 0.75rem;
-    /* 0.5rem × 1.5 */
-    padding: 0.9rem 1.875rem;
-    /* 0.6rem × 1.5, 1.25rem × 1.5 */
-    border-radius: 15px;
-    /* 10px × 1.5 */
-    font-size: 1.35rem;
-    /* 0.9rem × 1.5 */
-    border-width: 1.5px;
+    gap: 1rem;
+    /* 0.5rem × 2 */
+    padding: 1.2rem 2.5rem;
+    /* 0.6rem × 2, 1.25rem × 2 */
+    border-radius: 20px;
+    /* 10px × 2 */
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    border-width: 2px;
   }
 
   .btn-play-now-new svg {
-    width: 30px;
-    /* 20px × 1.5 */
-    height: 30px;
+    width: 40px;
+    /* 20px × 2 */
+    height: 40px;
   }
 
-  /* Outline Button - 1.5x scaling */
+  /* Outline Button - 2x scaling */
   .btn-outline-new {
-    gap: 0.75rem;
-    /* 0.5rem × 1.5 */
-    padding: 0.9rem 1.875rem;
-    /* 0.6rem × 1.5, 1.25rem × 1.5 */
-    border-radius: 15px;
-    /* 10px × 1.5 */
-    font-size: 1.35rem;
-    /* 0.9rem × 1.5 */
-    border-width: 1.5px;
+    gap: 1rem;
+    /* 0.5rem × 2 */
+    padding: 1.2rem 2.5rem;
+    /* 0.6rem × 2, 1.25rem × 2 */
+    border-radius: 20px;
+    /* 10px × 2 */
+    font-size: 1.8rem;
+    /* 0.9rem × 2 */
+    border-width: 2px;
   }
 
   .btn-outline-new svg {
-    width: 30px;
-    /* 20px × 1.5 */
-    height: 30px;
+    width: 40px;
+    /* 20px × 2 */
+    height: 40px;
   }
 
   /* Button icons */
   .btn-icon {
-    font-size: 1.275rem;
-    /* 0.85rem × 1.5 */
+    font-size: 1.7rem;
+    /* 0.85rem × 2 */
   }
 }
 
@@ -4686,101 +5360,144 @@ select.filter-dropdown {
 
   /* Banner Desktop Content Container */
   .banner-content.banner-desktop-content {
-    padding: 3rem;
+    padding: 4rem;
+    /* 1rem × 4 */
   }
 
-  /* Banner Title - 3x scaling */
+  /* Banner Title - 4x scaling */
   .banner-title-new {
     font-size: 10.5rem;
-    /* 3.5rem × 3 */
-    letter-spacing: -9px;
-    /* -3px × 3 */
-    margin-bottom: 3rem;
-    /* 1rem × 3 */
-    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.7);
+    /* 3.5rem × 4 */
+    letter-spacing: -12px;
+    /* -3px × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
+    text-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
   }
 
   .banner-title-new .title-highlight {
     color: #991b1b;
   }
 
-  /* Banner Badges - 3x scaling */
+  /* Banner Badges - 4x scaling */
   .banner-badges {
-    gap: 2.25rem;
-    /* 0.75rem × 3 */
-    margin-bottom: 3rem;
-    /* 1rem × 3 */
+    gap: 3rem;
+    /* 0.75rem × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
   }
 
   .banner-badge {
-    border-radius: 42px;
-    /* 14px × 3 */
-    border-width: 3px;
-    padding: 0.75rem 2.55rem;
-    /* 0.25rem × 3, 0.85rem × 3 */
-    font-size: 2.625rem;
-    /* 0.875rem × 3 */
+    border-radius: 56px;
+    /* 14px × 4 */
+    border-width: 4px;
+    /* 1px × 4 */
+    padding: 1rem 3.4rem;
+    /* 0.25rem × 4, 0.85rem × 4 */
+    font-size: 3.5rem;
+    /* 0.875rem × 4 */
     font-weight: 500;
   }
 
-  /* Banner Description - 3x scaling */
+  /* Banner Description - 4x scaling */
   .banner-description-new {
-    font-size: 3rem;
-    /* 1rem × 3 */
+    font-size: 4rem;
+    /* 1rem × 4 */
     line-height: 1.6;
-    margin-bottom: 4.5rem;
-    /* 1.5rem × 3 */
-    max-width: 1650px;
-    /* 550px × 3 */
+    margin-bottom: 6rem;
+    /* 1.5rem × 4 */
+    max-width: 2200px;
+    /* 550px × 4 */
   }
 
-  /* Banner Buttons Container - 3x scaling */
+  /* Banner Buttons Container - 4x scaling */
   .banner-buttons-new {
-    gap: 2.25rem;
-    /* 0.75rem × 3 */
+    gap: 3rem;
+    /* 0.75rem × 4 */
   }
 
-  /* Play Now Button - 3x scaling */
+  /* Play Now Button - 4x scaling */
   .btn-play-now-new {
-    gap: 1.5rem;
-    /* 0.5rem × 3 */
-    padding: 1.8rem 3.75rem;
-    /* 0.6rem × 3, 1.25rem × 3 */
-    border-radius: 30px;
-    /* 10px × 3 */
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-    border-width: 3px;
+    gap: 2rem;
+    /* 0.5rem × 4 */
+    padding: 2.4rem 5rem;
+    /* 0.6rem × 4, 1.25rem × 4 */
+    border-radius: 40px;
+    /* 10px × 4 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+    border-width: 4px;
   }
 
   .btn-play-now-new svg {
-    width: 60px;
-    /* 20px × 3 */
-    height: 60px;
+    width: 80px;
+    /* 20px × 4 */
+    height: 80px;
   }
 
-  /* Outline Button - 3x scaling */
+  /* Outline Button - 4x scaling */
   .btn-outline-new {
-    gap: 1.5rem;
-    /* 0.5rem × 3 */
-    padding: 1.8rem 3.75rem;
-    /* 0.6rem × 3, 1.25rem × 3 */
-    border-radius: 30px;
-    /* 10px × 3 */
-    font-size: 2.7rem;
-    /* 0.9rem × 3 */
-    border-width: 3px;
+    gap: 2rem;
+    /* 0.5rem × 4 */
+    padding: 2.4rem 5rem;
+    /* 0.6rem × 4, 1.25rem × 4 */
+    border-radius: 40px;
+    /* 10px × 4 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+    border-width: 4px;
   }
 
   .btn-outline-new svg {
-    width: 60px;
-    /* 20px × 3 */
-    height: 60px;
+    width: 80px;
+    /* 20px × 4 */
+    height: 80px;
   }
 
   /* Ensure button icons scale */
   .btn-icon {
-    font-size: 2.55rem;
-    /* 0.85rem × 3 */
+    font-size: 3.4rem;
+    /* 0.85rem × 4 */
+  }
+
+  /* Banner Navigation Buttons - 4x scaled */
+  .banner-nav-btn {
+    width: 176px;
+    /* 44px × 4 */
+    height: 176px;
+    /* 44px × 4 */
+    font-size: 5rem;
+    /* 1.25rem × 4 */
+    border-width: 4px;
+    /* 1px × 4 */
+    line-height: 1;
+    box-sizing: border-box;
+  }
+
+  .banner-nav-prev {
+    left: 80px;
+    /* 20px × 4 */
+  }
+
+  .banner-nav-next {
+    right: 80px;
+    /* 20px × 4 */
+  }
+
+  /* Banner Progress Bar - 4x scaled */
+  .banner-progress {
+    height: 8px;
+    /* 2px × 4 */
+  }
+
+  /* Banner Slider - 4x scaled */
+  .banner-slider {
+    min-height: 700px;
+    /* Scaled for 4K */
+  }
+
+  .banner-slide {
+    min-height: 700px;
+    /* Scaled for 4K */
   }
 }

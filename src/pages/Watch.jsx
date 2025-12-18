@@ -419,10 +419,12 @@ const Watch = () => {
   };
 
   const handleTouchStart = (e) => {
+    e.preventDefault(); // Prevent pull-to-refresh
     handleDragStart(e.touches[0].clientY);
   };
 
   const handleTouchMove = (e) => {
+    e.preventDefault(); // Prevent pull-to-refresh
     handleDragMove(e.touches[0].clientY);
   };
 
@@ -712,6 +714,14 @@ const Watch = () => {
                   key={server.name}
                   className={`watch-server-card ${currentServer === index ? 'active' : ''}`}
                   onClick={() => handleServerSelect(index)}
+                  tabIndex={0}
+                  role="button"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleServerSelect(index);
+                    }
+                  }}
                 >
                   <div className="watch-server-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32">

@@ -313,101 +313,171 @@
     }
 }
 
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
 @media (min-width: 3840px) {
     .viu-page {
-        padding: 300px 120px 180px;
+        padding: 400px 160px 240px;
+        /* 100px × 4, 40px × 4, 60px × 4 */
     }
 
     .viu-page-header {
-        max-width: 4200px;
-        margin-bottom: 120px;
+        max-width: 5600px;
+        /* 1400px × 4 */
+        margin-bottom: 160px;
+        /* 40px × 4 */
+        border-radius: 64px;
+        /* 16px × 4 */
+        padding: 128px;
+        /* 32px × 4 */
+    }
+
+    .viu-page-header::before {
+        height: 12px;
+        /* 3px × 4 */
     }
 
     .back-button {
-        gap: 24px;
-        padding: 30px 60px;
-        border-radius: 24px;
-        font-size: 3rem;
-        margin-bottom: 72px;
+        gap: 32px;
+        /* 8px × 4 */
+        padding: 40px 80px;
+        /* 10px × 4, 20px × 4 */
+        border-radius: 32px;
+        /* 8px × 4 */
+        font-size: 4rem;
+        /* 1rem × 4 */
+        margin-bottom: 96px;
+        /* 24px × 4 */
     }
 
     .back-button svg {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        /* 20px × 4 */
+        height: 80px;
+        /* 20px × 4 */
     }
 
     .viu-page-title-section {
-        gap: 48px;
-        margin-bottom: 36px;
+        gap: 64px;
+        /* 16px × 4 */
+        margin-bottom: 48px;
+        /* 12px × 4 */
     }
 
     .viu-page-logo {
-        height: 180px;
+        height: 320px;
+        /* 80px × 4 */
     }
 
     .viu-page-subtitle {
-        font-size: 3.375rem;
+        font-size: 4.5rem;
+        /* 1.125rem × 4 */
     }
 
     .viu-content-section {
-        max-width: 4200px;
-        margin-bottom: 180px;
+        max-width: 5600px;
+        /* 1400px × 4 */
+        margin-bottom: 240px;
+        /* 60px × 4 */
     }
 
     .viu-section-header {
-        gap: 36px;
-        margin-bottom: 72px;
+        gap: 48px;
+        /* 12px × 4 */
+        margin-bottom: 96px;
+        /* 24px × 4 */
     }
 
     .viu-section-accent {
-        height: 72px;
-        width: 12px;
+        height: 96px;
+        /* 24px × 4 */
+        width: 16px;
+        /* 4px × 4 */
     }
 
     .viu-section-title {
-        font-size: 4.5rem;
+        font-size: 6rem;
+        /* 1.5rem × 4 */
     }
 
     .viu-section-count {
-        font-size: 2.625rem;
-        margin-left: 24px;
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+        margin-left: 32px;
+        /* 8px × 4 */
     }
 
     .viu-grid {
-        grid-template-columns: repeat(auto-fill, minmax(540px, 1fr));
-        gap: 72px;
+        grid-template-columns: repeat(auto-fill, minmax(720px, 1fr));
+        /* 180px × 4 */
+        gap: 96px;
+        /* 24px × 4 */
     }
 
     .viu-page-loading .loading-spinner {
-        width: 150px;
-        height: 150px;
-        border-width: 9px;
-        margin-bottom: 48px;
+        width: 200px;
+        /* 50px × 4 */
+        height: 200px;
+        /* 50px × 4 */
+        border-width: 12px;
+        /* 3px × 4 */
+        margin-bottom: 64px;
+        /* 16px × 4 */
     }
 
     .load-more-container {
-        margin-top: 120px;
+        margin-top: 160px;
+        /* 40px × 4 */
     }
 
     .load-more-btn {
-        gap: 24px;
-        padding: 42px 96px;
-        border-radius: 24px;
-        font-size: 3rem;
+        gap: 32px;
+        /* 8px × 4 */
+        padding: 56px 128px;
+        /* 14px × 4, 32px × 4 */
+        border-radius: 32px;
+        /* 8px × 4 */
+        font-size: 4rem;
+        /* 1rem × 4 */
     }
 
     .viu-load-more {
-        border-width: 6px;
+        border-width: 8px;
+        /* 2px × 4 */
     }
 
     .load-more-btn svg {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        /* 20px × 4 */
+        height: 80px;
+        /* 20px × 4 */
     }
 
     .btn-spinner {
-        width: 54px;
-        height: 54px;
-        border-width: 6px;
+        width: 72px;
+        /* 18px × 4 */
+        height: 72px;
+        /* 18px × 4 */
+        border-width: 8px;
+        /* 2px × 4 */
+    }
+
+    .viu-section-header .select-filter-btn {
+        gap: 32px;
+        /* 8px × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        border-radius: 24px;
+        /* 6px × 4 */
+        font-size: 3.6rem;
+        /* 0.9rem × 4 */
+        border-width: 4px;
+        /* 1px × 4 */
+    }
+
+    .viu-section-header .select-filter-btn svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
     }
 }

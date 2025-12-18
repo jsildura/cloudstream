@@ -1,6 +1,7 @@
 .mylist-page {
     padding: 24px 48px;
     min-height: 100vh;
+    margin-top: 4rem;
 }
 
 .mylist-header {
@@ -211,7 +212,8 @@
 /* Mobile */
 @media (max-width: 639px) {
     .mylist-page {
-        padding: 16px;
+        padding: 10px 24px;
+        margin-top: 4rem;
     }
 
     .mylist-header {
@@ -236,7 +238,8 @@
 /* Tablet */
 @media (min-width: 640px) and (max-width: 1023px) {
     .mylist-page {
-        padding: 24px;
+        padding: 20px 24px;
+        margin-top: 4rem;
     }
 
     .mylist-grid {
@@ -251,10 +254,218 @@
     }
 }
 
+/* 720p (1.5x scaling) */
+@media (min-width: 1280px) {
+    .mylist-page {
+        padding: 25px 36px;
+        margin-top: 4rem;
+    }
+
+    .mylist-title {
+        font-size: 2rem;
+    }
+
+    .mylist-header {
+        margin-bottom: 36px;
+        gap: 24px;
+    }
+
+    .mylist-controls {
+        gap: 18px;
+    }
+
+    .mylist-sort-select,
+    .mylist-clear-btn {
+        padding: 15px 24px;
+        font-size: 1.3125rem;
+        border-radius: 12px;
+    }
+
+    .mylist-count {
+        font-size: 1.3125rem;
+        margin-bottom: 24px;
+    }
+
+    .mylist-empty {
+        padding: 120px 36px;
+    }
+
+    .mylist-empty svg {
+        width: 96px;
+        height: 96px;
+        margin-bottom: 36px;
+    }
+
+    .mylist-empty h3 {
+        font-size: 2.25rem;
+        margin: 0 0 12px 0;
+    }
+
+    .mylist-empty p {
+        font-size: 1.5rem;
+    }
+
+    .mylist-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 30px;
+    }
+
+    .mylist-card-image-container {
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    .mylist-card-overlay {
+        padding: 12px;
+    }
+
+    .mylist-card-type {
+        font-size: 0.975rem;
+        padding: 6px 12px;
+        border-radius: 6px;
+        bottom: 12px;
+        left: 12px;
+    }
+
+    .mylist-card-info {
+        padding: 0 6px;
+    }
+
+    .mylist-card-title {
+        font-size: 1.3125rem;
+        margin: 0 0 6px 0;
+    }
+
+    .mylist-card-rating {
+        font-size: 1.125rem;
+    }
+
+    .mylist-remove-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .mylist-remove-btn svg {
+        width: 30px;
+        height: 30px;
+    }
+
+    .mylist-card:focus {
+        outline-width: 3px;
+        outline-offset: 6px;
+        border-radius: 12px;
+    }
+}
+
+/* 1080p (2x scaling) */
+@media (min-width: 1920px) {
+    .mylist-page {
+        padding: 48px 56px;
+        margin-top: 8rem
+    }
+
+    .mylist-title {
+        font-size: 3rem;
+    }
+
+    .mylist-header {
+        margin-bottom: 48px;
+        gap: 32px;
+    }
+
+    .mylist-controls {
+        gap: 24px;
+    }
+
+    .mylist-sort-select,
+    .mylist-clear-btn {
+        padding: 20px 32px;
+        font-size: 1.75rem;
+        border-radius: 16px;
+        border-width: 2px;
+    }
+
+    .mylist-count {
+        font-size: 1.75rem;
+        margin-bottom: 32px;
+    }
+
+    .mylist-empty {
+        padding: 160px 48px;
+    }
+
+    .mylist-empty svg {
+        width: 128px;
+        height: 128px;
+        margin-bottom: 48px;
+    }
+
+    .mylist-empty h3 {
+        font-size: 3rem;
+        margin: 0 0 16px 0;
+    }
+
+    .mylist-empty p {
+        font-size: 2rem;
+    }
+
+    .mylist-grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 40px;
+    }
+
+    .mylist-card-image-container {
+        border-radius: 16px;
+        margin-bottom: 16px;
+    }
+
+    .mylist-card-overlay {
+        padding: 16px;
+    }
+
+    .mylist-card-type {
+        font-size: 1.3rem;
+        padding: 8px 16px;
+        border-radius: 8px;
+        bottom: 16px;
+        left: 16px;
+    }
+
+    .mylist-card-info {
+        padding: 0 8px;
+    }
+
+    .mylist-card-title {
+        font-size: 1.75rem;
+        margin: 0 0 8px 0;
+    }
+
+    .mylist-card-rating {
+        font-size: 1.5rem;
+    }
+
+    .mylist-remove-btn {
+        width: 64px;
+        height: 64px;
+    }
+
+    .mylist-remove-btn svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .mylist-card:focus {
+        outline-width: 4px;
+        outline-offset: 8px;
+        border-radius: 16px;
+    }
+}
+
 /* 4K */
 @media (min-width: 3840px) {
     .mylist-page {
-        padding: 72px 144px;
+        padding: 96px 152px;
+        margin-top: 16rem;
     }
 
     .mylist-title {
@@ -262,69 +473,89 @@
     }
 
     .mylist-header {
-        margin-bottom: 72px;
+        margin-bottom: 96px;
+        gap: 64px;
+    }
+
+    .mylist-controls {
         gap: 48px;
     }
 
     .mylist-sort-select,
     .mylist-clear-btn {
-        padding: 30px 48px;
-        font-size: 2.625rem;
-        border-radius: 24px;
+        padding: 40px 64px;
+        font-size: 3.5rem;
+        border-radius: 32px;
+        border-width: 4px;
     }
 
     .mylist-count {
-        font-size: 2.625rem;
-        margin-bottom: 48px;
+        font-size: 3.5rem;
+        margin-bottom: 64px;
     }
 
     .mylist-empty svg {
-        width: 192px;
-        height: 192px;
-        margin-bottom: 72px;
+        width: 256px;
+        height: 256px;
+        margin-bottom: 96px;
     }
 
     .mylist-empty h3 {
-        font-size: 4.5rem;
+        font-size: 6rem;
     }
 
     .mylist-empty p {
-        font-size: 3rem;
+        font-size: 4rem;
     }
 
     .mylist-grid {
         grid-template-columns: repeat(6, 1fr);
-        gap: 60px;
+        gap: 80px;
     }
 
     .mylist-card-image-container {
-        border-radius: 24px;
-        margin-bottom: 24px;
+        border-radius: 32px;
+        margin-bottom: 32px;
+    }
+
+    .mylist-card-overlay {
+        padding: 32px;
     }
 
     .mylist-card-type {
-        font-size: 1.95rem;
-        padding: 12px 24px;
-        border-radius: 12px;
-        bottom: 24px;
-        left: 24px;
+        font-size: 2.6rem;
+        padding: 16px 32px;
+        border-radius: 16px;
+        bottom: 32px;
+        left: 32px;
+    }
+
+    .mylist-card-info {
+        padding: 0 16px;
     }
 
     .mylist-card-title {
-        font-size: 2.625rem;
+        font-size: 3.5rem;
+        margin: 0 0 16px 0;
     }
 
     .mylist-card-rating {
-        font-size: 2.25rem;
+        font-size: 3rem;
     }
 
     .mylist-remove-btn {
-        width: 96px;
-        height: 96px;
+        width: 128px;
+        height: 128px;
     }
 
     .mylist-remove-btn svg {
-        width: 60px;
-        height: 60px;
+        width: 80px;
+        height: 80px;
+    }
+
+    .mylist-card:focus {
+        outline-width: 8px;
+        outline-offset: 16px;
+        border-radius: 32px;
     }
 }

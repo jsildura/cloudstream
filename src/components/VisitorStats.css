@@ -237,9 +237,83 @@
 }
 
 /* ========================================
+   RESPONSIVE - 720p TV (1.5x scale)
+   ======================================== */
+@media (min-width: 1280px) and (max-width: 1919px) {
+    .visitor-stats {
+        bottom: 25px;
+        left: 25px;
+        font-size: 16px;
+    }
+
+    .visitor-stats-compact {
+        padding: 10px 18px;
+        gap: 10px;
+        border-radius: 8px;
+    }
+
+    .visitor-icon {
+        font-size: 18px;
+    }
+
+    .visitor-count {
+        font-size: 18px;
+    }
+
+    .visitor-label {
+        font-size: 16px;
+    }
+
+    .visitor-expand-arrow {
+        font-size: 12px;
+    }
+
+    .visitor-stats-expanded {
+        padding: 14px 18px;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .visitor-stats-row {
+        padding: 5px 0;
+        gap: 8px;
+    }
+
+    .stat-icon {
+        width: 22px;
+        font-size: 15px;
+    }
+
+    .visitor-stats-section-title {
+        font-size: 15px;
+        padding: 5px 0 10px 0;
+    }
+
+    .region-row {
+        font-size: 15px;
+        gap: 8px;
+        padding: 2px 0;
+    }
+
+    .region-flag {
+        font-size: 18px;
+        width: 25px;
+    }
+
+    .visitor-regions {
+        max-height: 250px;
+        gap: 4px;
+    }
+
+    .visitor-stats-divider {
+        margin: 12px 0;
+    }
+}
+
+/* ========================================
    RESPONSIVE - 1080p TV
    ======================================== */
 @media (min-width: 1920px) and (max-width: 2559px) {
+
     .visitor-stats {
         bottom: 30px;
         left: 30px;

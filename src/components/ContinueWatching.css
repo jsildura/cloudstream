@@ -227,76 +227,234 @@
     }
 }
 
-/* 4K Scaling */
-@media (min-width: 3840px) {
+/* 1080p Scaling - 2x */
+@media (min-width: 1920px) and (max-width: 3839px) {
     .continue-watching-section {
-        margin: 120px 0 180px;
+        margin: 80px 0 120px;
+        /* 40px × 2, 60px × 2 */
+    }
+
+    .continue-watching-header {
+        margin-bottom: 40px;
+        /* 20px × 2 */
     }
 
     .continue-watching-title {
-        font-size: 4.2rem;
+        font-size: 2.8rem;
+        /* 1.4rem × 2 */
     }
 
     .clear-history-btn {
-        font-size: 2.55rem;
-        padding: 24px 48px;
-        border-radius: 18px;
+        font-size: 1.7rem;
+        /* 0.85rem × 2 */
+        padding: 16px 32px;
+        /* 8px × 2, 16px × 2 */
+        border-radius: 12px;
+        /* 6px × 2 */
     }
 
     .continue-watching-row {
-        gap: 48px;
-        padding-bottom: 48px;
+        gap: 32px;
+        /* 16px × 2 */
+        padding-bottom: 32px;
     }
 
     .continue-watching-card {
-        width: 540px;
+        width: 360px;
+        /* 180px × 2 */
+    }
+
+    .continue-watching-card-image-container {
+        border-radius: 16px;
+        /* 8px × 2 */
+    }
+
+    .continue-watching-overlay {
+        padding: 24px;
+        /* 12px × 2 */
     }
 
     .continue-watching-remove-btn {
-        width: 96px;
-        height: 96px;
+        width: 64px;
+        /* 32px × 2 */
+        height: 64px;
+        border-radius: 50%;
     }
 
     .continue-watching-remove-btn svg {
-        width: 48px;
-        height: 48px;
+        width: 32px;
+        height: 32px;
     }
 
     .continue-watching-resume-badge {
-        padding: 24px 42px;
-        border-radius: 60px;
-        font-size: 2.55rem;
-        gap: 18px;
+        padding: 16px 28px;
+        /* 8px × 2, 14px × 2 */
+        border-radius: 40px;
+        /* 20px × 2 */
+        font-size: 1.7rem;
+        /* 0.85rem × 2 */
+        gap: 12px;
+        /* 6px × 2 */
     }
 
     .continue-watching-resume-badge svg {
-        width: 48px;
-        height: 48px;
+        width: 32px;
+        height: 32px;
     }
 
     .continue-watching-type-badge {
-        top: 24px;
-        left: 24px;
-        padding: 12px 24px;
-        border-radius: 12px;
-        font-size: 2.1rem;
+        top: 16px;
+        /* 8px × 2 */
+        left: 16px;
+        padding: 8px 16px;
+        /* 4px × 2, 8px × 2 */
+        border-radius: 8px;
+        /* 4px × 2 */
+        font-size: 1.4rem;
+        /* 0.7rem × 2 */
     }
 
     .continue-watching-card-info {
-        padding: 36px 0 0;
+        padding: 24px 0 0;
+        /* 12px × 2 */
     }
 
     .continue-watching-card-title {
-        font-size: 2.7rem;
-        margin: 0 0 18px 0;
+        font-size: 1.8rem;
+        /* 0.9rem × 2 */
+        margin: 0 0 12px 0;
+        /* 6px × 2 */
     }
 
     .continue-watching-card-meta {
-        gap: 12px;
-        font-size: 2.4rem;
+        gap: 8px;
+        /* 4px × 2 */
+        font-size: 1.6rem;
+        /* 0.8rem × 2 */
     }
 
     .continue-watching-time {
-        font-size: 2.25rem;
+        font-size: 1.5rem;
+        /* 0.75rem × 2 */
+    }
+}
+
+/* 4K Scaling - 4x */
+@media (min-width: 3840px) {
+    .continue-watching-section {
+        margin: 160px 0 240px;
+        /* 40px × 4, 60px × 4 */
+    }
+
+    .continue-watching-header {
+        margin-bottom: 80px;
+        /* 20px × 4 */
+    }
+
+    .continue-watching-title {
+        font-size: 5.6rem;
+        /* 1.4rem × 4 */
+    }
+
+    .clear-history-btn {
+        font-size: 3.4rem;
+        /* 0.85rem × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        border-radius: 24px;
+        /* 6px × 4 */
+        border-width: 4px;
+    }
+
+    .continue-watching-row {
+        gap: 64px;
+        /* 16px × 4 */
+        padding-bottom: 64px;
+    }
+
+    .continue-watching-row::-webkit-scrollbar {
+        height: 32px;
+        /* 8px × 4 */
+    }
+
+    .continue-watching-card {
+        width: 720px;
+        /* 180px × 4 */
+    }
+
+    .continue-watching-card-image-container {
+        border-radius: 32px;
+        /* 8px × 4 */
+    }
+
+    .continue-watching-overlay {
+        padding: 48px;
+        /* 12px × 4 */
+    }
+
+    .continue-watching-remove-btn {
+        width: 128px;
+        /* 32px × 4 */
+        height: 128px;
+        border-width: 4px;
+    }
+
+    .continue-watching-remove-btn svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+    }
+
+    .continue-watching-resume-badge {
+        padding: 32px 56px;
+        /* 8px × 4, 14px × 4 */
+        border-radius: 80px;
+        /* 20px × 4 */
+        font-size: 3.4rem;
+        /* 0.85rem × 4 */
+        gap: 24px;
+        /* 6px × 4 */
+    }
+
+    .continue-watching-resume-badge svg {
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+    }
+
+    .continue-watching-type-badge {
+        top: 32px;
+        /* 8px × 4 */
+        left: 32px;
+        padding: 16px 32px;
+        /* 4px × 4, 8px × 4 */
+        border-radius: 16px;
+        /* 4px × 4 */
+        font-size: 2.8rem;
+        /* 0.7rem × 4 */
+    }
+
+    .continue-watching-card-info {
+        padding: 48px 0 0;
+        /* 12px × 4 */
+    }
+
+    .continue-watching-card-title {
+        font-size: 3.6rem;
+        /* 0.9rem × 4 */
+        margin: 0 0 24px 0;
+        /* 6px × 4 */
+    }
+
+    .continue-watching-card-meta {
+        gap: 16px;
+        /* 4px × 4 */
+        font-size: 3.2rem;
+        /* 0.8rem × 4 */
+    }
+
+    .continue-watching-time {
+        font-size: 3rem;
+        /* 0.75rem × 4 */
     }
 }

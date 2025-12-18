@@ -130,7 +130,7 @@
     }
 
     .disneyplus-title {
-        font-size: 0.8rem;
+        font-size: 1rem;
     }
 
     .disneyplus-header-accent {
@@ -341,226 +341,310 @@
     }
 }
 
-/* 4K Android TV (3840x2160) - 3x scaled from 720p */
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
 @media (min-width: 3840px) {
     .disneyplus-section {
-        padding: 72px 0;
-        margin-bottom: 60px;
+        padding: 96px 0;
+        /* 24px × 4 */
+        margin-bottom: 80px;
+        /* 20px × 4 */
     }
 
     .disneyplus-header {
-        margin-bottom: 48px;
+        margin-bottom: 64px;
+        /* 16px × 4 */
     }
 
     .disneyplus-header-left {
-        gap: 36px;
+        gap: 48px;
+        /* 12px × 4 */
     }
 
     .disneyplus-header-accent {
-        height: 72px;
-        width: 12px;
+        height: 96px;
+        /* 24px × 4 */
+        width: 16px;
+        /* 4px × 4 */
     }
 
     .disneyplus-title {
-        font-size: 4.5rem;
+        font-size: 6rem;
+        /* 1.5rem × 4 */
     }
 
     .disneyplus-logo {
-        height: 72px;
-        margin-left: 24px;
+        height: 96px;
+        /* 24px × 4 */
+        margin-left: 32px;
+        /* 8px × 4 */
     }
 
     .disneyplus-view-all {
-        gap: 12px;
-        font-size: 2.625rem;
+        gap: 16px;
+        /* 4px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
     }
 
     .disneyplus-view-all svg {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
     }
 
     .disneyplus-carousel-track {
-        margin-left: -48px;
+        margin-left: -64px;
+        /* 16px × 4 */
     }
 
     .disneyplus-carousel-slide {
-        padding-left: 48px;
+        padding-left: 64px;
+        /* 16px × 4 */
     }
 
     .disneyplus-card {
-        border-radius: 24px;
+        border-radius: 32px;
+        /* 8px × 4 */
     }
 
     .disneyplus-card-info {
-        padding: 36px;
+        padding: 48px;
+        /* 12px × 4 */
     }
 
     .disneyplus-card-title {
-        font-size: 2.625rem;
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
     }
 
     .disneyplus-carousel-btn {
-        height: 96px;
-        width: 96px;
-        font-size: 42px;
-        gap: 24px;
+        height: 128px;
+        /* 32px × 4 */
+        width: 128px;
+        /* 32px × 4 */
+        font-size: 56px;
+        /* 14px × 4 */
+        gap: 32px;
+        /* 8px × 4 */
     }
 
     .disneyplus-carousel-btn svg {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        /* 16px × 4 */
+        height: 64px;
+        /* 16px × 4 */
     }
 
     .disneyplus-carousel-prev {
-        left: 24px;
+        left: 32px;
+        /* 8px × 4 */
     }
 
     .disneyplus-carousel-next {
-        right: 24px;
+        right: 32px;
+        /* 8px × 4 */
     }
 
     .disneyplus-loading {
-        height: 540px;
+        height: 720px;
+        /* 180px × 4 */
     }
 
     .disneyplus-loading .loading-spinner {
-        width: 120px;
-        height: 120px;
-        border-width: 9px;
+        width: 160px;
+        /* 40px × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-width: 12px;
+        /* 3px × 4 */
     }
 
-    /* Genre Buttons - 3x scaling */
+    /* Genre Buttons - 4x scaling */
     .disneyplus-genre-btn {
-        gap: 18px;
-        padding: 24px 48px;
-        font-size: 2.625rem;
-        height: 120px;
-        border-bottom-width: 6px;
+        gap: 24px;
+        /* 6px × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-bottom-width: 8px;
+        /* 2px × 4 */
     }
 
     .disneyplus-genre-btn svg {
-        width: 54px;
-        height: 54px;
+        width: 72px;
+        /* 18px × 4 */
+        height: 72px;
+        /* 18px × 4 */
     }
 
-    /* View All button - 3x scaling */
+    /* View All button - 4x scaling */
     .disneyplus-view-all {
-        gap: 18px;
-        font-size: 2.625rem;
-        padding: 24px 48px;
-        height: 120px;
-        border-bottom-width: 6px;
+        gap: 24px;
+        /* 6px × 4 */
+        font-size: 3.5rem;
+        /* 0.875rem × 4 */
+        padding: 32px 64px;
+        /* 8px × 4, 16px × 4 */
+        height: 160px;
+        /* 40px × 4 */
+        border-bottom-width: 8px;
+        /* 2px × 4 */
     }
 
     .disneyplus-view-all svg {
-        width: 54px;
-        height: 54px;
+        width: 72px;
+        /* 18px × 4 */
+        height: 72px;
+        /* 18px × 4 */
     }
 }
 
-/* 1080p Display (1920px - 2559px) - 1.5x scaling */
+/* 1080p Display (1920px - 2559px) - 2x scaling */
 @media (min-width: 1920px) and (max-width: 2559px) {
     .disneyplus-section {
-        padding: 36px 0;
-        margin-bottom: 30px;
+        padding: 48px 0;
+        /* 24px × 2 */
+        margin-bottom: 40px;
+        /* 20px × 2 */
     }
 
     .disneyplus-header {
-        margin-bottom: 24px;
+        margin-bottom: 32px;
+        /* 16px × 2 */
     }
 
     .disneyplus-header-left {
-        gap: 18px;
+        gap: 24px;
+        /* 12px × 2 */
     }
 
     .disneyplus-header-accent {
-        height: 36px;
-        width: 6px;
+        height: 48px;
+        /* 24px × 2 */
+        width: 8px;
+        /* 4px × 2 */
     }
 
     .disneyplus-title {
-        font-size: 2.25rem;
+        font-size: 3rem;
+        /* 1.5rem × 2 */
     }
 
     .disneyplus-genre-btn {
-        gap: 9px;
-        padding: 12px 24px;
-        font-size: 1.3125rem;
-        height: 60px;
-        border-bottom-width: 3px;
+        gap: 12px;
+        /* 6px × 2 */
+        padding: 16px 32px;
+        /* 8px × 2, 16px × 2 */
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-bottom-width: 4px;
+        /* 2px × 2 */
     }
 
     .disneyplus-genre-btn svg {
-        width: 27px;
-        height: 27px;
+        width: 36px;
+        /* 18px × 2 */
+        height: 36px;
+        /* 18px × 2 */
     }
 
     .disneyplus-view-all {
-        gap: 9px;
-        font-size: 1.3125rem;
-        padding: 12px 24px;
-        height: 60px;
-        border-bottom-width: 3px;
+        gap: 12px;
+        /* 6px × 2 */
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
+        padding: 16px 32px;
+        /* 8px × 2, 16px × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-bottom-width: 4px;
+        /* 2px × 2 */
     }
 
     .disneyplus-view-all svg {
-        width: 27px;
-        height: 27px;
+        width: 36px;
+        /* 18px × 2 */
+        height: 36px;
+        /* 18px × 2 */
     }
 
     .disneyplus-logo {
-        height: 36px;
-        margin-left: 12px;
+        height: 48px;
+        /* 24px × 2 */
+        margin-left: 16px;
+        /* 8px × 2 */
     }
 
     .disneyplus-carousel-track {
-        margin-left: -24px;
+        margin-left: -32px;
+        /* 16px × 2 */
     }
 
     .disneyplus-carousel-slide {
-        padding-left: 24px;
+        padding-left: 32px;
+        /* 16px × 2 */
     }
 
     .disneyplus-card {
-        border-radius: 12px;
+        border-radius: 16px;
+        /* 8px × 2 */
     }
 
     .disneyplus-card-info {
-        padding: 18px;
+        padding: 24px;
+        /* 12px × 2 */
     }
 
     .disneyplus-card-title {
-        font-size: 1.3125rem;
+        font-size: 1.75rem;
+        /* 0.875rem × 2 */
     }
 
     .disneyplus-carousel-btn {
-        height: 48px;
-        width: 48px;
-        font-size: 21px;
-        gap: 12px;
+        height: 64px;
+        /* 32px × 2 */
+        width: 64px;
+        /* 32px × 2 */
+        font-size: 28px;
+        /* 14px × 2 */
+        gap: 16px;
+        /* 8px × 2 */
     }
 
     .disneyplus-carousel-btn svg {
-        width: 24px;
-        height: 24px;
+        width: 32px;
+        /* 16px × 2 */
+        height: 32px;
+        /* 16px × 2 */
     }
 
     .disneyplus-carousel-prev {
-        left: 12px;
+        left: 16px;
+        /* 8px × 2 */
     }
 
     .disneyplus-carousel-next {
-        right: 12px;
+        right: 16px;
+        /* 8px × 2 */
     }
 
     .disneyplus-loading {
-        height: 270px;
+        height: 360px;
+        /* 180px × 2 */
     }
 
     .disneyplus-loading .loading-spinner {
-        width: 60px;
-        height: 60px;
-        border-width: 4.5px;
+        width: 80px;
+        /* 40px × 2 */
+        height: 80px;
+        /* 40px × 2 */
+        border-width: 6px;
+        /* 3px × 2 */
     }
 }
