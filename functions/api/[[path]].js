@@ -1,4 +1,4 @@
-const VISITOR_TTL_SECONDS = 90; // Visitor expires after 90 seconds without heartbeat
+const VISITOR_TTL_SECONDS = 45; // Visitor expires after 45 seconds without heartbeat
 
 /**
  * Handle heartbeat from a visitor
