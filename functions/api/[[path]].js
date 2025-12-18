@@ -1,4 +1,4 @@
-const VISITOR_TIMEOUT_MS = 45000; // 45 seconds - consider visitor offline after this
+const VISITOR_TIMEOUT_MS = 25000; // 25 seconds - consider visitor offline after this
 
 /**
  * Handle heartbeat from a visitor

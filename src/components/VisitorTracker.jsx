@@ -61,9 +61,9 @@ const VisitorTracker = () => {
         if (document.visibilityState === 'visible') {
             const timeSinceLastHeartbeat = Date.now() - lastHeartbeatRef.current;
 
-            // If more than 15 seconds since last heartbeat, send one immediately
+            // If more than 8 seconds since last heartbeat, send one immediately
             // This handles cases where the browser was in background
-            if (timeSinceLastHeartbeat > 15000) {
+            if (timeSinceLastHeartbeat > 8000) {
                 console.log('[VisitorTracker] Page visible again, sending catch-up heartbeat');
                 sendHeartbeat();
             }
@@ -74,8 +74,8 @@ const VisitorTracker = () => {
     const handleFocus = () => {
         const timeSinceLastHeartbeat = Date.now() - lastHeartbeatRef.current;
 
-        // If more than 15 seconds since last heartbeat, send one immediately
-        if (timeSinceLastHeartbeat > 15000) {
+        // If more than 8 seconds since last heartbeat, send one immediately
+        if (timeSinceLastHeartbeat > 8000) {
             console.log('[VisitorTracker] Window focused, sending catch-up heartbeat');
             sendHeartbeat();
         }
@@ -88,10 +88,10 @@ const VisitorTracker = () => {
         // Send initial heartbeat immediately
         sendHeartbeat();
 
-        // Set up heartbeat interval (every 20 seconds to stay within 45s TTL)
+        // Set up heartbeat interval (every 10 seconds to stay within 25s TTL)
         heartbeatRef.current = setInterval(() => {
             sendHeartbeat();
-        }, 20000);
+        }, 10000);
 
         // Listen for visibility changes (critical for mobile browsers!)
         document.addEventListener('visibilitychange', handleVisibilityChange);

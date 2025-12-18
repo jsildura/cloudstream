@@ -129,7 +129,6 @@ const VisitorStats = () => {
         <div className={`visitor-stats ${isExpanded ? 'expanded' : ''}`} ref={containerRef}>
             {/* Compact View */}
             <div className="visitor-stats-compact" onClick={toggleExpanded}>
-                <span className="visitor-icon">👥</span>
                 <span className="visitor-count">{stats.online}</span>
                 <span className="visitor-label">online</span>
                 <span className={`visitor-expand-arrow ${isExpanded ? 'rotated' : ''}`}>▼</span>
@@ -143,19 +142,16 @@ const VisitorStats = () => {
                     ) : (
                         <>
                             <div className="visitor-stats-row">
-                                <span className="stat-icon">👁️</span>
                                 <span className="stat-label">Visits:</span>
                                 <span className="stat-value">{stats.totalVisits.toLocaleString()}</span>
                             </div>
 
                             <div className="visitor-stats-row">
-                                <span className="stat-icon">👤</span>
                                 <span className="stat-label">Unique Visitors</span>
                                 <span className="stat-value">{stats.uniqueVisitors.toLocaleString()}</span>
                             </div>
 
                             <div className="visitor-stats-row">
-                                <span className="stat-icon">📅</span>
                                 <span className="stat-label">Today:</span>
                                 <span className={`stat-value ${loading ? 'loading' : ''}`}>
                                     {loading ? 'Loading...' : stats.todayVisitors.toLocaleString()}
@@ -163,13 +159,11 @@ const VisitorStats = () => {
                             </div>
 
                             <div className="visitor-stats-row">
-                                <span className="stat-icon">📈</span>
                                 <span className="stat-label">Peak:</span>
                                 <span className="stat-value">{stats.peak}</span>
                             </div>
 
                             <div className="visitor-stats-row">
-                                <span className="stat-icon">🌐</span>
                                 <span className="stat-label">You:</span>
                                 <span className="stat-value">Online</span>
                             </div>
@@ -177,9 +171,7 @@ const VisitorStats = () => {
                             {stats.regions.length > 0 && (
                                 <>
                                     <div className="visitor-stats-divider"></div>
-
                                     <div className="visitor-stats-section-title">
-                                        <span className="stat-icon">🌍</span>
                                         <span>Online by Region:</span>
                                     </div>
 
