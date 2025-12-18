@@ -1,5 +1,10 @@
-const VISITOR_TIMEOUT_MS = 60000; // 60 seconds - consider visitor offline after this
+const VISITOR_TTL_SECONDS = 90; // Visitor expires after 90 seconds without heartbeat
 
+/**
+ * Handle heartbeat from a visitor
+ * Uses individual KV keys per visitor with automatic TTL expiration
+ * This eliminates race conditions from concurrent heartbeats
+ */
 async function handleVisitorHeartbeat(context) {
   const KV = context.env.VISITOR_STATS;
   if (!KV) {
@@ -21,11 +26,22 @@ async function handleVisitorHeartbeat(context) {
     const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
 
-    let stats = await KV.get('stats', { type: 'json' }) || {
+    // Store this visitor in their own key with automatic expiration
+    // This eliminates race conditions - each visitor only writes to their own key
+    const visitorData = {
+      lastSeen: now,
+      region: region,
+      country: country
+    };
+    await KV.put(`visitor:${visitorId}`, JSON.stringify(visitorData), {
+      expirationTtl: VISITOR_TTL_SECONDS
+    });
+
+    // Update aggregate stats separately (less frequent updates are OK here)
+    let stats = await KV.get('aggregate_stats', { type: 'json' }) || {
       totalVisits: 0,
       uniqueVisitors: 0,
       peak: 0,
-      visitors: {},
       dailyVisitors: {},
       knownVisitorIds: []
     };
@@ -37,12 +53,6 @@ async function handleVisitorHeartbeat(context) {
       stats.totalVisits++;
     }
 
-    stats.visitors[visitorId] = {
-      lastSeen: now,
-      region: region,
-      country: country
-    };
-
     if (!stats.dailyVisitors[today]) {
       stats.dailyVisitors[today] = [];
     }
@@ -50,19 +60,7 @@ async function handleVisitorHeartbeat(context) {
       stats.dailyVisitors[today].push(visitorId);
     }
 
-    const activeVisitors = {};
-    for (const [id, data] of Object.entries(stats.visitors)) {
-      if (now - data.lastSeen < VISITOR_TIMEOUT_MS) {
-        activeVisitors[id] = data;
-      }
-    }
-    stats.visitors = activeVisitors;
-
-    const onlineCount = Object.keys(stats.visitors).length;
-    if (onlineCount > stats.peak) {
-      stats.peak = onlineCount;
-    }
-
+    // Clean up old daily visitors (keep 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const cutoffDate = sevenDaysAgo.toISOString().split('T')[0];
@@ -72,7 +70,16 @@ async function handleVisitorHeartbeat(context) {
       }
     }
 
-    await KV.put('stats', JSON.stringify(stats));
+    // Count current online visitors by listing visitor keys
+    const visitorList = await KV.list({ prefix: 'visitor:' });
+    const onlineCount = visitorList.keys.length;
+
+    // Update peak if needed
+    if (onlineCount > stats.peak) {
+      stats.peak = onlineCount;
+    }
+
+    await KV.put('aggregate_stats', JSON.stringify(stats));
 
     return jsonResponse({
       success: true,
@@ -85,6 +92,10 @@ async function handleVisitorHeartbeat(context) {
   }
 }
 
+/**
+ * Get visitor statistics
+ * Counts online visitors by listing individual visitor keys
+ */
 async function handleVisitorStats(context) {
   const KV = context.env.VISITOR_STATS;
   if (!KV) {
@@ -99,29 +110,33 @@ async function handleVisitorStats(context) {
   }
 
   try {
-    const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
 
-    let stats = await KV.get('stats', { type: 'json' }) || {
+    // Get aggregate stats
+    let stats = await KV.get('aggregate_stats', { type: 'json' }) || {
       totalVisits: 0,
       uniqueVisitors: 0,
       peak: 0,
-      visitors: {},
       dailyVisitors: {},
       knownVisitorIds: []
     };
 
-    const activeVisitors = {};
-    for (const [id, data] of Object.entries(stats.visitors)) {
-      if (now - data.lastSeen < VISITOR_TIMEOUT_MS) {
-        activeVisitors[id] = data;
-      }
-    }
+    // Count online visitors by listing visitor keys (with auto-expiring TTL)
+    const visitorList = await KV.list({ prefix: 'visitor:' });
+    const onlineCount = visitorList.keys.length;
 
+    // Get region data from active visitors
     const regionCounts = {};
-    for (const data of Object.values(activeVisitors)) {
-      const key = `${data.region}, ${data.country}`;
-      regionCounts[key] = (regionCounts[key] || 0) + 1;
+    for (const key of visitorList.keys) {
+      try {
+        const visitorData = await KV.get(key.name, { type: 'json' });
+        if (visitorData) {
+          const regionKey = `${visitorData.region}, ${visitorData.country}`;
+          regionCounts[regionKey] = (regionCounts[regionKey] || 0) + 1;
+        }
+      } catch (e) {
+        // Ignore individual visitor fetch errors
+      }
     }
 
     const regions = Object.entries(regionCounts)
@@ -129,7 +144,7 @@ async function handleVisitorStats(context) {
       .sort((a, b) => b.count - a.count);
 
     return jsonResponse({
-      online: Object.keys(activeVisitors).length || 1,
+      online: onlineCount || 1,
       totalVisits: stats.totalVisits,
       uniqueVisitors: stats.uniqueVisitors,
       todayVisitors: stats.dailyVisitors[today]?.length || 0,
