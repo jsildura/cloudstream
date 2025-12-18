@@ -18,9 +18,14 @@ const API_BASE = '/api/visitors';
  * VisitorTracker - Invisible component that maintains visitor online status
  * This component should be mounted at the app root level to persist across all routes
  * It sends heartbeat signals every 30 seconds to keep the visitor marked as online
+ * 
+ * IMPORTANT: Handles mobile browser background throttling by:
+ * - Listening for visibility changes (when user switches back to tab)
+ * - Sending immediate heartbeat when page becomes visible again
  */
 const VisitorTracker = () => {
     const heartbeatRef = useRef(null);
+    const lastHeartbeatRef = useRef(Date.now());
 
     // Send heartbeat to register this visitor as online
     const sendHeartbeat = async () => {
@@ -43,6 +48,7 @@ const VisitorTracker = () => {
 
             if (response.ok) {
                 const data = await response.json();
+                lastHeartbeatRef.current = Date.now();
                 console.log('[VisitorTracker] Heartbeat sent, online count:', data.online);
             }
         } catch (err) {
@@ -50,10 +56,35 @@ const VisitorTracker = () => {
         }
     };
 
+    // Handle visibility change (for mobile browsers that pause JS in background)
+    const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+            const timeSinceLastHeartbeat = Date.now() - lastHeartbeatRef.current;
+
+            // If more than 20 seconds since last heartbeat, send one immediately
+            // This handles cases where the browser was in background
+            if (timeSinceLastHeartbeat > 20000) {
+                console.log('[VisitorTracker] Page visible again, sending catch-up heartbeat');
+                sendHeartbeat();
+            }
+        }
+    };
+
+    // Handle window focus (additional trigger for mobile)
+    const handleFocus = () => {
+        const timeSinceLastHeartbeat = Date.now() - lastHeartbeatRef.current;
+
+        // If more than 20 seconds since last heartbeat, send one immediately
+        if (timeSinceLastHeartbeat > 20000) {
+            console.log('[VisitorTracker] Window focused, sending catch-up heartbeat');
+            sendHeartbeat();
+        }
+    };
+
     // Setup heartbeat lifecycle
     useEffect(() => {
         console.log('[VisitorTracker] Mounted - Starting heartbeat service');
-        
+
         // Send initial heartbeat immediately
         sendHeartbeat();
 
@@ -62,12 +93,20 @@ const VisitorTracker = () => {
             sendHeartbeat();
         }, 30000);
 
+        // Listen for visibility changes (critical for mobile browsers!)
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Listen for window focus (backup for mobile)
+        window.addEventListener('focus', handleFocus);
+
         // Cleanup on unmount
         return () => {
             console.log('[VisitorTracker] Unmounting - Stopping heartbeat service');
             if (heartbeatRef.current) {
                 clearInterval(heartbeatRef.current);
             }
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', handleFocus);
         };
     }, []);
 
@@ -76,3 +115,4 @@ const VisitorTracker = () => {
 };
 
 export default VisitorTracker;
+
