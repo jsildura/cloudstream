@@ -575,6 +575,253 @@
   font-style: italic;
 }
 
+/* ========================================
+   SEARCH CLEAR BUTTON
+   ======================================== */
+.search-clear-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.search-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.search-clear-btn svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-clear-btn:hover svg {
+  color: #fff;
+}
+
+/* ========================================
+   SEARCH SUGGESTIONS (Recent + Trending)
+   ======================================== */
+.search-suggestions {
+  padding: 8px 0;
+}
+
+.search-section {
+  padding: 0;
+}
+
+.search-section+.search-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.search-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.search-section-header svg {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.search-suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.suggestion-text {
+  flex: 1;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.suggestion-remove-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.suggestion-remove-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.suggestion-remove-btn svg {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.suggestion-remove-btn:hover svg {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Trending Items */
+.trending-item {
+  gap: 10px;
+}
+
+.trending-rank {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #e50914;
+  background: rgba(229, 9, 20, 0.15);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.suggestion-type {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: capitalize;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+/* ========================================
+   RESPONSIVE - Mobile Search Improvements
+   ======================================== */
+@media (max-width: 768px) {
+  .search-clear-btn {
+    width: 28px;
+    height: 28px;
+    right: 10px;
+  }
+
+  .search-clear-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .search-section-header {
+    padding: 10px 14px;
+    font-size: 0.7rem;
+  }
+
+  .search-suggestion-item {
+    padding: 12px 14px;
+  }
+
+  .suggestion-text {
+    font-size: 0.95rem;
+  }
+
+  .trending-rank {
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - Tablet
+   ======================================== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .search-clear-btn {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* ========================================
+   RESPONSIVE - 4K TV
+   ======================================== */
+@media (min-width: 3840px) {
+  .search-clear-btn {
+    width: 48px;
+    height: 48px;
+    right: 24px;
+  }
+
+  .search-clear-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .search-section-header {
+    padding: 16px 32px;
+    font-size: 1.5rem;
+    gap: 16px;
+  }
+
+  .search-section-header svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .search-suggestion-item {
+    padding: 20px 32px;
+    gap: 24px;
+  }
+
+  .suggestion-text {
+    font-size: 1.8rem;
+  }
+
+  .suggestion-remove-btn {
+    padding: 8px;
+  }
+
+  .suggestion-remove-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .trending-rank {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+    border-radius: 8px;
+  }
+
+  .suggestion-type {
+    font-size: 1.4rem;
+    padding: 4px 12px;
+    border-radius: 8px;
+  }
+}
+
 .search-close {
   position: absolute;
   top: 20px;
@@ -1575,11 +1822,41 @@
 /* Footer Styles - zxcstream-third design */
 .footer {
   color: #d1d5db;
-  padding: 0.1rem 0.5rem;
+  padding: 0.1rem 0.5rem 1rem 0.5rem;
   width: 100%;
   font-size: 0.75rem;
   margin-top: 5rem;
-  margin-bottom: 60px;
+  margin-bottom: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.footer::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255, 120, 40, 0.4) 0%, rgba(255, 100, 30, 0.15) 40%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255, 160, 60, 0.3) 0%, transparent 55%);
+  animation: footerGlow 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes footerGlow {
+
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }
 
 @media (min-width: 1024px) {
@@ -1665,7 +1942,9 @@
 
 /* Copyright */
 .footer-copyright {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .menu-toggle {

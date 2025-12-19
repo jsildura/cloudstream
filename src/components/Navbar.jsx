@@ -1,18 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 
+const RECENT_SEARCHES_KEY = 'streamflix_recent_searches';
+const MAX_RECENT_SEARCHES = 5;
+const MAX_TRENDING = 10;
+
 const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
-  const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  const [trendingSearches, setTrendingSearches] = useState([]);
 
-  React.useEffect(() => {
+  // Load recent searches from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
+      if (saved) {
+        setRecentSearches(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error('Error loading recent searches:', e);
+    }
+  }, []);
+
+  // Fetch trending from TMDB on mount
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const response = await fetch('/api/trending/all/week');
+        if (response.ok) {
+          const data = await response.json();
+          const trending = data.results
+            ?.slice(0, MAX_TRENDING)
+            .map(item => ({
+              id: item.id,
+              name: item.title || item.name,
+              type: item.media_type
+            })) || [];
+          setTrendingSearches(trending);
+        }
+      } catch (e) {
+        console.error('Error fetching trending:', e);
+      }
+    };
+    fetchTrending();
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -20,8 +60,50 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   // Function to get poster image URL
   const getPosterUrl = (posterPath) => {
     if (!posterPath) return null;
-    return `https://image.tmdb.org/t/p/w92${posterPath}`; // w92 is small poster size
+    return `https://image.tmdb.org/t/p/w92${posterPath}`;
   };
+
+  // Save a search to recent searches
+  const saveRecentSearch = useCallback((query) => {
+    if (!query || query.trim().length === 0) return;
+
+    const trimmed = query.trim();
+    const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, MAX_RECENT_SEARCHES);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error saving recent searches:', e);
+    }
+  }, [recentSearches]);
+
+  // Remove a recent search
+  const removeRecentSearch = useCallback((query, e) => {
+    e.stopPropagation();
+    const updated = recentSearches.filter(s => s !== query);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Error removing recent search:', e);
+    }
+  }, [recentSearches]);
+
+  // Clear search input
+  const clearSearchInput = useCallback(() => {
+    setSearchQuery('');
+    if (onSearch) {
+      onSearch('');
+    }
+  }, [onSearch]);
+
+  // Handle suggestion click (recent or trending)
+  const handleSuggestionClick = useCallback((query) => {
+    setSearchQuery(query);
+    if (onSearch) {
+      onSearch(query);
+    }
+  }, [onSearch]);
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -35,7 +117,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
     setIsSearchFocused(true);
   };
 
-  const handleSearchBlur = (e) => {
+  const handleSearchBlur = () => {
     setTimeout(() => {
       setIsSearchFocused(false);
     }, 200);
@@ -50,6 +132,10 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   };
 
   const handleItemSelect = (item) => {
+    // Save the search query to recent searches
+    if (searchQuery) {
+      saveRecentSearch(searchQuery);
+    }
     if (onItemClick) {
       onItemClick(item);
     }
@@ -61,13 +147,15 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const toggleMobileSearch = () => {
     setIsMobileSearchOpen(!isMobileSearchOpen);
     if (!isMobileSearchOpen) {
-      // Focus the input when opening
       setTimeout(() => {
         const input = document.querySelector('.navbar-search-input');
         if (input) input.focus();
       }, 100);
     }
   };
+
+  // Show suggestions when focused and no query
+  const showSuggestions = isSearchFocused && !searchQuery && (recentSearches.length > 0 || trendingSearches.length > 0);
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
@@ -122,7 +210,22 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               className="navbar-search-input"
             />
 
-            {/* Inline Search Results Dropdown */}
+            {/* Clear Button */}
+            {searchQuery && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={clearSearchInput}
+                aria-label="Clear search"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            )}
+
+            {/* Search Results Dropdown */}
             {isSearchFocused && searchQuery && (
               <div className="search-results-dropdown">
                 <div className="search-results-list">
@@ -133,7 +236,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                         className="search-result-item"
                         onClick={() => handleItemSelect(item)}
                       >
-                        {/* Poster Image */}
                         <div className="search-result-poster">
                           {getPosterUrl(item.poster_path) ? (
                             <img
@@ -147,7 +249,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                             </div>
                           )}
                         </div>
-
                         <div className="search-result-info">
                           <div className="search-result-title">
                             {item.title || item.name}
@@ -175,6 +276,69 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Suggestions Dropdown (Recent + Trending) */}
+            {showSuggestions && (
+              <div className="search-results-dropdown search-suggestions">
+                {/* Recent Searches */}
+                {recentSearches.length > 0 && (
+                  <div className="search-section">
+                    <div className="search-section-header">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      <span>Recent Searches</span>
+                    </div>
+                    {recentSearches.map((query, index) => (
+                      <div
+                        key={`recent-${index}`}
+                        className="search-suggestion-item"
+                        onClick={() => handleSuggestionClick(query)}
+                      >
+                        <span className="suggestion-text">{query}</span>
+                        <button
+                          type="button"
+                          className="suggestion-remove-btn"
+                          onClick={(e) => removeRecentSearch(query, e)}
+                          aria-label="Remove from recent searches"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Trending Searches */}
+                {trendingSearches.length > 0 && (
+                  <div className="search-section">
+                    <div className="search-section-header">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2v8l4-4"></path>
+                        <path d="M12 2v8l-4-4"></path>
+                        <path d="M20 12a8 8 0 1 1-16 0"></path>
+                      </svg>
+                      <span>Trending Searches This Week</span>
+                    </div>
+                    {trendingSearches.map((item, index) => (
+                      <div
+                        key={`trending-${item.id}-${index}`}
+                        className="search-suggestion-item trending-item"
+                        onClick={() => handleSuggestionClick(item.name)}
+                      >
+                        <span className="trending-rank">{index + 1}</span>
+                        <span className="suggestion-text">{item.name}</span>
+                        <span className="suggestion-type">{item.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>
