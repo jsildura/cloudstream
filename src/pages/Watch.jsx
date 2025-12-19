@@ -31,6 +31,20 @@ const Watch = () => {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [warningExpanded, setWarningExpanded] = useState(false);
 
+  // Password protection state
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [pendingServerIndex, setPendingServerIndex] = useState(null);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [unlockedServers, setUnlockedServers] = useState(() => {
+    try {
+      const stored = localStorage.getItem('unlockedServers');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const watchContainerRef = useRef(null);
   const dragStartY = useRef(0);
   const isDragging = useRef(false);
@@ -221,15 +235,15 @@ const Watch = () => {
       u: ['aHR0cHM6Ly92aWRzcmMueHl6L2VtYmVkLw==', '']
     },
     {
-      n: 'Server 7', d: 'Premium Quality. Customizable Player. (Ads)', r: false, ss: false, p: 0,
+      n: 'Server 7', d: 'Premium Quality. Customizable Player.', r: false, ss: false, p: 0, ads: true,
       u: ['aHR0cHM6Ly92aWRsaW5rLnByby8=', '']
     },
     {
-      n: 'Server 8', d: 'Lightning Fast. Multiple Mirrors. (Ads)', r: false, ss: false, p: 0,
+      n: 'Server 8', d: 'Lightning Fast. Multiple Mirrors.', r: false, ss: false, p: 0, ads: true,
       u: ['aHR0cHM6Ly92aWRmYXN0LnByby8=', '']
     },
     {
-      n: 'Server 9', d: 'Huge Catalog. Quick Load Times. (Ads)', r: false, ss: false, p: 0,
+      n: 'Server 9', d: 'Huge Catalog. Quick Load Times.', r: false, ss: false, p: 0, ads: true,
       u: ['aHR0cHM6Ly92aXhzcmMudG8v', '']
     },
     {
@@ -241,8 +255,20 @@ const Watch = () => {
       u: ['aHR0cHM6Ly93d3cudmlka2luZy5uZXQvZW1iZWQvbW92aWUv', '']
     },
     {
-      n: 'Server 12', d: 'High Bitrate Movies. Alternative Source. (Ads)', r: false, ss: false, p: 2,
+      n: 'Server 12', d: 'High Bitrate Movies. Alternative Source.', r: false, ss: false, p: 2, ads: true,
       u: ['aHR0cHM6Ly92aWRzcmMud3RmL2FwaS8zL21vdmllLz9pZD0=', '']
+    },
+    {
+      n: 'Server 13', d: 'Multi-Source Backup Servers. Subtitle Support.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTM=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
+      u: ['aHR0cHM6Ly9wbGF5ZXIudmlkemVlLnd0Zi9lbWJlZC8=', '']
+    },
+    {
+      n: 'Server 14', d: 'Multi-Source. Customizable Subtitles. Up to 1080p.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTQ=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
+      u: ['aHR0cHM6Ly9wbGF5ZXIudmlkZWFzeS5uZXQv', '']
+    },
+    {
+      n: 'Server 15', d: 'Subtitle Support. Up to 1080p Quality.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTU=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
+      u: ['aHR0cHM6Ly9tYXBwbGUudWsvd2F0Y2gv', '']
     }
   ], []);
 
@@ -251,6 +277,9 @@ const Watch = () => {
     description: s.d,
     isRecommended: s.r,
     sandboxSupport: s.ss,
+    hasAds: s.ads || false,
+    isLocked: s.locked || false,
+    password: s.pwd || null,
     getUrl: (season, episode) => {
       const base = atob(s.u[0]);
       const suffix = s.u[1];
@@ -364,9 +393,50 @@ const Watch = () => {
   };
 
   const handleServerSelect = (index) => {
+    const server = servers[index];
+
+    // Check if server is locked and not yet unlocked for this specific server
+    if (server.isLocked && !unlockedServers[server.name]) {
+      setPendingServerIndex(index);
+      setPasswordInput('');
+      setPasswordError('');
+      setPasswordModalOpen(true);
+      return;
+    }
+
     setCurrentServer(index);
-    setSandboxEnabled(servers[index].sandboxSupport);
+    setSandboxEnabled(server.sandboxSupport);
     setServerDrawerOpen(false);
+  };
+
+  const handlePasswordSubmit = () => {
+    if (pendingServerIndex === null) return;
+
+    const server = servers[pendingServerIndex];
+    const correctPassword = atob(server.password);
+
+    if (passwordInput === correctPassword) {
+      // Store unlock for this specific server in localStorage
+      const newUnlocked = { ...unlockedServers, [server.name]: true };
+      localStorage.setItem('unlockedServers', JSON.stringify(newUnlocked));
+      setUnlockedServers(newUnlocked);
+      setPasswordModalOpen(false);
+
+      // Now select the server
+      setCurrentServer(pendingServerIndex);
+      setSandboxEnabled(server.sandboxSupport);
+      setServerDrawerOpen(false);
+      setPendingServerIndex(null);
+    } else {
+      setPasswordError('Incorrect password');
+    }
+  };
+
+  const handlePasswordCancel = () => {
+    setPasswordModalOpen(false);
+    setPendingServerIndex(null);
+    setPasswordInput('');
+    setPasswordError('');
   };
 
   const handleBack = () => {
@@ -733,12 +803,23 @@ const Watch = () => {
                         clipRule="evenodd"
                       />
                     </svg>
+                    {server.isLocked && !unlockedServers[server.name] && (
+                      <span className="watch-server-lock-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                          <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                      </span>
+                    )}
                   </div>
                   <div className="watch-server-details">
                     <p className="watch-server-name">
                       {server.name}
                       {server.isRecommended && (
                         <span className="watch-server-recommended"> (Recommended)</span>
+                      )}
+                      {server.hasAds && (
+                        <span className="watch-server-ads-badge"> (Ads)</span>
                       )}
                     </p>
                     <p className="watch-server-desc">{server.description}</p>
@@ -783,6 +864,47 @@ const Watch = () => {
             <button className="watch-drawer-close" onClick={() => setServerDrawerOpen(false)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Password Modal */}
+      {passwordModalOpen && (
+        <div className="watch-password-overlay" onClick={handlePasswordCancel}>
+          <div className="watch-password-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="watch-password-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            </div>
+            <h3 className="watch-password-title">Beta Server</h3>
+            <p className="watch-password-desc">This server is in beta testing. Password available to early supporters only.</p>
+            <input
+              type="password"
+              className="watch-password-input"
+              placeholder="Enter password"
+              value={passwordInput}
+              onChange={(e) => {
+                setPasswordInput(e.target.value);
+                setPasswordError('');
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handlePasswordSubmit();
+              }}
+              autoFocus
+            />
+            {passwordError && (
+              <p className="watch-password-error">{passwordError}</p>
+            )}
+            <div className="watch-password-buttons">
+              <button className="watch-password-btn cancel" onClick={handlePasswordCancel}>
+                Cancel
+              </button>
+              <button className="watch-password-btn submit" onClick={handlePasswordSubmit}>
+                Unlock
+              </button>
+            </div>
           </div>
         </div>
       )}
