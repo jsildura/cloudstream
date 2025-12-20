@@ -381,6 +381,29 @@ export const useTMDB = () => {
     }
   }, [buildUrl]);
 
+  const fetchPopularByRegion = useCallback(async (type = 'movie', region = 'US') => {
+    try {
+      const url = buildUrl(`/${type}/popular`, {
+        language: 'en-US',
+        page: 1,
+        region: region
+      });
+
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP error! status: ${res.status}, response: ${errorText}`);
+      }
+
+      const data = await res.json();
+      return data.results?.slice(0, 10) || [];
+    } catch (error) {
+      console.error(`Failed to fetch popular ${type} for region ${region}:`, error);
+      throw error;
+    }
+  }, [buildUrl]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -422,6 +445,7 @@ export const useTMDB = () => {
     fetchTVRecommendations,
     fetchVideos,
     fetchLogo,
+    fetchPopularByRegion,
     ...constants
   };
 };

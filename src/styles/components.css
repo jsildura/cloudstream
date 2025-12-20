@@ -2278,7 +2278,6 @@
 .navbar-search-container {
   position: relative;
   margin-left: auto;
-  margin-right: 20px;
 }
 
 .search-bar-wrapper {
@@ -2762,7 +2761,7 @@
   }
 
   .navbar-links {
-    gap: 2.5rem;
+    gap: 1rem;
     /* ~20px × 2 */
   }
 
@@ -2795,7 +2794,7 @@
   .search-bar-wrapper {
     width: 600px;
     /* 300px × 2 */
-    margin-top: 4rem;
+    margin-top: 4.5rem;
   }
 
   .navbar-search-input {
@@ -3503,8 +3502,7 @@
   }
 
   .navbar-logo {
-    margin-right: 100px;
-    /* 25px × 4 */
+    margin-right: 50px;
   }
 
   .navbar-logo img {
@@ -3515,8 +3513,9 @@
   }
 
   .navbar-links {
-    gap: 4rem;
-    /* 1rem × 4 */
+    gap: 1.5rem;
+    margin-right: 2rem;
+
   }
 
   .navbar-links svg {

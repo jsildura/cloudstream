@@ -12,14 +12,58 @@ import AppleTVPicks from '../components/AppleTVPicks';
 import HBOPicks from '../components/HBOPicks';
 import ViuPicks from '../components/ViuPicks';
 import VisitorStats from '../components/VisitorStats';
+import TopTenRow from '../components/TopTenRow';
 import { useTMDB } from '../hooks/useTMDB';
 import './Home.css';
+
+// Timezone to country code mapping for popular regions
+const timezoneToCountry = {
+  'Asia/Manila': { code: 'PH', name: 'the Philippines' },
+  'Asia/Tokyo': { code: 'JP', name: 'Japan' },
+  'Asia/Seoul': { code: 'KR', name: 'South Korea' },
+  'Asia/Shanghai': { code: 'CN', name: 'China' },
+  'Asia/Hong_Kong': { code: 'HK', name: 'Hong Kong' },
+  'Asia/Singapore': { code: 'SG', name: 'Singapore' },
+  'Asia/Bangkok': { code: 'TH', name: 'Thailand' },
+  'Asia/Jakarta': { code: 'ID', name: 'Indonesia' },
+  'Asia/Kuala_Lumpur': { code: 'MY', name: 'Malaysia' },
+  'Asia/Ho_Chi_Minh': { code: 'VN', name: 'Vietnam' },
+  'Asia/Kolkata': { code: 'IN', name: 'India' },
+  'America/New_York': { code: 'US', name: 'the USA' },
+  'America/Los_Angeles': { code: 'US', name: 'the USA' },
+  'America/Chicago': { code: 'US', name: 'the USA' },
+  'America/Denver': { code: 'US', name: 'the USA' },
+  'America/Toronto': { code: 'CA', name: 'Canada' },
+  'America/Vancouver': { code: 'CA', name: 'Canada' },
+  'America/Mexico_City': { code: 'MX', name: 'Mexico' },
+  'America/Sao_Paulo': { code: 'BR', name: 'Brazil' },
+  'Europe/London': { code: 'GB', name: 'the UK' },
+  'Europe/Paris': { code: 'FR', name: 'France' },
+  'Europe/Berlin': { code: 'DE', name: 'Germany' },
+  'Europe/Madrid': { code: 'ES', name: 'Spain' },
+  'Europe/Rome': { code: 'IT', name: 'Italy' },
+  'Europe/Amsterdam': { code: 'NL', name: 'the Netherlands' },
+  'Australia/Sydney': { code: 'AU', name: 'Australia' },
+  'Australia/Melbourne': { code: 'AU', name: 'Australia' },
+  'Pacific/Auckland': { code: 'NZ', name: 'New Zealand' },
+};
+
+const getCountryFromTimezone = () => {
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return timezoneToCountry[timezone] || { code: 'US', name: 'Your Country' };
+  } catch {
+    return { code: 'US', name: 'Your Country' };
+  }
+};
 
 const Home = () => {
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [trendingTV, setTrendingTV] = useState([]);
   const [trendingAnime, setTrendingAnime] = useState([]);
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
+  const [topTenMovies, setTopTenMovies] = useState([]);
+  const [userCountry, setUserCountry] = useState({ code: 'US', name: 'Your Country' });
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -32,7 +76,8 @@ const Home = () => {
     tvGenres,
     fetchTrending,
     fetchTrendingAnime,
-    fetchNowPlaying, // Import the new function
+    fetchNowPlaying,
+    fetchPopularByRegion,
     searchTMDB,
     fetchCredits,
     fetchContentRating
@@ -51,17 +96,24 @@ const Home = () => {
   const initializeData = async () => {
     try {
       setLoading(true);
-      const [movies, tvShows, anime, nowPlaying] = await Promise.all([
+
+      // Detect user's country from timezone
+      const country = getCountryFromTimezone();
+      setUserCountry(country);
+
+      const [movies, tvShows, anime, nowPlaying, topTen] = await Promise.all([
         fetchTrending('movie', timeWindow),
         fetchTrending('tv', timeWindow),
         fetchTrendingAnime(),
-        fetchNowPlaying() // Fetch now playing movies
+        fetchNowPlaying(),
+        fetchPopularByRegion('movie', country.code)
       ]);
 
       setTrendingMovies(movies);
       setTrendingTV(tvShows);
       setTrendingAnime(anime);
       setNowPlayingMovies(nowPlaying);
+      setTopTenMovies(topTen);
     } catch (error) {
       console.error("Failed to initialize data:", error);
     } finally {
@@ -202,6 +254,15 @@ const Home = () => {
             </div>
           )}
         </div>
+
+        {/* Top 10 in Your Country Section */}
+        {topTenMovies.length > 0 && (
+          <TopTenRow
+            items={topTenMovies}
+            onItemClick={handleItemClick}
+            countryName={userCountry.name}
+          />
+        )}
 
         {/* Popular Collections Section */}
         <PopularCollections />
