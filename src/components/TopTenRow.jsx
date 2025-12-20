@@ -1,17 +1,40 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
 import './TopTenRow.css';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const { POSTER_URL } = useTMDB();
-    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Refs
     const carouselRef = useRef(null);
     const viewportRef = useRef(null);
     const cardRefs = useRef([]);
+    const touchEndTimeoutRef = useRef(null);
+
+    // Core state
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [focusedCardIndex, setFocusedCardIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(5);
     const [scrollMetrics, setScrollMetrics] = useState({ trackWidth: 0, viewportWidth: 0 });
-    const [isKeyboardNav, setIsKeyboardNav] = useState(false);
+
+    // Interaction state - consolidated into single object to reduce re-renders
+    const [interactionState, setInteractionState] = useState({
+        isPaused: false,
+        isKeyboardNav: false,
+        isTouching: false
+    });
+
+    // Memoized values
+    const maxIndex = useMemo(() =>
+        Math.max(0, (items?.length || 0) - itemsPerView),
+        [items?.length, itemsPerView]
+    );
+
+    const centerOffset = useMemo(() =>
+        Math.floor(itemsPerView / 2),
+        [itemsPerView]
+    );
 
     // Calculate scroll metrics from DOM
     const updateScrollMetrics = useCallback(() => {
@@ -23,20 +46,15 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         }
     }, []);
 
+    // Responsive items per view
     useEffect(() => {
         const updateItemsPerView = () => {
             const width = window.innerWidth;
-            if (width >= 3840) {
-                setItemsPerView(5); // 4K
-            } else if (width >= 1920) {
-                setItemsPerView(5); // 1080p
-            } else if (width >= 1024) {
-                setItemsPerView(4); // Desktop
-            } else if (width >= 768) {
-                setItemsPerView(3); // Tablet
-            } else {
-                setItemsPerView(2); // Mobile
-            }
+            if (width >= 3840) setItemsPerView(5);
+            else if (width >= 1920) setItemsPerView(5);
+            else if (width >= 1024) setItemsPerView(4);
+            else if (width >= 768) setItemsPerView(3);
+            else setItemsPerView(2);
         };
 
         updateItemsPerView();
@@ -51,75 +69,99 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         return () => window.removeEventListener('resize', updateScrollMetrics);
     }, [items, updateScrollMetrics]);
 
-    // Also update after a short delay to catch any layout shifts
+    // Delayed scroll metrics update for layout shifts
     useEffect(() => {
         const timer = setTimeout(updateScrollMetrics, 100);
         return () => clearTimeout(timer);
     }, [items, updateScrollMetrics]);
 
-    const maxIndex = Math.max(0, items.length - itemsPerView);
-    const [isPaused, setIsPaused] = useState(false);
-    const [focusedCardIndex, setFocusedCardIndex] = useState(0);
-
-    // Auto-scroll and auto-hover every 5 seconds - center focused card
+    // Cleanup touch timeout on unmount
     useEffect(() => {
-        if (isPaused || isKeyboardNav) return;
+        return () => {
+            if (touchEndTimeoutRef.current) {
+                clearTimeout(touchEndTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Validate focusedCardIndex when items change
+    useEffect(() => {
+        if (items && focusedCardIndex >= items.length) {
+            setFocusedCardIndex(Math.max(0, items.length - 1));
+        }
+    }, [items, focusedCardIndex]);
+
+    // Auto-scroll and auto-hover every 5 seconds
+    useEffect(() => {
+        const { isPaused, isKeyboardNav, isTouching } = interactionState;
+        if (isPaused || isKeyboardNav || isTouching || !items?.length) return;
 
         const autoScrollInterval = setInterval(() => {
-            setFocusedCardIndex(prev => {
-                const nextFocus = prev + 1;
-                // When we've gone through all items, loop back
-                if (nextFocus >= items.length) {
-                    return 0;
-                }
-                return nextFocus;
-            });
+            setFocusedCardIndex(prev => (prev + 1) % items.length);
         }, 5000);
 
         return () => clearInterval(autoScrollInterval);
-    }, [isPaused, isKeyboardNav, items.length]);
+    }, [interactionState, items?.length]);
 
     // Update scroll position to center the focused card
     useEffect(() => {
+        const { isPaused, isKeyboardNav, isTouching } = interactionState;
+
+        // Don't auto-update scroll position during manual interaction
+        if (isTouching) return;
         if (isPaused && !isKeyboardNav) return;
 
-        // Calculate scroll index to center the focused card
-        // The focused card should be in the middle of the visible cards
-        const centerOffset = Math.floor(itemsPerView / 2);
         const targetScrollIndex = Math.max(0, Math.min(maxIndex, focusedCardIndex - centerOffset));
         setCurrentIndex(targetScrollIndex);
-    }, [focusedCardIndex, isPaused, isKeyboardNav, itemsPerView, maxIndex]);
+    }, [focusedCardIndex, interactionState, centerOffset, maxIndex]);
 
-    const handleMouseEnter = () => {
-        setIsPaused(true);
-        setIsKeyboardNav(false);
-    };
+    // Event handlers
+    const handleMouseEnter = useCallback(() => {
+        setInteractionState(prev => ({ ...prev, isPaused: true, isKeyboardNav: false }));
+    }, []);
 
-    const handleMouseLeave = () => {
-        setIsPaused(false);
-        setIsKeyboardNav(false);
-        // Reset focus to the center card of current view
-        const centerOffset = Math.floor(itemsPerView / 2);
-        setFocusedCardIndex(currentIndex + centerOffset);
-    };
+    const handleMouseLeave = useCallback(() => {
+        setInteractionState(prev => ({ ...prev, isPaused: false, isKeyboardNav: false }));
+        setFocusedCardIndex(prev => {
+            // Reset focus to the center card of current view
+            return Math.min((items?.length || 1) - 1, currentIndex + centerOffset);
+        });
+    }, [currentIndex, centerOffset, items?.length]);
+
+    const handleTouchStart = useCallback(() => {
+        // Clear any pending touch end timeout
+        if (touchEndTimeoutRef.current) {
+            clearTimeout(touchEndTimeoutRef.current);
+            touchEndTimeoutRef.current = null;
+        }
+        setInteractionState(prev => ({ ...prev, isTouching: true, isPaused: true, isKeyboardNav: false }));
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        // Delay resume to allow swipe animation to complete
+        touchEndTimeoutRef.current = setTimeout(() => {
+            setInteractionState(prev => ({ ...prev, isTouching: false, isPaused: false }));
+            touchEndTimeoutRef.current = null;
+        }, 500);
+    }, []);
 
     // TV/Keyboard navigation handler
     const handleKeyDown = useCallback((e, index) => {
+        const itemsLength = items?.length || 0;
+
         switch (e.key) {
             case 'ArrowLeft':
                 e.preventDefault();
                 if (index > 0) {
-                    setIsKeyboardNav(true);
-                    setIsPaused(true);
+                    setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
                     setFocusedCardIndex(index - 1);
                     cardRefs.current[index - 1]?.focus();
                 }
                 break;
             case 'ArrowRight':
                 e.preventDefault();
-                if (index < items.length - 1) {
-                    setIsKeyboardNav(true);
-                    setIsPaused(true);
+                if (index < itemsLength - 1) {
+                    setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
                     setFocusedCardIndex(index + 1);
                     cardRefs.current[index + 1]?.focus();
                 }
@@ -127,7 +169,9 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             case 'Enter':
             case ' ':
                 e.preventDefault();
-                onItemClick(items[index]);
+                if (items?.[index]) {
+                    onItemClick(items[index]);
+                }
                 break;
             default:
                 break;
@@ -136,41 +180,49 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
     // Handle focus event on card (for TV navigation)
     const handleCardFocus = useCallback((index) => {
-        setIsKeyboardNav(true);
-        setIsPaused(true);
+        setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
         setFocusedCardIndex(index);
     }, []);
 
-    const handlePrevious = () => {
+    const handlePrevious = useCallback(() => {
         setCurrentIndex(prev => Math.max(0, prev - 1));
-    };
+    }, []);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
-    };
+    }, [maxIndex]);
 
-    // Calculate how much to translate based on actual DOM measurements
-    // maxScroll = total track width - visible viewport width
-    // scrollPerStep = maxScroll / maxIndex (if maxIndex > 0)
-    const { trackWidth, viewportWidth } = scrollMetrics;
-    const maxScroll = Math.max(0, trackWidth - viewportWidth);
-    const scrollPerStep = maxIndex > 0 ? maxScroll / maxIndex : 0;
-    const translateX = currentIndex * scrollPerStep;
+    // Handle swipe with focusedCardIndex update
+    const handleSwipe = useCallback((itemsToMove) => {
+        setCurrentIndex(prev => {
+            const newIndex = Math.max(0, Math.min(maxIndex, prev + itemsToMove));
+            // Update focusedCardIndex to center of new view
+            const newFocusedIndex = Math.min((items?.length || 1) - 1, newIndex + centerOffset);
+            setFocusedCardIndex(newFocusedIndex);
+            return newIndex;
+        });
+    }, [maxIndex, items?.length, centerOffset]);
 
     const swipeHandlers = useSwipe({
-        onSwipe: (itemsToMove) => {
-            setCurrentIndex(prev => {
-                const newIndex = prev + itemsToMove;
-                return Math.max(0, Math.min(maxIndex, newIndex));
-            });
-        },
+        onSwipe: handleSwipe,
         threshold: 50,
         itemsPerSwipe: 2
     });
 
+    // Calculate translation
+    const translateX = useMemo(() => {
+        const { trackWidth, viewportWidth } = scrollMetrics;
+        const maxScroll = Math.max(0, trackWidth - viewportWidth);
+        const scrollPerStep = maxIndex > 0 ? maxScroll / maxIndex : 0;
+        return currentIndex * scrollPerStep;
+    }, [scrollMetrics, maxIndex, currentIndex]);
+
+    // Early return for empty items
     if (!items || items.length === 0) {
         return null;
     }
+
+    const { isPaused, isKeyboardNav } = interactionState;
 
     return (
         <div className="top-ten-section">
@@ -180,9 +232,17 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
             <div
                 className="top-ten-carousel"
-                {...swipeHandlers}
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                onTouchStart={(e) => {
+                    handleTouchStart();
+                    swipeHandlers.onTouchStart(e);
+                }}
+                onTouchMove={swipeHandlers.onTouchMove}
+                onTouchEnd={(e) => {
+                    swipeHandlers.onTouchEnd(e);
+                    handleTouchEnd();
+                }}
             >
                 <div className="top-ten-viewport" ref={viewportRef}>
                     <div
@@ -195,12 +255,13 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                             const posterSrc = item.poster_path
                                 ? `${POSTER_URL}${item.poster_path}`
                                 : '/placeholder-poster.jpg';
+                            const isFocused = (isKeyboardNav || !isPaused) && focusedCardIndex === index;
 
                             return (
                                 <div
                                     key={item.id}
                                     ref={el => cardRefs.current[index] = el}
-                                    className={`top-ten-card${(isKeyboardNav || !isPaused) && focusedCardIndex === index ? ' focused' : ''}`}
+                                    className={`top-ten-card${isFocused ? ' focused' : ''}`}
                                     onClick={() => onItemClick(item)}
                                     role="button"
                                     tabIndex={0}
