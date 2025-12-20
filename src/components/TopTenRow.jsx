@@ -8,8 +8,10 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const carouselRef = useRef(null);
     const viewportRef = useRef(null);
+    const cardRefs = useRef([]);
     const [itemsPerView, setItemsPerView] = useState(5);
     const [scrollMetrics, setScrollMetrics] = useState({ trackWidth: 0, viewportWidth: 0 });
+    const [isKeyboardNav, setIsKeyboardNav] = useState(false);
 
     // Calculate scroll metrics from DOM
     const updateScrollMetrics = useCallback(() => {
@@ -61,7 +63,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
     // Auto-scroll and auto-hover every 5 seconds - center focused card
     useEffect(() => {
-        if (isPaused) return;
+        if (isPaused || isKeyboardNav) return;
 
         const autoScrollInterval = setInterval(() => {
             setFocusedCardIndex(prev => {
@@ -75,26 +77,69 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         }, 5000);
 
         return () => clearInterval(autoScrollInterval);
-    }, [isPaused, items.length]);
+    }, [isPaused, isKeyboardNav, items.length]);
 
     // Update scroll position to center the focused card
     useEffect(() => {
-        if (isPaused) return;
+        if (isPaused && !isKeyboardNav) return;
 
         // Calculate scroll index to center the focused card
         // The focused card should be in the middle of the visible cards
         const centerOffset = Math.floor(itemsPerView / 2);
         const targetScrollIndex = Math.max(0, Math.min(maxIndex, focusedCardIndex - centerOffset));
         setCurrentIndex(targetScrollIndex);
-    }, [focusedCardIndex, isPaused, itemsPerView, maxIndex]);
+    }, [focusedCardIndex, isPaused, isKeyboardNav, itemsPerView, maxIndex]);
 
-    const handleMouseEnter = () => setIsPaused(true);
+    const handleMouseEnter = () => {
+        setIsPaused(true);
+        setIsKeyboardNav(false);
+    };
+
     const handleMouseLeave = () => {
         setIsPaused(false);
+        setIsKeyboardNav(false);
         // Reset focus to the center card of current view
         const centerOffset = Math.floor(itemsPerView / 2);
         setFocusedCardIndex(currentIndex + centerOffset);
     };
+
+    // TV/Keyboard navigation handler
+    const handleKeyDown = useCallback((e, index) => {
+        switch (e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                if (index > 0) {
+                    setIsKeyboardNav(true);
+                    setIsPaused(true);
+                    setFocusedCardIndex(index - 1);
+                    cardRefs.current[index - 1]?.focus();
+                }
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                if (index < items.length - 1) {
+                    setIsKeyboardNav(true);
+                    setIsPaused(true);
+                    setFocusedCardIndex(index + 1);
+                    cardRefs.current[index + 1]?.focus();
+                }
+                break;
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                onItemClick(items[index]);
+                break;
+            default:
+                break;
+        }
+    }, [items, onItemClick]);
+
+    // Handle focus event on card (for TV navigation)
+    const handleCardFocus = useCallback((index) => {
+        setIsKeyboardNav(true);
+        setIsPaused(true);
+        setFocusedCardIndex(index);
+    }, []);
 
     const handlePrevious = () => {
         setCurrentIndex(prev => Math.max(0, prev - 1));
@@ -154,16 +199,13 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                             return (
                                 <div
                                     key={item.id}
-                                    className={`top-ten-card${!isPaused && focusedCardIndex === index ? ' focused' : ''}`}
+                                    ref={el => cardRefs.current[index] = el}
+                                    className={`top-ten-card${(isKeyboardNav || !isPaused) && focusedCardIndex === index ? ' focused' : ''}`}
                                     onClick={() => onItemClick(item)}
                                     role="button"
                                     tabIndex={0}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter' || e.key === ' ') {
-                                            e.preventDefault();
-                                            onItemClick(item);
-                                        }
-                                    }}
+                                    onKeyDown={(e) => handleKeyDown(e, index)}
+                                    onFocus={() => handleCardFocus(index)}
                                     aria-label={`#${index + 1} ${title}`}
                                 >
                                     <span className="top-ten-number">{index + 1}</span>
@@ -174,7 +216,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                                             loading="lazy"
                                         />
                                         <div className="top-ten-hover-overlay">
-                                            <button className="top-ten-play-btn">
+                                            <button className="top-ten-play-btn" tabIndex={-1}>
                                                 <span className="play-icon">▶</span>
                                             </button>
                                         </div>

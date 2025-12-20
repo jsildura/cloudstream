@@ -85,6 +85,28 @@
     cursor: pointer;
     min-height: calc(var(--poster-height) + 30px);
     overflow: visible;
+    outline: none;
+}
+
+/* TV/Keyboard navigation focus styles */
+.top-ten-section .top-ten-card:focus-visible {
+    outline: 3px solid #e50914;
+    outline-offset: 4px;
+    border-radius: 8px;
+}
+
+.top-ten-section .top-ten-card:focus-visible .top-ten-number {
+    -webkit-text-stroke-color: #ff3d3d;
+    text-shadow: 0 0 20px rgba(229, 9, 20, 0.5);
+}
+
+.top-ten-section .top-ten-card:focus-visible .top-ten-poster {
+    transform: scale(1.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+}
+
+.top-ten-section .top-ten-card:focus-visible .top-ten-hover-overlay {
+    opacity: 1;
 }
 
 /* Large Number Styling */
