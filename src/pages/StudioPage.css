@@ -1,0 +1,549 @@
+.studio-page {
+    min-height: 100vh;
+    background: #141414;
+    padding: 100px 40px 60px;
+}
+
+/* Page Header */
+.studio-page-header {
+    max-width: 1400px;
+    margin: 0 auto 40px;
+    background: linear-gradient(135deg, rgba(var(--studio-color-rgb), 0.2) 0%, rgba(var(--studio-color-rgb), 0.08) 30%, rgba(20, 20, 20, 0.95) 60%, rgba(20, 20, 20, 1) 100%);
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid rgba(var(--studio-color-rgb), 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.studio-page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--studio-color, #e50914);
+}
+
+.studio-page .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.2s ease;
+    margin-bottom: 24px;
+}
+
+.studio-page .back-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.studio-page .back-button svg {
+    width: 20px;
+    height: 20px;
+}
+
+.studio-page-title-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.studio-page-logo {
+    height: 80px;
+    max-width: 300px;
+    object-fit: contain;
+}
+
+.studio-page-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.125rem;
+    margin: 0;
+}
+
+/* Section Styles */
+.studio-section {
+    max-width: 1400px;
+    margin: 0 auto 60px;
+}
+
+.studio-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.studio-section-accent {
+    height: 24px;
+    width: 4px;
+    background: var(--studio-color, #e50914);
+    border-radius: 50px;
+}
+
+.studio-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.studio-section-count {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.875rem;
+}
+
+/* Filter button in section header */
+.studio-section-header .select-filter-btn {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.studio-section-header .select-filter-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Grid Layout */
+.studio-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 24px;
+}
+
+/* Loading State */
+.studio-page-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.studio-page-loading .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--studio-color, #e50914);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Load More Button */
+.studio-page .load-more-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+}
+
+.studio-page .load-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(229, 9, 20, 0.2);
+    color: #fff;
+    border: 2px solid #e50914;
+    padding: 14px 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.studio-page .load-more-btn:hover:not(:disabled) {
+    background: var(--studio-color, #e50914);
+}
+
+.studio-page .load-more-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.studio-page .load-more-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.studio-page .btn-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Filters Section */
+.studio-page .filters-section {
+    max-width: 1400px;
+    margin: 0 auto 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.studio-page .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.studio-page .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 150px;
+}
+
+.studio-page .filter-group label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.studio-page .filter-group select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.studio-page .filter-group select:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.studio-page .filter-group select:focus {
+    outline: none;
+    border-color: var(--studio-color, #e50914);
+}
+
+.studio-page .filter-group select option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .studio-page {
+        padding: 80px 20px 40px;
+    }
+
+    .studio-page-title-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .studio-page-logo {
+        height: 60px;
+        max-width: 200px;
+    }
+
+    .studio-page-subtitle {
+        font-size: 1rem;
+    }
+
+    .studio-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+    }
+
+    .studio-section-header .select-filter-btn {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        gap: 6px;
+    }
+
+    .studio-section-header .select-filter-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .studio-page .filter-row {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .studio-page .filter-group {
+        min-width: 100%;
+    }
+}
+
+/* 1080p Full HD (1920x1080) */
+@media (min-width: 1920px) and (max-width: 3839px) {
+    .studio-page {
+        padding: 120px 60px 80px;
+    }
+
+    .studio-page-header {
+        max-width: 1800px;
+        margin-bottom: 50px;
+    }
+
+    .studio-page .back-button {
+        gap: 10px;
+        padding: 12px 24px;
+        font-size: 1.1rem;
+        margin-bottom: 28px;
+    }
+
+    .studio-page .back-button svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .studio-page-title-section {
+        gap: 20px;
+        margin-bottom: 16px;
+    }
+
+    .studio-page-logo {
+        height: 100px;
+        max-width: 400px;
+    }
+
+    .studio-page-subtitle {
+        font-size: 1.25rem;
+    }
+
+    .studio-section {
+        max-width: 1800px;
+        margin-bottom: 70px;
+    }
+
+    .studio-section-header {
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+
+    .studio-section-accent {
+        height: 28px;
+        width: 5px;
+    }
+
+    .studio-section-title {
+        font-size: 1.75rem;
+    }
+
+    .studio-section-count {
+        font-size: 1rem;
+        margin-left: 10px;
+    }
+
+    .studio-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 28px;
+    }
+
+    .studio-page-loading .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border-width: 4px;
+        margin-bottom: 20px;
+    }
+
+    .studio-page .load-more-container {
+        margin-top: 50px;
+    }
+
+    .studio-page .load-more-btn {
+        gap: 10px;
+        padding: 16px 40px;
+        font-size: 1.1rem;
+    }
+
+    .studio-page .load-more-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .studio-page .btn-spinner {
+        width: 20px;
+        height: 20px;
+    }
+
+    .studio-section-header .select-filter-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+
+    .studio-page .filters-section {
+        max-width: 1800px;
+    }
+}
+
+/* 4K Android TV (3840x2160) */
+@media (min-width: 3840px) {
+    .studio-page {
+        padding: 400px 160px 240px;
+    }
+
+    .studio-page-header {
+        max-width: 5600px;
+        margin-bottom: 160px;
+        border-radius: 64px;
+        padding: 128px;
+    }
+
+    .studio-page-header::before {
+        height: 12px;
+    }
+
+    .studio-page .back-button {
+        gap: 32px;
+        padding: 40px 80px;
+        border-radius: 32px;
+        font-size: 4rem;
+        margin-bottom: 96px;
+    }
+
+    .studio-page .back-button svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .studio-page-title-section {
+        gap: 64px;
+        margin-bottom: 48px;
+    }
+
+    .studio-page-logo {
+        height: 320px;
+        max-width: 1200px;
+    }
+
+    .studio-page-subtitle {
+        font-size: 4.5rem;
+    }
+
+    .studio-section {
+        max-width: 5600px;
+        margin-bottom: 240px;
+    }
+
+    .studio-section-header {
+        gap: 48px;
+        margin-bottom: 96px;
+    }
+
+    .studio-section-accent {
+        height: 96px;
+        width: 16px;
+    }
+
+    .studio-section-title {
+        font-size: 6rem;
+    }
+
+    .studio-section-count {
+        font-size: 3.5rem;
+        margin-left: 32px;
+    }
+
+    .studio-grid {
+        grid-template-columns: repeat(auto-fill, minmax(720px, 1fr));
+        gap: 96px;
+    }
+
+    .studio-page-loading .loading-spinner {
+        width: 200px;
+        height: 200px;
+        border-width: 12px;
+        margin-bottom: 64px;
+    }
+
+    .studio-page .load-more-container {
+        margin-top: 160px;
+    }
+
+    .studio-page .load-more-btn {
+        gap: 32px;
+        padding: 56px 128px;
+        border-radius: 32px;
+        font-size: 4rem;
+        border-width: 8px;
+    }
+
+    .studio-page .load-more-btn svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .studio-page .btn-spinner {
+        width: 72px;
+        height: 72px;
+        border-width: 8px;
+    }
+
+    .studio-section-header .select-filter-btn {
+        gap: 32px;
+        padding: 32px 64px;
+        border-radius: 24px;
+        font-size: 3.6rem;
+        border-width: 4px;
+    }
+
+    .studio-section-header .select-filter-btn svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .studio-page .filters-section {
+        max-width: 5600px;
+        border-radius: 48px;
+        padding: 80px;
+    }
+
+    .studio-page .filter-row {
+        gap: 80px;
+    }
+
+    .studio-page .filter-group {
+        gap: 24px;
+        min-width: 600px;
+    }
+
+    .studio-page .filter-group label {
+        font-size: 3.4rem;
+    }
+
+    .studio-page .filter-group select {
+        padding: 40px 48px;
+        border-radius: 24px;
+        font-size: 3.6rem;
+    }
+}

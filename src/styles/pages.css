@@ -1,14 +1,52 @@
 .banner-slider {
   position: relative;
-  height: 80vh;
+  height: 98vh;
   overflow: hidden;
   background: var(--netflix-gradient);
-  margin-top: 4rem;
+  margin-top: 0;
 }
 
-@media (max-width: 768px) {
+.banner-slider::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background: linear-gradient(to bottom,
+      rgba(20, 20, 20, 0) 0%,
+      rgba(20, 20, 20, 0.5) 40%,
+      rgba(20, 20, 20, 0.85) 70%,
+      #141414 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Mobile: 375px+ (small phones) */
+@media (max-width: 479px) {
   .banner-slider {
-    height: 60vh;
+    height: 73vh;
+  }
+}
+
+/* Medium phones: 480px - 639px */
+@media (min-width: 480px) and (max-width: 639px) {
+  .banner-slider {
+    height: 75vh;
+  }
+}
+
+/* Large phones / Small tablets: 640px - 767px */
+@media (min-width: 640px) and (max-width: 767px) {
+  .banner-slider {
+    height: 80vh;
+  }
+}
+
+/* Tablets: 768px - 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .banner-slider {
+    height: 85vh;
   }
 }
 
@@ -21,10 +59,11 @@
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
+  -webkit-box-align: end;
+  -ms-flex-align: end;
+  align-items: flex-end;
   padding: 0 4%;
+  padding-bottom: 50px;
   -webkit-transition: opacity 0.5s ease;
   -o-transition: opacity 0.5s ease;
   transition: opacity 0.5s ease;
@@ -42,10 +81,10 @@
 }
 
 .banner-content {
-  max-width: 600px;
-  z-index: 2;
+  max-width: 500px;
+  z-index: 1;
   position: relative;
-  margin-left: 3rem;
+  margin-left: 0;
 }
 
 @media (max-width: 768px) {
@@ -470,13 +509,57 @@
   background-position: center 40%;
   background-repeat: no-repeat;
   opacity: 0.7;
-  mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
   transition: opacity 0.3s ease-out, transform 0.8s ease;
 }
 
 .banner-slide:hover .banner-backdrop {
   transform: scale(1.02);
+}
+
+/* Banner Trailer Video */
+.banner-trailer-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+
+.banner-trailer-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 130%;
+  height: 130%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  border: none;
+}
+
+.banner-action-icon.active {
+  background: rgba(229, 9, 20, 0.3);
+  border-color: #e50914;
+  color: #e50914;
+}
+
+.banner-action-icon.active:hover {
+  background: rgba(229, 9, 20, 0.4);
+  border-color: #ff3d3d;
+}
+
+.banner-action-icon.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.banner-action-icon.disabled:hover {
+  transform: none;
+  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 /* New Title Style */
@@ -498,6 +581,27 @@
   .banner-title-new {
     font-size: 2rem;
     letter-spacing: -1px;
+  }
+}
+
+/* Banner Logo Styles */
+.banner-logo-container {
+  margin-bottom: 1rem;
+}
+
+.banner-logo-image {
+  max-width: 450px;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.7));
+}
+
+@media (min-width: 1920px) {
+  .banner-logo-image {
+    max-width: 600px;
+    max-height: 250px;
   }
 }
 
@@ -534,7 +638,7 @@
   line-height: 1.6;
   margin-bottom: 1.5rem;
   color: rgba(255, 255, 255, 0.9);
-  max-width: 550px;
+  max-width: 450px;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -602,6 +706,251 @@
 
 .btn-icon {
   font-size: 0.85rem;
+}
+
+/* ===== NEW ARCANE-STYLE BANNER ===== */
+
+/* IMDb + Metadata Row */
+.banner-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.imdb-badge {
+  background: #f5c518;
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.meta-rating {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.meta-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+.meta-item {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+.meta-match {
+  color: #4ade80;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.meta-runtime {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
+}
+
+/* Action Buttons Row */
+.banner-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.banner-action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.banner-action-icon:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.banner-action-icon.in-watchlist {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.banner-action-icon.in-watchlist:hover {
+  background: rgba(74, 222, 128, 0.3);
+  border-color: #22c55e;
+}
+
+.banner-action-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Watch Now Button */
+.banner-watch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #fff;
+  border: none;
+  color: #000;
+  padding: 0.6rem 1.25rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.banner-watch-btn:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: scale(1.02);
+}
+
+.banner-watch-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: #000;
+}
+
+/* Genre Tags */
+.banner-genre-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.genre-tag {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+}
+
+.genre-separator {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.75rem;
+}
+
+/* Bottom Right Controls */
+.banner-bottom-controls {
+  position: absolute;
+  bottom: 90px;
+  right: 30px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.banner-mute-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.banner-mute-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+
+.banner-mute-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.banner-age-badge {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.35rem 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+/* Mobile hide for bottom controls */
+@media (max-width: 1024px) {
+  .banner-bottom-controls {
+    display: none;
+  }
+}
+
+/* Desktop 1280px-1919px adjustment */
+@media (min-width: 1280px) and (max-width: 1919px) {
+  .banner-bottom-controls {
+    right: 55px;
+  }
+}
+
+/* Responsive for new banner elements */
+@media (max-width: 768px) {
+  .banner-meta-row {
+    gap: 0.4rem;
+  }
+
+  .imdb-badge {
+    font-size: 0.55rem;
+    padding: 0.1rem 0.3rem;
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-match,
+  .meta-runtime {
+    font-size: 0.75rem;
+  }
+
+  .banner-actions-row {
+    gap: 0.4rem;
+  }
+
+  .banner-action-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .banner-action-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .banner-watch-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .banner-genre-tags {
+    gap: 0.4rem;
+  }
+
+  .genre-tag {
+    font-size: 0.75rem;
+  }
 }
 
 /* Navigation Arrows */
@@ -686,6 +1035,137 @@
   }
 }
 
+/* 1080p Banner Content Scaling (min-width: 1920px and max-width: 2559px) */
+@media (min-width: 1920px) and (max-width: 2559px) {
+
+  /* Banner content container - scaled up */
+  .banner-content {
+    max-width: 650px;
+  }
+
+  /* Banner logo - scaled up */
+  .banner-logo-image {
+    max-width: 750px;
+    max-height: 375px;
+    width: 100%;
+    height: auto;
+  }
+
+  .banner-logo-container {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Banner title - scaled up */
+  .banner-title-new {
+    font-size: 4.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Banner description - scaled up */
+  .banner-description-new {
+    font-size: 1.15rem;
+    max-width: 580px;
+    margin-bottom: 1.75rem;
+  }
+
+  /* Meta row - scaled up */
+  .banner-meta-row {
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+  }
+
+  .imdb-badge {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-match,
+  .meta-runtime {
+    font-size: 1rem;
+  }
+
+  .meta-separator {
+    font-size: 0.85rem;
+  }
+
+  /* Action buttons - scaled up */
+  .banner-actions-row {
+    gap: 0.65rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .banner-action-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .banner-action-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .banner-watch-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 30px;
+  }
+
+  .banner-watch-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Genre tags - scaled up */
+  .banner-genre-tags {
+    gap: 0.65rem;
+    margin-top: 0.65rem;
+  }
+
+  .genre-tag {
+    font-size: 0.95rem;
+  }
+
+  .genre-separator {
+    font-size: 0.85rem;
+  }
+
+  /* Bottom controls - scaled up */
+  .banner-bottom-controls {
+    bottom: 110px;
+    right: 73px;
+    gap: 1rem;
+  }
+
+  .banner-mute-btn {
+    width: 48px;
+    height: 48px;
+  }
+
+  .banner-mute-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .banner-age-badge {
+    font-size: 0.95rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 20px;
+  }
+
+  /* Banner slide padding - maintain alignment with content sections */
+  .banner-slide {
+    padding: 0 4%;
+    padding-bottom: 70px;
+  }
+
+  /* Progress bar - slightly thicker */
+  .banner-progress {
+    height: 3px;
+  }
+}
+
 /* ===== MOBILE POSTER CAROUSEL ===== */
 
 
@@ -698,167 +1178,203 @@
 /* Mobile styles */
 @media (max-width: 1024px) {
 
-  /* Reduce banner height on mobile */
-  .banner-slider {
-    height: 53vh;
-  }
-
   /* Blur backdrop on mobile */
   .banner-backdrop {
-    filter: blur(2px);
-    opacity: 0.6;
+    filter: blur(3px);
+    opacity: 0.5;
   }
 
-  /* Hide desktop content on mobile */
+  /* Show desktop content on mobile - redesigned layout */
   .banner-desktop-content {
-    display: none !important;
-  }
-
-  /* Show mobile poster carousel */
-  .mobile-poster-carousel {
-    display: block;
-    position: absolute;
-    bottom: 130px;
-    left: 0;
-    right: 0;
-    width: 100%;
-    z-index: 10;
-    pointer-events: none;
-  }
-
-  .mobile-cards-container {
-    display: flex;
-    justify-content: center;
+    display: flex !important;
+    flex-direction: column;
     align-items: center;
-    position: relative;
-    height: 260px;
-    perspective: 1000px;
-  }
-
-  .mobile-poster-card {
-    position: absolute;
-    left: 50%;
-    width: 170px;
-    aspect-ratio: 9 / 13;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    transform-style: preserve-3d;
-  }
-
-  .mobile-poster-card img {
+    justify-content: center;
+    text-align: center;
+    padding: 0 16px;
+    padding-bottom: 34px;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    border-radius: 12px;
+    max-width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
   }
 
-  /* 3D Card Stack Effect - All cards centered with left:50% */
-  .mobile-poster-card.card-far-prev {
-    transform: translateX(-50%) translateX(-110px) translateZ(-200px) rotateZ(-4deg);
-    opacity: 0.4;
-    z-index: 1;
+  /* Banner slide - center content */
+  .banner-slide {
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 16px;
+    display: flex;
   }
 
-  .mobile-poster-card.card-prev {
-    transform: translateX(-50%) translateX(-60px) translateZ(-100px) rotateZ(-2deg);
-    opacity: 0.75;
-    z-index: 2;
-  }
-
-  .mobile-poster-card.card-active {
-    transform: translateX(-50%) translateZ(0) rotateZ(0);
-    opacity: 1;
-    z-index: 3;
-  }
-
-  .mobile-poster-card.card-next {
-    transform: translateX(-50%) translateX(60px) translateZ(-100px) rotateZ(2deg);
-    opacity: 0.75;
-    z-index: 2;
-  }
-
-  .mobile-poster-card.card-far-next {
-    transform: translateX(-50%) translateX(110px) translateZ(-200px) rotateZ(4deg);
-    opacity: 0.4;
-    z-index: 1;
-  }
-
-  /* Mobile Controls at Bottom */
-  .mobile-banner-controls {
+  /* Title/Logo container */
+  .banner-logo-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    gap: 10px;
-    width: auto;
+    margin-bottom: 28px;
+  }
+
+  .banner-logo-image {
     max-width: 280px;
+    max-height: 140px;
   }
 
-  .mobile-badges-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  .banner-title-fallback {
+    font-size: 1.3rem !important;
+    text-align: center;
+  }
+
+  /* Meta row - centered */
+  .banner-meta-row {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+  }
+
+  .imdb-badge {
+    font-size: 0.6rem;
+    padding: 2px 4px;
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-runtime {
+    font-size: 0.8rem;
+  }
+
+  /* Description - centered, limited lines */
+  .banner-description-new {
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    max-width: 100%;
+    margin-bottom: 20px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  /* Action buttons row - centered, visible */
+  .banner-actions-row {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
-    width: 100%;
+    margin-bottom: 14px;
+    flex-wrap: nowrap;
   }
 
-  .mobile-badge {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  /* Hide Play Trailer button on mobile */
+  .banner-actions-row .banner-action-icon[aria-label="Play Trailer"] {
+    display: none;
+  }
+
+  /* Action icon buttons - same height as Watch now button */
+  .banner-action-icon {
+    width: 33px;
+    height: 33px;
+    min-width: 33px;
+    border-radius: 50%;
+    background: rgba(60, 60, 60, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 14px;
-    padding: 6px 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
     color: #fff;
-    white-space: nowrap;
-  }
-
-  .mobile-watch-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    width: 100%;
-    background: rgba(39, 39, 42, 0.5);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    padding: 10px 16px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    padding: 0;
   }
 
-  .mobile-watch-btn:hover {
-    background: rgba(39, 39, 42, 0.8);
-    border-color: rgba(255, 255, 255, 0.4);
+  /* Button order: [+] [Share] [Watch now] [Previous] [Next] */
+  .banner-action-icon[aria-label="Add to My List"] {
+    order: 1;
   }
 
-  .mobile-watch-btn svg {
+  .banner-action-icon[aria-label="Share"] {
+    order: 2;
+  }
+
+  .banner-watch-btn {
+    order: 3;
+  }
+
+  .banner-action-icon[aria-label="Previous"] {
+    order: 4;
+  }
+
+  .banner-action-icon[aria-label="Next"] {
+    order: 5;
+  }
+
+  .banner-action-icon svg {
     width: 14px;
     height: 14px;
   }
 
-  /* Adjust nav buttons for mobile - position at card level */
+  .banner-action-icon:hover {
+    background: rgba(80, 80, 80, 0.9);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  /* Watch button - compact pill style */
+  .banner-watch-btn {
+    background: #fff;
+    color: #000;
+    padding: 8px 18px;
+    border-radius: 18px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    gap: 5px;
+    min-width: auto;
+    white-space: nowrap;
+  }
+
+  .banner-watch-btn svg {
+    width: 12px;
+    height: 12px;
+    fill: #000;
+    stroke: #000;
+  }
+
+  .banner-watch-btn:hover {
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  /* Genre tags - centered, smaller */
+  .banner-genre-tags {
+    justify-content: center;
+    font-size: 0.75rem;
+    opacity: 0.6;
+  }
+
+  /* Hide poster carousel since we show full content */
+  .mobile-poster-carousel {
+    display: none !important;
+  }
+
+  /* Hide old mobile controls - using action buttons instead */
+  .mobile-banner-controls {
+    display: none !important;
+  }
+
+  /* Hide bottom controls on mobile */
+  .banner-bottom-controls {
+    display: none;
+  }
+
+  /* Adjust nav buttons for mobile - position at edges */
   .banner-nav-prev,
   .banner-nav-next {
     top: 50%;
     transform: translateY(-50%);
     bottom: auto;
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
   }
 
   .banner-nav-prev {
@@ -904,6 +1420,13 @@
   background-clip: text;
   margin-bottom: 10px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile: Row header font size */
+@media (max-width: 767px) {
+  .row h2 {
+    font-size: 1.2rem;
+  }
 }
 
 .grid-container {
@@ -2745,7 +3268,7 @@ select.filter-dropdown {
   .banner-content {
     max-width: 900px;
     /* 600px × 1.5 */
-    margin-left: 4.5rem;
+    margin-left: 0rem;
     /* 3rem × 1.5 */
   }
 
@@ -3343,12 +3866,41 @@ select.filter-dropdown {
     /* 600px × 3 */
   }
 
-  /* Banner Content - 3x scaled from 720p */
+  /* Banner Content - 4x scaled from 720p */
   .banner-content {
-    max-width: 1800px;
-    /* 600px × 3 */
-    margin-left: 9rem;
-    /* 3rem × 3 */
+    max-width: 2000px;
+    /* 500px × 4 */
+    margin-left: 0;
+  }
+
+  /* Banner Slide - 4x padding */
+  .banner-slide {
+    padding: 0 4%;
+    padding-bottom: 100px;
+    /* 50px × 4 */
+  }
+
+  /* Banner Logo - 4x scaled */
+  .banner-logo-image {
+    max-width: 1400px;
+    /* 450px × 4 */
+    max-height: 700px;
+    /* 150px × 4 */
+    width: 100%;
+    height: auto;
+  }
+
+  .banner-logo-container {
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
+  }
+
+  /* Banner Title - 4x scaled */
+  .banner-title-new {
+    font-size: 14rem;
+    /* 3.5rem × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
   }
 
   .banner-title {
@@ -3356,6 +3908,148 @@ select.filter-dropdown {
     /* 3.5rem × 3 */
     margin-bottom: 4.5rem;
     /* 1.5rem × 3 */
+  }
+
+  /* Banner Description - 4x scaled */
+  .banner-description-new {
+    font-size: 4rem;
+    /* 1rem × 4 */
+    max-width: 1800px;
+    /* 450px × 4 */
+    margin-bottom: 6rem;
+    /* 1.5rem × 4 */
+    line-height: 1.6;
+  }
+
+  /* Meta Row - 4x scaled */
+  .banner-meta-row {
+    gap: 2rem;
+    /* 0.5rem × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
+  }
+
+  .imdb-badge {
+    font-size: 2.4rem;
+    /* 0.6rem × 4 */
+    padding: 0.6rem 1.6rem;
+    /* 0.15rem × 4, 0.4rem × 4 */
+    border-radius: 8px;
+    /* 2px × 4 */
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-match,
+  .meta-runtime {
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+  }
+
+  .meta-separator {
+    font-size: 3rem;
+    /* 0.75rem × 4 */
+  }
+
+  /* Action Buttons Row - 4x scaled */
+  .banner-actions-row {
+    gap: 2rem;
+    /* 0.5rem × 4 */
+    margin-bottom: 4rem;
+    /* 1rem × 4 */
+  }
+
+  .banner-action-icon {
+    width: 160px;
+    /* 40px × 4 */
+    height: 160px;
+    /* 40px × 4 */
+    border-width: 4px;
+    /* 1px × 4 */
+  }
+
+  .banner-action-icon svg {
+    width: 72px;
+    /* 18px × 4 */
+    height: 72px;
+    /* 18px × 4 */
+  }
+
+  .banner-watch-btn {
+    padding: 2.4rem 5rem;
+    /* 0.6rem × 4, 1.25rem × 4 */
+    font-size: 3.6rem;
+    /* 0.9rem × 4 */
+    border-radius: 100px;
+    /* 25px × 4 */
+    gap: 2rem;
+    /* 0.5rem × 4 */
+  }
+
+  .banner-watch-btn svg {
+    width: 56px;
+    /* 14px × 4 */
+    height: 56px;
+    /* 14px × 4 */
+  }
+
+  /* Genre Tags - 4x scaled */
+  .banner-genre-tags {
+    gap: 2rem;
+    /* 0.5rem × 4 */
+    margin-top: 2rem;
+    /* 0.5rem × 4 */
+  }
+
+  .genre-tag {
+    font-size: 3.4rem;
+    /* 0.85rem × 4 */
+  }
+
+  .genre-separator {
+    font-size: 3rem;
+    /* 0.75rem × 4 */
+  }
+
+  /* Bottom Controls - 4x scaled */
+  .banner-bottom-controls {
+    bottom: 260px;
+
+    right: 170px;
+    /* 30px × 4 */
+    gap: 3rem;
+    /* 0.75rem × 4 */
+  }
+
+  .banner-mute-btn {
+    width: 160px;
+    /* 40px × 4 */
+    height: 160px;
+    /* 40px × 4 */
+    border-width: 4px;
+  }
+
+  .banner-mute-btn svg {
+    width: 72px;
+    /* 18px × 4 */
+    height: 72px;
+    /* 18px × 4 */
+  }
+
+  .banner-age-badge {
+    font-size: 3.4rem;
+    /* 0.85rem × 4 */
+    padding: 1.4rem 3rem;
+    /* 0.35rem × 4, 0.75rem × 4 */
+    border-radius: 64px;
+    /* 16px × 4 */
+    border-width: 4px;
+  }
+
+  /* Progress bar - 4x */
+  .banner-progress {
+    height: 8px;
+    /* 2px × 4 */
   }
 
   .banner-meta-enhanced {
@@ -5396,7 +6090,7 @@ select.filter-dropdown {
 
   /* Banner Desktop Content Container */
   .banner-content.banner-desktop-content {
-    padding: 2rem;
+    padding: 0rem;
     /* 1rem × 2 */
   }
 
@@ -5495,7 +6189,7 @@ select.filter-dropdown {
 
   /* Banner Desktop Content Container */
   .banner-content.banner-desktop-content {
-    padding: 4rem;
+    padding: 0rem;
     /* 1rem × 4 */
   }
 

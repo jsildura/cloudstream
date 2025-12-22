@@ -10,6 +10,13 @@
     color: #fff;
 }
 
+/* Mobile: Title font size */
+@media (max-width: 767px) {
+    .popular-collections-title {
+        font-size: 1.2rem;
+    }
+}
+
 .collections-carousel {
     position: relative;
     width: 100%;

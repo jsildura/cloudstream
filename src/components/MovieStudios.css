@@ -1,0 +1,173 @@
+/* Movie Studios Section */
+.movie-studios-section {
+    padding: 24px 0;
+    margin-bottom: 20px;
+}
+
+.movie-studios-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 20px;
+    letter-spacing: 0.02em;
+}
+
+.movie-studios-grid {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: auto;
+    /* Changed to auto to prevent fighting with drag scroll */
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+}
+
+.movie-studios-grid::-webkit-scrollbar {
+    display: none;
+}
+
+/* Studio Card */
+.studio-card {
+    flex: 0 0 auto;
+    width: 240px;
+    height: 130px;
+    background: rgba(180, 180, 180, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.studio-card:hover {
+    background: rgba(200, 200, 200, 0.4);
+    transform: scale(1.05);
+}
+
+.studio-card:focus {
+    outline: 2px solid var(--netflix-red, #e50914);
+    outline-offset: 2px;
+}
+
+.studio-logo {
+    max-width: 80%;
+    max-height: 60%;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.studio-card:hover .studio-logo {
+    transform: scale(1.05);
+}
+
+.studio-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #333;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    padding: 0 10px;
+}
+
+/* Mobile: max-width 767px */
+@media (max-width: 767px) {
+    .movie-studios-section {
+        padding: 20px 0;
+    }
+
+    .movie-studios-title {
+        font-size: 1.2rem;
+        margin-bottom: 14px;
+    }
+
+    .movie-studios-grid {
+        gap: 12px;
+    }
+
+    .studio-card {
+        width: 160px;
+        height: 90px;
+    }
+
+    .studio-name {
+        font-size: 0.8rem;
+    }
+}
+
+/* Tablet: 768px to 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .movie-studios-section {
+        padding: 24px 0;
+    }
+
+    .movie-studios-title {
+        font-size: 1.35rem;
+    }
+
+    .studio-card {
+        width: 200px;
+        height: 110px;
+    }
+}
+
+/* 1080p: 1920px+ */
+@media (min-width: 1920px) {
+    .movie-studios-section {
+        padding: 40px 0;
+    }
+
+    .movie-studios-title {
+        font-size: 2.5rem;
+        margin-bottom: 30px;
+    }
+
+    .movie-studios-grid {
+        gap: 24px;
+    }
+
+    .studio-card {
+        width: 320px;
+        height: 180px;
+        border-radius: 12px;
+    }
+
+    .studio-name {
+        font-size: 1.4rem;
+    }
+}
+
+/* 4K: 3840px+ */
+@media (min-width: 3840px) {
+    .movie-studios-section {
+        padding: 80px 0;
+    }
+
+    .movie-studios-title {
+        font-size: 5rem;
+        margin-bottom: 60px;
+    }
+
+    .movie-studios-grid {
+        gap: 48px;
+    }
+
+    .studio-card {
+        width: 640px;
+        height: 360px;
+        border-radius: 24px;
+    }
+
+    .studio-name {
+        font-size: 2.8rem;
+    }
+}

@@ -15,6 +15,7 @@ import PrimeVideo from './pages/PrimeVideo';
 import AppleTV from './pages/AppleTV';
 import HBO from './pages/HBO';
 import Viu from './pages/Viu';
+import StudioPage from './pages/StudioPage';
 import MyList from './pages/MyList';
 import Modal from './components/Modal';
 import { useTMDB } from './hooks/useTMDB';
@@ -22,7 +23,7 @@ import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import AdblockModal from './components/AdblockModal';
 import BotProtection from './components/BotProtection';
-import VisitorTracker from './components/VisitorTracker';
+// VisitorTracker disabled
 import { ToastProvider } from './contexts/ToastContext';
 import Toast from './components/Toast';
 import useTVNavigation from './hooks/useTVNavigation';
@@ -88,7 +89,7 @@ function App() {
   return (
     <ToastProvider>
       <div className="App">
-        <VisitorTracker />
+        {/* VisitorTracker disabled */}
         <BotProtection />
         <AdblockModal />
         <ScrollToTop />
@@ -117,6 +118,7 @@ function App() {
             <Route path="/apple-tv" element={<AppleTV />} />
             <Route path="/hbo" element={<HBO />} />
             <Route path="/viu" element={<Viu />} />
+            <Route path="/studio/:id" element={<StudioPage />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </main>

@@ -60,6 +60,16 @@
 .top-ten-section .top-ten-carousel {
     position: relative;
     overflow: visible;
+    cursor: grab;
+    user-select: none;
+}
+
+.top-ten-section .top-ten-carousel.dragging {
+    cursor: grabbing;
+}
+
+.top-ten-section .top-ten-carousel.dragging .top-ten-card {
+    pointer-events: none;
 }
 
 .top-ten-section .top-ten-viewport {
@@ -72,6 +82,10 @@
 .top-ten-section .top-ten-track {
     display: flex;
     transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.top-ten-section .top-ten-carousel.dragging .top-ten-track {
+    transition: none;
 }
 
 /* Individual Card */
@@ -112,7 +126,7 @@
 /* Large Number Styling */
 .top-ten-section .top-ten-number {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: var(--number-size);
+    font-size: 10rem;
     font-weight: 900;
     color: transparent;
     -webkit-text-stroke: var(--number-stroke) #e50914;
@@ -248,23 +262,43 @@
 /* Mobile: < 768px */
 @media (max-width: 767px) {
     .top-ten-section {
-        --poster-width: 90px;
-        /* Smaller for mobile */
-        --poster-height: 135px;
-        --number-size: 10rem;
-        --number-margin: -18px;
+        /* Poster follows 2:3 aspect ratio like netflix-carousel */
+        --poster-width: 110px;
+        --poster-height: 165px;
+        --number-margin: -15px;
         --number-stroke: 2px;
         --card-gap: -10px;
-        --card-margin: 20px;
+        --card-margin: 12px;
         --items-per-view: 2;
-        --section-padding: 15px 3%;
-        --title-size: 1.5rem;
-        /* Match popular-collections-title */
+        --section-padding: 16px 3%;
+        --title-size: 1.2rem;
         --play-btn-size: 36px;
+        --nav-btn-size: 36px;
+        margin-bottom: 20px;
     }
 
     .top-ten-section .top-ten-nav-btn {
         display: none;
+    }
+
+    .top-ten-section .top-ten-number {
+        font-size: 10rem;
+        -webkit-text-stroke: 2px #e50914;
+        line-height: 0.85;
+    }
+
+    .top-ten-section .top-ten-card {
+        margin-right: 8px;
+        min-height: calc(var(--poster-height) + 20px);
+    }
+
+    .top-ten-section .top-ten-poster {
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .top-ten-section .top-ten-play-btn .play-icon {
+        font-size: 0.85rem;
     }
 }
 
@@ -304,11 +338,15 @@
         /* -18 * 1.5 */
         --card-margin: 65px;
         /* Scaled for desktop */
-        --items-per-view: 4;
+        --items-per-view: 5;
         --title-size: 1.5rem;
         /* Match popular-collections-title */
         --nav-btn-size: 50px;
         --nav-btn-offset: 10px;
+    }
+
+    .top-ten-section .top-ten-number {
+        font-size: 14rem;
     }
 }
 
@@ -329,7 +367,7 @@
         /* -25 * 1.5 */
         --card-margin: 85px;
         /* Scaled for 1080p */
-        --items-per-view: 5;
+        --items-per-view: 7;
         --section-padding: 45px 4%;
         /* 30 * 1.5 */
         --title-size: 3rem;
@@ -340,43 +378,86 @@
         --play-btn-size: 82px;
         /* 55 * 1.5 */
     }
+
+    .top-ten-section .top-ten-number {
+        font-size: 20rem;
+    }
 }
 
-/* 4K: >= 3840px */
+/* 4K: >= 3840px - 4x scaled from 720p base */
 @media (min-width: 3840px) {
     .top-ten-section {
-        --poster-width: 420px;
-        /* 280 * 1.5 */
-        --poster-height: 630px;
-        /* 420 * 1.5 */
-        --number-size: 49.5rem;
-        /* 33 * 1.5 */
-        --number-margin: -60px;
-        /* -40 * 1.5 */
-        --number-stroke: 9px;
-        /* 6 * 1.5 */
-        --card-gap: -75px;
-        /* -50 * 1.5 */
-        --card-margin: 140px;
+        --poster-width: 460px;
+        /* 115px × 4 */
+        --poster-height: 690px;
+        /* 172px × 4 (maintaining 2:3 ratio) */
+        --number-size: 56rem;
+        /* 14rem × 4 */
+        --number-margin: -80px;
+        /* -20px × 4 */
+        --number-stroke: 12px;
+        /* 3px × 4 */
+        --card-gap: -60px;
+        /* -15px × 4 */
+        --card-margin: 180px;
         /* Scaled for 4K */
         --items-per-view: 5;
-        --section-padding: 90px 4%;
-        /* 60 * 1.5 */
+        --section-padding: 80px 4%;
+        /* 20px × 4 */
         --title-size: 6rem;
-        /* Match popular-collections-title 4K */
-        --nav-btn-size: 120px;
-        /* 80 * 1.5 */
-        --nav-btn-offset: 30px;
-        --play-btn-size: 135px;
-        /* 90 * 1.5 */
+        /* 1.5rem × 4 */
+        --nav-btn-size: 160px;
+        /* 40px × 4 */
+        --nav-btn-offset: 40px;
+        /* 10px × 4 */
+        --play-btn-size: 200px;
+        /* 50px × 4 */
+        margin-bottom: 120px;
+        /* 30px × 4 */
+    }
+
+    .top-ten-section .top-ten-number {
+        font-size: 40rem;
+        /* 10rem × 4 */
+        -webkit-text-stroke: 12px #e50914;
+        /* 3px × 4 */
     }
 
     .top-ten-section .top-ten-poster {
-        border-radius: 15px;
-        /* 10 * 1.5 */
+        border-radius: 24px;
+        /* 6px × 4 */
+        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.6);
+        /* Scaled shadows */
     }
 
     .top-ten-section .top-ten-hover-overlay {
-        border-radius: 15px;
+        border-radius: 24px;
+    }
+
+    .top-ten-section .top-ten-card {
+        min-height: calc(var(--poster-height) + 120px);
+        /* Scaled min-height */
+    }
+
+    .top-ten-section .top-ten-nav-btn {
+        border-width: 4px;
+        /* 1px × 4 */
+    }
+
+    .top-ten-section .top-ten-play-btn .play-icon {
+        margin-left: 12px;
+        /* 3px × 4 */
+    }
+
+    .top-ten-section .top-ten-title {
+        gap: 32px;
+        /* 8px × 4 */
+    }
+
+    .top-ten-section .top-ten-arrow {
+        width: 80px;
+        /* 20px × 4 */
+        height: 80px;
+        /* 20px × 4 */
     }
 }

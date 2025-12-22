@@ -11,7 +11,8 @@ import PrimeVideoPicks from '../components/PrimeVideoPicks';
 import AppleTVPicks from '../components/AppleTVPicks';
 import HBOPicks from '../components/HBOPicks';
 import ViuPicks from '../components/ViuPicks';
-import VisitorStats from '../components/VisitorStats';
+import MovieStudios from '../components/MovieStudios';
+// VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
 import { useTMDB } from '../hooks/useTMDB';
 import './Home.css';
@@ -205,9 +206,6 @@ const Home = () => {
         />
       )}
 
-      {/* Visitor Stats Widget - Homepage Only */}
-      <VisitorStats />
-
       {/* Continue Watching Section */}
       <ContinueWatching onItemClick={handleItemClick} />
 
@@ -266,6 +264,9 @@ const Home = () => {
 
         {/* Popular Collections Section */}
         <PopularCollections />
+
+        {/* Movie Studios Section */}
+        <MovieStudios />
 
         {/* Netflix Originals Section */}
         <NetflixOriginals />

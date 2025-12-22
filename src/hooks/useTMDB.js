@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
+const LOGO_URL = 'https://image.tmdb.org/t/p/w500';
 
 export const useTMDB = () => {
   const [movieGenres, setMovieGenres] = useState(new Map());
@@ -210,6 +211,22 @@ export const useTMDB = () => {
       return await res.json();
     } catch (error) {
       console.error("Failed to fetch TV details:", error);
+      throw error;
+    }
+  }, [buildUrl]);
+
+  const fetchMovieDetails = useCallback(async (movieId) => {
+    try {
+      const url = buildUrl(`/movie/${movieId}`);
+      const res = await fetch(url);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      return await res.json();
+    } catch (error) {
+      console.error("Failed to fetch movie details:", error);
       throw error;
     }
   }, [buildUrl]);
@@ -424,7 +441,8 @@ export const useTMDB = () => {
   // Memoize constants to prevent recreation
   const constants = useMemo(() => ({
     POSTER_URL,
-    BACKDROP_URL
+    BACKDROP_URL,
+    LOGO_URL
   }), []);
 
   return {
@@ -439,6 +457,7 @@ export const useTMDB = () => {
     fetchContentRating,
     fetchSeasonEpisodes,
     fetchTVDetails,
+    fetchMovieDetails,
     fetchDiscoverMovies,
     fetchDiscoverTV,
     fetchMovieRecommendations,

@@ -25,6 +25,16 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         isTouching: false
     });
 
+    // Drag state for mouse swipe
+    const [isDragging, setIsDragging] = useState(false);
+    const [isDown, setIsDown] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollStartX, setScrollStartX] = useState(0);
+
+    // Momentum state
+    const velX = useRef(0);
+    const animationFrameId = useRef(null);
+
     // Memoized values
     const maxIndex = useMemo(() =>
         Math.max(0, (items?.length || 0) - itemsPerView),
@@ -75,11 +85,14 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         return () => clearTimeout(timer);
     }, [items, updateScrollMetrics]);
 
-    // Cleanup touch timeout on unmount
+    // Cleanup touch timeout and momentum animation on unmount
     useEffect(() => {
         return () => {
             if (touchEndTimeoutRef.current) {
                 clearTimeout(touchEndTimeoutRef.current);
+            }
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
             }
         };
     }, []);
@@ -91,42 +104,130 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         }
     }, [items, focusedCardIndex]);
 
-    // Auto-scroll and auto-hover every 5 seconds
+    // Update scroll position when focused card changes via keyboard navigation
     useEffect(() => {
-        const { isPaused, isKeyboardNav, isTouching } = interactionState;
-        if (isPaused || isKeyboardNav || isTouching || !items?.length) return;
+        const { isKeyboardNav } = interactionState;
 
-        const autoScrollInterval = setInterval(() => {
-            setFocusedCardIndex(prev => (prev + 1) % items.length);
-        }, 5000);
-
-        return () => clearInterval(autoScrollInterval);
-    }, [interactionState, items?.length]);
-
-    // Update scroll position to center the focused card
-    useEffect(() => {
-        const { isPaused, isKeyboardNav, isTouching } = interactionState;
-
-        // Don't auto-update scroll position during manual interaction
-        if (isTouching) return;
-        if (isPaused && !isKeyboardNav) return;
+        // Only update scroll position during keyboard navigation
+        if (!isKeyboardNav) return;
 
         const targetScrollIndex = Math.max(0, Math.min(maxIndex, focusedCardIndex - centerOffset));
         setCurrentIndex(targetScrollIndex);
     }, [focusedCardIndex, interactionState, centerOffset, maxIndex]);
 
+    // Cancel momentum animation
+    const cancelMomentum = useCallback(() => {
+        if (animationFrameId.current) {
+            cancelAnimationFrame(animationFrameId.current);
+            animationFrameId.current = null;
+        }
+    }, []);
+
+    // Momentum animation loop
+    const momentumLoop = useCallback(() => {
+        if (!viewportRef.current) return;
+
+        // Apply velocity to currentIndex calculation
+        const cardWidth = cardRefs.current[0]?.offsetWidth || 200;
+        const cardStyle = cardRefs.current[0] ? window.getComputedStyle(cardRefs.current[0]) : null;
+        const marginRight = cardStyle ? parseFloat(cardStyle.marginRight) || 0 : 0;
+        const totalCardWidth = cardWidth + marginRight;
+
+        // Convert velocity to index change
+        const indexChange = velX.current / totalCardWidth;
+
+        setCurrentIndex(prev => {
+            const newIndex = Math.max(0, Math.min(maxIndex, prev - indexChange));
+            return newIndex;
+        });
+
+        // Decay velocity
+        velX.current *= 0.92;
+
+        if (Math.abs(velX.current) > 2) {
+            animationFrameId.current = requestAnimationFrame(momentumLoop);
+        } else {
+            animationFrameId.current = null;
+            // Snap to nearest index
+            setCurrentIndex(prev => Math.round(prev));
+        }
+    }, [maxIndex]);
+
+    // Mouse drag handlers
+    const handleMouseDown = useCallback((e) => {
+        if (e.button !== 0) return; // Only left mouse button
+        setIsDown(true);
+        setIsDragging(false);
+        cancelMomentum();
+        setStartX(e.pageX);
+        setScrollStartX(currentIndex);
+        velX.current = 0;
+        if (viewportRef.current) viewportRef.current.style.cursor = 'grabbing';
+    }, [cancelMomentum, currentIndex]);
+
+    const handleMouseLeaveCarousel = useCallback(() => {
+        if (isDown) {
+            setIsDown(false);
+            if (viewportRef.current) viewportRef.current.style.cursor = 'grab';
+            // Start momentum
+            if (Math.abs(velX.current) > 5) {
+                cancelMomentum();
+                animationFrameId.current = requestAnimationFrame(momentumLoop);
+            } else {
+                setCurrentIndex(prev => Math.round(prev));
+            }
+        }
+        setInteractionState(prev => ({ ...prev, isPaused: false, isKeyboardNav: false }));
+        setFocusedCardIndex(prev => {
+            return Math.min((items?.length || 1) - 1, Math.round(currentIndex) + centerOffset);
+        });
+    }, [isDown, cancelMomentum, momentumLoop, items?.length, currentIndex, centerOffset]);
+
+    const handleMouseUp = useCallback(() => {
+        if (!isDown) return;
+        setIsDown(false);
+        if (viewportRef.current) viewportRef.current.style.cursor = 'grab';
+        setTimeout(() => setIsDragging(false), 0);
+
+        // Start momentum if velocity is present
+        if (Math.abs(velX.current) > 5) {
+            cancelMomentum();
+            animationFrameId.current = requestAnimationFrame(momentumLoop);
+        } else {
+            setCurrentIndex(prev => Math.round(prev));
+        }
+    }, [isDown, cancelMomentum, momentumLoop]);
+
+    const handleMouseMove = useCallback((e) => {
+        if (!isDown) return;
+        e.preventDefault();
+
+        const x = e.pageX;
+        const walk = (x - startX);
+
+        // Calculate new index based on drag distance
+        const cardWidth = cardRefs.current[0]?.offsetWidth || 200;
+        const cardStyle = cardRefs.current[0] ? window.getComputedStyle(cardRefs.current[0]) : null;
+        const marginRight = cardStyle ? parseFloat(cardStyle.marginRight) || 0 : 0;
+        const totalCardWidth = cardWidth + marginRight;
+
+        const indexChange = walk / totalCardWidth;
+        const newIndex = Math.max(0, Math.min(maxIndex, scrollStartX - indexChange));
+
+        setCurrentIndex(newIndex);
+
+        // Track velocity for momentum
+        velX.current = e.movementX * 2;
+
+        if (Math.abs(walk) > 5) {
+            setIsDragging(true);
+        }
+    }, [isDown, startX, scrollStartX, maxIndex]);
+
     // Event handlers
     const handleMouseEnter = useCallback(() => {
         setInteractionState(prev => ({ ...prev, isPaused: true, isKeyboardNav: false }));
     }, []);
-
-    const handleMouseLeave = useCallback(() => {
-        setInteractionState(prev => ({ ...prev, isPaused: false, isKeyboardNav: false }));
-        setFocusedCardIndex(prev => {
-            // Reset focus to the center card of current view
-            return Math.min((items?.length || 1) - 1, currentIndex + centerOffset);
-        });
-    }, [currentIndex, centerOffset, items?.length]);
 
     const handleTouchStart = useCallback(() => {
         // Clear any pending touch end timeout
@@ -209,13 +310,26 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         itemsPerSwipe: 2
     });
 
-    // Calculate translation
+    // Calculate translation based on card width
     const translateX = useMemo(() => {
-        const { trackWidth, viewportWidth } = scrollMetrics;
-        const maxScroll = Math.max(0, trackWidth - viewportWidth);
-        const scrollPerStep = maxIndex > 0 ? maxScroll / maxIndex : 0;
-        return currentIndex * scrollPerStep;
-    }, [scrollMetrics, maxIndex, currentIndex]);
+        if (!cardRefs.current[0] || !viewportRef.current) return 0;
+
+        const firstCard = cardRefs.current[0];
+        const cardWidth = firstCard.offsetWidth;
+        const cardStyle = window.getComputedStyle(firstCard);
+        const marginRight = parseFloat(cardStyle.marginRight) || 0;
+        const totalCardWidth = cardWidth + marginRight;
+
+        // Calculate max scroll to ensure last items are visible
+        const totalWidth = totalCardWidth * (items?.length || 0);
+        const viewportWidth = viewportRef.current.clientWidth;
+        const maxScroll = Math.max(0, totalWidth - viewportWidth);
+
+        // Calculate current scroll position
+        const scrollPosition = currentIndex * totalCardWidth;
+
+        return Math.min(scrollPosition, maxScroll);
+    }, [currentIndex, items?.length, scrollMetrics]);
 
     // Early return for empty items
     if (!items || items.length === 0) {
@@ -231,9 +345,12 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             </h2>
 
             <div
-                className="top-ten-carousel"
+                className={`top-ten-carousel${isDragging ? ' dragging' : ''}`}
                 onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
+                onMouseLeave={handleMouseLeaveCarousel}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
                 onTouchStart={(e) => {
                     handleTouchStart();
                     swipeHandlers.onTouchStart(e);
@@ -243,12 +360,16 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                     swipeHandlers.onTouchEnd(e);
                     handleTouchEnd();
                 }}
+                style={{ cursor: isDown ? 'grabbing' : 'grab' }}
             >
                 <div className="top-ten-viewport" ref={viewportRef}>
                     <div
                         className="top-ten-track"
                         ref={carouselRef}
-                        style={{ transform: `translate3d(-${translateX}px, 0, 0)` }}
+                        style={{
+                            transform: `translate3d(-${translateX}px, 0, 0)`,
+                            transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1)'
+                        }}
                     >
                         {items.map((item, index) => {
                             const title = item.title || item.name;
@@ -262,7 +383,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                                     key={item.id}
                                     ref={el => cardRefs.current[index] = el}
                                     className={`top-ten-card${isFocused ? ' focused' : ''}`}
-                                    onClick={() => onItemClick(item)}
+                                    onClick={() => !isDragging && onItemClick(item)}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => handleKeyDown(e, index)}
