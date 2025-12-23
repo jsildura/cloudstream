@@ -1,0 +1,40 @@
+/* Native Ad Wrapper - Non-intrusive placement */
+.native-ad-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  margin-top: 20px;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(20, 20, 20, 0.5) 50%,
+    transparent 100%
+  );
+}
+
+.native-ad-container {
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .native-ad-wrapper {
+    padding: 30px 15px;
+  }
+}
+
+/* 1080p scaling */
+@media (min-width: 1920px) {
+  .native-ad-wrapper {
+    padding: 60px 30px;
+  }
+}
+
+/* 4K scaling */
+@media (min-width: 3840px) {
+  .native-ad-wrapper {
+    padding: 120px 60px;
+  }
+}

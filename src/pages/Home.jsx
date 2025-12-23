@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import BannerSlider from '../components/BannerSlider';
 import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
@@ -14,6 +14,7 @@ import ViuPicks from '../components/ViuPicks';
 import MovieStudios from '../components/MovieStudios';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
+import NativeAd from '../components/NativeAd';
 import { useTMDB } from '../hooks/useTMDB';
 import './Home.css';
 
@@ -136,11 +137,11 @@ const Home = () => {
     }
   };
 
-  const handleTimeWindowToggle = () => {
+  const handleTimeWindowToggle = useCallback(() => {
     setTimeWindow(prev => prev === 'week' ? 'day' : 'week');
-  };
+  }, []);
 
-  const handleSearch = async (query) => {
+  const handleSearch = useCallback(async (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
@@ -153,9 +154,9 @@ const Home = () => {
       console.error('Search error:', error);
       setSearchResults([]);
     }
-  };
+  }, [searchTMDB]);
 
-  const handleItemClick = async (item) => {
+  const handleItemClick = useCallback(async (item) => {
     const type = item.media_type === "movie" || item.release_date ? "movie" : "tv";
     const genreMap = type === 'movie' ? movieGenres : tvGenres;
     const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
@@ -174,18 +175,18 @@ const Home = () => {
       contentRating
     });
     setIsModalOpen(true);
-  };
+  }, [movieGenres, tvGenres, fetchCredits, fetchContentRating]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedItem(null);
-  };
+  }, []);
 
-  const openSearch = () => setIsSearchOpen(true);
-  const closeSearch = () => {
+  const openSearch = useCallback(() => setIsSearchOpen(true), []);
+  const closeSearch = useCallback(() => {
     setIsSearchOpen(false);
     setSearchResults([]);
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -295,6 +296,9 @@ const Home = () => {
           />
         )}
       </div>
+
+      {/* Native Ad - Non-intrusive placement at bottom of homepage */}
+      <NativeAd />
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />
