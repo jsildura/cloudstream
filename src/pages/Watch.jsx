@@ -55,21 +55,18 @@ const Watch = () => {
   const { addToHistory } = useWatchHistory();
   const hasShownToast = useRef(false);
 
-  // Show "Now Playing" toast when page is fully loaded
   useEffect(() => {
     if (!loading && contentInfo && !hasShownToast.current) {
-      // Add a small delay to ensure the page is fully rendered
       const timer = setTimeout(() => {
         const title = contentInfo.title || contentInfo.name;
         showNowPlaying(title);
         hasShownToast.current = true;
-      }, 4000); // 4000ms delay after loading completes
+      }, 4000);
 
       return () => clearTimeout(timer);
     }
   }, [loading, contentInfo, showNowPlaying]);
 
-  // Track watch history when player loads
   useEffect(() => {
     if (playerLoaded && contentInfo) {
       addToHistory({
@@ -318,7 +315,7 @@ const Watch = () => {
 
   useEffect(() => {
     setSandboxEnabled(servers[currentServer].sandboxSupport);
-    setPlayerLoaded(false); // Reset lazy load when server changes
+    setPlayerLoaded(false);
   }, [currentServer]);
 
   useEffect(() => {
@@ -350,10 +347,8 @@ const Watch = () => {
       setSeasons(validSeasons);
 
       if (validSeasons.length > 0) {
-        // Use URL parameters if available, otherwise default to first season
         const seasonToLoad = urlSeason ? parseInt(urlSeason) : validSeasons[0].season_number;
 
-        // Only set season if no URL parameter (avoid overwriting initial state)
         if (!urlSeason) {
           setCurrentSeason(seasonToLoad);
         }
@@ -371,9 +366,6 @@ const Watch = () => {
       const data = await res.json();
       setEpisodes(data.episodes || []);
 
-      // Only reset to episode 1 if:
-      // - No URL episode parameter exists, OR
-      // - We're loading a different season than the URL season
       const isUrlSeason = urlSeason && parseInt(urlSeason) === seasonNumber;
       if (!urlEpisode || !isUrlSeason) {
         setCurrentEpisode(1);
@@ -395,7 +387,6 @@ const Watch = () => {
   const handleServerSelect = (index) => {
     const server = servers[index];
 
-    // Check if server is locked and not yet unlocked for this specific server
     if (server.isLocked && !unlockedServers[server.name]) {
       setPendingServerIndex(index);
       setPasswordInput('');
@@ -416,13 +407,10 @@ const Watch = () => {
     const correctPassword = atob(server.password);
 
     if (passwordInput === correctPassword) {
-      // Store unlock for this specific server in localStorage
       const newUnlocked = { ...unlockedServers, [server.name]: true };
       localStorage.setItem('unlockedServers', JSON.stringify(newUnlocked));
       setUnlockedServers(newUnlocked);
       setPasswordModalOpen(false);
-
-      // Now select the server
       setCurrentServer(pendingServerIndex);
       setSandboxEnabled(server.sandboxSupport);
       setServerDrawerOpen(false);

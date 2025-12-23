@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useForm, ValidationError } from '@formspree/react';
 import '../styles/LegalPages.css';
 
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
 
 const Contact = () => {
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-    });
-    const [submitted, setSubmitted] = useState(false);
+    const [state, handleSubmit] = useForm("mnjalzry");
     const [backdrop, setBackdrop] = useState(null);
 
     // Fetch a random trending movie backdrop
@@ -35,20 +30,6 @@ const Contact = () => {
         fetchBackdrop();
     }, []);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        console.log('Form submitted:', formData);
-        setSubmitted(true);
-    };
-
     return (
         <div className="legal-page">
             <div className="contact-container">
@@ -67,7 +48,7 @@ const Contact = () => {
                     {/* Left Column - Form */}
                     <div className="contact-form-column">
                         <div className="contact-form-card">
-                            {submitted ? (
+                            {state.succeeded ? (
                                 <div className="contact-success-new">
                                     <div className="success-icon">
                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -91,10 +72,14 @@ const Contact = () => {
                                                     id="name"
                                                     name="name"
                                                     className="form-input"
-                                                    value={formData.name}
-                                                    onChange={handleChange}
                                                     required
                                                     placeholder="Your name"
+                                                />
+                                                <ValidationError
+                                                    prefix="Name"
+                                                    field="name"
+                                                    errors={state.errors}
+                                                    className="form-error"
                                                 />
                                             </div>
 
@@ -104,10 +89,14 @@ const Contact = () => {
                                                     id="email"
                                                     name="email"
                                                     className="form-input"
-                                                    value={formData.email}
-                                                    onChange={handleChange}
                                                     required
                                                     placeholder="your.email@example.com"
+                                                />
+                                                <ValidationError
+                                                    prefix="Email"
+                                                    field="email"
+                                                    errors={state.errors}
+                                                    className="form-error"
                                                 />
                                             </div>
                                         </div>
@@ -117,8 +106,6 @@ const Contact = () => {
                                                 id="subject"
                                                 name="subject"
                                                 className="form-select"
-                                                value={formData.subject}
-                                                onChange={handleChange}
                                                 required
                                             >
                                                 <option value="">Select a subject</option>
@@ -129,6 +116,12 @@ const Contact = () => {
                                                 <option value="advertising">Advertising</option>
                                                 <option value="other">Other</option>
                                             </select>
+                                            <ValidationError
+                                                prefix="Subject"
+                                                field="subject"
+                                                errors={state.errors}
+                                                className="form-error"
+                                            />
                                         </div>
 
                                         <div className="form-field">
@@ -136,16 +129,20 @@ const Contact = () => {
                                                 id="message"
                                                 name="message"
                                                 className="form-textarea"
-                                                value={formData.message}
-                                                onChange={handleChange}
                                                 required
                                                 placeholder="Your message..."
                                                 rows="5"
                                             />
+                                            <ValidationError
+                                                prefix="Message"
+                                                field="message"
+                                                errors={state.errors}
+                                                className="form-error"
+                                            />
                                         </div>
 
-                                        <button type="submit" className="form-submit">
-                                            Send Message
+                                        <button type="submit" className="form-submit" disabled={state.submitting}>
+                                            {state.submitting ? 'Sending...' : 'Send Message'}
                                         </button>
                                     </form>
                                 </>

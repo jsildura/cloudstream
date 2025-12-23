@@ -809,6 +809,18 @@
     height: 18px;
 }
 
+.form-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.form-error {
+    color: #e50914;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    display: block;
+}
+
 /* Responsive - Mobile */
 @media (max-width: 900px) {
     .contact-layout {
