@@ -134,15 +134,15 @@ const BotProtection = () => {
                 disableCut: false,           // Allow cutting
                 disablePaste: false,         // Allow pasting
                 interval: 200,               // Check interval in ms
-                // Use only reliable detection methods to prevent false positives
+                // Use all detection methods for maximum coverage
                 detectors: [
                     0,  // RegToString
                     1,  // DefineId
-                    // 2,  // Size - disabled (can cause false positives)
+                    // 2,  // Size - disabled as per library recommendation (can cause false positives)
                     3,  // DateToString
                     4,  // FuncToString
-                    // 5,  // Debugger - disabled (can cause false positives with extensions)
-                    // 6,  // Performance - disabled (unreliable, causes false positives)
+                    5,  // Debugger
+                    6,  // Performance
                     7,  // DebugLib (eruda, vconsole)
                 ],
             });
