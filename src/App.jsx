@@ -8,6 +8,9 @@ import Popular from './pages/Popular';
 import Watch from './pages/Watch';
 import About from './pages/About';
 import Disclaimer from './pages/Disclaimer';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import Contact from './pages/Contact';
 import CollectionDetails from './pages/CollectionDetails';
 import Netflix from './pages/Netflix';
 import Disney from './pages/Disney';
@@ -111,6 +114,9 @@ function App() {
             <Route path="/watch" element={<Watch />} />
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/collection/:id" element={<CollectionDetails />} />
             <Route path="/netflix" element={<Netflix />} />
             <Route path="/disney" element={<Disney />} />

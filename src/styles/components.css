@@ -1777,7 +1777,7 @@
   padding: 0.1rem 0.5rem 1rem 0.5rem;
   width: 100%;
   font-size: 0.75rem;
-  margin-top: 5rem;
+  margin-top: 2rem;
   margin-bottom: 0;
   position: relative;
   overflow: hidden;
@@ -1897,6 +1897,28 @@
   color: rgba(255, 255, 255, 0.75);
   font-weight: 400;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Legal Links (Privacy, Terms, Contact) */
+.footer-legal-links {
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.footer-legal-link {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  font-weight: 400;
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+.footer-legal-link:hover {
+  color: #991b1b;
 }
 
 .menu-toggle {
@@ -2896,8 +2918,8 @@
   .footer {
     padding: 3rem 0;
     /* 2rem × 1.5 */
-    margin-top: 7.5rem;
-    /* 5rem × 1.5 */
+    margin-top: 3rem;
+    /* 2rem × 1.5 */
   }
 
   .footer-container {
@@ -3705,8 +3727,8 @@
     /* 2rem × 4 */
     font-size: 4rem;
     /* 1rem × 4 */
-    margin-top: 20rem;
-    /* 5rem × 4 */
+    margin-top: 8rem;
+    /* 2rem × 4 */
   }
 
   .footer-container {

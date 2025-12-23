@@ -66,6 +66,13 @@ const Footer = () => {
           <strong className="footer-brand">StreamFlix</strong> operates strictly as a search index and does not host any media files on its servers. All content is provided by non-affiliated third parties. Any copyright concerns should be directed to the respective file hosting services. <strong className="footer-brand">StreamFlix</strong> exercises no control over, and accepts no liability for, any media files distributed by external hosting services.
         </p>
 
+        {/* Legal Links */}
+        <nav className="footer-legal-links">
+          <Link to="/privacy" className="footer-legal-link">Privacy Policy</Link>
+          <Link to="/terms" className="footer-legal-link">Terms of Service</Link>
+          <Link to="/contact" className="footer-legal-link">Contact</Link>
+        </nav>
+
         {/* Copyright */}
         <p className="footer-copyright">© {currentYear} StreamFlix All rights reserved.</p>
       </div>
