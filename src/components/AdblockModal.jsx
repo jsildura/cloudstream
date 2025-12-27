@@ -4,7 +4,7 @@ import './AdblockModal.css';
 const AdblockModal = () => {
     // TODO: Re-enable adblock detection when project is complete
     // Remove or comment out the "return null;" below to re-enable
-    return null;
+
     const [adblockDetected, setAdblockDetected] = useState(false);
     const [checkComplete, setCheckComplete] = useState(false);
 
@@ -12,85 +12,103 @@ const AdblockModal = () => {
         const detectAdblock = async () => {
             let blocked = false;
 
-            const isBrave = navigator.brave && await navigator.brave.isBrave();
+            try {
+                const isBrave = navigator.brave && await navigator.brave.isBrave();
 
-            const baitContainer = document.createElement('div');
-            baitContainer.style.cssText = 'position: absolute; top: -9999px; left: -9999px;';
+                const baitContainer = document.createElement('div');
+                baitContainer.style.cssText = 'position: absolute; top: -9999px; left: -9999px;';
 
-            const baits = [
-                { tag: 'div', attrs: { class: 'ad-unit', 'data-ad-slot': '1234567890' } },
-                { tag: 'div', attrs: { class: 'ad-container ad-wrapper' } },
-                { tag: 'ins', attrs: { class: 'adsbygoogle', 'data-ad-client': 'ca-pub-1234567890' } },
-                { tag: 'div', attrs: { id: 'ad-banner', class: 'ad' } },
-                { tag: 'div', attrs: { class: 'sponsor-ad sponsored-content' } },
-                { tag: 'iframe', attrs: { src: 'about:blank', class: 'ad-frame' } },
-            ];
+                const baits = [
+                    { tag: 'div', attrs: { class: 'ad-unit', 'data-ad-slot': '1234567890' } },
+                    { tag: 'div', attrs: { class: 'ad-container ad-wrapper' } },
+                    { tag: 'ins', attrs: { class: 'adsbygoogle', 'data-ad-client': 'ca-pub-1234567890' } },
+                    { tag: 'div', attrs: { id: 'ad-banner', class: 'ad' } },
+                    { tag: 'div', attrs: { class: 'sponsor-ad sponsored-content' } },
+                    { tag: 'iframe', attrs: { src: 'about:blank', class: 'ad-frame' } },
+                ];
 
-            baits.forEach(({ tag, attrs }) => {
-                const el = document.createElement(tag);
-                Object.entries(attrs).forEach(([key, value]) => {
-                    el.setAttribute(key, value);
-                });
-                el.style.cssText = 'width: 1px; height: 1px; display: block;';
-                el.innerHTML = '&nbsp;';
-                baitContainer.appendChild(el);
-            });
-
-            document.body.appendChild(baitContainer);
-
-            const testScript = document.createElement('script');
-            testScript.type = 'text/javascript';
-            testScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-            testScript.async = true;
-
-            let scriptBlocked = false;
-            testScript.onerror = () => {
-                scriptBlocked = true;
-            };
-
-            document.head.appendChild(testScript);
-
-            await new Promise(resolve => setTimeout(resolve, 800));
-
-            const baitElements = baitContainer.querySelectorAll('*');
-            for (const bait of baitElements) {
-                if (!document.body.contains(bait)) {
-                    blocked = true;
-                    break;
-                }
-                const style = window.getComputedStyle(bait);
-                if (
-                    style.display === 'none' ||
-                    style.visibility === 'hidden' ||
-                    style.opacity === '0' ||
-                    bait.offsetHeight === 0 ||
-                    bait.offsetWidth === 0
-                ) {
-                    blocked = true;
-                    break;
-                }
-            }
-
-            if (scriptBlocked) {
-                blocked = true;
-            }
-            if (baitContainer.parentNode) {
-                baitContainer.parentNode.removeChild(baitContainer);
-            }
-            if (testScript.parentNode) {
-                testScript.parentNode.removeChild(testScript);
-            }
-
-            if (isBrave) {
-                try {
-                    const testFetch = await fetch('https://www.googletagservices.com/tag/js/gpt.js', {
-                        method: 'HEAD',
-                        mode: 'no-cors',
-                        cache: 'no-store'
+                baits.forEach(({ tag, attrs }) => {
+                    const el = document.createElement(tag);
+                    Object.entries(attrs).forEach(([key, value]) => {
+                        el.setAttribute(key, value);
                     });
+                    el.style.cssText = 'width: 1px; height: 1px; display: block;';
+                    el.innerHTML = '&nbsp;';
+                    baitContainer.appendChild(el);
+                });
+
+                document.body.appendChild(baitContainer);
+
+                // Test script loading with proper error handling
+                let scriptBlocked = false;
+                try {
+                    const testScript = document.createElement('script');
+                    testScript.type = 'text/javascript';
+                    testScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                    testScript.async = true;
+
+                    await new Promise((resolve) => {
+                        testScript.onload = () => resolve(false);
+                        testScript.onerror = () => {
+                            scriptBlocked = true;
+                            resolve(true);
+                        };
+                        document.head.appendChild(testScript);
+                        // Timeout fallback
+                        setTimeout(() => resolve(false), 1500);
+                    });
+
+                    if (testScript.parentNode) {
+                        testScript.parentNode.removeChild(testScript);
+                    }
                 } catch (e) {
+                    scriptBlocked = true;
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const baitElements = baitContainer.querySelectorAll('*');
+                for (const bait of baitElements) {
+                    if (!document.body.contains(bait)) {
+                        blocked = true;
+                        break;
+                    }
+                    const style = window.getComputedStyle(bait);
+                    if (
+                        style.display === 'none' ||
+                        style.visibility === 'hidden' ||
+                        style.opacity === '0' ||
+                        bait.offsetHeight === 0 ||
+                        bait.offsetWidth === 0
+                    ) {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                if (scriptBlocked) {
                     blocked = true;
                 }
+
+                if (baitContainer.parentNode) {
+                    baitContainer.parentNode.removeChild(baitContainer);
+                }
+
+                if (isBrave) {
+                    try {
+                        await fetch('https://www.googletagservices.com/tag/js/gpt.js', {
+                            method: 'HEAD',
+                            mode: 'no-cors',
+                            cache: 'no-store'
+                        });
+                    } catch (e) {
+                        blocked = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Adblock detection error:', error);
+                // On error, assume adblock might be present
+                blocked = true;
             }
 
             setAdblockDetected(blocked);

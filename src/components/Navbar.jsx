@@ -13,6 +13,11 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [trendingSearches, setTrendingSearches] = useState([]);
+  const [moviesDropdownOpen, setMoviesDropdownOpen] = useState(false);
+  const [tvShowsDropdownOpen, setTvShowsDropdownOpen] = useState(false);
+  const [moviesMenuOpen, setMoviesMenuOpen] = useState(false);
+  const [tvShowsMenuOpen, setTvShowsMenuOpen] = useState(false);
+  const [platformsMenuOpen, setPlatformsMenuOpen] = useState(false);
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -170,9 +175,215 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
 
         <div className="navbar-links">
           <Link to="/" className="nav-link">Home</Link>
-          <Link to="/tv-shows" className="nav-link">TV Shows</Link>
-          <Link to="/movies" className="nav-link">Movies</Link>
-          <Link to="/popular" className="nav-link">Popular</Link>
+          {/* TV Shows Dropdown */}
+          <div
+            className="nav-dropdown-wrapper"
+            onMouseEnter={() => setTvShowsDropdownOpen(true)}
+            onMouseLeave={() => setTvShowsDropdownOpen(false)}
+          >
+            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
+              TV Shows
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+
+            {tvShowsDropdownOpen && (
+              <div className="nav-mega-dropdown">
+                {/* Header */}
+                <div className="mega-dropdown-header">
+                  <div className="mega-dropdown-header-title-row">
+                    <img src="/logo/tv-outline.svg" alt="TV Shows" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1)' }} />
+                    <h3>TV Shows</h3>
+                  </div>
+                  <p className="mega-dropdown-header-desc">Discover captivating TV series from around the world. From binge-worthy dramas to hilarious comedies, find your next obsession.</p>
+                </div>
+
+                {/* Categories Grid */}
+                <div className="mega-dropdown-grid">
+                  <Link to="/tv-shows" className="mega-dropdown-card mega-dropdown-card-featured" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">✦</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Discover</div>
+                      <p>Browse our extensive collection of TV series across all genres.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/trending-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">♡</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Trending Now</div>
+                      <p>See what TV shows everyone is talking about right now.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/top-rated-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">☆</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Top Rated</div>
+                      <p>Explore the highest-rated TV series of all time.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/anime-series" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">◉</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Anime Series</div>
+                      <p>Dive into the world of Japanese animated series.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/popular-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">★</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Popular</div>
+                      <p>Discover the most popular TV shows worldwide.</p>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Streaming Platforms */}
+                <div className="mega-dropdown-platforms">
+                  <Link to="/netflix" className="mega-dropdown-platform" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <img src="/logo/brand-netflix.svg" alt="Netflix" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Netflix</span>
+                      <p>Stream hit TV series and original content.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/disney" className="mega-dropdown-platform" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <img src="/logo/brand-disney.svg" alt="Disney+" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Disney</span>
+                      <p>Explore Disney's magical TV series collection.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/apple-tv" className="mega-dropdown-platform" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <img src="/logo/appletv.svg" alt="Apple TV+" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Apple TV+</span>
+                      <p>Watch award-winning Apple Original series.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/prime-video" className="mega-dropdown-platform" onClick={() => setTvShowsDropdownOpen(false)}>
+                    <img src="/logo/amazon_prime_video.svg" alt="Amazon Prime" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Amazon Prime</span>
+                      <p>Enjoy exclusive Prime Video original series.</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Movies Dropdown */}
+          <div
+            className="nav-dropdown-wrapper"
+            onMouseEnter={() => setMoviesDropdownOpen(true)}
+            onMouseLeave={() => setMoviesDropdownOpen(false)}
+          >
+            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
+              Movies
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+
+            {moviesDropdownOpen && (
+              <div className="nav-mega-dropdown">
+                {/* Header */}
+                <div className="mega-dropdown-header">
+                  <div className="mega-dropdown-header-title-row">
+                    <img src="/logo/movie-outline.svg" alt="Movies" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1)' }} />
+                    <h3>Movies</h3>
+                  </div>
+                  <p className="mega-dropdown-header-desc">Explore a world of movies with our extensive film library. From iconic classics to today’s biggest hits, discover your next must-watch anytime.</p>
+                </div>
+                <div className="mega-dropdown-grid">
+                  <Link to="/discover" className="mega-dropdown-card mega-dropdown-card-featured" onClick={() => setMoviesDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">✦</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Discover</div>
+                      <p>Find fresh discoveries and exciting new titles in cinema today.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/trending" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">♡</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Trending Now</div>
+                      <p>Dive into the world of trending movies that have captured hearts.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/top-rated" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">☆</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Top Rated</div>
+                      <p>Explore the pinnacle of cinematic excellence with top-rated films.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/anime-movies" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">◉</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Anime Movies</div>
+                      <p>Embark on an epic journey with our handpicked anime movies.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/popular" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">★</div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Popular</div>
+                      <p>Discover what everyone is watching right now.</p>
+                    </div>
+                  </Link>
+                </div>
+
+                {/* Streaming Platforms */}
+                <div className="mega-dropdown-platforms">
+                  <Link to="/netflix" className="mega-dropdown-platform" onClick={() => setMoviesDropdownOpen(false)}>
+                    <img src="/logo/brand-netflix.svg" alt="Netflix" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Netflix</span>
+                      <p>Explore Netflix’s expansive library of blockbuster hits.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/disney" className="mega-dropdown-platform" onClick={() => setMoviesDropdownOpen(false)}>
+                    <img src="/logo/brand-disney.svg" alt="Disney+" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Disney</span>
+                      <p>Discover Disney’s iconic films and heartwarming stories.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/apple-tv" className="mega-dropdown-platform" onClick={() => setMoviesDropdownOpen(false)}>
+                    <img src="/logo/appletv.svg" alt="Apple TV+" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Apple TV+</span>
+                      <p>Discover Apple TV+'s lineup of critically acclaimed series...</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/prime-video" className="mega-dropdown-platform" onClick={() => setMoviesDropdownOpen(false)}>
+                    <img src="/logo/amazon_prime_video.svg" alt="Amazon Prime" className="platform-logo" />
+                    <div className="platform-info">
+                      <span className="platform-name">Amazon Prime</span>
+                      <p>Explore Amazon Prime's diverse offerings and exclusives...</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+
           <Link to="/my-list" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" />
@@ -359,16 +570,70 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
           </div>
           <div className="side-menu-links">
             <Link to="/" className="nav-link" onClick={closeMenu}>Home</Link>
-            <Link to="/tv-shows" className="nav-link" onClick={closeMenu}>TV Shows</Link>
-            <Link to="/movies" className="nav-link" onClick={closeMenu}>Movies</Link>
-            <Link to="/popular" className="nav-link" onClick={closeMenu}>Popular</Link>
+
+            {/* TV Shows Section with Collapsible Submenu */}
+            <div className="side-menu-section">
+              <span
+                className={`nav-link side-menu-section-title ${tvShowsMenuOpen ? 'open' : ''}`}
+                onClick={() => setTvShowsMenuOpen(!tvShowsMenuOpen)}
+              >
+                TV Shows
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="submenu-arrow">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+              {tvShowsMenuOpen && (
+                <div className="side-menu-submenu">
+                  <Link to="/tv-shows" className="nav-link submenu-link" onClick={closeMenu}>Discover</Link>
+                  <Link to="/trending-tv" className="nav-link submenu-link" onClick={closeMenu}>Trending Now</Link>
+                  <Link to="/top-rated-tv" className="nav-link submenu-link" onClick={closeMenu}>Top Rated</Link>
+                  <Link to="/anime-series" className="nav-link submenu-link" onClick={closeMenu}>Anime Series</Link>
+                  <Link to="/popular-tv" className="nav-link submenu-link" onClick={closeMenu}>Popular</Link>
+
+                  {/* Streaming Platforms */}
+                  <Link to="/netflix" className="nav-link submenu-link" onClick={closeMenu}>Netflix</Link>
+                  <Link to="/disney" className="nav-link submenu-link" onClick={closeMenu}>Disney+</Link>
+                  <Link to="/apple-tv" className="nav-link submenu-link" onClick={closeMenu}>Apple TV+</Link>
+                  <Link to="/prime-video" className="nav-link submenu-link" onClick={closeMenu}>Amazon Prime</Link>
+                </div>
+              )}
+            </div>
+
+            {/* Movies Section with Collapsible Submenu */}
+            <div className="side-menu-section">
+              <span
+                className={`nav-link side-menu-section-title ${moviesMenuOpen ? 'open' : ''}`}
+                onClick={() => setMoviesMenuOpen(!moviesMenuOpen)}
+              >
+                Movies
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="submenu-arrow">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+              {moviesMenuOpen && (
+                <div className="side-menu-submenu">
+                  <Link to="/discover" className="nav-link submenu-link" onClick={closeMenu}>Discover</Link>
+                  <Link to="/trending" className="nav-link submenu-link" onClick={closeMenu}>Trending Now</Link>
+                  <Link to="/top-rated" className="nav-link submenu-link" onClick={closeMenu}>Top Rated</Link>
+                  <Link to="/anime-movies" className="nav-link submenu-link" onClick={closeMenu}>Anime Movies</Link>
+                  <Link to="/popular" className="nav-link submenu-link" onClick={closeMenu}>Popular</Link>
+
+                  {/* Streaming Platforms */}
+                  <Link to="/netflix" className="nav-link submenu-link" onClick={closeMenu}>Netflix</Link>
+                  <Link to="/disney" className="nav-link submenu-link" onClick={closeMenu}>Disney+</Link>
+                  <Link to="/apple-tv" className="nav-link submenu-link" onClick={closeMenu}>Apple TV+</Link>
+                  <Link to="/prime-video" className="nav-link submenu-link" onClick={closeMenu}>Amazon Prime</Link>
+                </div>
+              )}
+            </div>
+
             <Link to="/my-list" className="nav-link" onClick={closeMenu}>Watchlist</Link>
           </div>
         </div>
 
         {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
       </div>
-    </nav>
+    </nav >
   );
 };
 

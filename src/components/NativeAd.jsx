@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react';
 const NativeAd = () => {
     const adContainerRef = useRef(null);
     const scriptLoaded = useRef(false);
+    return null;
 
     useEffect(() => {
         // Only load the script once

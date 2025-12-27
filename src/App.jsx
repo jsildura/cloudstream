@@ -2,13 +2,20 @@ import { useState } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
-import Movies from './pages/Movies';
+import TopRated from './pages/TopRated';
 import TVShows from './pages/TVShows';
 import Popular from './pages/Popular';
+import Discover from './pages/Discover';
+import TrendingNow from './pages/TrendingNow';
+import AnimeMovies from './pages/AnimeMovies';
+import TrendingTV from './pages/TrendingTV';
+import TopRatedTV from './pages/TopRatedTV';
+import AnimeSeries from './pages/AnimeSeries';
+import PopularTV from './pages/PopularTV';
 import Watch from './pages/Watch';
 import About from './pages/About';
 import Disclaimer from './pages/Disclaimer';
-import PrivacyPolicy from './pages/PrivacyPolicy';
+import DataPolicy from './pages/DataPolicy';
 import TermsOfService from './pages/TermsOfService';
 import Contact from './pages/Contact';
 import CollectionDetails from './pages/CollectionDetails';
@@ -24,6 +31,7 @@ import Modal from './components/Modal';
 import { useTMDB } from './hooks/useTMDB';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import ScrollToTopButton from './components/ScrollToTopButton';
 import AdblockModal from './components/AdblockModal';
 import BotProtection from './components/BotProtection';
 // VisitorTracker disabled
@@ -96,6 +104,7 @@ function App() {
         <BotProtection />
         <AdblockModal />
         <ScrollToTop />
+        <ScrollToTopButton />
         <Toast />
         <Navbar
           onSearch={handleSearch}
@@ -108,13 +117,20 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/my-list" element={<MyList />} />
-            <Route path="/movies" element={<Movies />} />
+            <Route path="/top-rated" element={<TopRated />} />
             <Route path="/tv-shows" element={<TVShows />} />
             <Route path="/popular" element={<Popular />} />
+            <Route path="/discover" element={<Discover />} />
+            <Route path="/trending" element={<TrendingNow />} />
+            <Route path="/anime-movies" element={<AnimeMovies />} />
+            <Route path="/trending-tv" element={<TrendingTV />} />
+            <Route path="/top-rated-tv" element={<TopRatedTV />} />
+            <Route path="/anime-series" element={<AnimeSeries />} />
+            <Route path="/popular-tv" element={<PopularTV />} />
             <Route path="/watch" element={<Watch />} />
             <Route path="/about" element={<About />} />
             <Route path="/disclaimer" element={<Disclaimer />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/privacy" element={<DataPolicy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/collection/:id" element={<CollectionDetails />} />

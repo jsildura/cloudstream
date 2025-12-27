@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
+import FilterPanel from '../components/FilterPanel';
 import { useTMDB } from '../hooks/useTMDB';
 import './PrimeVideo.css';
 
@@ -22,6 +23,7 @@ const PrimeVideo = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [showFilters, setShowFilters] = useState(false);
+    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
     const [filters, setFilters] = useState({
         sort_by: searchParams.get('sort_by') || 'popularity.desc',
         year: searchParams.get('year') ? parseInt(searchParams.get('year')) : undefined,
@@ -245,6 +247,23 @@ const PrimeVideo = () => {
         navigate(-1);
     };
 
+    // Handle filter panel apply
+    const handleApplyFilters = (newFilters) => {
+        const newFilterState = { sort_by: 'popularity.desc' };
+        if (newFilters.genres && newFilters.genres.length > 0) newFilterState.with_genres = newFilters.genres.join(',');
+        if (newFilters.year) newFilterState.year = parseInt(newFilters.year);
+        if (newFilters.rating) newFilterState['vote_average.gte'] = parseFloat(newFilters.rating);
+        setFilters(newFilterState);
+    };
+
+    const getActiveFilterCount = () => {
+        let count = 0;
+        if (filters.with_genres) count++;
+        if (filters.year) count++;
+        if (filters['vote_average.gte']) count++;
+        return count;
+    };
+
     if (loading) {
         return (
             <div className="primevideo-page">
@@ -292,64 +311,36 @@ const PrimeVideo = () => {
                 <p className="primevideo-page-subtitle">Popular movies and TV shows available on Prime Video</p>
             </div>
 
-            {showFilters && (
-                <div className="filters-section">
-                    <div className="filter-row">
-                        <div className="filter-group">
-                            <label>Sort By:</label>
-                            <select value={filters.sort_by} onChange={(e) => handleFilterChange({ sort_by: e.target.value })}>
-                                <option value="popularity.desc">Popularity Descending</option>
-                                <option value="popularity.asc">Popularity Ascending</option>
-                                <option value="vote_average.desc">Rating Descending</option>
-                                <option value="vote_average.asc">Rating Ascending</option>
-                                <option value="primary_release_date.desc">Release Date Descending</option>
-                                <option value="primary_release_date.asc">Release Date Ascending</option>
-                                <option value="title.asc">Title A-Z</option>
-                                <option value="title.desc">Title Z-A</option>
-                            </select>
-                        </div>
-                        <div className="filter-group">
-                            <label>Release Year:</label>
-                            <select value={filters.year || ''} onChange={(e) => handleFilterChange({ year: e.target.value ? parseInt(e.target.value) : undefined })}>
-                                <option value="">All Years</option>
-                                {Array.from({ length: new Date().getFullYear() - 1990 + 1 }, (_, i) => new Date().getFullYear() - i).map(year => (<option key={year} value={year}>{year}</option>))}
-                            </select>
-                        </div>
-                        <div className="filter-group">
-                            <label>Genre:</label>
-                            <select value={filters.with_genres || ''} onChange={(e) => handleFilterChange({ with_genres: e.target.value || undefined })}>
-                                <option value="">All Genres</option>
-                                {Array.from(movieGenres.entries()).map(([id, name]) => (<option key={id} value={id}>{name}</option>))}
-                            </select>
-                        </div>
-                        <div className="filter-group">
-                            <label>Minimum Rating:</label>
-                            <select value={filters['vote_average.gte'] || ''} onChange={(e) => handleFilterChange({ 'vote_average.gte': e.target.value ? parseFloat(e.target.value) : undefined })}>
-                                <option value="">Any Rating</option>
-                                <option value="5">5+ stars</option>
-                                <option value="6">6+ stars</option>
-                                <option value="7">7+ stars</option>
-                                <option value="8">8+ stars</option>
-                                <option value="9">9+ stars</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <FilterPanel
+                isOpen={isFilterPanelOpen}
+                onClose={() => setIsFilterPanelOpen(false)}
+                filters={{
+                    genres: filters.with_genres ? filters.with_genres.split(',').map(Number) : [],
+                    rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
+                    year: filters.year ? String(filters.year) : ''
+                }}
+                onApply={handleApplyFilters}
+                mediaType="movie"
+            />
 
             <section className="primevideo-content-section">
                 <div className="primevideo-section-header">
                     <div className="primevideo-section-accent"></div>
                     <h2 className="primevideo-section-title">Movies</h2>
                     <span className="primevideo-section-count">{filteredMovies.length} titles</span>
-                    <button className="select-filter-btn" onClick={() => setShowFilters(!showFilters)}>
+                    <button className="select-filter-btn" onClick={() => setIsFilterPanelOpen(true)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
                             <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
                             <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
                             <line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line>
                         </svg>
-                        {showFilters ? 'Hide Filters' : 'Select Filter'}
+                        Filters
+                        {getActiveFilterCount() > 0 && (
+                            <span style={{ background: 'rgba(255, 255, 255, 0.9)', color: '#000', borderRadius: '10px', padding: '2px 8px', fontSize: '0.75rem', fontWeight: '600', marginLeft: '4px' }}>
+                                {getActiveFilterCount()}
+                            </span>
+                        )}
                     </button>
                 </div>
                 <div className="primevideo-grid">

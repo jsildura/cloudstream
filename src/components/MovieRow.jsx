@@ -1,8 +1,9 @@
 import React from 'react';
 import MovieCard from './MovieCard';
 
-const MovieRow = ({ title, items, onItemClick, headerAction }) => {
-  const displayItems = items.slice(0, 24);
+const MovieRow = ({ title, items, onItemClick, headerAction, maxItems }) => {
+  // Only apply slice if maxItems is explicitly provided
+  const displayItems = maxItems ? items.slice(0, maxItems) : items;
 
   if (displayItems.length === 0) {
     return null;

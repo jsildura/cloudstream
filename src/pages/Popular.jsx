@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
+import FilterPanel from '../components/FilterPanel';
 import { useTMDB } from '../hooks/useTMDB';
 
 const Popular = () => {
@@ -11,7 +12,11 @@ const Popular = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMorePages, setHasMorePages] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Initialize filters from URL or defaults
@@ -78,10 +83,14 @@ const Popular = () => {
     return url.toString();
   };
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (page = 1, append = false) => {
     try {
-      setLoading(true);
-      const url = buildUrl('/movie/popular', filters);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const url = buildUrl('/movie/popular', { ...filters, page });
       console.log('Fetching popular movies from:', url);
 
       const res = await fetch(url);
@@ -92,11 +101,33 @@ const Popular = () => {
       }
 
       const data = await res.json();
-      setMovies(data.results || []);
+      const newMovies = data.results || [];
+
+      if (append) {
+        // Filter out duplicates by movie ID
+        setMovies(prev => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const uniqueNewMovies = newMovies.filter(m => !existingIds.has(m.id));
+          return [...prev, ...uniqueNewMovies];
+        });
+      } else {
+        setMovies(newMovies);
+      }
+
+      // Check if there are more pages
+      setHasMorePages(page < (data.total_pages || 1));
+      setCurrentPage(page);
     } catch (error) {
       console.error("Failed to fetch popular movies:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMorePages) {
+      fetchMovies(currentPage + 1, true);
     }
   };
 
@@ -136,6 +167,43 @@ const Popular = () => {
       language: 'en-US',
       page: 1
     });
+    setCurrentPage(1);
+    setHasMorePages(true);
+  };
+
+  // Handle filter panel apply
+  const handleApplyFilters = (newFilters) => {
+    const apiFilters = {
+      include_adult: false,
+      include_video: false,
+      language: 'en-US',
+      page: 1
+    };
+
+    if (newFilters.genres && newFilters.genres.length > 0) {
+      apiFilters.with_genres = newFilters.genres.join(',');
+    }
+
+    if (newFilters.year) {
+      apiFilters.year = parseInt(newFilters.year);
+    }
+
+    if (newFilters.rating) {
+      apiFilters['vote_average.gte'] = parseFloat(newFilters.rating);
+    }
+
+    setFilters(apiFilters);
+    setCurrentPage(1);
+    setHasMorePages(true);
+  };
+
+  // Count active filters
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.with_genres) count++;
+    if (filters.year) count++;
+    if (filters['vote_average.gte']) count++;
+    return count;
   };
 
   if (loading) {
@@ -154,93 +222,48 @@ const Popular = () => {
         <BannerSlider movies={topMovies} onItemClick={handleItemClick} />
       )}
 
-      <div className="page-header" style={{ display: 'none' }}>
-        <h1>Popular Movies</h1>
-        <p>Discover the most popular movies right now</p>
-        <button
-          className="clear-filters-btn"
-          onClick={clearFilters}
-          style={{
-            background: 'var(--netflix-red)',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            marginTop: '10px'
-          }}
-        >
-          Clear Filters
-        </button>
+      {/* Page Title and Description */}
+      <div className="page-title-section" style={{
+        padding: '40px 4% 20px',
+        background: 'transparent'
+      }}>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: '700',
+          color: '#fff',
+          margin: '0 0 12px 0'
+        }}>Popular Movies</h1>
+        <p style={{
+          fontSize: '1rem',
+          color: 'rgba(255, 255, 255, 0.7)',
+          margin: 0,
+          width: '100%',
+          lineHeight: '1.5'
+        }}>Discover what everyone is watching right now. These are the most popular movies trending across the globe.</p>
       </div>
 
-      {showFilters && (
-        <div className="filters-section">
-          <div className="filter-row">
-            <div className="filter-group">
-              <label>Release Year:</label>
-              <select
-                value={filters.year || ''}
-                onChange={(e) => handleFilterChange({
-                  year: e.target.value ? parseInt(e.target.value) : undefined
-                })}
-              >
-                <option value="">All Years</option>
-                {Array.from({ length: new Date().getFullYear() - 1930 + 1 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Genre:</label>
-              <select
-                value={filters.with_genres || ''}
-                onChange={(e) => handleFilterChange({
-                  with_genres: e.target.value || undefined
-                })}
-              >
-                <option value="">All Genres</option>
-                {Array.from(movieGenres.entries()).map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label>Minimum Rating:</label>
-              <select
-                value={filters['vote_average.gte'] || ''}
-                onChange={(e) => handleFilterChange({
-                  'vote_average.gte': e.target.value ? parseFloat(e.target.value) : undefined
-                })}
-              >
-                <option value="">Any Rating</option>
-                <option value="1">1 star</option>
-                <option value="2">2 stars</option>
-                <option value="3">3 stars</option>
-                <option value="4">4 stars</option>
-                <option value="5">5 stars</option>
-                <option value="6">6 stars</option>
-                <option value="7">7 stars</option>
-                <option value="8">8 stars</option>
-                <option value="9">9 stars</option>
-                <option value="10">10 stars</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Filter Panel */}
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        filters={{
+          genres: filters.with_genres ? filters.with_genres.split(',').map(Number) : [],
+          rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
+          year: filters.year ? String(filters.year) : ''
+        }}
+        onApply={handleApplyFilters}
+        mediaType="movie"
+      />
 
       <div className="content-rows">
         <MovieRow
-          title={`Popular Movies (${movies.length})`}
+          title={`Movies (${movies.length})`}
           items={movies}
           onItemClick={handleItemClick}
           headerAction={
             <button
               className="select-filter-btn"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => setIsFilterPanelOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -266,11 +289,50 @@ const Popular = () => {
                 <line x1="9" y1="8" x2="15" y2="8"></line>
                 <line x1="17" y1="16" x2="23" y2="16"></line>
               </svg>
-              {showFilters ? 'Hide Filters' : 'Select Filter'}
+              Filters
+              {getActiveFilterCount() > 0 && (
+                <span style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#000',
+                  borderRadius: '10px',
+                  padding: '2px 8px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  marginLeft: '4px'
+                }}>
+                  {getActiveFilterCount()}
+                </span>
+              )}
             </button>
           }
         />
       </div>
+
+      {/* Load More Button */}
+      {hasMorePages && movies.length > 0 && (
+        <div className="load-more-container">
+          <button
+            className="load-more-btn"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? (
+              <>
+                <span className="load-more-spinner"></span>
+                Loading...
+              </>
+            ) : (
+              <>
+                Load More Movies
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </>
+            )}
+          </button>
+          <span className="load-more-count">Showing {movies.length} movies</span>
+        </div>
+      )}
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />

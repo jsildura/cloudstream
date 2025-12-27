@@ -1441,7 +1441,7 @@
   background: -o-linear-gradient(315deg, var(--netflix-dark-gray), var(--netflix-medium-gray));
   background: linear-gradient(135deg, var(--netflix-dark-gray), var(--netflix-medium-gray));
   border-radius: 12px;
-  margin: 20px 4%;
+  margin: 20px 0%;
   -webkit-box-shadow: var(--netflix-card-shadow);
   box-shadow: var(--netflix-card-shadow);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2594,6 +2594,11 @@
 .filters-section {
   position: relative !important;
   z-index: 100 !important;
+  max-width: 1400px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .filter-group {
@@ -2696,7 +2701,7 @@ select.filter-dropdown {
   }
 
   .filters-section {
-    margin: 20px 2%;
+    margin: 20px 0%;
     padding: 15px 3%;
   }
 
@@ -4409,7 +4414,7 @@ select.filter-dropdown {
     /* 20px × 3 */
     border-radius: 36px;
     /* 12px × 3 */
-    margin: 60px 4%;
+    margin: 60px 0%;
     /* 20px × 3 */
     border-width: 3px;
     /* 1px × 3 */

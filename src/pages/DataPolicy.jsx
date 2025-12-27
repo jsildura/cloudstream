@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/LegalPages.css';
 
-const PrivacyPolicy = () => {
+const DataPolicy = () => {
     return (
         <div className="legal-page">
             <div className="legal-container">
@@ -91,4 +91,4 @@ const PrivacyPolicy = () => {
     );
 };
 
-export default PrivacyPolicy;
+export default DataPolicy;

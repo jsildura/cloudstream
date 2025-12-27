@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
+import FilterPanel from '../components/FilterPanel';
 import { useTMDB } from '../hooks/useTMDB';
 
 const TVShows = () => {
@@ -12,7 +13,11 @@ const TVShows = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMorePages, setHasMorePages] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Initialize filters from URL or defaults
@@ -72,15 +77,40 @@ const TVShows = () => {
     setSearchParams(params);
   }, [filters, setSearchParams]);
 
-  const fetchTVShows = async () => {
+  const fetchTVShows = async (page = 1, append = false) => {
     try {
-      setLoading(true);
-      const results = await fetchDiscoverTV(filters);
-      setTvShows(results);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      const results = await fetchDiscoverTV({ ...filters, page });
+
+      if (append) {
+        // Filter out duplicates by ID
+        setTvShows(prev => {
+          const existingIds = new Set(prev.map(s => s.id));
+          const uniqueNew = results.filter(s => !existingIds.has(s.id));
+          return [...prev, ...uniqueNew];
+        });
+      } else {
+        setTvShows(results);
+      }
+
+      // Assume more pages if we got a full page of results
+      setHasMorePages(results.length >= 20);
+      setCurrentPage(page);
     } catch (error) {
       console.error("Failed to fetch TV shows:", error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMorePages) {
+      fetchTVShows(currentPage + 1, true);
     }
   };
 
@@ -121,6 +151,48 @@ const TVShows = () => {
       language: 'en-US',
       page: 1
     });
+    setCurrentPage(1);
+    setHasMorePages(true);
+  };
+
+  // Handle filter panel apply
+  const handleApplyFilters = (newFilters) => {
+    const apiFilters = {
+      sort_by: newFilters.sort_by || 'popularity.desc',
+      language: 'en-US',
+      include_adult: false,
+      include_null_first_air_dates: false,
+      page: 1
+    };
+
+    // Convert multi-select genres to comma-separated string
+    if (newFilters.genres && newFilters.genres.length > 0) {
+      apiFilters.with_genres = newFilters.genres.join(',');
+    }
+
+    // Year filter
+    if (newFilters.year) {
+      apiFilters.first_air_date_year = parseInt(newFilters.year);
+    }
+
+    // Rating filter
+    if (newFilters.rating) {
+      apiFilters['vote_average.gte'] = parseFloat(newFilters.rating);
+    }
+
+    setFilters(apiFilters);
+    setCurrentPage(1);
+    setHasMorePages(true);
+  };
+
+  // Count active filters
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.with_genres) count++;
+    if (filters.first_air_date_year) count++;
+    if (filters['vote_average.gte']) count++;
+    if (filters.with_status) count++;
+    return count;
   };
 
   if (loading) {
@@ -159,81 +231,19 @@ const TVShows = () => {
         </button>
       </div>
 
-      {showFilters && (
-
-        <div className="filters-section">
-          <div className="filter-row">
-            <div className="filter-group">
-              <label htmlFor="sort-by">Sort By:</label>
-              <select
-                id="sort-by"
-                value={filters.sort_by}
-                onChange={(e) => handleFilterChange({ sort_by: e.target.value })}
-              >
-                <option value="popularity.asc">Popularity Ascending</option>
-                <option value="popularity.desc">Popularity Descending</option>
-                <option value="first_air_date.asc">First Air Date Ascending</option>
-                <option value="first_air_date.desc">First Air Date Descending</option>
-                <option value="vote_average.asc">Rating Ascending</option>
-                <option value="vote_average.desc">Rating Descending</option>
-                <option value="vote_count.asc">Vote Count Ascending</option>
-                <option value="vote_count.desc">Vote Count Descending</option>
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="first-air-year">First Air Year:</label>
-              <select
-                id="first-air-year"
-                value={filters.first_air_date_year || ''}
-                onChange={(e) => handleFilterChange({
-                  first_air_date_year: e.target.value ? parseInt(e.target.value) : undefined
-                })}
-              >
-                <option value="">All Years</option>
-                {Array.from({ length: new Date().getFullYear() - 1930 + 1 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="genre">Genre:</label>
-              <select
-                id="genre"
-                value={filters.with_genres || ''}
-                onChange={(e) => handleFilterChange({
-                  with_genres: e.target.value || undefined
-                })}
-              >
-                <option value="">All Genres</option>
-                {Array.from(tvGenres.entries()).map(([id, name]) => (
-                  <option key={id} value={id}>{name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="filter-group">
-              <label htmlFor="status">Status:</label>
-              <select
-                id="status"
-                value={filters.with_status || ''}
-                onChange={(e) => handleFilterChange({
-                  with_status: e.target.value || undefined
-                })}
-              >
-                <option value="">All Status</option>
-                <option value="0">Returning Series</option>
-                <option value="1">Planned</option>
-                <option value="2">In Production</option>
-                <option value="3">Ended</option>
-                <option value="4">Cancelled</option>
-                <option value="5">Pilot</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Filter Panel */}
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        filters={{
+          genres: filters.with_genres ? filters.with_genres.split(',').map(Number) : [],
+          rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
+          sort_by: filters.sort_by,
+          year: filters.first_air_date_year ? String(filters.first_air_date_year) : ''
+        }}
+        onApply={handleApplyFilters}
+        mediaType="tv"
+      />
 
       <div className="content-rows">
         <MovieRow
@@ -243,7 +253,7 @@ const TVShows = () => {
           headerAction={
             <button
               className="select-filter-btn"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => setIsFilterPanelOpen(true)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -269,11 +279,50 @@ const TVShows = () => {
                 <line x1="9" y1="8" x2="15" y2="8"></line>
                 <line x1="17" y1="16" x2="23" y2="16"></line>
               </svg>
-              {showFilters ? 'Hide Filters' : 'Select Filter'}
+              Filters
+              {getActiveFilterCount() > 0 && (
+                <span style={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  color: '#000',
+                  borderRadius: '10px',
+                  padding: '2px 8px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  marginLeft: '4px'
+                }}>
+                  {getActiveFilterCount()}
+                </span>
+              )}
             </button>
           }
         />
       </div>
+
+      {/* Load More Button */}
+      {hasMorePages && tvShows.length > 0 && (
+        <div className="load-more-container">
+          <button
+            className="load-more-btn"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? (
+              <>
+                <span className="load-more-spinner"></span>
+                Loading...
+              </>
+            ) : (
+              <>
+                Load More TV Shows
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m6 9 6 6 6-6"></path>
+                </svg>
+              </>
+            )}
+          </button>
+          <span className="load-more-count">Showing {tvShows.length} TV shows</span>
+        </div>
+      )}
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />

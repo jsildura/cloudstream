@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import DisableDevtool from 'disable-devtool';
 import './BotProtection.css';
 
 const BotProtection = () => {
@@ -108,45 +107,55 @@ const BotProtection = () => {
 
         runHeadlessDetection();
 
-        // Initialize disable-devtool library (only once, skip on mobile/TV)
-        if (!skipDevToolsDetection && !disableDevtoolInitialized.current) {
+        // Initialize disable-devtool library dynamically (only once, skip on mobile/TV)
+        const initDisableDevtool = async () => {
+            if (skipDevToolsDetection || disableDevtoolInitialized.current) return;
             disableDevtoolInitialized.current = true;
 
-            DisableDevtool({
-                // Callback when devtools is detected
-                ondevtoolopen: (type, next) => {
-                    if (!detectedRef.current) {
-                        detectedRef.current = true;
-                        setAccessDenied(true);
-                        setDenialReason('Developer tools detected');
-                    }
-                    // Don't call next() to avoid default redirect behavior
-                },
-                // Callback when devtools is closed (optional, for future use)
-                ondevtoolclose: () => {
-                    // Could potentially reset state here if desired
-                },
-                // Configuration options
-                disableMenu: true,           // Disable right-click context menu
-                clearLog: true,              // Clear console logs periodically
-                disableSelect: false,        // Allow text selection
-                disableCopy: false,          // Allow copying
-                disableCut: false,           // Allow cutting
-                disablePaste: false,         // Allow pasting
-                interval: 200,               // Check interval in ms
-                // Use all detection methods for maximum coverage
-                detectors: [
-                    0,  // RegToString
-                    1,  // DefineId
-                    // 2,  // Size - disabled as per library recommendation (can cause false positives)
-                    3,  // DateToString
-                    4,  // FuncToString
-                    5,  // Debugger
-                    6,  // Performance
-                    7,  // DebugLib (eruda, vconsole)
-                ],
-            });
-        }
+            try {
+                const { default: DisableDevtool } = await import('disable-devtool');
+
+                DisableDevtool({
+                    // Callback when devtools is detected
+                    ondevtoolopen: (type, next) => {
+                        if (!detectedRef.current) {
+                            detectedRef.current = true;
+                            setAccessDenied(true);
+                            setDenialReason('Developer tools detected');
+                        }
+                        // Don't call next() to avoid default redirect behavior
+                    },
+                    // Callback when devtools is closed (optional, for future use)
+                    ondevtoolclose: () => {
+                        // Could potentially reset state here if desired
+                    },
+                    // Configuration options
+                    disableMenu: true,           // Disable right-click context menu
+                    clearLog: true,              // Clear console logs periodically
+                    disableSelect: false,        // Allow text selection
+                    disableCopy: false,          // Allow copying
+                    disableCut: false,           // Allow cutting
+                    disablePaste: false,         // Allow pasting
+                    interval: 200,               // Check interval in ms
+                    // Use all detection methods for maximum coverage
+                    detectors: [
+                        0,  // RegToString
+                        1,  // DefineId
+                        // 2,  // Size - disabled as per library recommendation (can cause false positives)
+                        3,  // DateToString
+                        4,  // FuncToString
+                        5,  // Debugger
+                        6,  // Performance
+                        7,  // DebugLib (eruda, vconsole)
+                    ],
+                });
+            } catch (error) {
+                // Library blocked by adblocker or failed to load - silently ignore
+                console.warn('DisableDevtool could not be loaded:', error.message);
+            }
+        };
+
+        initDisableDevtool();
 
         // No cleanup needed - disable-devtool manages its own lifecycle
         return () => { };
