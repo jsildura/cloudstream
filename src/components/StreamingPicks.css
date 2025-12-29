@@ -1,0 +1,691 @@
+/* StreamingPicks - Unified styles for streaming platform sections */
+/* Replaces: NetflixOriginals.css, DisneyPlusPicks.css, PrimeVideoPicks.css, AppleTVPicks.css, HBOPicks.css, ViuPicks.css */
+
+/* Base Section Styling - applies to all providers */
+.netflix-originals,
+.disneyplus-section,
+.prime-section,
+.appletv-section,
+.hbo-section,
+.viu-section {
+    padding: 24px 0;
+    margin-bottom: 20px;
+}
+
+/* Header with branding */
+.netflix-originals-header,
+.disneyplus-section-header,
+.prime-section-header,
+.appletv-section-header,
+.hbo-section-header,
+.viu-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.netflix-originals-header-left,
+.disneyplus-section-header-left,
+.prime-section-header-left,
+.appletv-section-header-left,
+.hbo-section-header-left,
+.viu-section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.netflix-originals-header-accent,
+.disneyplus-section-header-accent,
+.prime-section-header-accent,
+.appletv-section-header-accent,
+.hbo-section-header-accent,
+.viu-section-header-accent {
+    height: 24px;
+    width: 4px;
+    border-radius: 50px;
+}
+
+.netflix-originals-title,
+.disneyplus-section-title,
+.prime-section-title,
+.appletv-section-title,
+.hbo-section-title,
+.viu-section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.netflix-originals-view-all,
+.disneyplus-section-view-all,
+.prime-section-view-all,
+.appletv-section-view-all,
+.hbo-section-view-all,
+.viu-section-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.netflix-originals-view-all:hover,
+.disneyplus-section-view-all:hover,
+.prime-section-view-all:hover,
+.appletv-section-view-all:hover,
+.hbo-section-view-all:hover,
+.viu-section-view-all:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.netflix-originals-view-all svg,
+.disneyplus-section-view-all svg,
+.prime-section-view-all svg,
+.appletv-section-view-all svg,
+.hbo-section-view-all svg,
+.viu-section-view-all svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Genre Filters */
+.streaming-genre-filters {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.streaming-genre-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.streaming-genre-btn:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.streaming-genre-btn.active {
+    color: #fff;
+    border-bottom-color: var(--accent-color, #e50914);
+}
+
+.streaming-genre-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.streaming-genre-btn .genre-label {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    .streaming-genre-btn .genre-label {
+        display: block;
+    }
+}
+
+/* Mobile optimization */
+@media (max-width: 639px) {
+
+    .netflix-originals-header,
+    .disneyplus-section-header,
+    .prime-section-header,
+    .appletv-section-header,
+    .hbo-section-header,
+    .viu-section-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .netflix-originals-header-left,
+    .disneyplus-section-header-left,
+    .prime-section-header-left,
+    .appletv-section-header-left,
+    .hbo-section-header-left,
+    .viu-section-header-left {
+        gap: 6px;
+    }
+
+    .netflix-originals-title,
+    .disneyplus-section-title,
+    .prime-section-title,
+    .appletv-section-title,
+    .hbo-section-title,
+    .viu-section-title {
+        font-size: 1rem;
+    }
+
+    .netflix-originals-header-accent,
+    .disneyplus-section-header-accent,
+    .prime-section-header-accent,
+    .appletv-section-header-accent,
+    .hbo-section-header-accent,
+    .viu-section-header-accent {
+        height: 14px;
+        width: 2px;
+    }
+
+    .streaming-genre-filters {
+        display: flex;
+    }
+
+    .streaming-genre-btn {
+        padding: 4px 8px;
+        height: 28px;
+    }
+
+    .streaming-genre-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .netflix-originals-view-all,
+    .disneyplus-section-view-all,
+    .prime-section-view-all,
+    .appletv-section-view-all,
+    .hbo-section-view-all,
+    .viu-section-view-all {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+        height: 28px;
+        gap: 4px;
+    }
+
+    .netflix-originals-view-all svg,
+    .disneyplus-section-view-all svg,
+    .prime-section-view-all svg,
+    .appletv-section-view-all svg,
+    .hbo-section-view-all svg,
+    .viu-section-view-all svg {
+        width: 12px;
+        height: 12px;
+    }
+}
+
+/* Carousel */
+.streaming-carousel {
+    position: relative;
+    width: 100%;
+}
+
+.streaming-carousel-viewport {
+    overflow: hidden;
+}
+
+.streaming-carousel-track {
+    display: flex;
+    margin-left: -8px;
+    transition: transform 0.33s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (min-width: 768px) {
+    .streaming-carousel-track {
+        margin-left: -16px;
+    }
+}
+
+.streaming-carousel-slide {
+    min-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 8px;
+    /* Mobile: 3 poster cards per view */
+    flex-basis: 33.333333%;
+}
+
+@media (min-width: 640px) {
+    .streaming-carousel-slide {
+        /* Small tablet: 4 items per view */
+        flex-basis: 25%;
+    }
+}
+
+@media (min-width: 768px) {
+    .streaming-carousel-slide {
+        /* Tablet: 4 items per view */
+        flex-basis: 25%;
+        padding-left: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .streaming-carousel-slide {
+        /* Desktop: 5 items per view */
+        flex-basis: 20%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .streaming-carousel-slide {
+        /* Desktop XL: 6 items per view */
+        flex-basis: 16.666667%;
+    }
+}
+
+/* Card */
+.streaming-card {
+    position: relative;
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.streaming-card:hover .streaming-card-image {
+    transform: scale(1.05);
+}
+
+.streaming-card:focus {
+    outline: 2px solid var(--accent-color, #e50914);
+    outline-offset: 2px;
+}
+
+.streaming-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+    z-index: 10;
+}
+
+.streaming-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.streaming-card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 12px;
+    z-index: 20;
+}
+
+.streaming-card-title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* Navigation buttons */
+.streaming-carousel-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    position: absolute;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    z-index: 10;
+}
+
+.streaming-carousel-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
+
+.streaming-carousel-btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+.streaming-carousel-btn svg {
+    pointer-events: none;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.streaming-carousel-prev {
+    left: 8px;
+}
+
+.streaming-carousel-next {
+    right: 8px;
+}
+
+/* Loading State */
+.streaming-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 180px;
+}
+
+.streaming-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--accent-color, #e50914);
+    border-radius: 50%;
+    animation: streaming-spin 1s linear infinite;
+}
+
+@keyframes streaming-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
+@media (min-width: 3840px) {
+
+    .netflix-originals,
+    .disneyplus-section,
+    .prime-section,
+    .appletv-section,
+    .hbo-section,
+    .viu-section {
+        padding: 96px 0;
+        margin-bottom: 80px;
+    }
+
+    .netflix-originals-header,
+    .disneyplus-section-header,
+    .prime-section-header,
+    .appletv-section-header,
+    .hbo-section-header,
+    .viu-section-header {
+        margin-bottom: 64px;
+    }
+
+    .netflix-originals-header-left,
+    .disneyplus-section-header-left,
+    .prime-section-header-left,
+    .appletv-section-header-left,
+    .hbo-section-header-left,
+    .viu-section-header-left {
+        gap: 48px;
+    }
+
+    .netflix-originals-header-accent,
+    .disneyplus-section-header-accent,
+    .prime-section-header-accent,
+    .appletv-section-header-accent,
+    .hbo-section-header-accent,
+    .viu-section-header-accent {
+        height: 96px;
+        width: 16px;
+    }
+
+    .netflix-originals-title,
+    .disneyplus-section-title,
+    .prime-section-title,
+    .appletv-section-title,
+    .hbo-section-title,
+    .viu-section-title {
+        font-size: 6rem;
+    }
+
+    .netflix-originals-view-all,
+    .disneyplus-section-view-all,
+    .prime-section-view-all,
+    .appletv-section-view-all,
+    .hbo-section-view-all,
+    .viu-section-view-all {
+        gap: 24px;
+        font-size: 3.5rem;
+        padding: 32px 64px;
+        height: 160px;
+        border-bottom-width: 8px;
+    }
+
+    .netflix-originals-view-all svg,
+    .disneyplus-section-view-all svg,
+    .prime-section-view-all svg,
+    .appletv-section-view-all svg,
+    .hbo-section-view-all svg,
+    .viu-section-view-all svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .streaming-carousel-track {
+        margin-left: -64px;
+    }
+
+    .streaming-carousel-slide {
+        padding-left: 64px;
+    }
+
+    .streaming-card {
+        border-radius: 32px;
+    }
+
+    .streaming-card-info {
+        padding: 48px;
+    }
+
+    .streaming-card-title {
+        font-size: 3.5rem;
+    }
+
+    .streaming-carousel-btn {
+        height: 128px;
+        width: 128px;
+        font-size: 56px;
+        gap: 32px;
+    }
+
+    .streaming-carousel-btn svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .streaming-carousel-prev {
+        left: 32px;
+    }
+
+    .streaming-carousel-next {
+        right: 32px;
+    }
+
+    .streaming-loading {
+        height: 720px;
+    }
+
+    .streaming-loading .loading-spinner {
+        width: 160px;
+        height: 160px;
+        border-width: 12px;
+    }
+
+    /* Genre Buttons - 4x scaling */
+    .streaming-genre-btn {
+        gap: 24px;
+        padding: 32px 64px;
+        font-size: 3.5rem;
+        height: 160px;
+        border-bottom-width: 8px;
+    }
+
+    .streaming-genre-btn svg {
+        width: 72px;
+        height: 72px;
+    }
+}
+
+/* 1080p Display (1920px - 2559px) - 2x scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+
+    .netflix-originals,
+    .disneyplus-section,
+    .prime-section,
+    .appletv-section,
+    .hbo-section,
+    .viu-section {
+        padding: 48px 0;
+        margin-bottom: 40px;
+    }
+
+    .netflix-originals-header,
+    .disneyplus-section-header,
+    .prime-section-header,
+    .appletv-section-header,
+    .hbo-section-header,
+    .viu-section-header {
+        margin-bottom: 32px;
+    }
+
+    .netflix-originals-header-left,
+    .disneyplus-section-header-left,
+    .prime-section-header-left,
+    .appletv-section-header-left,
+    .hbo-section-header-left,
+    .viu-section-header-left {
+        gap: 24px;
+    }
+
+    .netflix-originals-header-accent,
+    .disneyplus-section-header-accent,
+    .prime-section-header-accent,
+    .appletv-section-header-accent,
+    .hbo-section-header-accent,
+    .viu-section-header-accent {
+        height: 48px;
+        width: 8px;
+    }
+
+    .netflix-originals-title,
+    .disneyplus-section-title,
+    .prime-section-title,
+    .appletv-section-title,
+    .hbo-section-title,
+    .viu-section-title {
+        font-size: 3rem;
+    }
+
+    /* Genre Buttons - 2x scaling */
+    .streaming-genre-btn {
+        gap: 12px;
+        padding: 16px 32px;
+        font-size: 1.75rem;
+        height: 80px;
+        border-bottom-width: 4px;
+    }
+
+    .streaming-genre-btn svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    /* View All button - 2x scaling */
+    .netflix-originals-view-all,
+    .disneyplus-section-view-all,
+    .prime-section-view-all,
+    .appletv-section-view-all,
+    .hbo-section-view-all,
+    .viu-section-view-all {
+        gap: 12px;
+        font-size: 1.75rem;
+        padding: 16px 32px;
+        height: 80px;
+        border-bottom-width: 4px;
+    }
+
+    .netflix-originals-view-all svg,
+    .disneyplus-section-view-all svg,
+    .prime-section-view-all svg,
+    .appletv-section-view-all svg,
+    .hbo-section-view-all svg,
+    .viu-section-view-all svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .streaming-carousel-track {
+        margin-left: -32px;
+    }
+
+    .streaming-carousel-slide {
+        padding-left: 32px;
+    }
+
+    .streaming-card {
+        border-radius: 16px;
+    }
+
+    .streaming-card-info {
+        padding: 24px;
+    }
+
+    .streaming-card-title {
+        font-size: 1.75rem;
+    }
+
+    .streaming-carousel-btn {
+        height: 64px;
+        width: 64px;
+        font-size: 28px;
+        gap: 16px;
+    }
+
+    .streaming-carousel-btn svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .streaming-carousel-prev {
+        left: 16px;
+    }
+
+    .streaming-carousel-next {
+        right: 16px;
+    }
+
+    .streaming-loading {
+        height: 360px;
+    }
+
+    .streaming-loading .loading-spinner {
+        width: 80px;
+        height: 80px;
+        border-width: 6px;
+    }
+}

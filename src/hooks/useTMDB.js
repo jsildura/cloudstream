@@ -4,6 +4,37 @@ const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
 const LOGO_URL = 'https://image.tmdb.org/t/p/w500';
 
+// ===== API CACHING =====
+// In-memory cache with TTL to reduce redundant API calls
+const apiCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Fetch data with caching support
+ * @param {string} cacheKey - Unique key for this request
+ * @param {Function} fetcher - Async function that returns the data
+ * @returns {Promise<any>} - Cached or fresh data
+ */
+const fetchWithCache = async (cacheKey, fetcher) => {
+  const cached = apiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  const data = await fetcher();
+  apiCache.set(cacheKey, { data, timestamp: Date.now() });
+  return data;
+};
+
+// Clear stale cache entries periodically (every 10 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of apiCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL) {
+      apiCache.delete(key);
+    }
+  }
+}, 10 * 60 * 1000);
+
 export const useTMDB = () => {
   const [movieGenres, setMovieGenres] = useState(new Map());
   const [tvGenres, setTvGenres] = useState(new Map());
@@ -72,7 +103,8 @@ export const useTMDB = () => {
 
   // Memoize all fetch functions
   const fetchNowPlaying = useCallback(async () => {
-    try {
+    const cacheKey = 'nowPlaying';
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl('/movie/now_playing', {
         language: 'en-US',
         page: 1
@@ -87,14 +119,12 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch now playing movies:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchTrending = useCallback(async (type, timeWindow = 'week') => {
-    try {
+    const cacheKey = `trending_${type}_${timeWindow}`;
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl(`/trending/${type}/${timeWindow}`);
 
       const res = await fetch(url);
@@ -106,14 +136,12 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results || [];
-    } catch (error) {
-      console.error(`Failed to fetch trending ${type}:`, error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchTrendingAnime = useCallback(async () => {
-    try {
+    const cacheKey = 'trendingAnime';
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl('/discover/tv', {
         with_genres: 16,
         with_keywords: 210024,
@@ -129,10 +157,7 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch anime:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   // Add useCallback to all other fetch functions similarly
@@ -399,7 +424,8 @@ export const useTMDB = () => {
   }, [buildUrl]);
 
   const fetchPopularByRegion = useCallback(async (type = 'movie', region = 'US') => {
-    try {
+    const cacheKey = `popular_${type}_${region}`;
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl(`/${type}/popular`, {
         language: 'en-US',
         page: 1,
@@ -415,10 +441,7 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results?.slice(0, 10) || [];
-    } catch (error) {
-      console.error(`Failed to fetch popular ${type} for region ${region}:`, error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   useEffect(() => {

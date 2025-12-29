@@ -5,12 +5,7 @@ import Modal from '../components/Modal';
 import SearchModal from '../components/SearchModal';
 import PopularCollections from '../components/PopularCollections';
 import ContinueWatching from '../components/ContinueWatching';
-import NetflixOriginals from '../components/NetflixOriginals';
-import DisneyPlusPicks from '../components/DisneyPlusPicks';
-import PrimeVideoPicks from '../components/PrimeVideoPicks';
-import AppleTVPicks from '../components/AppleTVPicks';
-import HBOPicks from '../components/HBOPicks';
-import ViuPicks from '../components/ViuPicks';
+import StreamingPicks from '../components/StreamingPicks';
 import MovieStudios from '../components/MovieStudios';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
@@ -270,22 +265,22 @@ const Home = () => {
         <MovieStudios />
 
         {/* Netflix Originals Section */}
-        <NetflixOriginals />
+        <StreamingPicks provider="netflix" />
 
         {/* Disney+ Picks Section */}
-        <DisneyPlusPicks />
+        <StreamingPicks provider="disney" />
 
         {/* Prime Video Featured Section */}
-        <PrimeVideoPicks />
+        <StreamingPicks provider="prime" />
 
         {/* Apple TV+ Originals Section */}
-        <AppleTVPicks />
+        <StreamingPicks provider="apple" />
 
         {/* HBO Originals Section */}
-        <HBOPicks />
+        <StreamingPicks provider="hbo" />
 
         {/* VIU Picks Section */}
-        <ViuPicks />
+        <StreamingPicks provider="viu" />
 
         {/* Trending Anime below */}
         {trendingAnime.length > 0 && (

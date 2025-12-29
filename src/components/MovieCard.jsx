@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 
-const MovieCard = ({ item, onClick }) => {
+const MovieCard = memo(({ item, onClick }) => {
   const { POSTER_URL } = useTMDB();
 
   const title = item.title || item.name;
@@ -58,6 +58,7 @@ const MovieCard = ({ item, onClick }) => {
       </div>
     </div>
   );
-};
+});
 
+MovieCard.displayName = 'MovieCard';
 export default MovieCard;

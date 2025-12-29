@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
@@ -120,44 +120,82 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
   // Format rating
   const rating = item.vote_average ? `${(item.vote_average).toFixed(1)}/10` : '';
 
-  // Drawer bar drag state
+  // Drawer bar drag state - use refs for performance (avoid re-renders during drag)
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStartY, setDragStartY] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
+  const dragStartYRef = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const modalContentRef = useRef(null);
+  const rafIdRef = useRef(null);
 
   const handleDragStart = useCallback((e) => {
     e.preventDefault();  // Prevent pull-to-refresh
     setIsDragging(true);
     const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-    setDragStartY(clientY);
+    dragStartYRef.current = clientY;
+    dragOffsetRef.current = 0;
   }, []);
 
   const handleDragMove = useCallback((e) => {
-    if (!isDragging) return;
+    if (!modalContentRef.current) return;
     e.preventDefault();  // Prevent pull-to-refresh
     const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-    const offset = clientY - dragStartY;
-    setDragOffset(offset);
-  }, [isDragging, dragStartY]);
+    const offset = Math.max(0, clientY - dragStartYRef.current);
+    dragOffsetRef.current = offset;
+
+    // Cancel any pending animation frame
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+    }
+
+    // Use requestAnimationFrame for smooth 60fps updates - direct DOM manipulation
+    // Use translate3d for GPU acceleration - critical for low-tier mobile
+    rafIdRef.current = requestAnimationFrame(() => {
+      if (modalContentRef.current) {
+        modalContentRef.current.style.transform = `translate3d(-50%, ${offset}px, 0)`;
+      }
+    });
+  }, []);
 
   const handleDragEnd = useCallback(() => {
-    if (isDragging) {
-      // If dragged down more than 50% of viewport height, close the modal
-      const closeThreshold = window.innerHeight * 0.5;
-      if (dragOffset > closeThreshold) {
-        onClose();
-      }
-      setIsDragging(false);
-      setDragOffset(0);
+    // Cancel any pending animation frame
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
     }
-  }, [isDragging, dragOffset, onClose]);
+
+    // If dragged down more than 50% of viewport height, close the modal
+    const closeThreshold = window.innerHeight * 0.5;
+    if (dragOffsetRef.current > closeThreshold) {
+      onClose();
+    } else {
+      // Animate back to original position with GPU-accelerated transform
+      if (modalContentRef.current) {
+        modalContentRef.current.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        modalContentRef.current.style.transform = 'translate3d(-50%, 0, 0)';
+        // Remove transition after animation completes
+        setTimeout(() => {
+          if (modalContentRef.current) {
+            modalContentRef.current.style.transition = '';
+          }
+        }, 300);
+      }
+    }
+    setIsDragging(false);
+    dragOffsetRef.current = 0;
+  }, [onClose]);
 
   // Add/remove global mouse/touch event listeners for drag
   useEffect(() => {
     if (isDragging) {
+      // Remove transition during drag for instant response
+      if (modalContentRef.current) {
+        modalContentRef.current.style.transition = 'none';
+      }
+
       document.addEventListener('mousemove', handleDragMove);
       document.addEventListener('mouseup', handleDragEnd);
-      document.addEventListener('touchmove', handleDragMove);
+      // Use passive: false to allow preventDefault on touch events
+      document.addEventListener('touchmove', handleDragMove, { passive: false });
       document.addEventListener('touchend', handleDragEnd);
     }
     return () => {
@@ -171,13 +209,9 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
   return createPortal(
     <div className="modal-overlay" onClick={handleBackdropClick}>
       <div
+        ref={modalContentRef}
         className="modal-content-new"
-        style={{
-          transform: isDragging
-            ? `translateX(-50%) translateY(${Math.max(0, dragOffset)}px)`
-            : 'translateX(-50%)',
-          transition: isDragging ? 'none' : 'transform 0.3s ease'
-        }}
+        style={{ transform: 'translate3d(-50%, 0, 0)' }}
       >
         {/* Drawer Bar */}
         <div

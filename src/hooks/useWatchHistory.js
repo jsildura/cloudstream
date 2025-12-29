@@ -41,7 +41,7 @@ const useWatchHistory = () => {
             // Remove existing entry if present
             const filtered = prev.filter(i => i.id !== item.id);
 
-            // Create new entry with timestamp
+            // Create new entry with timestamp and progress
             const newEntry = {
                 id: item.id,
                 type: item.type,
@@ -49,6 +49,10 @@ const useWatchHistory = () => {
                 poster_path: item.poster_path,
                 backdrop_path: item.backdrop_path,
                 lastWatched: Date.now(),
+                // Watch progress tracking
+                currentTime: item.currentTime || 0,
+                duration: item.duration || 0,
+                progress: item.duration > 0 ? (item.currentTime / item.duration) : 0,
                 ...(item.type === 'tv' && {
                     lastSeason: item.lastSeason,
                     lastEpisode: item.lastEpisode,
@@ -61,6 +65,24 @@ const useWatchHistory = () => {
 
             // Limit to MAX_ITEMS (20)
             return updated.slice(0, MAX_ITEMS);
+        });
+    }, []);
+
+    // Update only the progress of an existing item (efficient for video timeupdate)
+    const updateProgress = useCallback((id, currentTime, duration) => {
+        setWatchHistory(prev => {
+            const itemIndex = prev.findIndex(i => i.id === id);
+            if (itemIndex === -1) return prev;
+
+            const updated = [...prev];
+            updated[itemIndex] = {
+                ...updated[itemIndex],
+                currentTime,
+                duration,
+                progress: duration > 0 ? (currentTime / duration) : 0,
+                lastWatched: Date.now()
+            };
+            return updated;
         });
     }, []);
 
@@ -92,6 +114,7 @@ const useWatchHistory = () => {
     return {
         watchHistory,
         addToHistory,
+        updateProgress,
         getWatchHistory,
         getLastWatched,
         isInHistory,

@@ -103,40 +103,75 @@ const findNextElement = (currentElement, direction) => {
  */
 const useTVNavigation = (enabled = true) => {
     const handleKeyDown = useCallback((event) => {
-        // Only handle arrow keys
-        const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-        if (!arrowKeys.includes(event.key)) return;
-
         const activeElement = document.activeElement;
-
-        // Skip if we're in an input/textarea field for left/right navigation
         const isTextInput = activeElement.tagName === 'INPUT' ||
             activeElement.tagName === 'TEXTAREA';
 
-        if (isTextInput && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-            return; // Allow natural cursor movement in text fields
+        // Handle Escape key - blur current element / close modals
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            activeElement.blur();
+            return;
         }
 
-        // Skip if inside a carousel that handles its own navigation
-        const inCarousel = activeElement.closest('[role="region"][aria-roledescription="carousel"]');
-        if (inCarousel && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
-            // Let carousel handle horizontal navigation
-            // But only if it's within the carousel track itself
-            const inCarouselTrack = activeElement.closest('[class*="carousel-track"]');
-            if (!inCarouselTrack) {
-                // Carousel buttons - let our navigation handle it
-            } else {
-                return;
+        // Handle Spacebar - activate focused element (like Enter)
+        if (event.key === ' ' && !isTextInput) {
+            event.preventDefault();
+            activeElement.click();
+            return;
+        }
+
+        // Handle Home/End keys for first/last element nav
+        if (event.key === 'Home' && !isTextInput) {
+            event.preventDefault();
+            const focusable = getFocusableElements();
+            if (focusable.length > 0) {
+                focusable[0].focus({ preventScroll: false });
+                focusable[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+            return;
+        }
+        if (event.key === 'End' && !isTextInput) {
+            event.preventDefault();
+            const focusable = getFocusableElements();
+            if (focusable.length > 0) {
+                focusable[focusable.length - 1].focus({ preventScroll: false });
+                focusable[focusable.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            return;
         }
 
-        // Map key to direction
-        const direction = {
+        // Map arrow keys and vim-style keys to directions
+        const keyMap = {
             'ArrowUp': 'up',
             'ArrowDown': 'down',
             'ArrowLeft': 'left',
             'ArrowRight': 'right',
-        }[event.key];
+            'k': 'up',      // vim up
+            'j': 'down',    // vim down
+            'h': 'left',    // vim left
+            'l': 'right'    // vim right
+        };
+
+        const direction = keyMap[event.key];
+        if (!direction) return;
+
+        // Skip vim keys if in text input (allow normal typing)
+        if (isTextInput) {
+            // Only allow arrow key navigation for up/down in text inputs
+            if (!['ArrowUp', 'ArrowDown'].includes(event.key)) {
+                return;
+            }
+        }
+
+        // Skip if inside a carousel that handles its own navigation
+        const inCarousel = activeElement.closest('[role="region"][aria-roledescription="carousel"]');
+        if (inCarousel && (direction === 'left' || direction === 'right')) {
+            const inCarouselTrack = activeElement.closest('[class*="carousel-track"]');
+            if (inCarouselTrack) {
+                return;
+            }
+        }
 
         // Find next element in direction
         const nextElement = findNextElement(activeElement, direction);

@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { memo, useCallback } from 'react';
 import MovieCard from './MovieCard';
 
-const MovieRow = ({ title, items, onItemClick, headerAction, maxItems }) => {
+const MovieRow = memo(({ title, items, onItemClick, headerAction, maxItems }) => {
   // Only apply slice if maxItems is explicitly provided
   const displayItems = maxItems ? items.slice(0, maxItems) : items;
+
+  // Memoize item click handler factory
+  const handleItemClick = useCallback((item) => {
+    onItemClick(item);
+  }, [onItemClick]);
 
   if (displayItems.length === 0) {
     return null;
@@ -20,12 +25,13 @@ const MovieRow = ({ title, items, onItemClick, headerAction, maxItems }) => {
           <MovieCard
             key={item.id}
             item={item}
-            onClick={() => onItemClick(item)}
+            onClick={() => handleItemClick(item)}
           />
         ))}
       </div>
     </div>
   );
-};
+});
 
+MovieRow.displayName = 'MovieRow';
 export default MovieRow;

@@ -1531,7 +1531,8 @@
   position: fixed;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
+  /* Use translate3d for GPU acceleration - critical for low-tier mobile */
+  transform: translate3d(-50%, 0, 0);
   background: var(--netflix-dark-gray, #1a1a1a);
   border-radius: 16px 16px 0 0;
   width: 98%;
@@ -1545,6 +1546,16 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-bottom: none;
   z-index: 2001;
+  /* GPU/Hardware acceleration for smooth dragging */
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+  /* Isolate paint/layout for performance */
+  contain: layout style paint;
+  /* Prevent any transitions during drag - JS controls this */
+  touch-action: none;
 }
 
 /* Shadow gradient at top of modal */

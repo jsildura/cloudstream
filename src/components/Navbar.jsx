@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 const RECENT_SEARCHES_KEY = 'streamflix_recent_searches';
@@ -18,6 +18,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const [moviesMenuOpen, setMoviesMenuOpen] = useState(false);
   const [tvShowsMenuOpen, setTvShowsMenuOpen] = useState(false);
   const [platformsMenuOpen, setPlatformsMenuOpen] = useState(false);
+  const debounceTimerRef = useRef(null);
 
   // Load recent searches from localStorage on mount
   useEffect(() => {
@@ -113,9 +114,18 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-    if (onSearch) {
-      onSearch(value);
+
+    // Clear previous debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
+
+    // Debounce search API call by 300ms
+    debounceTimerRef.current = setTimeout(() => {
+      if (onSearch) {
+        onSearch(value);
+      }
+    }, 300);
   };
 
   const handleInputFocus = () => {
