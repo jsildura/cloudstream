@@ -35,11 +35,28 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const velX = useRef(0);
     const animationFrameId = useRef(null);
 
-    // Memoized values
-    const maxIndex = useMemo(() =>
-        Math.max(0, (items?.length || 0) - itemsPerView),
-        [items?.length, itemsPerView]
-    );
+    // Memoized values - calculate maxIndex based on actual scroll metrics
+    // This accounts for variable card widths (card 10 is wider due to "10" number)
+    const maxIndex = useMemo(() => {
+        if (!carouselRef.current || !viewportRef.current || !cardRefs.current[0]) {
+            // Fallback to simple calculation
+            return Math.max(0, (items?.length || 0) - itemsPerView);
+        }
+
+        const firstCard = cardRefs.current[0];
+        const cardWidth = firstCard.offsetWidth;
+        const cardStyle = window.getComputedStyle(firstCard);
+        const marginRight = parseFloat(cardStyle.marginRight) || 0;
+        const totalCardWidth = cardWidth + marginRight;
+
+        const trackWidth = carouselRef.current.scrollWidth;
+        const viewportWidth = viewportRef.current.clientWidth;
+        const maxScroll = Math.max(0, trackWidth - viewportWidth);
+
+        // Calculate how many index steps needed to reach maxScroll
+        // Add 1 to ensure we can scroll past any partial card
+        return Math.ceil(maxScroll / totalCardWidth);
+    }, [items?.length, itemsPerView, scrollMetrics]);
 
     const centerOffset = useMemo(() =>
         Math.floor(itemsPerView / 2),
@@ -321,9 +338,11 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
         const totalCardWidth = cardWidth + marginRight;
 
         // Calculate max scroll to ensure last items are visible
-        const totalWidth = totalCardWidth * (items?.length || 0);
+        // Use actual track scrollWidth since cards have variable widths (card 10 is wider due to "10" number)
+        const trackElement = carouselRef.current;
+        const trackWidth = trackElement ? trackElement.scrollWidth : totalCardWidth * (items?.length || 0);
         const viewportWidth = viewportRef.current.clientWidth;
-        const maxScroll = Math.max(0, totalWidth - viewportWidth);
+        const maxScroll = Math.max(0, trackWidth - viewportWidth);
 
         // Calculate current scroll position
         const scrollPosition = currentIndex * totalCardWidth;

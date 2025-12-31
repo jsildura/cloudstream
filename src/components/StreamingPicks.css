@@ -182,7 +182,7 @@
     .appletv-section-title,
     .hbo-section-title,
     .viu-section-title {
-        font-size: 1rem;
+        font-size: 1.2rem !important;
     }
 
     .netflix-originals-header-accent,

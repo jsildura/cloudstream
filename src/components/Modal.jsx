@@ -103,12 +103,40 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     }
   }, [item.title, item.name, item.type, item.id]);
 
+  // Ref to track if user manually toggled the trailer (to prevent auto-play interference)
+  const userToggledTrailerRef = useRef(false);
+  const autoPlayTimerRef = useRef(null);
+
   // Toggle trailer playback
   const toggleTrailer = useCallback(() => {
     if (trailerKey) {
+      userToggledTrailerRef.current = true; // Mark as user-controlled
+      // Clear auto-play timer if user toggles manually
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
+      }
       setIsTrailerPlaying(prev => !prev);
     }
   }, [trailerKey]);
+
+  // Auto-play trailer after 5 seconds delay
+  useEffect(() => {
+    // Only auto-play if trailer key exists, not already playing, and user hasn't toggled manually
+    if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current) {
+      autoPlayTimerRef.current = setTimeout(() => {
+        setIsTrailerPlaying(true);
+      }, 3000); // 3 second delay
+    }
+
+    return () => {
+      // Cleanup timer on unmount or when dependencies change
+      if (autoPlayTimerRef.current) {
+        clearTimeout(autoPlayTimerRef.current);
+        autoPlayTimerRef.current = null;
+      }
+    };
+  }, [trailerKey, isTrailerPlaying]);
 
   // Get year from release date
   const year = item.release_date?.substring(0, 4) ||

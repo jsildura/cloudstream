@@ -82,6 +82,7 @@
 .top-ten-section .top-ten-track {
     display: flex;
     transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+    padding-right: var(--card-margin);
 }
 
 .top-ten-section .top-ten-carousel.dragging .top-ten-track {
