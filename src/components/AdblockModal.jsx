@@ -13,15 +13,13 @@ const AdblockModal = () => {
             let blocked = false;
 
             try {
-                const isBrave = navigator.brave && await navigator.brave.isBrave();
-
+                // Create bait elements that ad blockers typically hide
                 const baitContainer = document.createElement('div');
                 baitContainer.style.cssText = 'position: absolute; top: -9999px; left: -9999px;';
 
                 const baits = [
                     { tag: 'div', attrs: { class: 'ad-unit', 'data-ad-slot': '1234567890' } },
                     { tag: 'div', attrs: { class: 'ad-container ad-wrapper' } },
-                    { tag: 'ins', attrs: { class: 'adsbygoogle', 'data-ad-client': 'ca-pub-1234567890' } },
                     { tag: 'div', attrs: { id: 'ad-banner', class: 'ad' } },
                     { tag: 'div', attrs: { class: 'sponsor-ad sponsored-content' } },
                     { tag: 'iframe', attrs: { src: 'about:blank', class: 'ad-frame' } },
@@ -39,34 +37,10 @@ const AdblockModal = () => {
 
                 document.body.appendChild(baitContainer);
 
-                // Test script loading with proper error handling
-                let scriptBlocked = false;
-                try {
-                    const testScript = document.createElement('script');
-                    testScript.type = 'text/javascript';
-                    testScript.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
-                    testScript.async = true;
-
-                    await new Promise((resolve) => {
-                        testScript.onload = () => resolve(false);
-                        testScript.onerror = () => {
-                            scriptBlocked = true;
-                            resolve(true);
-                        };
-                        document.head.appendChild(testScript);
-                        // Timeout fallback
-                        setTimeout(() => resolve(false), 1500);
-                    });
-
-                    if (testScript.parentNode) {
-                        testScript.parentNode.removeChild(testScript);
-                    }
-                } catch (e) {
-                    scriptBlocked = true;
-                }
-
+                // Wait for ad blockers to process
                 await new Promise(resolve => setTimeout(resolve, 500));
 
+                // Check if bait elements were hidden or removed
                 const baitElements = baitContainer.querySelectorAll('*');
                 for (const bait of baitElements) {
                     if (!document.body.contains(bait)) {
@@ -86,36 +60,35 @@ const AdblockModal = () => {
                     }
                 }
 
-                if (scriptBlocked) {
-                    blocked = true;
-                }
-
+                // Cleanup
                 if (baitContainer.parentNode) {
                     baitContainer.parentNode.removeChild(baitContainer);
                 }
 
-                if (isBrave) {
-                    try {
-                        await fetch('https://www.googletagservices.com/tag/js/gpt.js', {
-                            method: 'HEAD',
-                            mode: 'no-cors',
-                            cache: 'no-store'
-                        });
-                    } catch (e) {
-                        blocked = true;
-                    }
+                // Additional check: Try to fetch a known ad-related domain
+                try {
+                    const response = await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+                        method: 'HEAD',
+                        mode: 'no-cors',
+                        cache: 'no-store'
+                    });
+                    // If we get here without error, ads might be working
+                } catch (e) {
+                    // Fetch blocked - likely ad blocker
+                    blocked = true;
                 }
+
             } catch (error) {
                 console.error('Adblock detection error:', error);
-                // On error, assume adblock might be present
-                blocked = true;
+                // On error, don't assume adblock (avoid false positives)
+                blocked = false;
             }
 
             setAdblockDetected(blocked);
             setCheckComplete(true);
         };
 
-        setTimeout(detectAdblock, 200);
+        setTimeout(detectAdblock, 500);
     }, []);
 
     const handleRefresh = () => {
