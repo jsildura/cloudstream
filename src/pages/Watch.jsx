@@ -31,6 +31,11 @@ const Watch = () => {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [warningExpanded, setWarningExpanded] = useState(false);
 
+  // Episode drawer state
+  const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
+  const [episodeSearchQuery, setEpisodeSearchQuery] = useState('');
+  const [episodeDrawerTranslateY, setEpisodeDrawerTranslateY] = useState(0);
+
   // Password protection state
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [pendingServerIndex, setPendingServerIndex] = useState(null);
@@ -49,6 +54,9 @@ const Watch = () => {
   const dragStartY = useRef(0);
   const isDragging = useRef(false);
   const hideControlsTimer = useRef(null);
+  const episodeDragStartY = useRef(0);
+  const isEpisodeDragging = useRef(false);
+  const episodeDrawerTranslateRef = useRef(0);
 
   const { POSTER_URL } = useTMDB();
   const { showNowPlaying } = useToast();
@@ -490,6 +498,65 @@ const Watch = () => {
     handleDragEnd();
   };
 
+  // Episode drawer drag handlers
+  const handleEpisodeDragStart = (clientY) => {
+    isEpisodeDragging.current = true;
+    episodeDragStartY.current = clientY;
+    episodeDrawerTranslateRef.current = 0;
+  };
+
+  const handleEpisodeDragMove = (clientY) => {
+    if (!isEpisodeDragging.current) return;
+    const deltaY = clientY - episodeDragStartY.current;
+    if (deltaY > 0) {
+      episodeDrawerTranslateRef.current = deltaY;
+      setEpisodeDrawerTranslateY(deltaY);
+    }
+  };
+
+  const handleEpisodeDragEnd = () => {
+    if (!isEpisodeDragging.current) return;
+    isEpisodeDragging.current = false;
+    if (episodeDrawerTranslateRef.current > 100) {
+      setEpisodeDrawerOpen(false);
+      setEpisodeSearchQuery('');
+    }
+    episodeDrawerTranslateRef.current = 0;
+    setEpisodeDrawerTranslateY(0);
+  };
+
+  const handleEpisodeMouseDown = (e) => {
+    e.preventDefault();
+    handleEpisodeDragStart(e.clientY);
+
+    const onMouseMove = (moveEvent) => {
+      handleEpisodeDragMove(moveEvent.clientY);
+    };
+
+    const onMouseUp = () => {
+      handleEpisodeDragEnd();
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  };
+
+  const handleEpisodeTouchStart = (e) => {
+    e.preventDefault();
+    handleEpisodeDragStart(e.touches[0].clientY);
+  };
+
+  const handleEpisodeTouchMove = (e) => {
+    e.preventDefault();
+    handleEpisodeDragMove(e.touches[0].clientY);
+  };
+
+  const handleEpisodeTouchEnd = () => {
+    handleEpisodeDragEnd();
+  };
+
   if (loading) {
     return (
       <div className="watch-fullscreen">
@@ -625,102 +692,221 @@ const Watch = () => {
         </svg>
       </button>
 
-      {/* Playback Warning Icon - Toggle Button */}
-      <button
-        className={`watch-playback-warning-icon${!controlsVisible ? ' controls-hidden' : ''}`}
-        onClick={() => setWarningExpanded(!warningExpanded)}
-        aria-label="Show playback help"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-          <path d="M12 9v4"></path>
-          <path d="M12 17h.01"></path>
-        </svg>
-      </button>
 
-      {/* Playback Warning Tooltip - Appears Below Icon */}
-      {warningExpanded && (
-        <div className={`watch-playback-warning-tooltip${!controlsVisible ? ' controls-hidden' : ''}`}>
-          Switch servers if the video doesn't start
+
+
+
+      {/* TV Episode Badge with Integrated Fullscreen & Warning */}
+      {type === 'tv' && (
+        <div className={`watch-episode-badge${!controlsVisible ? ' controls-hidden' : ''}`}>
+          {/* Episode Text - Clickable to open episode drawer */}
+          <button
+            className="watch-episode-badge-text"
+            onClick={() => setEpisodeDrawerOpen(true)}
+            aria-label="Open episode selector"
+          >
+            S{currentSeason} <span className="badge-dot">•</span> E{currentEpisode}
+          </button>
+
+          {/* Fullscreen Button - Middle */}
+          <button
+            className="watch-episode-badge-btn watch-episode-badge-fullscreen"
+            onClick={() => {
+              if (watchContainerRef.current) {
+                const elem = watchContainerRef.current;
+                const doc = document;
+
+                const isCurrentlyFullscreen = doc.fullscreenElement ||
+                  doc.webkitFullscreenElement ||
+                  doc.mozFullScreenElement ||
+                  doc.msFullscreenElement ||
+                  isFullscreen;
+
+                if (!isCurrentlyFullscreen) {
+                  if (elem.requestFullscreen) {
+                    elem.requestFullscreen().then(() => {
+                      setIsFullscreen(true);
+                    }).catch(err => {
+                      console.log('Standard fullscreen failed, trying fallback:', err);
+                      setIsFullscreen(true);
+                    });
+                  } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                    setIsFullscreen(true);
+                  } else if (elem.webkitEnterFullscreen) {
+                    elem.webkitEnterFullscreen();
+                    setIsFullscreen(true);
+                  } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                    setIsFullscreen(true);
+                  } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                    setIsFullscreen(true);
+                  } else {
+                    setIsFullscreen(true);
+                  }
+                } else {
+                  if (doc.exitFullscreen) {
+                    doc.exitFullscreen().then(() => {
+                      setIsFullscreen(false);
+                    }).catch(() => setIsFullscreen(false));
+                  } else if (doc.webkitExitFullscreen) {
+                    doc.webkitExitFullscreen();
+                    setIsFullscreen(false);
+                  } else if (doc.mozCancelFullScreen) {
+                    doc.mozCancelFullScreen();
+                    setIsFullscreen(false);
+                  } else if (doc.msExitFullscreen) {
+                    doc.msExitFullscreen();
+                    setIsFullscreen(false);
+                  } else {
+                    setIsFullscreen(false);
+                  }
+                }
+              }
+            }}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+                <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+              </svg>
+            )}
+          </button>
+
+          {/* Warning Button - Right */}
+          <button
+            className="watch-episode-badge-btn watch-episode-badge-warning"
+            onClick={() => setWarningExpanded(!warningExpanded)}
+            aria-label="Show playback help"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </button>
+
+          {/* Warning Tooltip - Inside badge for proper centering */}
+          {warningExpanded && (
+            <div className="watch-playback-warning-tooltip">
+              Switch servers if the video doesn't start
+            </div>
+          )}
         </div>
       )}
 
-      {/* Custom Fullscreen Button */}
-      <button className={`watch-overlay-btn watch-fullscreen-btn${!controlsVisible ? ' controls-hidden' : ''}`} onClick={() => {
-        if (watchContainerRef.current) {
-          const elem = watchContainerRef.current;
-          const doc = document;
+      {/* Movie Badge with Fullscreen & Warning (matches TV badge for uniformity) */}
+      {type === 'movie' && (
+        <div className={`watch-episode-badge${!controlsVisible ? ' controls-hidden' : ''}`}>
+          {/* Movie Text - Not clickable */}
+          <span className="watch-episode-badge-label">Movie</span>
 
-          const isCurrentlyFullscreen = doc.fullscreenElement ||
-            doc.webkitFullscreenElement ||
-            doc.mozFullScreenElement ||
-            doc.msFullscreenElement ||
-            isFullscreen;
+          {/* Fullscreen Button */}
+          <button
+            className="watch-episode-badge-btn watch-episode-badge-fullscreen"
+            onClick={() => {
+              if (watchContainerRef.current) {
+                const elem = watchContainerRef.current;
+                const doc = document;
 
-          if (!isCurrentlyFullscreen) {
-            if (elem.requestFullscreen) {
-              elem.requestFullscreen().then(() => {
-                setIsFullscreen(true);
-              }).catch(err => {
-                console.log('Standard fullscreen failed, trying fallback:', err);
-                setIsFullscreen(true);
-              });
-            } else if (elem.webkitRequestFullscreen) {
-              elem.webkitRequestFullscreen();
-              setIsFullscreen(true);
-            } else if (elem.webkitEnterFullscreen) {
-              elem.webkitEnterFullscreen();
-              setIsFullscreen(true);
-            } else if (elem.mozRequestFullScreen) {
-              elem.mozRequestFullScreen();
-              setIsFullscreen(true);
-            } else if (elem.msRequestFullscreen) {
-              elem.msRequestFullscreen();
-              setIsFullscreen(true);
-            } else {
-              setIsFullscreen(true);
-            }
-          } else {
-            if (doc.exitFullscreen) {
-              doc.exitFullscreen().then(() => {
-                setIsFullscreen(false);
-              }).catch(() => setIsFullscreen(false));
-            } else if (doc.webkitExitFullscreen) {
-              doc.webkitExitFullscreen();
-              setIsFullscreen(false);
-            } else if (doc.mozCancelFullScreen) {
-              doc.mozCancelFullScreen();
-              setIsFullscreen(false);
-            } else if (doc.msExitFullscreen) {
-              doc.msExitFullscreen();
-              setIsFullscreen(false);
-            } else {
-              setIsFullscreen(false);
-            }
-          }
-        }
-      }}>
-        {isFullscreen ? (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
-            <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
-            <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
-            <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-            <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-            <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-            <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
-          </svg>
-        )}
-      </button>
+                const isCurrentlyFullscreen = doc.fullscreenElement ||
+                  doc.webkitFullscreenElement ||
+                  doc.mozFullScreenElement ||
+                  doc.msFullscreenElement ||
+                  isFullscreen;
 
-      {/* TV Episode Badge */}
-      {type === 'tv' && (
-        <div className="watch-episode-badge">
-          S{currentSeason} • E{currentEpisode}
+                if (!isCurrentlyFullscreen) {
+                  if (elem.requestFullscreen) {
+                    elem.requestFullscreen().then(() => {
+                      setIsFullscreen(true);
+                    }).catch(err => {
+                      console.log('Standard fullscreen failed, trying fallback:', err);
+                      setIsFullscreen(true);
+                    });
+                  } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                    setIsFullscreen(true);
+                  } else if (elem.webkitEnterFullscreen) {
+                    elem.webkitEnterFullscreen();
+                    setIsFullscreen(true);
+                  } else if (elem.mozRequestFullScreen) {
+                    elem.mozRequestFullScreen();
+                    setIsFullscreen(true);
+                  } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                    setIsFullscreen(true);
+                  } else {
+                    setIsFullscreen(true);
+                  }
+                } else {
+                  if (doc.exitFullscreen) {
+                    doc.exitFullscreen().then(() => {
+                      setIsFullscreen(false);
+                    }).catch(() => setIsFullscreen(false));
+                  } else if (doc.webkitExitFullscreen) {
+                    doc.webkitExitFullscreen();
+                    setIsFullscreen(false);
+                  } else if (doc.mozCancelFullScreen) {
+                    doc.mozCancelFullScreen();
+                    setIsFullscreen(false);
+                  } else if (doc.msExitFullscreen) {
+                    doc.msExitFullscreen();
+                    setIsFullscreen(false);
+                  } else {
+                    setIsFullscreen(false);
+                  }
+                }
+              }
+            }}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          >
+            {isFullscreen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
+                <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+              </svg>
+            )}
+          </button>
+
+          {/* Warning Button */}
+          <button
+            className="watch-episode-badge-btn watch-episode-badge-warning"
+            onClick={() => setWarningExpanded(!warningExpanded)}
+            aria-label="Show playback help"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+              <path d="M12 9v4"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </button>
+
+          {/* Warning Tooltip - Inside badge for proper centering */}
+          {warningExpanded && (
+            <div className="watch-playback-warning-tooltip">
+              Switch servers if the video doesn't start
+            </div>
+          )}
         </div>
       )}
 
@@ -816,38 +1002,6 @@ const Watch = () => {
               ))}
             </div>
 
-            {/* TV Show Episode Selector */}
-            {type === 'tv' && seasons.length > 0 && (
-              <div className="watch-episode-section">
-                <div className="watch-season-row">
-                  <label className="watch-season-label">Season</label>
-                  <select
-                    value={currentSeason}
-                    onChange={(e) => handleSeasonChange(Number(e.target.value))}
-                    className="watch-season-select"
-                  >
-                    {seasons.map(season => (
-                      <option key={season.season_number} value={season.season_number}>
-                        {season.name} ({season.episode_count} eps)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="watch-episodes-grid">
-                  {episodes.map(episode => (
-                    <button
-                      key={episode.episode_number}
-                      className={`watch-episode-btn ${currentEpisode === episode.episode_number ? 'active' : ''}`}
-                      onClick={() => setCurrentEpisode(episode.episode_number)}
-                    >
-                      E{episode.episode_number}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Close Button */}
             <button className="watch-drawer-close" onClick={() => setServerDrawerOpen(false)}>
               Close
@@ -892,6 +1046,183 @@ const Watch = () => {
               <button className="watch-password-btn submit" onClick={handlePasswordSubmit}>
                 Unlock
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Episode Drawer Modal */}
+      {episodeDrawerOpen && type === 'tv' && (
+        <div className="watch-episode-drawer-overlay" onClick={() => { setEpisodeDrawerOpen(false); setEpisodeSearchQuery(''); }}>
+          <div
+            className="watch-episode-drawer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              transform: `translateY(${episodeDrawerTranslateY}px)`,
+              transition: isEpisodeDragging.current ? 'none' : 'transform 0.3s ease'
+            }}
+          >
+            {/* Drawer Handle */}
+            <div
+              className="watch-drawer-handle"
+              onMouseDown={handleEpisodeMouseDown}
+              onTouchStart={handleEpisodeTouchStart}
+              onTouchMove={handleEpisodeTouchMove}
+              onTouchEnd={handleEpisodeTouchEnd}
+            ></div>
+
+            {/* Header */}
+            <div className="watch-episode-drawer-header">
+              <div className="watch-episode-drawer-title">
+                <h2>Episodes</h2>
+                <span className="watch-episode-count">{episodes.length}</span>
+              </div>
+            </div>
+
+            {/* Season Selector */}
+            <div className="watch-episode-drawer-season">
+              <select
+                value={currentSeason}
+                onChange={(e) => handleSeasonChange(Number(e.target.value))}
+                className="watch-episode-season-select"
+              >
+                {seasons.map(season => (
+                  <option key={season.season_number} value={season.season_number}>
+                    {season.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <div className="watch-episode-search-wrapper">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.3-4.3"></path>
+              </svg>
+              <input
+                type="text"
+                className="watch-episode-search"
+                placeholder="Search episodes..."
+                value={episodeSearchQuery}
+                onChange={(e) => setEpisodeSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Episode List */}
+            <div className="watch-episode-list">
+              {episodes
+                .filter(ep => {
+                  if (episodeSearchQuery === '') return true;
+
+                  const query = episodeSearchQuery.toLowerCase().trim();
+
+                  // Check standard text search (name, overview)
+                  if (ep.name?.toLowerCase().includes(query) ||
+                    ep.overview?.toLowerCase().includes(query)) {
+                    return true;
+                  }
+
+                  // Parse episode number patterns: "Episode 1", "EP1", "EP 1", "Ep. 1"
+                  const epOnlyMatch = query.match(/^(?:episode|ep\.?)\s*(\d+)$/i);
+                  if (epOnlyMatch) {
+                    const searchEpNum = parseInt(epOnlyMatch[1], 10);
+                    return ep.episode_number === searchEpNum;
+                  }
+
+                  // Parse season+episode patterns: "S1 EP1", "S1E1", "Season 1 Episode 1", "S1 E1"
+                  const seasonEpMatch = query.match(/^(?:s(?:eason)?\s*(\d+)\s*)?(?:ep(?:isode)?\.?\s*|e)(\d+)$/i);
+                  if (seasonEpMatch) {
+                    const searchSeasonNum = seasonEpMatch[1] ? parseInt(seasonEpMatch[1], 10) : null;
+                    const searchEpNum = parseInt(seasonEpMatch[2], 10);
+
+                    // If season is specified, check if viewing that season
+                    if (searchSeasonNum !== null && searchSeasonNum !== currentSeason) {
+                      return false;
+                    }
+                    return ep.episode_number === searchEpNum;
+                  }
+
+                  // Direct number search (just "1" or "12")
+                  const directNum = query.match(/^(\d+)$/);
+                  if (directNum) {
+                    const searchNum = parseInt(directNum[1], 10);
+                    return ep.episode_number === searchNum;
+                  }
+
+                  return false;
+                })
+                .map(episode => (
+                  <div
+                    key={episode.episode_number}
+                    className={`watch-episode-item ${currentEpisode === episode.episode_number ? 'active' : ''}`}
+                    onClick={() => {
+                      setCurrentEpisode(episode.episode_number);
+                      setEpisodeDrawerOpen(false);
+                      setEpisodeSearchQuery('');
+                    }}
+                  >
+                    {/* Thumbnail */}
+                    <div className="watch-episode-thumbnail">
+                      {episode.still_path ? (
+                        <img
+                          src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
+                          alt={episode.name}
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="watch-episode-thumbnail-placeholder">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="m22 8-6 4 6 4V8Z"></path>
+                            <rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+                          </svg>
+                        </div>
+                      )}
+                      {currentEpisode === episode.episode_number && (
+                        <div className="watch-episode-play-overlay">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"></path>
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="watch-episode-content">
+                      <div className="watch-episode-badges">
+                        <span className="watch-episode-number">EP {episode.episode_number}</span>
+                        {currentEpisode === episode.episode_number && (
+                          <span className="watch-episode-playing">Playing</span>
+                        )}
+                      </div>
+                      <h3 className="watch-episode-title">{episode.name || `Episode ${episode.episode_number}`}</h3>
+                      {episode.overview && (
+                        <p className="watch-episode-overview">{episode.overview}</p>
+                      )}
+                    </div>
+
+                    {/* Meta */}
+                    <div className="watch-episode-meta">
+                      {episode.vote_average > 0 && (
+                        <span className="watch-episode-rating">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                          </svg>
+                          {episode.vote_average.toFixed(1)}
+                        </span>
+                      )}
+                      {episode.runtime && (
+                        <span className="watch-episode-duration">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                          {episode.runtime} min
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
