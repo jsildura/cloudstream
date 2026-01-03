@@ -11,6 +11,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const { showSuccess } = useToast();
   const [inWatchlist, setInWatchlist] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
 
   // Check if item is in watchlist on mount
   useEffect(() => {
@@ -62,11 +63,21 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     loadData();
   }, [item?.id, item?.media_type, item?.type, item?.contentRating, fetchVideos, fetchLogo]);
 
+  // Animated close handler
+  const handleClose = useCallback(() => {
+    if (isClosing) return; // Prevent double-close
+    setIsClosing(true);
+    // Wait for exit animation to complete (300ms matches CSS)
+    setTimeout(() => {
+      onClose();
+    }, 300);
+  }, [isClosing, onClose]);
+
   const handleBackdropClick = useCallback((e) => {
     if (e.target === e.currentTarget) {
-      onClose();
+      handleClose();
     }
-  }, [onClose]);
+  }, [handleClose]);
 
   const playButtonClick = useCallback(() => {
     // Build URL with season/episode if available (from watch history)
@@ -120,7 +131,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     }
   }, [trailerKey]);
 
-  // Auto-play trailer after 5 seconds delay
+  // Auto-play trailer after 3 seconds delay
   useEffect(() => {
     // Only auto-play if trailer key exists, not already playing, and user hasn't toggled manually
     if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current) {
@@ -194,6 +205,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     // If dragged down more than 50% of viewport height, close the modal
     const closeThreshold = window.innerHeight * 0.5;
     if (dragOffsetRef.current > closeThreshold) {
+      // Close directly without exit animation (already dragged past threshold)
       onClose();
     } else {
       // Animate back to original position with GPU-accelerated transform
@@ -215,9 +227,10 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
   // Add/remove global mouse/touch event listeners for drag
   useEffect(() => {
     if (isDragging) {
-      // Remove transition during drag for instant response
+      // Remove transition and animation during drag for instant response
       if (modalContentRef.current) {
         modalContentRef.current.style.transition = 'none';
+        modalContentRef.current.style.animation = 'none';
       }
 
       document.addEventListener('mousemove', handleDragMove);
@@ -238,7 +251,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     <div className="modal-overlay" onClick={handleBackdropClick}>
       <div
         ref={modalContentRef}
-        className="modal-content-new"
+        className={`modal-content-new${isClosing ? ' closing' : ''}`}
         style={{ transform: 'translate3d(-50%, 0, 0)' }}
       >
         {/* Drawer Bar */}
@@ -251,7 +264,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
         </div>
 
         {/* Close Button */}
-        <button className="modal-close-new" onClick={onClose}>✕</button>
+        <button className="modal-close-new" onClick={handleClose}>✕</button>
 
         {/* Scrollable Content */}
         <div className={`modal-scroll-container ${isTrailerPlaying ? 'trailer-playing' : ''}`}>

@@ -1532,6 +1532,7 @@
   bottom: 0;
   left: 50%;
   /* Use translate3d for GPU acceleration - critical for low-tier mobile */
+  -webkit-transform: translate3d(-50%, 0, 0);
   transform: translate3d(-50%, 0, 0);
   background: var(--netflix-dark-gray, #1a1a1a);
   border-radius: 16px 16px 0 0;
@@ -1546,7 +1547,9 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-bottom: none;
   z-index: 2001;
-  /* GPU/Hardware acceleration for smooth dragging */
+  /* GPU/Hardware acceleration - force compositor layer */
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
   will-change: transform;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
@@ -1556,6 +1559,51 @@
   contain: layout style paint;
   /* Prevent any transitions during drag - JS controls this */
   touch-action: none;
+  /* Slide up enter animation - GPU accelerated */
+  -webkit-animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@-webkit-keyframes modalSlideUp {
+  from {
+    -webkit-transform: translate3d(-50%, 100%, 0);
+    transform: translate3d(-50%, 100%, 0);
+  }
+
+  to {
+    -webkit-transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    -webkit-transform: translate3d(-50%, 100%, 0);
+    transform: translate3d(-50%, 100%, 0);
+  }
+
+  to {
+    -webkit-transform: translate3d(-50%, 0, 0);
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+/* Exit animation - slide down */
+.modal-content-new.closing {
+  animation: modalSlideDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes modalSlideDown {
+  from {
+    opacity: 1;
+    transform: translate3d(-50%, 0, 0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate3d(-50%, 100%, 0);
+  }
 }
 
 /* Shadow gradient at top of modal */
@@ -1629,7 +1677,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.2);
   border: none;
   color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
@@ -1774,6 +1822,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  /* No animation - matches production for best drag performance */
 }
 
 @media (min-width: 1024px) {
