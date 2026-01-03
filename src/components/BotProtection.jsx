@@ -27,6 +27,13 @@ const BotProtection = () => {
 
         // Comprehensive headless/automation browser detection
         const checkHeadless = () => {
+            // Whitelist in-app browsers (Facebook, Instagram, etc.) - skip ALL detection
+            // These browsers have quirks that trigger false positives (no chrome object, webdriver flag, etc.)
+            const inAppBrowserPattern = /FBAN|FBAV|FB_IAB|FB4A|FBIOS|Instagram|LinkedIn|Snapchat|Pinterest|Twitter|TikTok|Line|WeChat|MicroMessenger|GSA|Telegram/i;
+            if (inAppBrowserPattern.test(navigator.userAgent)) {
+                return null; // Not a bot, allow access
+            }
+
             const tests = [];
 
             // WebDriver detection
