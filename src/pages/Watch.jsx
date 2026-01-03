@@ -436,7 +436,14 @@ const Watch = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    // Check if there's browser history to go back to
+    // window.history.length > 2 covers most browsers (some start with 1-2)
+    if (window.history.length > 2) {
+      navigate(-1);
+    } else {
+      // No history (user came from direct link), navigate to home
+      navigate('/');
+    }
   };
 
   const drawerTranslateRef = useRef(0);
