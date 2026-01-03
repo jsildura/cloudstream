@@ -1,0 +1,315 @@
+/* Install App Button Styles */
+.install-app-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    margin-left: 16px;
+    background: rgba(39, 39, 42, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.install-app-btn:hover {
+    background: rgba(229, 9, 20, 0.8);
+    border-color: rgba(229, 9, 20, 0.6);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.install-app-btn:active {
+    transform: translateY(0);
+}
+
+.install-app-btn .install-icon {
+    flex-shrink: 0;
+}
+
+.install-app-btn .install-text {
+    line-height: 1;
+}
+
+/* Hide button on mobile and tablet in main navbar - available in side menu instead */
+@media (max-width: 1024px) {
+    .install-app-btn {
+        display: none;
+    }
+
+    /* But show it in the side menu */
+    .side-menu-install .install-app-btn {
+        display: inline-flex;
+        width: 100%;
+        justify-content: center;
+        margin: 16px 0;
+        margin-left: 0;
+    }
+}
+
+/* Responsive scaling for larger screens */
+@media (min-width: 1280px) {
+    .install-app-btn {
+        padding: 10px 18px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (min-width: 1920px) {
+    .install-app-btn {
+        padding: 12px 22px;
+        font-size: 1rem;
+        gap: 8px;
+    }
+
+    .install-app-btn .install-icon {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (min-width: 3840px) {
+    .install-app-btn {
+        padding: 24px 44px;
+        font-size: 2rem;
+        gap: 16px;
+        border-radius: 12px;
+        border-width: 2px;
+    }
+
+    .install-app-btn .install-icon {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* ===== Install Drawer Modal - watch-drawer style ===== */
+.install-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.install-drawer {
+    width: 100%;
+    max-width: 700px;
+    max-height: 85vh;
+    background: #1a1a1a;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: installSlideUp 0.3s ease;
+}
+
+@keyframes installSlideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* Drawer Handle */
+.install-drawer-handle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 0;
+    cursor: grab;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.install-drawer-handle:active {
+    cursor: grabbing;
+}
+
+.install-drawer-handle-bar {
+    width: 40px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 3px;
+    transition: background 0.2s ease;
+}
+
+.install-drawer-handle:hover .install-drawer-handle-bar {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Header */
+.install-drawer-header {
+    padding: 0 20px 16px;
+}
+
+.install-drawer-title {
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+}
+
+.install-drawer-subtitle {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Platform Tabs */
+.install-drawer-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    margin: 0 20px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+}
+
+.install-drawer-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.install-drawer-tab:hover {
+    color: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.install-drawer-tab.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.install-drawer-tab svg {
+    flex-shrink: 0;
+}
+
+/* Content */
+.install-drawer-content {
+    padding: 0 20px 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.install-drawer-browser-title {
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 16px 0;
+}
+
+/* Steps Grid - 2 columns like screenshot */
+.install-drawer-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.install-drawer-step-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    min-height: 70px;
+}
+
+
+
+.install-step-number {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.95rem;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.install-step-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Note styling */
+.install-drawer-note {
+    margin: 20px 0 0 0;
+    padding: 12px 16px;
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid #3b82f6;
+    border-radius: 0 8px 8px 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.install-drawer-note .note-label {
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+/* Mobile: Single column */
+@media (max-width: 600px) {
+    .install-drawer-steps-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .install-drawer-tabs {
+        margin-left: 16px;
+        margin-right: 16px;
+        padding: 0;
+    }
+
+    .install-drawer-tab {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        gap: 4px;
+    }
+
+    .install-drawer-tab svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .install-drawer-header {
+        padding: 0 16px 12px;
+    }
+
+    .install-drawer-content {
+        padding: 0 16px 20px;
+    }
+
+    .install-drawer-title {
+        font-size: 1.1rem;
+    }
+
+    .install-drawer-subtitle {
+        font-size: 0.8rem;
+    }
+}

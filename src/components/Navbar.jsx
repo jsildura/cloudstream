@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import InstallAppButton from './InstallAppButton';
 
 const RECENT_SEARCHES_KEY = 'streamflix_recent_searches';
 const MAX_RECENT_SEARCHES = 5;
@@ -405,6 +406,9 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
           </Link>
         </div>
 
+        {/* PWA Install Button - Desktop View */}
+        <InstallAppButton />
+
         <div className={`navbar-search-container ${isMobileSearchOpen ? 'mobile-open' : ''}`}>
           <div className="search-bar-wrapper">
             <input
@@ -638,6 +642,11 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             </div>
 
             <Link to="/my-list" className="nav-link" onClick={closeMenu}>Watchlist</Link>
+
+            {/* PWA Install Button in Mobile Menu - Modal renders via Portal */}
+            <div className="side-menu-install">
+              <InstallAppButton />
+            </div>
           </div>
         </div>
 
