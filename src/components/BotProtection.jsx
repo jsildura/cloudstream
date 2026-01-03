@@ -37,7 +37,9 @@ const BotProtection = () => {
             // Chrome object detection
             const isChrome = /Chrome/i.test(navigator.userAgent);
             const isBrave = navigator.brave || /Brave/i.test(navigator.userAgent);
-            if (isChrome && !isBrave && typeof window.chrome === 'undefined') tests.push('no-chrome-obj');
+            // Detect in-app browsers that don't expose window.chrome (Facebook, Instagram, etc.)
+            const isInAppBrowser = /FBAN|FBAV|Instagram|LinkedIn|Snapchat|Pinterest|Twitter|TikTok|Line|WeChat|MicroMessenger/i.test(navigator.userAgent);
+            if (isChrome && !isBrave && !isInAppBrowser && typeof window.chrome === 'undefined') tests.push('no-chrome-obj');
 
             // Automation framework detection
             if (window.callPhantom || window._phantom || window.phantom) tests.push('phantomjs');
