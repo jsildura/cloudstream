@@ -62,6 +62,123 @@ const Watch = () => {
   const { showNowPlaying } = useToast();
   const { addToHistory } = useWatchHistory();
   const hasShownToast = useRef(false);
+  const wakeLockRef = useRef(null);
+
+  // Screen Wake Lock - Prevents screen from turning off during playback
+  // Works on: Chrome 84+, Safari iOS 16.4+, Edge 84+, Brave, Opera
+  // Note: May be rejected in battery saver mode - will retry on user interaction
+  useEffect(() => {
+    let isActive = true;
+    let retryTimeout = null;
+
+    const requestWakeLock = async () => {
+      // Don't request if component is unmounting or player not loaded
+      if (!isActive || !playerLoaded) return false;
+
+      try {
+        if ('wakeLock' in navigator) {
+          // Release existing lock before acquiring new one
+          if (wakeLockRef.current) {
+            try {
+              await wakeLockRef.current.release();
+            } catch (e) {
+              // Ignore release errors
+            }
+            wakeLockRef.current = null;
+          }
+
+          wakeLockRef.current = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock acquired - screen will stay on');
+
+          // Listen for release events (can happen due to tab switch, battery saver, etc.)
+          wakeLockRef.current.addEventListener('release', () => {
+            console.log('Wake Lock was released');
+            // Only re-acquire if still active and visible
+            if (isActive && playerLoaded && document.visibilityState === 'visible') {
+              // Small delay before retry to avoid rapid re-requests
+              retryTimeout = setTimeout(() => {
+                requestWakeLock();
+              }, 1000);
+            }
+          });
+
+          return true;
+        }
+      } catch (err) {
+        // Common rejection reasons:
+        // - Battery saver mode active
+        // - Low battery (some Android devices)
+        // - No user gesture (iOS Safari requires user interaction first)
+        // - Document not visible
+        console.log('Wake Lock request failed:', err.name, err.message);
+
+        // If rejected due to not visible, don't retry - visibilitychange will handle it
+        if (err.name !== 'NotAllowedError') {
+          // For other errors, retry after a delay
+          retryTimeout = setTimeout(() => {
+            if (isActive && playerLoaded) {
+              requestWakeLock();
+            }
+          }, 5000);
+        }
+        return false;
+      }
+      return false;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && playerLoaded && isActive) {
+        // Clear any pending retry
+        if (retryTimeout) {
+          clearTimeout(retryTimeout);
+          retryTimeout = null;
+        }
+        requestWakeLock();
+      }
+    };
+
+    const handleFullscreenChange = () => {
+      // Re-acquire wake lock when entering/exiting fullscreen
+      if (playerLoaded && isActive && document.visibilityState === 'visible') {
+        requestWakeLock();
+      }
+    };
+
+    // iOS Safari requires user gesture - also try on touch/click
+    const handleUserInteraction = () => {
+      if (playerLoaded && isActive && !wakeLockRef.current) {
+        requestWakeLock();
+      }
+    };
+
+    if (playerLoaded) {
+      requestWakeLock();
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      // iOS Safari may need user gesture to acquire wake lock
+      document.addEventListener('touchstart', handleUserInteraction, { once: true, passive: true });
+      document.addEventListener('click', handleUserInteraction, { once: true });
+    }
+
+    return () => {
+      isActive = false;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('click', handleUserInteraction);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release()
+          .then(() => console.log('Wake Lock released on cleanup'))
+          .catch(() => { });
+        wakeLockRef.current = null;
+      }
+    };
+  }, [playerLoaded]);
 
   useEffect(() => {
     if (!loading && contentInfo && !hasShownToast.current) {
