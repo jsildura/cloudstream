@@ -10,7 +10,7 @@ const Footer = () => {
         {/* Social Media Icons */}
         <div className="footer-social-icons">
           <a
-            href="#"
+            href="https://www.facebook.com/profile.php?id=61585783390740"
             target="_blank"
             rel="noopener noreferrer"
             className="social-icon facebook"
