@@ -282,6 +282,12 @@ const Home = () => {
         {/* VIU Picks Section */}
         <StreamingPicks provider="viu" />
 
+        {/* Crunchyroll Anime Section */}
+        <StreamingPicks provider="crunchyroll" />
+
+        {/* Peacock Picks Section */}
+        <StreamingPicks provider="peacock" />
+
         {/* Trending Anime below */}
         {trendingAnime.length > 0 && (
           <MovieRow

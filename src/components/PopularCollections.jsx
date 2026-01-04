@@ -1,108 +1,128 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import CollectionCard from './CollectionCard';
 import { popularCollections } from '../data/collectionsData';
-import useSwipe from '../hooks/useSwipe';
 import './PopularCollections.css';
 
 const PopularCollections = () => {
-    const [currentIndex, setCurrentIndex] = useState(0);
     const carouselRef = useRef(null);
-    const [itemsPerView, setItemsPerView] = useState(4);
 
-    // Calculate items per view based on screen width
-    useEffect(() => {
-        const updateItemsPerView = () => {
-            const width = window.innerWidth;
-            if (width >= 3840) {
-                setItemsPerView(4); // 4K
-            } else if (width >= 1024) {
-                setItemsPerView(4); // Desktop
-            } else if (width >= 768) {
-                setItemsPerView(3); // Tablet
-            } else if (width >= 640) {
-                setItemsPerView(2); // Small tablet
-            } else {
-                setItemsPerView(1); // Mobile
-            }
-        };
+    // Drag state
+    const [isDown, setIsDown] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
 
-        updateItemsPerView();
-        window.addEventListener('resize', updateItemsPerView);
-        return () => window.removeEventListener('resize', updateItemsPerView);
-    }, []);
+    // Momentum state
+    const velX = useRef(0);
+    const animationFrameId = useRef(null);
+    const lastMouseMoveTime = useRef(0);
 
-    const maxIndex = Math.max(0, popularCollections.length - itemsPerView);
-
-    const handlePrevious = () => {
-        setCurrentIndex(prev => Math.max(0, prev - 1));
+    const cancelMomentum = () => {
+        if (animationFrameId.current) {
+            cancelAnimationFrame(animationFrameId.current);
+            animationFrameId.current = null;
+        }
     };
 
-    const handleNext = () => {
-        setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
+    const momentumLoop = () => {
+        if (!carouselRef.current) return;
+
+        // Apply velocity
+        carouselRef.current.scrollLeft -= velX.current;
+
+        // Decay velocity
+        velX.current *= 0.95; // Friction factor
+
+        if (Math.abs(velX.current) > 0.5) {
+            animationFrameId.current = requestAnimationFrame(momentumLoop);
+        } else {
+            animationFrameId.current = null;
+        }
     };
 
-    const translateX = currentIndex * (100 / itemsPerView);
+    const handleMouseDown = (e) => {
+        setIsDown(true);
+        setIsDragging(false);
+        cancelMomentum();
 
-    // Swipe handlers - move 6 items per swipe
-    const swipeHandlers = useSwipe({
-        onSwipe: (itemsToMove) => {
-            setCurrentIndex(prev => {
-                const newIndex = prev + itemsToMove;
-                return Math.max(0, Math.min(maxIndex, newIndex));
-            });
-        },
-        threshold: 50,
-        itemsPerSwipe: 6
-    });
+        setStartX(e.pageX - carouselRef.current.offsetLeft);
+        setScrollLeft(carouselRef.current.scrollLeft);
+        velX.current = 0;
+
+        carouselRef.current.style.cursor = 'grabbing';
+    };
+
+    const handleMouseLeave = () => {
+        setIsDown(false);
+        if (carouselRef.current) carouselRef.current.style.cursor = 'grab';
+        // Start momentum if velocity is present
+        if (Math.abs(velX.current) > 1) {
+            cancelMomentum();
+            animationFrameId.current = requestAnimationFrame(momentumLoop);
+        }
+    };
+
+    const handleMouseUp = () => {
+        setIsDown(false);
+        if (carouselRef.current) carouselRef.current.style.cursor = 'grab';
+        setTimeout(() => setIsDragging(false), 0);
+
+        // Start momentum if velocity is present
+        if (Math.abs(velX.current) > 1) {
+            cancelMomentum();
+            animationFrameId.current = requestAnimationFrame(momentumLoop);
+        }
+    };
+
+    const handleMouseMove = (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+
+        const x = e.pageX - carouselRef.current.offsetLeft;
+        const walk = (x - startX) * 2; // Scroll-fast factor
+
+        // Calculate velocity
+        const now = Date.now();
+        lastMouseMoveTime.current = now;
+
+        velX.current = (e.movementX) * 2;
+
+        carouselRef.current.scrollLeft = scrollLeft - walk;
+
+        if (Math.abs(x - startX) > 5) {
+            setIsDragging(true);
+        }
+    };
+
+    // Use a prevention handler for links/clicks inside if dragging
+    const handleCaptureClick = (e) => {
+        if (isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    };
 
     return (
         <div className="popular-collections">
             <h2 className="popular-collections-title">Popular Collections</h2>
 
-            <div className="collections-carousel" role="region" aria-roledescription="carousel" {...swipeHandlers}>
-                <div className="collections-carousel-viewport">
+            <div
+                className="collections-carousel"
+                ref={carouselRef}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                onClickCapture={handleCaptureClick}
+            >
+                {popularCollections.map((collection) => (
                     <div
-                        className="collections-carousel-track"
-                        ref={carouselRef}
-                        style={{ transform: `translate3d(-${translateX}%, 0px, 0px)` }}
+                        key={collection.id}
+                        className="collections-carousel-slide"
                     >
-                        {popularCollections.map((collection) => (
-                            <div
-                                key={collection.id}
-                                className="collections-carousel-slide"
-                                role="group"
-                                aria-roledescription="slide"
-                            >
-                                <CollectionCard collection={collection} />
-                            </div>
-                        ))}
+                        <CollectionCard collection={collection} />
                     </div>
-                </div>
-
-                {/* Navigation buttons */}
-                <button
-                    className="collections-carousel-btn collections-carousel-prev"
-                    onClick={handlePrevious}
-                    disabled={currentIndex === 0}
-                    aria-label="Previous slide"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m12 19-7-7 7-7"></path>
-                        <path d="M19 12H5"></path>
-                    </svg>
-                </button>
-
-                <button
-                    className="collections-carousel-btn collections-carousel-next"
-                    onClick={handleNext}
-                    disabled={currentIndex >= maxIndex}
-                    aria-label="Next slide"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M5 12h14"></path>
-                        <path d="m12 5 7 7-7 7"></path>
-                    </svg>
-                </button>
+                ))}
             </div>
         </div>
     );

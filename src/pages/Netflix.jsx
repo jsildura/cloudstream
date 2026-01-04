@@ -335,7 +335,7 @@ const Netflix = () => {
     // Handle filter panel apply
     const handleApplyFilters = (newFilters) => {
         const newFilterState = {
-            sort_by: 'popularity.desc'
+            sort_by: newFilters.sort_by || 'popularity.desc'
         };
 
         if (newFilters.genres && newFilters.genres.length > 0) {
@@ -359,6 +359,7 @@ const Netflix = () => {
         if (filters.with_genres) count++;
         if (filters.year) count++;
         if (filters['vote_average.gte']) count++;
+        if (filters.sort_by && filters.sort_by !== 'popularity.desc') count++;
         return count;
     };
 
@@ -422,7 +423,8 @@ const Netflix = () => {
                 filters={{
                     genres: filters.with_genres ? filters.with_genres.split(',').map(Number) : [],
                     rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
-                    year: filters.year ? String(filters.year) : ''
+                    year: filters.year ? String(filters.year) : '',
+                    sort_by: filters.sort_by || 'popularity.desc'
                 }}
                 onApply={handleApplyFilters}
                 mediaType="movie"

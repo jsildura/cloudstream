@@ -25,6 +25,8 @@ import PrimeVideo from './pages/PrimeVideo';
 import AppleTV from './pages/AppleTV';
 import HBO from './pages/HBO';
 import Viu from './pages/Viu';
+import Crunchyroll from './pages/Crunchyroll';
+import Peacock from './pages/Peacock';
 import StudioPage from './pages/StudioPage';
 import MyList from './pages/MyList';
 import Modal from './components/Modal';
@@ -140,6 +142,8 @@ function App() {
             <Route path="/apple-tv" element={<AppleTV />} />
             <Route path="/hbo" element={<HBO />} />
             <Route path="/viu" element={<Viu />} />
+            <Route path="/crunchyroll" element={<Crunchyroll />} />
+            <Route path="/peacock" element={<Peacock />} />
             <Route path="/studio/:id" element={<StudioPage />} />
             <Route path="*" element={<Home />} />
           </Routes>

@@ -206,6 +206,7 @@ const TopRated = () => {
         if (filters.with_genres) count++;
         if (filters.year) count++;
         if (filters['vote_average.gte']) count++;
+        if (filters.sort_by && filters.sort_by !== 'popularity.desc') count++;
         return count;
     };
 

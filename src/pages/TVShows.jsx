@@ -192,6 +192,7 @@ const TVShows = () => {
     if (filters.first_air_date_year) count++;
     if (filters['vote_average.gte']) count++;
     if (filters.with_status) count++;
+    if (filters.sort_by && filters.sort_by !== 'popularity.desc') count++;
     return count;
   };
 

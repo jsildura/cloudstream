@@ -79,5 +79,45 @@ export const popularCollections = [
         movieIds: [329, 330, 331, 332, 333, 335],
         movieCount: 6,
         backdrop: "https://image.tmdb.org/t/p/original/jzt9HuhIAdH9qp0K2MA1m5V8sgq.jpg"
+    },
+    {
+        id: 131635,
+        name: "The Hunger Games Collection",
+        description: "In a dystopian future, teenagers are forced to fight to the death in an annual televised event called The Hunger Games.",
+        movieIds: [70160, 101299, 131631, 131634, 695721],
+        movieCount: 5,
+        backdrop: "https://image.tmdb.org/t/p/original/3sndNmvdF0R8AeyCmVoNv8LKtNy.jpg"
+    },
+    {
+        id: 33514,
+        name: "The Twilight Saga Collection",
+        description: "A teenage girl risks everything when she falls in love with a vampire.",
+        movieIds: [8966, 18239, 24021, 50619, 50620],
+        movieCount: 5,
+        backdrop: "https://image.tmdb.org/t/p/original/fpg1Uxc6zIAMRgY7RgbG0ZG9fzC.jpg"
+    },
+    {
+        id: 575,
+        name: "James Bond Collection",
+        description: "The world's most famous secret agent 007 in action-packed spy adventures.",
+        movieIds: [646, 657, 658, 660, 667, 668, 681, 253, 682, 691, 698, 699, 700, 36670, 707, 708, 709, 710, 714, 36643, 36669, 36557, 10764, 37724, 206647, 370172],
+        movieCount: 26,
+        backdrop: "https://image.tmdb.org/t/p/original/dOSECZImeyZldoq0ObieBE0lwie.jpg"
+    },
+    {
+        id: 8650,
+        name: "Transformers Collection",
+        description: "Giant alien robots wage war on Earth, with humanity caught in the middle.",
+        movieIds: [1858, 8373, 38356, 91314, 335988, 424783, 667538],
+        movieCount: 7,
+        backdrop: "https://image.tmdb.org/t/p/original/rkLyg9ClVRtfCAu89y2sxTCOjvt.jpg"
+    },
+    {
+        id: 87359,
+        name: "Mission: Impossible Collection",
+        description: "Ethan Hunt and his IMF team embark on impossible missions around the globe.",
+        movieIds: [954, 955, 956, 56292, 177677, 353081, 575264],
+        movieCount: 7,
+        backdrop: "https://image.tmdb.org/t/p/original/ooaOqQ3A6emPn2Tswovwxj5kKE6.jpg"
     }
 ];

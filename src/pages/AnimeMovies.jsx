@@ -219,6 +219,7 @@ const AnimeMovies = () => {
         }
         if (filters.year) count++;
         if (filters['vote_average.gte']) count++;
+        if (filters.sort_by && filters.sort_by !== 'popularity.desc') count++;
         return count;
     };
 

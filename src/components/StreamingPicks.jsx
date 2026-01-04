@@ -86,6 +86,20 @@ const PROVIDERS = {
         accentColor: '#FFC107',
         route: '/viu',
         regions: ['HK', 'SG', 'MY', 'PH', 'IN'] // Viu is Asia-focused
+    },
+    crunchyroll: {
+        id: 283,
+        name: 'Crunchyroll Anime',
+        className: 'crunchyroll-section',
+        accentColor: '#F47521',
+        route: '/crunchyroll'
+    },
+    peacock: {
+        id: 386,
+        name: 'Peacock Originals',
+        className: 'peacock-section',
+        accentColor: '#f3f3f3',
+        route: '/peacock'
     }
 };
 
@@ -152,6 +166,24 @@ const StreamingPicks = memo(({ provider = 'netflix' }) => {
                     tvIds.add(t.id);
                     return true;
                 });
+            } else if (provider === 'peacock') {
+                // Peacock Originals: Use network ID 3353 for TV shows
+                const movieUrl = `/api/discover/movie?with_watch_providers=${config.id}&watch_region=US&with_watch_monetization_types=flatrate&sort_by=popularity.desc${genreQueryMovie}`;
+                const tvUrl = `/api/discover/tv?with_networks=3353&sort_by=popularity.desc${genreQueryTV}`;
+
+                const [moviesRes, tvRes] = await Promise.all([
+                    fetch(movieUrl),
+                    fetch(tvUrl)
+                ]);
+
+                if (!moviesRes.ok || !tvRes.ok) {
+                    throw new Error(`Failed to fetch ${config.name} content`);
+                }
+
+                const moviesData = await moviesRes.json();
+                const tvData = await tvRes.json();
+                allMovies = moviesData.results || [];
+                allTV = tvData.results || [];
             } else {
                 // Standard fetch for other providers
                 const movieUrl = `/api/discover/movie?with_watch_providers=${config.id}&watch_region=US&sort_by=popularity.desc${genreQueryMovie}`;

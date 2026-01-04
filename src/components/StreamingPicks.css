@@ -7,7 +7,9 @@
 .prime-section,
 .appletv-section,
 .hbo-section,
-.viu-section {
+.viu-section,
+.crunchyroll-section,
+.peacock-section {
     padding: 24px 0;
     margin-bottom: 20px;
 }
@@ -18,7 +20,9 @@
 .prime-section-header,
 .appletv-section-header,
 .hbo-section-header,
-.viu-section-header {
+.viu-section-header,
+.crunchyroll-section-header,
+.peacock-section-header {
     display: flex;
     align-items: center;
     margin-bottom: 16px;
@@ -29,7 +33,9 @@
 .prime-section-header-left,
 .appletv-section-header-left,
 .hbo-section-header-left,
-.viu-section-header-left {
+.viu-section-header-left,
+.crunchyroll-section-header-left,
+.peacock-section-header-left {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -41,7 +47,9 @@
 .prime-section-header-accent,
 .appletv-section-header-accent,
 .hbo-section-header-accent,
-.viu-section-header-accent {
+.viu-section-header-accent,
+.crunchyroll-section-header-accent,
+.peacock-section-header-accent {
     height: 24px;
     width: 4px;
     border-radius: 50px;
@@ -52,7 +60,9 @@
 .prime-section-title,
 .appletv-section-title,
 .hbo-section-title,
-.viu-section-title {
+.viu-section-title,
+.crunchyroll-section-title,
+.peacock-section-title {
     font-size: 1.5rem;
     font-weight: 700;
     color: #fff;
@@ -64,7 +74,9 @@
 .prime-section-view-all,
 .appletv-section-view-all,
 .hbo-section-view-all,
-.viu-section-view-all {
+.viu-section-view-all,
+.crunchyroll-section-view-all,
+.peacock-section-view-all {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -86,7 +98,9 @@
 .prime-section-view-all:hover,
 .appletv-section-view-all:hover,
 .hbo-section-view-all:hover,
-.viu-section-view-all:hover {
+.viu-section-view-all:hover,
+.crunchyroll-section-view-all:hover,
+.peacock-section-view-all:hover {
     color: #fff;
     border-bottom-color: rgba(255, 255, 255, 0.6);
 }
@@ -96,7 +110,9 @@
 .prime-section-view-all svg,
 .appletv-section-view-all svg,
 .hbo-section-view-all svg,
-.viu-section-view-all svg {
+.viu-section-view-all svg,
+.crunchyroll-section-view-all svg,
+.peacock-section-view-all svg {
     width: 18px;
     height: 18px;
 }
@@ -161,7 +177,9 @@
     .prime-section-header,
     .appletv-section-header,
     .hbo-section-header,
-    .viu-section-header {
+    .viu-section-header,
+    .crunchyroll-section-header,
+    .peacock-section-header {
         flex-wrap: wrap;
         gap: 8px;
     }
@@ -171,7 +189,9 @@
     .prime-section-header-left,
     .appletv-section-header-left,
     .hbo-section-header-left,
-    .viu-section-header-left {
+    .viu-section-header-left,
+    .crunchyroll-section-header-left,
+    .peacock-section-header-left {
         gap: 6px;
     }
 
@@ -180,7 +200,9 @@
     .prime-section-title,
     .appletv-section-title,
     .hbo-section-title,
-    .viu-section-title {
+    .viu-section-title,
+    .crunchyroll-section-title,
+    .peacock-section-title {
         font-size: 1.2rem !important;
     }
 
@@ -189,7 +211,9 @@
     .prime-section-header-accent,
     .appletv-section-header-accent,
     .hbo-section-header-accent,
-    .viu-section-header-accent {
+    .viu-section-header-accent,
+    .crunchyroll-section-header-accent,
+    .peacock-section-header-accent {
         height: 14px;
         width: 2px;
     }
@@ -213,7 +237,9 @@
     .prime-section-view-all,
     .appletv-section-view-all,
     .hbo-section-view-all,
-    .viu-section-view-all {
+    .viu-section-view-all,
+    .crunchyroll-section-view-all,
+    .peacock-section-view-all {
         padding: 4px 8px;
         font-size: 0.65rem;
         height: 28px;
@@ -225,7 +251,9 @@
     .prime-section-view-all svg,
     .appletv-section-view-all svg,
     .hbo-section-view-all svg,
-    .viu-section-view-all svg {
+    .viu-section-view-all svg,
+    .crunchyroll-section-view-all svg,
+    .peacock-section-view-all svg {
         width: 12px;
         height: 12px;
     }
@@ -420,7 +448,9 @@
     .prime-section,
     .appletv-section,
     .hbo-section,
-    .viu-section {
+    .viu-section,
+    .crunchyroll-section,
+    .peacock-section {
         padding: 96px 0;
         margin-bottom: 80px;
     }
@@ -430,7 +460,9 @@
     .prime-section-header,
     .appletv-section-header,
     .hbo-section-header,
-    .viu-section-header {
+    .viu-section-header,
+    .crunchyroll-section-header,
+    .peacock-section-header {
         margin-bottom: 64px;
     }
 
@@ -439,7 +471,9 @@
     .prime-section-header-left,
     .appletv-section-header-left,
     .hbo-section-header-left,
-    .viu-section-header-left {
+    .viu-section-header-left,
+    .crunchyroll-section-header-left,
+    .peacock-section-header-left {
         gap: 48px;
     }
 
@@ -448,7 +482,9 @@
     .prime-section-header-accent,
     .appletv-section-header-accent,
     .hbo-section-header-accent,
-    .viu-section-header-accent {
+    .viu-section-header-accent,
+    .crunchyroll-section-header-accent,
+    .peacock-section-header-accent {
         height: 96px;
         width: 16px;
     }
@@ -458,7 +494,9 @@
     .prime-section-title,
     .appletv-section-title,
     .hbo-section-title,
-    .viu-section-title {
+    .viu-section-title,
+    .crunchyroll-section-title,
+    .peacock-section-title {
         font-size: 6rem;
     }
 
@@ -467,7 +505,9 @@
     .prime-section-view-all,
     .appletv-section-view-all,
     .hbo-section-view-all,
-    .viu-section-view-all {
+    .viu-section-view-all,
+    .crunchyroll-section-view-all,
+    .peacock-section-view-all {
         gap: 24px;
         font-size: 3.5rem;
         padding: 32px 64px;
@@ -480,7 +520,9 @@
     .prime-section-view-all svg,
     .appletv-section-view-all svg,
     .hbo-section-view-all svg,
-    .viu-section-view-all svg {
+    .viu-section-view-all svg,
+    .crunchyroll-section-view-all svg,
+    .peacock-section-view-all svg {
         width: 72px;
         height: 72px;
     }
@@ -558,7 +600,9 @@
     .prime-section,
     .appletv-section,
     .hbo-section,
-    .viu-section {
+    .viu-section,
+    .crunchyroll-section,
+    .peacock-section {
         padding: 48px 0;
         margin-bottom: 40px;
     }
@@ -568,7 +612,9 @@
     .prime-section-header,
     .appletv-section-header,
     .hbo-section-header,
-    .viu-section-header {
+    .viu-section-header,
+    .crunchyroll-section-header,
+    .peacock-section-header {
         margin-bottom: 32px;
     }
 
@@ -577,7 +623,9 @@
     .prime-section-header-left,
     .appletv-section-header-left,
     .hbo-section-header-left,
-    .viu-section-header-left {
+    .viu-section-header-left,
+    .crunchyroll-section-header-left,
+    .peacock-section-header-left {
         gap: 24px;
     }
 
@@ -586,7 +634,9 @@
     .prime-section-header-accent,
     .appletv-section-header-accent,
     .hbo-section-header-accent,
-    .viu-section-header-accent {
+    .viu-section-header-accent,
+    .crunchyroll-section-header-accent,
+    .peacock-section-header-accent {
         height: 48px;
         width: 8px;
     }
@@ -596,7 +646,9 @@
     .prime-section-title,
     .appletv-section-title,
     .hbo-section-title,
-    .viu-section-title {
+    .viu-section-title,
+    .crunchyroll-section-title,
+    .peacock-section-title {
         font-size: 3rem;
     }
 
@@ -620,7 +672,9 @@
     .prime-section-view-all,
     .appletv-section-view-all,
     .hbo-section-view-all,
-    .viu-section-view-all {
+    .viu-section-view-all,
+    .crunchyroll-section-view-all,
+    .peacock-section-view-all {
         gap: 12px;
         font-size: 1.75rem;
         padding: 16px 32px;
@@ -633,7 +687,9 @@
     .prime-section-view-all svg,
     .appletv-section-view-all svg,
     .hbo-section-view-all svg,
-    .viu-section-view-all svg {
+    .viu-section-view-all svg,
+    .crunchyroll-section-view-all svg,
+    .peacock-section-view-all svg {
         width: 36px;
         height: 36px;
     }

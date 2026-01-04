@@ -4,9 +4,9 @@ import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import FilterPanel from '../components/FilterPanel';
 import { useTMDB } from '../hooks/useTMDB';
-import './Viu.css';
+import './Peacock.css';
 
-const Viu = () => {
+const Peacock = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
@@ -79,24 +79,36 @@ const Viu = () => {
         return filtered;
     };
 
+    // Initial fetch of Peacock Originals content
     useEffect(() => {
         const fetchInitialContent = async () => {
             try {
-                // VIU provider ID is 158 - available in Asia (HK, SG, MY, PH, IN)
-                const regions = ['HK', 'SG', 'MY', 'PH', 'IN'];
+                // Peacock network ID is 3353 for TV Originals
+                // For movies, we use Peacock as provider with exclusive filter
                 const moviePromises = [];
                 const tvPromises = [];
 
-                for (const region of regions) {
-                    for (let page = 1; page <= 2; page++) {
-                        moviePromises.push(fetch(`/api/discover/movie?with_watch_providers=158&watch_region=${region}&sort_by=popularity.desc&page=${page}`));
-                        tvPromises.push(fetch(`/api/discover/tv?with_watch_providers=158&watch_region=${region}&sort_by=popularity.desc&page=${page}`));
-                    }
+                for (let page = 1; page <= 5; page++) {
+                    // Movies: Peacock provider (386) with companies filter for NBCUniversal (33) which produces Peacock Originals
+                    moviePromises.push(
+                        fetch(`/api/discover/movie?with_watch_providers=386&watch_region=US&with_watch_monetization_types=flatrate&sort_by=popularity.desc&page=${page}`)
+                    );
+                    // TV Shows: Use Peacock network ID (3353) for true originals
+                    tvPromises.push(
+                        fetch(`/api/discover/tv?with_networks=3353&sort_by=popularity.desc&page=${page}`)
+                    );
                 }
 
-                const [movieResponses, tvResponses] = await Promise.all([Promise.all(moviePromises), Promise.all(tvPromises)]);
-                const movieData = await Promise.all(movieResponses.map(res => res.json()));
-                const tvData = await Promise.all(tvResponses.map(res => res.json()));
+                const [movieResponses, tvResponses] = await Promise.all([
+                    Promise.all(moviePromises),
+                    Promise.all(tvPromises)
+                ]);
+
+                const movieDataPromises = movieResponses.map(res => res.json());
+                const tvDataPromises = tvResponses.map(res => res.json());
+
+                const movieData = await Promise.all(movieDataPromises);
+                const tvData = await Promise.all(tvDataPromises);
 
                 setMoviesTotalPages(movieData[0]?.total_pages || 1);
                 setTVTotalPages(tvData[0]?.total_pages || 1);
@@ -128,7 +140,7 @@ const Viu = () => {
                 setMoviesPage(5);
                 setTVPage(5);
             } catch (err) {
-                console.error('Error fetching VIU content:', err);
+                console.error('Error fetching Peacock content:', err);
             } finally {
                 setLoading(false);
             }
@@ -139,18 +151,26 @@ const Viu = () => {
 
     const loadMoreMovies = async () => {
         if (loadingMoreMovies || moviesPage >= moviesTotalPages) return;
+
         setLoadingMoreMovies(true);
         try {
             const nextPages = [];
             const startPage = moviesPage + 1;
             const endPage = Math.min(moviesPage + 3, moviesTotalPages);
+
             for (let page = startPage; page <= endPage; page++) {
-                nextPages.push(fetch(`/api/discover/movie?with_watch_providers=158&watch_region=HK&sort_by=popularity.desc&page=${page}`));
+                nextPages.push(
+                    fetch(`/api/discover/movie?with_watch_providers=386&watch_region=US&with_watch_monetization_types=flatrate&sort_by=popularity.desc&page=${page}`)
+                );
             }
+
             const responses = await Promise.all(nextPages);
-            const data = await Promise.all(responses.map(res => res.json()));
+            const dataPromises = responses.map(res => res.json());
+            const data = await Promise.all(dataPromises);
+
             const existingIds = new Set(movies.map(m => m.id));
             const newMovies = [];
+
             data.forEach(d => {
                 (d.results || []).forEach(movie => {
                     if (!existingIds.has(movie.id)) {
@@ -159,6 +179,7 @@ const Viu = () => {
                     }
                 });
             });
+
             setMovies(prev => [...prev, ...newMovies]);
             setMoviesPage(endPage);
         } catch (err) {
@@ -170,18 +191,26 @@ const Viu = () => {
 
     const loadMoreTV = async () => {
         if (loadingMoreTV || tvPage >= tvTotalPages) return;
+
         setLoadingMoreTV(true);
         try {
             const nextPages = [];
             const startPage = tvPage + 1;
             const endPage = Math.min(tvPage + 3, tvTotalPages);
+
             for (let page = startPage; page <= endPage; page++) {
-                nextPages.push(fetch(`/api/discover/tv?with_watch_providers=158&watch_region=HK&sort_by=popularity.desc&page=${page}`));
+                nextPages.push(
+                    fetch(`/api/discover/tv?with_networks=3353&sort_by=popularity.desc&page=${page}`)
+                );
             }
+
             const responses = await Promise.all(nextPages);
-            const data = await Promise.all(responses.map(res => res.json()));
+            const dataPromises = responses.map(res => res.json());
+            const data = await Promise.all(dataPromises);
+
             const existingIds = new Set(tvShows.map(s => s.id));
             const newShows = [];
+
             data.forEach(d => {
                 (d.results || []).forEach(show => {
                     if (!existingIds.has(show.id)) {
@@ -190,6 +219,7 @@ const Viu = () => {
                     }
                 });
             });
+
             setTVShows(prev => [...prev, ...newShows]);
             setTVPage(endPage);
         } catch (err) {
@@ -238,21 +268,21 @@ const Viu = () => {
 
     if (loading) {
         return (
-            <div className="viu-page">
-                <div className="viu-page-header">
+            <div className="peacock-page">
+                <div className="peacock-page-header">
                     <button onClick={handleBack} className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>
                         </svg>
                         Back
                     </button>
-                    <div className="viu-page-title-section">
-                        <img src="/provider/viu.png" alt="VIU" className="viu-page-logo" />
+                    <div className="peacock-page-title-section">
+                        <img src="/provider/peacock_logo.png" alt="Peacock" className="peacock-page-logo" />
                     </div>
                 </div>
-                <div className="viu-page-loading">
+                <div className="peacock-page-loading">
                     <div className="loading-spinner"></div>
-                    <p>Loading VIU content...</p>
+                    <p>Loading Peacock content...</p>
                 </div>
             </div>
         );
@@ -262,18 +292,18 @@ const Viu = () => {
     const filteredTVShows = getFilteredTVShows();
 
     return (
-        <div className="viu-page">
-            <div className="viu-page-header">
+        <div className="peacock-page">
+            <div className="peacock-page-header">
                 <button onClick={handleBack} className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>
                     </svg>
                     Back
                 </button>
-                <div className="viu-page-title-section">
-                    <img src="/provider/viu.png" alt="VIU" className="viu-page-logo" />
+                <div className="peacock-page-title-section">
+                    <img src="/provider/peacock_logo.png" alt="Peacock" className="peacock-page-logo" />
                 </div>
-                <p className="viu-page-subtitle">Popular movies and TV shows available on VIU</p>
+                <p className="peacock-page-subtitle">Peacock Original series and featured movies</p>
             </div>
 
             <FilterPanel
@@ -289,11 +319,11 @@ const Viu = () => {
                 mediaType="movie"
             />
 
-            <section className="viu-content-section">
-                <div className="viu-section-header">
-                    <div className="viu-section-accent"></div>
-                    <h2 className="viu-section-title">Movies</h2>
-                    <span className="viu-section-count">{filteredMovies.length} titles</span>
+            <section className="peacock-content-section">
+                <div className="peacock-section-header">
+                    <div className="peacock-section-accent"></div>
+                    <h2 className="peacock-section-title">Featured Movies</h2>
+                    <span className="peacock-section-count">{filteredMovies.length} titles</span>
                     <button className="select-filter-btn" onClick={() => setIsFilterPanelOpen(true)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -309,30 +339,30 @@ const Viu = () => {
                         )}
                     </button>
                 </div>
-                <div className="viu-grid">
+                <div className="peacock-grid">
                     {filteredMovies.map(movie => (<MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />))}
                 </div>
                 {moviesPage < moviesTotalPages && (
                     <div className="load-more-container">
-                        <button className="load-more-btn viu-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
+                        <button className="load-more-btn peacock-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
                             {loadingMoreMovies ? <><div className="btn-spinner"></div>Loading...</> : <>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>}
                         </button>
                     </div>
                 )}
             </section>
 
-            <section className="viu-content-section">
-                <div className="viu-section-header">
-                    <div className="viu-section-accent"></div>
-                    <h2 className="viu-section-title">TV Shows</h2>
-                    <span className="viu-section-count">{filteredTVShows.length} titles</span>
+            <section className="peacock-content-section">
+                <div className="peacock-section-header">
+                    <div className="peacock-section-accent"></div>
+                    <h2 className="peacock-section-title">Original Series</h2>
+                    <span className="peacock-section-count">{filteredTVShows.length} titles</span>
                 </div>
-                <div className="viu-grid">
+                <div className="peacock-grid">
                     {filteredTVShows.map(show => (<MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />))}
                 </div>
                 {tvPage < tvTotalPages && (
                     <div className="load-more-container">
-                        <button className="load-more-btn viu-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
+                        <button className="load-more-btn peacock-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
                             {loadingMoreTV ? <><div className="btn-spinner"></div>Loading...</> : <>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>}
                         </button>
                     </div>
@@ -344,4 +374,4 @@ const Viu = () => {
     );
 };
 
-export default Viu;
+export default Peacock;
