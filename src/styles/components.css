@@ -120,7 +120,7 @@
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 12px;
 }
 
 .nav-link {
@@ -3309,8 +3309,7 @@
   }
 
   .navbar-links {
-    gap: 1rem;
-    /* ~20px × 2 */
+    gap: 14px;
   }
 
   .navbar-links svg {

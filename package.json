@@ -17,6 +17,7 @@
 		"react": "^19.1.1",
 		"react-dom": "^19.1.1",
 		"react-router-dom": "^7.9.5",
+		"shaka-player": "^4.16.12",
 		"vite-plugin-pwa": "^1.2.0",
 		"vite-plugin-sitemap": "^0.8.2"
 	},

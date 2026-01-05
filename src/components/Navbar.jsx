@@ -193,7 +193,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             onMouseLeave={() => setTvShowsDropdownOpen(false)}
           >
             <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
-              TV Shows
+              Shows
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -205,7 +205,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                 <div className="mega-dropdown-header">
                   <div className="mega-dropdown-header-title-row">
                     <img src="/logo/tv-outline.svg" alt="TV Shows" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1)' }} />
-                    <h3>TV Shows</h3>
+                    <h3>Shows</h3>
                   </div>
                   <p className="mega-dropdown-header-desc">Discover captivating TV series from around the world. From binge-worthy dramas to hilarious comedies, find your next obsession.</p>
                 </div>
@@ -403,6 +403,13 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               <rect x="3" y="14" width="7" height="7" />
             </svg>
             Watchlist
+          </Link>
+          <Link to="/iptv" className="nav-link nav-link-live">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+              <polyline points="17 2 12 7 7 2" />
+            </svg>
+            Live TV
           </Link>
         </div>
 
@@ -642,6 +649,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             </div>
 
             <Link to="/my-list" className="nav-link" onClick={closeMenu}>Watchlist</Link>
+            <Link to="/iptv" className="nav-link" onClick={closeMenu}>Live TV</Link>
 
             {/* PWA Install Button in Mobile Menu - Modal renders via Portal */}
             <div className="side-menu-install">

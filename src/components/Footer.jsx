@@ -59,6 +59,9 @@ const Footer = () => {
           <Link to="/hbo" className="footer-nav-link">HBO Max</Link>
           <Link to="/apple-tv" className="footer-nav-link">Apple TV+</Link>
           <Link to="/viu" className="footer-nav-link">Viu</Link>
+          <Link to="/crunchyroll" className="footer-nav-link">Crunchyroll</Link>
+          <Link to="/peacock" className="footer-nav-link">Peacock</Link>
+
         </nav>
 
         {/* Disclaimer Text */}

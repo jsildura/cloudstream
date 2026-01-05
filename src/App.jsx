@@ -29,6 +29,8 @@ import Crunchyroll from './pages/Crunchyroll';
 import Peacock from './pages/Peacock';
 import StudioPage from './pages/StudioPage';
 import MyList from './pages/MyList';
+import IPTV from './pages/IPTV';
+import IPTVWatch from './pages/IPTVWatch';
 import Modal from './components/Modal';
 import { useTMDB } from './hooks/useTMDB';
 import Footer from './components/Footer';
@@ -145,6 +147,8 @@ function App() {
             <Route path="/crunchyroll" element={<Crunchyroll />} />
             <Route path="/peacock" element={<Peacock />} />
             <Route path="/studio/:id" element={<StudioPage />} />
+            <Route path="/iptv" element={<IPTV />} />
+            <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </main>
