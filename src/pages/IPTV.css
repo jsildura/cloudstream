@@ -37,6 +37,100 @@
   padding: 0 1rem;
 }
 
+/* ========================================
+   TOP 10 LIVE TV SECTION
+   ======================================== */
+
+.iptv-top10-section {
+  margin-bottom: 2.5rem;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.iptv-top10-header {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1rem;
+  padding-left: 8px;
+}
+
+.iptv-top10-list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 40px 8px 0;
+  scroll-behavior: auto;
+  /* Changed to auto to prevent fighting with drag scroll */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+}
+
+.iptv-top10-list::-webkit-scrollbar {
+  display: none;
+}
+
+.iptv-top10-item {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  position: relative;
+  padding-right: 8px;
+}
+
+.iptv-top10-item:hover {
+  transform: scale(1.05);
+}
+
+.iptv-top10-item:focus-visible {
+  outline: 2px solid var(--netflix-red);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.iptv-top10-rank {
+  font-size: 5rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1;
+  margin-right: -20px;
+  z-index: 1;
+  text-shadow:
+    -2px -2px 0 #141414,
+    2px -2px 0 #141414,
+    -2px 2px 0 #141414,
+    2px 2px 0 #141414,
+    0 0 10px rgba(0, 0, 0, 0.8);
+  font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+}
+
+.iptv-top10-logo-container {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.iptv-top10-logo {
+  max-width: 70%;
+  max-height: 70%;
+  object-fit: contain;
+}
+
 /* Loading & Error States */
 .iptv-loading,
 .iptv-error {
@@ -111,7 +205,12 @@
   border-radius: 8px;
   color: #fff;
   font-size: 1rem;
+  line-height: 1.5;
+  /* Ensure consistent line height */
   transition: all 0.2s ease;
+  height: 54px;
+  /* Explicit height to match */
+  box-sizing: border-box;
 }
 
 .iptv-search-input::placeholder {
@@ -124,26 +223,112 @@
   background: rgba(255, 255, 255, 0.15);
 }
 
-.iptv-category-select {
+/* Custom Dropdown */
+.iptv-custom-select-container {
+  position: relative;
+  min-width: 200px;
+}
+
+.iptv-custom-select-trigger {
   padding: 14px 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: #fff;
   font-size: 1rem;
+  line-height: 1.5;
+  /* Ensure consistent line height */
   cursor: pointer;
-  min-width: 180px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
   transition: all 0.2s ease;
+  user-select: none;
+  height: 54px;
+  /* Explicit height to match input */
+  box-sizing: border-box;
 }
 
-.iptv-category-select:focus {
-  outline: none;
+.iptv-custom-select-trigger:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.iptv-custom-select-trigger.open {
   border-color: var(--netflix-red);
+  background: rgba(255, 255, 255, 0.15);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-.iptv-category-select option {
+.iptv-select-arrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.iptv-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.iptv-custom-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: none;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  z-index: 50;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.iptv-custom-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.iptv-custom-options::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.iptv-custom-options::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.iptv-custom-option {
+  padding: 12px 20px;
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.iptv-custom-option:hover {
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
+}
+
+.iptv-custom-option.selected {
+  background: rgba(229, 9, 20, 0.1);
+  /* Low opacity red */
+  color: #fff;
+  font-weight: 500;
+}
+
+.check-mark {
+  color: var(--netflix-red);
+  font-size: 1.1rem;
+  font-weight: bold;
 }
 
 /* Channel Grid */
@@ -333,7 +518,7 @@
     max-width: none;
   }
 
-  .iptv-category-select {
+  .iptv-custom-select-container {
     min-width: auto;
   }
 
@@ -353,6 +538,20 @@
 
   .iptv-channel-name {
     font-size: 0.85rem;
+  }
+
+  .iptv-top10-header {
+    font-size: 1.1rem;
+  }
+
+  .iptv-top10-rank {
+    font-size: 3.5rem;
+    margin-right: -14px;
+  }
+
+  .iptv-top10-logo-container {
+    width: 60px;
+    height: 60px;
   }
 }
 
@@ -378,6 +577,16 @@
   .iptv-channel-name {
     font-size: 1.1rem;
   }
+
+  .iptv-top10-rank {
+    font-size: 6rem;
+    margin-right: -24px;
+  }
+
+  .iptv-top10-logo-container {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 @media (min-width: 3840px) {
@@ -394,7 +603,7 @@
   }
 
   .iptv-search-input,
-  .iptv-category-select {
+  .iptv-custom-select-trigger {
     padding: 28px 32px 28px 72px;
     font-size: 2rem;
     border-radius: 16px;
@@ -424,5 +633,19 @@
 
   .iptv-channel-name {
     font-size: 1.8rem;
+  }
+
+  .iptv-top10-header {
+    font-size: 2.5rem;
+  }
+
+  .iptv-top10-rank {
+    font-size: 10rem;
+    margin-right: -40px;
+  }
+
+  .iptv-top10-logo-container {
+    width: 160px;
+    height: 160px;
   }
 }

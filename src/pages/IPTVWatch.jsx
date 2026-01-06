@@ -214,6 +214,16 @@ const IPTVWatch = () => {
                     await playerRef.current.destroy();
                 }
 
+                // FIX: Check for stale Jeepney TV key and update if necessary
+                if (channel.id === 'jeepney-tv') {
+                    // Correct Key from liveplay.vercel.app
+                    const freshKey = 'dc9fec234a5841bb8d06e92042c741ec:225676f32612dc803cb4d0f950d063d0';
+                    if (channel.licenseKey !== freshKey) {
+                        console.warn('[IPTVWatch] Detected stale Jeepney TV key. Force-updating to fresh key.');
+                        channel.licenseKey = freshKey;
+                    }
+                }
+
                 // Install polyfills
                 shaka.polyfill.installAll();
 
@@ -222,7 +232,9 @@ const IPTVWatch = () => {
                     throw new Error('Browser does not support Shaka Player');
                 }
 
-                const player = new shaka.Player(videoRef.current);
+                // Create detached player
+                const player = new shaka.Player();
+                await player.attach(videoRef.current);
                 playerRef.current = player;
 
                 // OFFLINE KEY INTERCEPTOR - For Mapple channels, intercept key requests
@@ -248,90 +260,117 @@ const IPTVWatch = () => {
                             return new Promise((resolve, reject) => {
                                 let attempts = 0;
                                 const maxAttempts = 150; // 15 seconds
-
-                                const checkKey = () => {
+                                const interval = setInterval(() => {
                                     attempts++;
-                                    if (keyRef.current) {
-                                        console.log('[IPTVWatch] Serving Key:', keyRef.current);
-                                        const keyBytes = new Uint8Array(keyRef.current.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                                    const key = localStorage.getItem('replay_key');
+                                    if (key) {
+                                        clearInterval(interval);
+                                        // Key found! Convert hex string to buffer
+                                        // The key from replay_key is usually hex string
+                                        // Check if key is raw bytes or hex
+                                        // Usually for Mapple it's binary content
+                                        // But localStorage is string.
+                                        // Let's assume hex string for now or direct raw bytes if encoded
+
+                                        // For now, let's just log
+                                        console.log('Found key in storage:', key.substring(0, 10) + '...');
+
+                                        // Respond with the key
+                                        // Need to convert hex string to ArrayBuffer
+                                        const buffer = new Uint8Array(key.match(/[\da-f]{2}/gi).map(h => parseInt(h, 16))).buffer;
 
                                         resolve({
-                                            data: keyBytes.buffer,
-                                            headers: {},
                                             uri: uri,
-                                            originalUri: uri,
-                                            timeMs: 0
+                                            data: buffer,
+                                            headers: {}
                                         });
                                     } else if (attempts >= maxAttempts) {
-                                        // Fallback or fail
-                                        console.warn('[IPTVWatch] Key timeout, serving fallback');
-                                        const fallback = '865373cbaac44341ddbc433c5a124329';
-                                        const keyBytes = new Uint8Array(fallback.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                                        resolve({
-                                            data: keyBytes.buffer,
-                                            headers: {},
-                                            uri: uri,
-                                            originalUri: uri,
-                                            timeMs: 0
-                                        });
-                                    } else {
-                                        setTimeout(checkKey, 100);
+                                        clearInterval(interval);
+                                        reject(new shaka.util.Error(
+                                            shaka.util.Error.Severity.CRITICAL,
+                                            shaka.util.Error.Category.NETWORK,
+                                            shaka.util.Error.Code.TIMEOUT
+                                        ));
                                     }
-                                };
-
-                                checkKey();
+                                }, 100);
                             });
                         }
-                        return shaka.util.AbortableOperation.failed(
-                            new shaka.util.Error(
-                                shaka.util.Error.Severity.RECOVERABLE,
-                                shaka.util.Error.Category.NETWORK,
-                                shaka.util.Error.Code.BAD_HTTP_STATUS
-                            )
-                        );
+                        return null;
                     });
                     console.log('[IPTVWatch] Using extension for key harvesting');
                 }
 
-                // Configure streaming settings
+                // Configure player
                 const config = {
                     streaming: {
-                        bufferingGoal: 30,
-                        rebufferingGoal: 2,
-                        bufferBehind: 30,
+                        bufferingGoal: 30, // Increase buffering to handle network fluctuations
+                        rebufferingGoal: 5,
+                        bufferBehind: 10,
                         retryParameters: {
-                            timeout: 30000,
-                            maxAttempts: 3,
+                            maxAttempts: 5,
                             baseDelay: 1000,
                             backoffFactor: 2,
+                            fuzzFactor: 0.5,
+                            timeout: 0 // Infinite timeout
                         },
+                        ignoreTextStreamFailures: true // Ignore subtitle failures
                     },
-                    abr: {
-                        enabled: true,
-                        defaultBandwidthEstimate: 1000000,
-                    },
-                    // Force HLS because the file extension is .css
                     manifest: {
                         retryParameters: {
-                            maxAttempts: 3
+                            maxAttempts: 5,
+                            baseDelay: 1000,
+                            timeout: 0
                         }
                     }
                 };
 
-                // Add DRM keys if present (for static local keys)
+                // Add DRM configuration if present
                 if (channel.licenseKey) {
                     try {
-                        const parts = channel.licenseKey.split(':');
-                        if (parts.length === 2) {
+                        const keyString = channel.licenseKey.trim();
+
+                        // Check if it's a License Key URL (Widevine/PlayReady server)
+                        if (keyString.startsWith('http')) {
                             config.drm = {
-                                clearKeys: {
-                                    [parts[0]]: parts[1]
+                                servers: {
+                                    'com.widevine.alpha': keyString,
+                                    // Add PlayReady if needed, but usually Widevine is primary default
+                                },
+                                retryParameters: {
+                                    maxAttempts: 3,
+                                    timeout: 10000
                                 }
                             };
-                            console.log('[IPTVWatch] Configured static ClearKey DRM');
+                            console.log('[IPTVWatch] Configured DRM License Server:', keyString);
+
+                        } else if (keyString.includes(':')) {
+                            // ClearKey format (id:key)
+                            let [keyId, key] = keyString.split(':');
+
+                            if (keyId && key) {
+                                config.drm = {
+                                    clearKeys: { [keyId]: key },
+                                    preferredKeySystems: ['org.w3.clearkey'],
+                                    retryParameters: {
+                                        timeout: 10000,
+                                        maxAttempts: 3,
+                                        baseDelay: 500,
+                                        backoffFactor: 2
+                                    },
+                                    advanced: {
+                                        'org.w3.clearkey': {
+                                            videoRobustness: [],
+                                            audioRobustness: []
+                                        }
+                                    }
+                                };
+                                console.log('[IPTVWatch] Configured static ClearKey DRM');
+                            }
+                        } else {
+                            console.warn('[IPTVWatch] Unrecognized Key format:', keyString);
                         }
                     } catch (e) {
-                        console.warn('[IPTVWatch] Failed to print license key:', e);
+                        console.warn('[IPTVWatch] Failed to configure DRM:', e);
                     }
                 }
 
@@ -340,13 +379,14 @@ const IPTVWatch = () => {
                 // Add error listener - only show UI for critical errors
                 player.addEventListener('error', (event) => {
                     const shakaError = event.detail;
-                    console.error('Shaka Player Error:', shakaError);
+                    // Safely stringify error for logging to avoid 'U' minified output issues
+                    console.error('Shaka Player Error:', JSON.stringify(shakaError, null, 2));
 
                     // Only show error UI for CRITICAL severity errors
                     // Severity.RECOVERABLE (1) means playback can continue
                     // Severity.CRITICAL (2) means playback cannot continue
                     if (shakaError.severity === shaka.util.Error.Severity.CRITICAL) {
-                        setError(`Playback error: ${shakaError.message || `Shaka Error ${shakaError.code}`}`);
+                        setError(`Playback error: Code ${shakaError.code} (${shakaError.category}) - ${shakaError.message || 'Unknown Error'}`);
                         markChannelOffline(channel?.id);
                     } else {
                         // Log recoverable errors but don't show UI
