@@ -322,8 +322,7 @@ const IPTV = () => {
             name: 'GMA 7',
             logo: 'https://ottepg8.comclark.com:8443/iptvepg/images/markurl/mark_1723126306082.png',
             category: 'Pinoy',
-            url: 'https://gsattv.akamaized.net/live/media0/gma7/Fairplay/gma7.m3u8',
-            licenseKey: 'https://key.nathcreqtives.com/widevine/?deviceId=02:00:00:00:00:00', // Ensure this works or fallback
+            url: 'https://gsattv.akamaized.net/live/media0/gma7/Widevine/gma7.mpd'
           },
           {
             id: 'red-bull',
@@ -436,12 +435,14 @@ const IPTV = () => {
             category: 'Movies',
             url: 'https://7732c5436342497882363a8cd14ceff4.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/Plex_NewMovies/playlist.m3u8'
           },
+          // === Source Live Play ===
           {
-            id: 'skygo-warner-tv',
+            id: 'warner-tv',
             name: 'Warner TV',
-            logo: 'https://i.imgur.com/Q4NhDKm.png',
-            category: 'Entertainment',
-            url: 'https://cdn4.skygo.mn/live/disk1/Warner/HLSv3-FTA/Warner-avc1_2089200=7-mp4a_256000_eng=6.m3u8'
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png',
+            category: 'Movies',
+            url: 'https://unifi-live2.secureswiftcontent.com/Content/DASH/Live/channel(WarnerTV)/master.mpd',
+            licenseKey: '6f4ea7be45af4275a8d76845fb19dba5:b02208ea61a2cdbf5b09440bc3157f04'
           },
           {
             id: 'iwatch-dubai-one',
@@ -955,7 +956,7 @@ const IPTV = () => {
             { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
             { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 52 },
             { rank: 11, name: 'Animal Planet HD (IN)', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 'animal-planet-hd-in' },
-            { rank: 12, name: 'Warner TV', logo: 'https://i.imgur.com/Q4NhDKm.png', channelId: 'skygo-warner-tv' },
+            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 'warner-tv' },
           ].map(item => {
             const channel = channels.find(c => c.id === item.channelId);
             return (

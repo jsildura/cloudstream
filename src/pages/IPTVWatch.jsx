@@ -56,7 +56,7 @@ const IPTVWatch = () => {
         if (channelStripTimer.current) clearTimeout(channelStripTimer.current);
         channelStripTimer.current = setTimeout(() => {
             setShowChannelStrip(false);
-        }, 60000); // 1 minute for testing (was 5000)
+        }, 5000); // 5 seconds timeout for channel strip
     }, []);
 
     // Toggle channel strip
