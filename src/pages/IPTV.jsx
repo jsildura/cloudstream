@@ -230,7 +230,7 @@ const IPTV = () => {
             licenseKey: 'b207c44332844523a3a3b0469e5652d7:fe71aea346db08f8c6fbf0592209f955'
           },
           {
-            id: 'shakzz-cinema-one',
+            id: 'cinema-one',
             name: 'Cinema One',
             logo: 'https://download.logo.wine/logo/Cinema_One/Cinema_One-Logo.wine.png',
             category: 'Movies',
@@ -777,22 +777,27 @@ const IPTV = () => {
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
+      const isOffline = offlineChannels.includes(channel.id);
+
       const matchesCategory = categoryFilter === 'All'
-        ? true
+        ? !isOffline // 'All' excludes offline channels
         : categoryFilter === 'Favorites'
           ? favorites.includes(channel.id)
-          : (channel.category || 'Entertainment') === categoryFilter;
+          : categoryFilter === 'Offline'
+            ? isOffline
+            : (channel.category || 'Entertainment') === categoryFilter && !isOffline;
 
       return matchesSearch && matchesCategory;
     });
-  }, [channels, searchQuery, categoryFilter, favorites]);
+  }, [channels, searchQuery, categoryFilter, favorites, offlineChannels]);
 
   // key categories Entertainment, Movies, News, Sports, Kids, Documentary, and Pinoy
-  const categories = ['Favorites', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Pinoy'];
+  const categories = ['Favorites', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Pinoy', 'Offline'];
 
   const getCategoryCount = (cat) => {
     if (cat === 'Favorites') return favorites.length;
-    return channels.filter(c => (c.category || 'Entertainment') === cat).length;
+    if (cat === 'Offline') return offlineChannels.length;
+    return channels.filter(c => (c.category || 'Entertainment') === cat && !offlineChannels.includes(c.id)).length;
   };
 
   // Count live and offline
@@ -800,8 +805,9 @@ const IPTV = () => {
   const offlineCount = offlineChannels.length;
 
   const handleChannelClick = (channel) => {
+    const channelIndex = filteredChannels.findIndex(c => c.id === channel.id);
     navigate(`/iptv/watch/${channel.id}`, {
-      state: { channel },
+      state: { channel, channels: filteredChannels, channelIndex },
     });
   };
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import shaka from 'shaka-player';
 import './IPTVWatch.css';
@@ -26,6 +26,14 @@ const IPTVWatch = () => {
     const [controlsVisible, setControlsVisible] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
 
+    // Channel strip state
+    const [channels] = useState(location.state?.channels || []);
+    const [currentIndex, setCurrentIndex] = useState(location.state?.channelIndex || 0);
+    const [showChannelStrip, setShowChannelStrip] = useState(false);
+    const [focusedIndex, setFocusedIndex] = useState(0); // Track focused item in strip
+    const channelStripTimer = useRef(null);
+    const channelRefs = useRef([]);
+
     const hideControlsTimer = useRef(null);
     const keyRef = useRef(null);
     const [latestKey, setLatestKey] = useState(null);
@@ -42,6 +50,91 @@ const IPTVWatch = () => {
             }
         }, 3000);
     };
+
+    // Auto-hide timer for channel strip
+    const resetChannelStripTimer = useCallback(() => {
+        if (channelStripTimer.current) clearTimeout(channelStripTimer.current);
+        channelStripTimer.current = setTimeout(() => {
+            setShowChannelStrip(false);
+        }, 60000); // 1 minute for testing (was 5000)
+    }, []);
+
+    // Toggle channel strip
+    const toggleChannelStrip = useCallback(() => {
+        setShowChannelStrip(prev => {
+            const newState = !prev;
+            if (newState) {
+                resetChannelStripTimer();
+                setFocusedIndex(currentIndex); // Start focus on current channel
+                setTimeout(() => {
+                    channelRefs.current[currentIndex]?.focus();
+                    channelRefs.current[currentIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }, 100);
+            }
+            return newState;
+        });
+    }, [currentIndex, resetChannelStripTimer]);
+
+    // Switch channel without remounting page
+    const switchChannel = useCallback((newChannel, newIndex) => {
+        if (newChannel.id === channel?.id) return;
+        setChannel(newChannel);
+        setCurrentIndex(newIndex);
+        setError(null);
+        setLoading(true);
+        setShowChannelStrip(false);
+        // Update URL without adding to history
+        navigate(`/iptv/watch/${newChannel.id}`, { replace: true, state: { channel: newChannel, channels, channelIndex: newIndex } });
+    }, [channel, channels, navigate]);
+
+    // Navigate prev/next channel
+    const navigateChannel = useCallback((direction) => {
+        if (channels.length === 0) return;
+        const newIndex = (currentIndex + direction + channels.length) % channels.length;
+        switchChannel(channels[newIndex], newIndex);
+    }, [currentIndex, channels, switchChannel]);
+
+    // Keyboard/D-pad navigation (Android TV support)
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (showChannelStrip && channels.length > 0) {
+                // Strip is open - custom focus navigation
+                if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setShowChannelStrip(false);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    const nextIndex = (focusedIndex + 1) % channels.length;
+                    setFocusedIndex(nextIndex);
+                    channelRefs.current[nextIndex]?.focus();
+                    channelRefs.current[nextIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    resetChannelStripTimer();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    const prevIndex = (focusedIndex - 1 + channels.length) % channels.length;
+                    setFocusedIndex(prevIndex);
+                    channelRefs.current[prevIndex]?.focus();
+                    channelRefs.current[prevIndex]?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    resetChannelStripTimer();
+                }
+            } else {
+                // Strip is closed - quick zap mode
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    toggleChannelStrip();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    navigateChannel(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateChannel(1);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showChannelStrip, channels, focusedIndex, toggleChannelStrip, navigateChannel, resetChannelStripTimer]);
 
     // 1. Key Harvester Listener - receives keys from the extension's hook.js via postMessage
     useEffect(() => {
@@ -244,10 +337,21 @@ const IPTVWatch = () => {
 
                 player.configure(config);
 
-                // Add error listener
+                // Add error listener - only show UI for critical errors
                 player.addEventListener('error', (event) => {
-                    console.error('Shaka Player Error:', event.detail);
-                    setError(`Playback error: ${event.detail.message || 'Unknown error'}`);
+                    const shakaError = event.detail;
+                    console.error('Shaka Player Error:', shakaError);
+
+                    // Only show error UI for CRITICAL severity errors
+                    // Severity.RECOVERABLE (1) means playback can continue
+                    // Severity.CRITICAL (2) means playback cannot continue
+                    if (shakaError.severity === shaka.util.Error.Severity.CRITICAL) {
+                        setError(`Playback error: ${shakaError.message || `Shaka Error ${shakaError.code}`}`);
+                        markChannelOffline(channel?.id);
+                    } else {
+                        // Log recoverable errors but don't show UI
+                        console.warn('[IPTVWatch] Recoverable error (playback continues):', shakaError.code, shakaError.message);
+                    }
                 });
 
                 // Add debugging listeners
@@ -292,7 +396,7 @@ const IPTVWatch = () => {
 
         // No need to wait for key - proxy server handles everything
         initPlayer();
-    }, [playerLoaded]); // No channel dep
+    }, [playerLoaded, channel]); // Re-init when channel changes
 
     // Mark channel as offline in localStorage
     const markChannelOffline = (channelId) => {
@@ -436,6 +540,20 @@ const IPTVWatch = () => {
             <div className={`iptv-watch-live-badge${!controlsVisible && playerLoaded ? ' controls-hidden' : ''}`}>
                 <span className="iptv-live-indicator">LIVE</span>
                 <span className="iptv-watch-channel-name">{channel?.name || 'AMC USA Test'}</span>
+                {/* Channel Strip Toggle */}
+                {channels.length > 0 && (
+                    <button
+                        className="iptv-watch-badge-btn"
+                        onClick={toggleChannelStrip}
+                        tabIndex={0}
+                        aria-label="Show channel list"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" />
+                            <path d="M8 21h8" /><path d="M12 17v4" />
+                        </svg>
+                    </button>
+                )}
                 <button
                     className="iptv-watch-badge-btn"
                     onClick={toggleFullscreen}
@@ -475,6 +593,43 @@ const IPTVWatch = () => {
                     allow="autoplay; encrypted-media"
                     title="Key Harvester"
                 />
+            )}
+
+
+
+            {/* Channel Strip Overlay */}
+            {showChannelStrip && channels.length > 0 && (
+                <div className="channel-strip-overlay" role="dialog" aria-label="Channel selector">
+                    <div className="channel-strip-header">All Channels ({channels.length})</div>
+                    <div
+                        className="channel-strip-list"
+                        onTouchStart={resetChannelStripTimer}
+                        onTouchMove={resetChannelStripTimer}
+                        onScroll={resetChannelStripTimer}
+                    >
+                        {channels.map((ch, idx) => (
+                            <button
+                                key={ch.id}
+                                ref={el => channelRefs.current[idx] = el}
+                                className={`channel-strip-item${idx === currentIndex ? ' active' : ''}`}
+                                onClick={() => switchChannel(ch, idx)}
+                                onFocus={resetChannelStripTimer}
+                                tabIndex={0}
+                                aria-label={`${ch.name}${idx === currentIndex ? ' (current)' : ''}`}
+                                aria-pressed={idx === currentIndex}
+                            >
+                                <div className="channel-strip-logo">
+                                    {ch.logo ? (
+                                        <img src={ch.logo} alt="" loading="lazy" />
+                                    ) : (
+                                        <span>{ch.name.charAt(0)}</span>
+                                    )}
+                                </div>
+                                <span className="channel-strip-name">{ch.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
             )}
         </div>
     );

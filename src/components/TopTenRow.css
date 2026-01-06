@@ -58,10 +58,22 @@
 
 /* Carousel Container */
 .top-ten-section .top-ten-carousel {
-    position: relative;
-    overflow: visible;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-behavior: auto;
+    /* Changed to auto to prevent fighting with drag scroll */
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     cursor: grab;
     user-select: none;
+}
+
+.top-ten-section .top-ten-carousel::-webkit-scrollbar {
+    display: none;
 }
 
 .top-ten-section .top-ten-carousel.dragging {
@@ -73,20 +85,11 @@
 }
 
 .top-ten-section .top-ten-viewport {
-    overflow-x: clip;
-    overflow-y: visible;
-    margin: 0;
-    padding: 0;
+    display: contents;
 }
 
 .top-ten-section .top-ten-track {
-    display: flex;
-    transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-    padding-right: var(--card-margin);
-}
-
-.top-ten-section .top-ten-carousel.dragging .top-ten-track {
-    transition: none;
+    display: contents;
 }
 
 /* Individual Card */
