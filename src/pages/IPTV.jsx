@@ -539,14 +539,6 @@ const IPTV = () => {
             licenseKey: 'a7242a7026ff45609114ee1f3beb34dc:65c32ada65548203a3683d5d37dd3a06'
           },
           {
-            id: 'crave-5',
-            name: 'Crave 5',
-            category: 'Movies',
-            logo: 'https://www.start.ca/wp-content/uploads/2022/09/StartTV_ChannelLogos_Crave5.png',
-            url: 'https://live-crave.video.9c9media.com/c5875a31f178e038f7cc572b1aa0defb996ce7171748593186018/fe/f/crave/crave4/manifest.mpd',
-            licenseKey: 'a7242a7026ff45609114ee1f3beb34dc:65c32ada65548203a3683d5d37dd3a06'
-          },
-          {
             id: 'bein-sports1',
             name: 'BeIN Sports 1',
             category: 'Sports',
@@ -942,7 +934,7 @@ const IPTV = () => {
 
       {/* Top 10 Live TV Channels */}
       <section className="iptv-top10-section">
-        <div className="iptv-top10-header">Top 10 TV Channels</div>
+        <div className="iptv-top10-header">Recommended Channels</div>
         <div
           className="iptv-top10-list"
           ref={gridRef}
@@ -961,7 +953,9 @@ const IPTV = () => {
             { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 36 },
             { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 57 },
             { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
-            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 52 }
+            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 52 },
+            { rank: 11, name: 'Animal Planet HD (IN)', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 'animal-planet-hd-in' },
+            { rank: 12, name: 'Warner TV', logo: 'https://i.imgur.com/Q4NhDKm.png', channelId: 'skygo-warner-tv' },
           ].map(item => {
             const channel = channels.find(c => c.id === item.channelId);
             return (
