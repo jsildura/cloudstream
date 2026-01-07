@@ -186,25 +186,27 @@ const IPTV = () => {
 
         // Add manual/test channels (Mapple)
         const manualChannels = [
-          {
-            id: 'mapple-amc',
-            name: 'AMC USA',
-            logo: '/channels/amc_logo.png',
-            url: 'https://nfsnew.kiko2.ru/nfs/premium303/mono.css',
-            mappleId: '303',
-            licenseType: 'clearkey' // Dynamic via harvester
-          },
 
-          {
-            id: 'mapple-ahc',
-            name: 'AHC (American Heroes Channel)',
-            logo: '/channels/American_Heroes_Channel_logo.png',
-            category: 'Documentary',
-            url: 'https://ddy6new.kiko2.ru/ddy6/premium206/mono.css',
-            mappleId: '206',
-            licenseType: 'clearkey'
-          },
+          //  {
+          //    id: 'mapple-amc',
+          //   name: 'AMC USA',
+          //   logo: '/channels/amc_logo.png',
+          //    url: 'https://nfsnew.kiko2.ru/nfs/premium303/mono.css',
+          //  mappleId: '303',
+          //  licenseType: 'clearkey' // Dynamic via harvester
+          //  }, 
+
+          // {
+          //  id: 'mapple-ahc',
+          //  name: 'AHC (American Heroes Channel)',
+          //  logo: '/channels/American_Heroes_Channel_logo.png',
+          //  category: 'Documentary',
+          //  url: 'https://ddy6new.kiko2.ru/ddy6/premium206/mono.css',
+          //  mappleId: '206',
+          //  licenseType: 'clearkey'
+          // },
           // === SHAKZZ CHANNELS (ClearKey - works on mobile!) ===
+
           // Movies
           {
             id: 'cinema-one',
@@ -223,23 +225,6 @@ const IPTV = () => {
             url: 'https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/cg_bbcearth_hd1/default/index.mpd',
             licenseKey: '34ce95b60c424e169619816c5181aded:0e2a2117d705613542618f58bf26fc8e'
           },
-          // Sports
-          /* PEACOCK STREAMS (Require Header/Proxy - Currently 403)
-          {
-            id: 'shakzz-wwe',
-            name: 'WWE',
-            logo: 'https://mcdn.wallpapersafari.com/medium/43/73/OC5BrI.png',
-            url: 'https://fsly.stream.peacocktv.com/Content/CMAF_CTR-4s/Live/channel(vc106wh3yw)/master.mpd',
-            licenseKey: '00208c93f4358213b52220898b962385:8ae6063167228e350dd132d4a1573102'
-          },
-          {
-            id: 'shakzz-premier-league',
-            name: 'Premier League',
-            logo: 'https://logos-world.net/wp-content/uploads/2023/02/Premier-League-Logo-2007.png',
-            url: 'https://fsly.stream.peacocktv.com/Content/CMAF_CTR-4s/Live/channel(vc1021n07j)/master.mpd',
-            licenseKey: '002046c9a49b9ab1cdb6616bec5d26c3:d2f92f6b7edc9a1a05d393ba0c20ef9e'
-          },
-          */
           // Entertainment
           {
             id: 'axn',
@@ -716,11 +701,151 @@ const IPTV = () => {
             logo: 'https://pilipinaslive.com/assets/images/logo/pilipinaslive-logo.svg',
             url: 'https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/pp_ch2_pri/default/index.mpd',
             licenseKey: '4fef00332d7e4fbc8f7005dfbf851a59:a6368c181358f3e527411a6c452c6a1a'
-          }
+          },
 
+          // Latest Channels Added - Source Deprecated
+          {
+            id: 'national-geographic',
+            name: 'National Geographic',
+            category: 'Documentary',
+            logo: '/channels/national_geographic.png',
+            url: 'https://fl31.moveonjoy.com/National_Geographic/index.m3u8'
+          },
+          {
+            id: 'nat-geo-wild',
+            name: 'Nat Geo Wild',
+            logo: '/channels/national_geo_wild.png',
+            url: 'https://fl1.moveonjoy.com/Nat_Geo_Wild/index.m3u8'
+          },
+
+          // Source www.distro.tv/live
+          {
+            id: 'wild-nature',
+            name: 'Wild Nature',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/23208/wild-nature/logo_20250401_214215_70.png',
+            url: 'https://dg5rg8emlfy55.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildNature2/491.m3u8'
+          },
+          {
+            id: 'euronews',
+            name: 'Euronews (EN)',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/22886/euronews/logo_20231218_175557_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/manifest/0bc8e8376bd8417a1b6761138aa41c26c7309312/euronews/316027a1-87ae-45ad-9535-9f3d05ad2c0b/5.m3u8'
+          },
+          {
+            id: 'unleashed-dogtv',
+            name: 'Unleashed by DOGTV',
+            category: 'Reality',
+            logo: 'https://a.jsrdn.com/hls/23231/unleashed-by-dogtv/logo_20251030_220003_68.png',
+            url: 'https://amg26269-amg26269c2-distrotv-us-8939.playouts.now.amagi.tv/ts-us-e2-n1/playlist/amg26269-dogtv-unleashedbydogtv-distrotvus/cb543d1e786c648e9dd43765cef043a2f9591fde1d6988693eb5518975d1073edce2a59caa08ff16388f1ede7f0a66413a3e951fda77118fd87eb141453c5728cfffe729a2c05616b7db083429b56a062a866a68ac39437ed0e21f48a238b6720a5aa82a66443d80b846ac7251db80148b61299bce8c37683f03409a5e5afba358b1ebe85e468b6af7b94a55c07d4de39f43c8821ca6d1860dcb5ed270f710cc9bf88b821985849b729368e3301a16236d89bf6f96db4ebfd5941b57f61d7a164c04b6f6c2ad1f6cd2161927928ecabb76b116de80368e643289018c468a37f80dc06d93d70387f7f3b532403db78a5e712eb3eaa48fef3c27b16389d683af467295f3156b4fcc6998203278b4d2ec20b29946fcdf2281a7271836d6ae4ce9dbd8c7b6e6d51a9e239297b9c93b14192e5051d20bef9b358c71907bfa9b1220591e1dfe9c0796dca23442634b95ce5ad10512badea882cb0b3cc57202288d0aba4c006e964c0612e429ead42f789b230b882124eb5d47e62898b425e3a2819f6c55b4dad40cfa7fe6a605d6f33da0694e3168d5a3780c131a2e8a9c0c66317dd00be3d6c5d56e19059e94a79f9209476d4116561fc5e6e266928dc50a1218cf5625747d1f19a21dc66cad6323617c936db9c6087096482928efa037492809fcabe0d9d78c852edb7ed7dcb33a20354d66b327103462a1cbe722f52c5f6e6907cf407354aa495e4bf981dbead7947881906dbc3d2d4e15af9816451a1c7d62079ee202bd36c69a0ead89c568fab5f978228438b04f1c9fc4ae05928ad8891657c9f8074310fdbd26c16063c312c2228bd75dd9bb50747956237fc78c0e8b35d4de9ed4659e29bb46007bce568fee80d9b7360c90fb2232371a1b1b705c715e67d2b384365235b4ec7fbe0dbc9e3fc24350207154d68d17618fec057af6512b33f2f491cac7a70214d920f779c0650db268043e93bc5284d2e2a0b4d63f034e81e5e51de8f3d2eea6b1cb226d456b3594b33b3f15e80eaae36d89ac196fa18e8ff5c81cf41f8365e1fbdc5ae538b385bf01a08498f0ef48134b4856e8c8f8f466bcd66f14e32b8b1d7760f6e4e5f076b5c9b4086fd85cf48c0969dc581439fd9db6239269d289382ef4c96849c55733d5e5f8290ed156c84a5f78ffd9847c2fceca019e489581ad4a26e1091af7094d69a36bee8eab656a93c8797264e307028d648ccddd1c5b6beeb649021e3b566763b841583faa2963a10eba9687db0b73dc51d07255cd78abd119b4aa03f9d0c5e7abe23777aef21f649565822298019f8fd58952c35265b926831466d4b9b69ad9fbd2b3958c7433199257d50ecd7888c3dbd71f422f74ca0a295e29f513ce0e0747d8e85ccca25e789fd2f84ff30340564e313ec815b78f1d123449e3e7798e936371656526edb165dd72e51fe2e53d1bbc1e7c5c14024b56ad85c908ac30b660b5fb5e40f584a5a728f3e03bd19bc6e7be5f01c1576a4a479ef78d94d84023f59b98dd316786ab71ba007c3a38cedead407bd5c0282ff6a79e67f7b86c805826056bd18dbd26de33863ded1f4cce34c3f6487e819d19207b863e84ca3f51a349a60a058517e02631d113791649228a31c66801292de279d58ccc362501974bd95a6738aed2f990a35f35777d0450743a29419c2a53d1093a0ba11730bac5e8add5858e0b292ce542bfcc83844a4af8f0d790845ff44b8a979bccb09adbc24a7d39d7495cc016a0091e8c8613d2778585d69d2b04ba8a38c71f1b349845582196e6490e082d01adeb89229548a916b7b5eee2c87dd2cdf861555c97ace421a51fed4e412a63cf7690cc2c2be0b89e6d8464289cd286e1a5a9269683f04dccea374eb294c25ac4a9dc74a43c7125754844588905c942eefe1a80252fb54d662bff23c2346735e0a4d824afba15757a0d6fb436a74b45910dff625d4064c88c14ddadaea3bb3968302fb7964b8a410ca5350042b9bb945134d434f20088eb9593056b1e2e77a3604e7a6fc37768414cbb9e50234a19d77985595ffde0b9940a527fc6cf4dced52e28e9f9ce20e871fb04892aab67195d0689577c36f6727c577028181e072742dffb078dc5e38f22b6a9c6a765f1ac1a91cc662a9bb42e96b01dcb1f61a71d7c8a999d2585225cf6f78cf5220c6ad36f0ba0dd84d60d099a996200db4707d7f9529a56704de9f62e90e2b37957e03ceb7842c3cdc29c36492032c0815ab9a377c5503122705ef98f41d4c721fb928bbafe9c32d9874d5747c23994d862b28dbc0601aec43282e7b56f07a0c078d4749d702aa805bb4d3a866263db273640af6de12bf58ae224b9f30b992f2cf9de771a9836693bc7cfad2ca8107e6a77bd5f6c66482036f5bc1efad2e1f0736148255630365e3a0553c2492fc0f8e255ca7492aa462cf82f3dc85b9e/28/1920x1080_5859480/index.m3u8'
+          },
+          {
+            id: 'pll-network',
+            name: 'PLL Network',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22964/pll-network-ww/logo_20240626_232614_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pll-network-ww/pll.m3u8'
+          },
+          {
+            id: 'mtrspt1',
+            name: 'MTRSPT1',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/23099/mtrspt1/logo_20250122_232635_70.png',
+            url: 'https://amg02873-kravemedia-mtrspt1-distrotv-mnsrl.amagi.tv/ts-us-w2-n1/playlist/amg02873-kravemedia-mtrspt1-distrotv/playlist.m3u8'
+          },
+          {
+            id: 'motorracing',
+            name: 'Motor Racing',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22705/motorracing/logo_20231219_215946_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/manifest/0bc8e8376bd8417a1b6761138aa41c26c7309312/motorracing/301877df-89fb-4935-b20d-c03e7e242eab/2.m3u8'
+          },
+          {
+            id: 'wfnnetwork',
+            name: 'WFN: World Fishing Network',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/23208/wfn-world-fishing-network/logo_20250911_182344_70.png',
+            url: 'https://d3b3ldcvgsu291.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WFN/477.m3u8'
+          },
+          {
+            id: 'horizonsports',
+            name: 'Horizon Sports',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22705/horizon-sports/logo_20231219_213910_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/horizon-sports/master.m3u8'
+          },
+          {
+            id: 'daystartv',
+            name: 'Daystar TV',
+            category: 'Spirituality',
+            logo: 'https://a.jsrdn.com/hls/23240/daystar-tv/logo_20251209_232020_69.png',
+            url: 'https://hls-live-media-gc.cdn01.net/mpegts/232076_2222904/HMX0lSsFdwYe2y3CWVtL3A/1771632000/master_mpegts.m3u8'
+          },
+          {
+            id: 'elevationchurchnetwork',
+            name: 'Elevation Church Network',
+            category: 'Spirituality',
+            logo: 'https://a.jsrdn.com/hls/23224/elevation-church-network/logo_20250623_165558_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/elevation-church-network/playlist.m3u8'
+          },
+          {
+            id: 'kidstv',
+            name: 'Kids TV',
+            category: 'Kids',
+            logo: 'https://a.jsrdn.com/hls/23088/kids-tv/logo_20231219_214656_61.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kids-tv/master_en.m3u8'
+          },
+
+          {
+            id: 'toonzkids',
+            name: 'Toonz Kids',
+            category: 'Kids',
+            logo: 'https://a.jsrdn.com/hls/23131/toonzkids/logo_20231219_223312_67.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/toonzkids/master.m3u8'
+          },
+          {
+            id: 'gusto-tv',
+            name: 'Gusto TV',
+            category: 'Reality',
+            logo: 'https://a.jsrdn.com/hls/23062/gusto-tv/logo_20231219_202519_56.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/gusto-tv/playlist.m3u8'
+          },
+          {
+            id: 'kaloopy',
+            name: 'Kaloopy',
+            category: 'Entertainment',
+            logo: 'https://a.jsrdn.com/hls/22868/kaloopy/logo_20231219_214555_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kaloopy/master.m3u8'
+          },
+          {
+            id: 'wild-tv',
+            name: 'Wild TV',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/23208/wild-tv/logo_20250401_215043_70.png',
+            url: 'https://d1tm3cz23db55z.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildTV/476.m3u8'
+          },
+          {
+            id: 'true-history',
+            name: 'True History',
+            category: 'Documentary',
+            logo: 'https://a.jsrdn.com/hls/23001/true-history/logo_20231219_223655_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/true-history/playlist.m3u8'
+          },
+          {
+            id: 'AMC',
+            name: 'AMC',
+            category: 'Movies',
+            logo: '/channels/amc_logo.png',
+            url: 'https://fl1.moveonjoy.com/AMC_NETWORK/index.m3u8'
+          }
         ];
 
-        const allChannels = [...manualChannels, ...parsed];
+        // Filter out unwanted channels from the parsed cignal.m3u (IDs 5, 6, 78)
+        const excludedIds = [5, 6, 78];
+        const filteredParsed = parsed.filter(ch => !excludedIds.includes(ch.id));
+
+        const allChannels = [...manualChannels, ...filteredParsed];
         allChannels.sort((a, b) => a.name.localeCompare(b.name));
         setChannels(allChannels);
       } catch (err) {
@@ -756,7 +881,7 @@ const IPTV = () => {
   }, [channels, searchQuery, categoryFilter, favorites, offlineChannels]);
 
   // key categories Entertainment, Movies, News, Sports, Kids, Documentary, and Pinoy
-  const categories = ['Favorites', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Music', 'Pinoy', 'Offline'];
+  const categories = ['Favorites', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Outdoors', 'Reality', 'Music', 'Spirituality', 'Pinoy', 'Offline'];
 
   const getCategoryCount = (cat) => {
     if (cat === 'Favorites') return favorites.length;
