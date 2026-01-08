@@ -1,14 +1,16 @@
 .scroll-to-top-btn {
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 78px;
+    /* Above 48px FAB (20px + 48px + 10px gap) */
+    /* Above Global Chat FAB */
+    right: 20px;
+    /* Match FAB wrapper position */
+    /* Aligned with FAB center (FAB is right:20px + margin, width:60px) */
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    background: linear-gradient(135deg,
-            rgba(255, 255, 255, 0.12) 0%,
-            rgba(255, 255, 255, 0.05) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
     display: flex;
@@ -18,12 +20,11 @@
     visibility: hidden;
     transform: translateY(20px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
+    z-index: 9999;
+    /* Just below FAB z-index */
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    box-shadow:
-        0 4px 30px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 
 .scroll-to-top-btn.visible {
@@ -48,6 +49,9 @@
 }
 
 .scroll-to-top-btn svg {
+    width: 22px;
+    height: 22px;
+    fill: currentColor;
     transition: transform 0.2s ease;
 }
 
@@ -58,7 +62,8 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .scroll-to-top-btn {
-        bottom: 20px;
+        bottom: 90px;
+        /* Above Global Chat FAB on mobile */
         right: 20px;
         width: 44px;
         height: 44px;

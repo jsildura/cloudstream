@@ -42,6 +42,7 @@ import BotProtection from './components/BotProtection';
 import { ToastProvider } from './contexts/ToastContext';
 import Toast from './components/Toast';
 import useTVNavigation from './hooks/useTVNavigation';
+import GlobalChat from './components/GlobalChat';
 
 
 function App() {
@@ -157,6 +158,9 @@ function App() {
         {isModalOpen && selectedItem && (
           <Modal item={selectedItem} onClose={closeModal} />
         )}
+
+        {/* Global Chat */}
+        <GlobalChat />
       </div>
     </ToastProvider>
   );
