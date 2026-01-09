@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-
+import './NativeAd.css';
 const NativeAd = () => {
     const adContainerRef = useRef(null);
     const scriptLoaded = useRef(false);
