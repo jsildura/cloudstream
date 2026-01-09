@@ -128,6 +128,9 @@ const BotProtection = () => {
         const runHeadlessDetection = () => {
             if (detectedRef.current) return;
 
+            // Skip on mobile devices - re-check in case module-level detection failed
+            if (isMobileOrTV()) return;
+
             const reason = checkHeadless();
             if (reason) {
                 detectedRef.current = true;
@@ -149,6 +152,12 @@ const BotProtection = () => {
                 DisableDevtool({
                     // Callback when devtools is detected
                     ondevtoolopen: (type, next) => {
+                        // FAILSAFE: Re-check if we're on mobile - this catches cases where
+                        // the module-level detection failed (navigator not ready at module load)
+                        if (isMobileOrTV()) {
+                            return; // Ignore detection on mobile - it's a false positive
+                        }
+
                         if (!detectedRef.current) {
                             detectedRef.current = true;
                             setAccessDenied(true);

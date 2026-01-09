@@ -9,7 +9,7 @@
     width: 48px;
     height: 48px;
     border-radius: 14px;
-    background: rgba(30, 30, 30, 0.95);
+    background: rgb(9, 9, 11);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: rgba(255, 255, 255, 0.9);
     cursor: pointer;
