@@ -1,6 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './BotProtection.css';
 
+// Device detection - skip devtools detection on mobile/TV
+// This function runs once at module load to detect mobile browsers via User Agent
+const isMobileOrTV = () => {
+    const ua = navigator.userAgent;
+    // Comprehensive mobile pattern - if UA matches, definitely mobile
+    // This check uses User Agent which is available immediately and reliably
+    const mobilePatterns = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
+    const tvPatterns = /TV|Smart-TV|SmartTV|GoogleTV|AppleTV|BRAVIA|NetCast|Roku|Viera|NETTV|Xbox|PlayStation|Nintendo|Tizen|WebOS/i;
+
+    // If user agent matches mobile/TV patterns, skip detection regardless of anything else
+    if (mobilePatterns.test(ua) || tvPatterns.test(ua)) {
+        return true;
+    }
+
+    // Additional check: touch-capable devices with mobile-like characteristics
+    // This runs only if UA check didn't match (e.g., for tablets or unusual devices)
+    if (typeof window !== 'undefined') {
+        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        // On touch devices, be more conservative - skip devtools detection
+        if (isTouchDevice) {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+// Determine mobile status ONCE at module load - this happens before any React rendering
+const IS_MOBILE_OR_TV = typeof navigator !== 'undefined' ? isMobileOrTV() : false;
+
 const BotProtection = () => {
     const [accessDenied, setAccessDenied] = useState(false);
     const [denialReason, setDenialReason] = useState('');
@@ -13,27 +43,9 @@ const BotProtection = () => {
             return () => { };
         }
 
-        // Device detection - skip devtools detection on mobile/TV
-        // This function is more robust and doesn't rely solely on window dimensions
-        const isMobileOrTV = () => {
-            const ua = navigator.userAgent;
-            // Comprehensive mobile pattern - if UA matches, definitely mobile
-            const mobilePatterns = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
-            const tvPatterns = /TV|Smart-TV|SmartTV|GoogleTV|AppleTV|BRAVIA|NetCast|Roku|Viera|NETTV|Xbox|PlayStation|Nintendo|Tizen|WebOS/i;
-
-            // If user agent matches mobile/TV patterns, skip detection regardless of screen size
-            if (mobilePatterns.test(ua) || tvPatterns.test(ua)) {
-                return true;
-            }
-
-            // Fallback: touch device with small screen
-            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-            const isSmallScreen = window.innerWidth < 1280 || window.innerHeight < 720;
-            return isTouchDevice && isSmallScreen;
-        };
-
-        // Check immediately - if UA clearly indicates mobile, skip devtools detection
-        let skipDevToolsDetection = isMobileOrTV();
+        // On mobile/TV devices, skip devtools detection entirely
+        // This prevents false positives from the disable-devtool library
+        const skipDevToolsDetection = IS_MOBILE_OR_TV;
 
         // Comprehensive headless/automation browser detection
         const checkHeadless = () => {
@@ -126,11 +138,9 @@ const BotProtection = () => {
 
         runHeadlessDetection();
 
-        // Initialize disable-devtool library dynamically (only once, skip on mobile/TV)
+        // Initialize disable-devtool library dynamically (only once)
         const initDisableDevtool = async () => {
-            // Re-check mobile detection - window dimensions should be stable now
-            const isMobileNow = isMobileOrTV();
-            if (isMobileNow || disableDevtoolInitialized.current) return;
+            if (disableDevtoolInitialized.current) return;
             disableDevtoolInitialized.current = true;
 
             try {
@@ -176,19 +186,14 @@ const BotProtection = () => {
             }
         };
 
-        // Delay devtools detection initialization to allow browser to fully initialize
-        // This prevents false positives on new tabs in mobile browsers where window
-        // dimensions may not be immediately available
-        const devtoolsTimeout = setTimeout(() => {
-            if (!skipDevToolsDetection) {
-                initDisableDevtool();
-            }
-        }, 500);
+        // Skip devtools detection entirely on mobile/TV devices
+        // The IS_MOBILE_OR_TV check happened at module load, so it's reliable
+        if (!skipDevToolsDetection) {
+            initDisableDevtool();
+        }
 
-        // Cleanup timeout on unmount
-        return () => {
-            clearTimeout(devtoolsTimeout);
-        };
+        // No cleanup needed - disable-devtool manages its own lifecycle
+        return () => { };
     }, []);
 
     if (!accessDenied) return null;
