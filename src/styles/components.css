@@ -354,6 +354,35 @@
   letter-spacing: 0.5px;
 }
 
+/* Nav Item Badge (Green "New") */
+.nav-badge-new {
+  background-color: #e50914;
+  /* Vibrant Green */
+  color: #e5e5e5;
+  font-size: 0.60rem;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+  margin-right: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  /* Positioning */
+  position: relative;
+  top: -8px;
+  left: 0;
+  vertical-align: top;
+}
+
+/* Desktop Only Utility */
+@media (max-width: 1024px) {
+  .desktop-only {
+    display: none !important;
+  }
+}
+
 /* Featured Card - Semi-red gradient */
 .mega-dropdown-card-featured {
   background: linear-gradient(135deg, rgba(229, 9, 20, 0.25), rgba(139, 0, 0, 0.15));

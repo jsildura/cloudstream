@@ -1054,7 +1054,7 @@ const IPTV = () => {
         <h1>Live TV</h1>
         <p className="iptv-subtitle">{channels.length} channels available</p>
         <p className="iptv-description">
-          Live TV. Any time. Everywhere. Access an ever-growing selection of news, sports, and entertainment. Stay connected to the world with premium live broadcasts at your fingertips.
+          Your destination for live TV. Enjoy news, sports, and entertainment on demand with a fresh, diverse lineup of channels at your fingertips.
         </p>
       </div>
 

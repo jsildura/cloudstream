@@ -1,0 +1,358 @@
+/* ========================================
+   MatchCard Component Styles
+   Premium sports card design matching mapple.uk
+   ======================================== */
+
+.match-card {
+    position: relative;
+    width: 320px;
+    min-width: 300px;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: rgba(15, 15, 15, 0.95);
+    flex-shrink: 0;
+}
+
+.match-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Background Image/Gradient Container */
+.match-card-bg {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.match-card-bg img {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.match-card:hover .match-card-bg img {
+    transform: scale(1.1);
+}
+
+/* Dynamic gradient background - always behind poster */
+.match-card-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Category-specific gradients */
+.match-card-gradient[data-category="football"] {
+    background: linear-gradient(135deg, #1b4332 0%, #2d6a4f 50%, #40916c 100%);
+}
+
+.match-card-gradient[data-category="basketball"] {
+    background: linear-gradient(135deg, #6b2c2c 0%, #c44536 50%, #e07a5f 100%);
+}
+
+.match-card-gradient[data-category="hockey"] {
+    background: linear-gradient(135deg, #1a3a5c 0%, #2c5f8a 50%, #4a90b8 100%);
+}
+
+.match-card-gradient[data-category="baseball"] {
+    background: linear-gradient(135deg, #4a2c2a 0%, #7a4a48 50%, #a06a68 100%);
+}
+
+.match-card-gradient[data-category="tennis"] {
+    background: linear-gradient(135deg, #3d5c3a 0%, #6a8a5c 50%, #8aaa7a 100%);
+}
+
+.match-card-gradient[data-category="american-football"] {
+    background: linear-gradient(135deg, #4a3728 0%, #7a5a40 50%, #a07a58 100%);
+}
+
+.match-card-gradient[data-category="mma"],
+.match-card-gradient[data-category="boxing"] {
+    background: linear-gradient(135deg, #2a1a1a 0%, #4a2a2a 50%, #6a3a3a 100%);
+}
+
+/* Dark overlay for better text readability */
+.match-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg,
+            rgba(0, 0, 0, 0.1) 0%,
+            rgba(0, 0, 0, 0.3) 50%,
+            rgba(0, 0, 0, 0.7) 100%);
+}
+
+/* Badges - shared styles */
+.match-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* LIVE Badge - Top Right */
+.match-badge.live-top {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(229, 9, 20, 0.95);
+    color: #fff;
+    z-index: 5;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 12px;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(0.8);
+    }
+}
+
+/* Time Badge */
+.match-badge.time {
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+}
+
+.match-badge.time .time-icon {
+    font-size: 10px;
+}
+
+.match-badge.time.live {
+    background: rgba(229, 9, 20, 0.9);
+    color: #fff;
+    animation: livePulse 2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 8px rgba(229, 9, 20, 0);
+    }
+}
+
+/* Category Badge */
+.match-badge.category {
+    background: rgba(0, 0, 0, 0.4);
+    color: #fff;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+}
+
+/* Team Badges - Center */
+.match-teams {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 4;
+    max-width: 80%;
+    padding: 0 10px;
+}
+
+.team-badge {
+    width: 56px;
+    height: 56px;
+    max-width: 76px;
+    max-height: 76px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.match-card:hover .team-badge {
+    transform: scale(1.1);
+}
+
+.vs-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    flex-shrink: 0;
+}
+
+/* Streamed Branding - for cards without team badges */
+.streamed-branding {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 4;
+    opacity: 0.85;
+}
+
+.streamed-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.streamed-text {
+    font-size: 22px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+/* Hidden branding - shown when badge images fail to load */
+.hidden-branding {
+    display: none;
+}
+
+.hidden-branding.show-branding {
+    display: flex;
+}
+
+/* Footer - Time & Category */
+.match-card-footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    z-index: 5;
+}
+
+/* Match Info - Below Card */
+.match-info {
+    padding: 12px;
+    background: rgba(15, 15, 15, 0.95);
+}
+
+.match-title {
+    margin: 0 0 4px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.match-teams-text {
+    margin: 0 0 4px 0;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.match-description {
+    margin: 0;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (max-width: 768px) {
+    .match-card {
+        width: 220px;
+        min-width: 220px;
+    }
+
+    .match-card-bg {
+        height: 140px;
+    }
+
+    .team-badge {
+        width: 46px !important;
+        height: 46px !important;
+    }
+
+    .match-badge {
+        padding: 3px 8px;
+        font-size: 8px;
+    }
+
+    .match-info {
+        padding: 10px;
+    }
+
+    .match-title {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .match-card {
+        width: 180px;
+        min-width: 180px;
+    }
+
+    .match-card-bg {
+        height: 120px;
+    }
+
+    .team-badge {
+        width: 42px !important;
+        height: 42px !important;
+    }
+
+    .vs-text {
+        font-size: 12px;
+    }
+}

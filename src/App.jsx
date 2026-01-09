@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import TopRated from './pages/TopRated';
@@ -31,6 +31,8 @@ import StudioPage from './pages/StudioPage';
 import MyList from './pages/MyList';
 import IPTV from './pages/IPTV';
 import IPTVWatch from './pages/IPTVWatch';
+import Sports from './pages/Sports';
+import SportsWatch from './pages/SportsWatch';
 import Modal from './components/Modal';
 import { useTMDB } from './hooks/useTMDB';
 import Footer from './components/Footer';
@@ -52,6 +54,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { searchTMDB, movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Enable TV remote / D-pad arrow key navigation
   useTVNavigation();
@@ -150,6 +153,8 @@ function App() {
             <Route path="/studio/:id" element={<StudioPage />} />
             <Route path="/iptv" element={<IPTV />} />
             <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
+            <Route path="/sports" element={<Sports />} />
+            <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
             <Route path="*" element={<Home />} />
           </Routes>
         </main>
@@ -159,8 +164,12 @@ function App() {
           <Modal item={selectedItem} onClose={closeModal} />
         )}
 
-        {/* Global Chat */}
-        <GlobalChat />
+        {/* Global Chat - Hidden on Watch pages */}
+        {!location.pathname.startsWith('/watch') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <GlobalChat />
+          )}
       </div>
     </ToastProvider>
   );

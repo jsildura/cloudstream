@@ -1,0 +1,385 @@
+/* ========================================
+   Sports Page Styles
+   Premium dark theme matching mapple.uk
+   ======================================== */
+
+.sports-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0a0a0a 0%, #141414 100%);
+    padding-top: 70px;
+    /* Account for fixed navbar */
+    padding-bottom: 60px;
+}
+
+/* ========================================
+   Page Header
+   ======================================== */
+
+.sports-header {
+    padding: 40px 5% 30px;
+    background: linear-gradient(180deg, rgba(20, 20, 20, 0.8) 0%, transparent 100%);
+}
+
+.sports-header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header-text h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.header-text p {
+    margin: 4px 0 0 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ========================================
+   Main Content Container
+   ======================================== */
+
+.sports-content {
+    padding: 0 5%;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   Sections
+   ======================================== */
+
+.sports-section {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-right: 8px;
+}
+
+.section-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-icon {
+    font-size: 20px;
+}
+
+.section-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.section-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Section Navigation */
+.section-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-page {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-right: 8px;
+}
+
+.nav-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+/* ========================================
+   Matches Carousel
+   ======================================== */
+
+.matches-carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 0 16px;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.matches-carousel::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+/* Enable momentum scrolling on touch devices */
+.matches-carousel {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ========================================
+   Loading State
+   ======================================== */
+
+.sports-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #e50914;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.sports-loading p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+/* ========================================
+   Error State
+   ======================================== */
+
+.sports-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+}
+
+.sports-error p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+}
+
+.sports-error button {
+    padding: 12px 24px;
+    background: #e50914;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sports-error button:hover {
+    background: #f40612;
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   Empty State
+   ======================================== */
+
+.empty-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.empty-section p {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 14px;
+}
+
+/* ========================================
+   Responsive Adjustments
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .sports-header {
+        padding: 30px 4% 24px;
+    }
+
+    .header-text h1 {
+        font-size: 24px;
+    }
+
+    .sports-content {
+        padding: 0 4%;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sports-page {
+        padding-top: 60px;
+    }
+
+    .sports-header {
+        padding: 24px 4% 20px;
+    }
+
+    .sports-header-content {
+        gap: 12px;
+    }
+
+    .header-text h1 {
+        font-size: 20px;
+    }
+
+    .header-text p {
+        font-size: 12px;
+    }
+
+    .sports-section {
+        margin-bottom: 32px;
+    }
+
+    .section-header {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .section-title {
+        font-size: 16px;
+    }
+
+    .section-page {
+        display: none;
+    }
+
+    .nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .matches-carousel {
+        gap: 12px;
+        padding: 4px 0 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .sports-header {
+        padding: 20px 4% 16px;
+    }
+
+
+    .header-text h1 {
+        font-size: 18px;
+    }
+
+    .sports-content {
+        padding: 0 3%;
+    }
+
+    .section-count {
+        display: none;
+    }
+}
+
+/* ========================================
+   4K/Large Screen Scaling
+   ======================================== */
+
+@media (min-width: 2560px) {
+    .sports-page {
+        padding-top: 100px;
+    }
+
+    .sports-header {
+        padding: 60px 5% 40px;
+    }
+
+
+    .header-text h1 {
+        font-size: 40px;
+    }
+
+    .header-text p {
+        font-size: 18px;
+    }
+
+    .section-title {
+        font-size: 28px;
+    }
+
+    .section-count {
+        min-width: 36px;
+        height: 32px;
+        font-size: 16px;
+    }
+
+    .nav-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
+    }
+
+    .matches-carousel {
+        gap: 24px;
+    }
+}

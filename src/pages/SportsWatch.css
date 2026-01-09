@@ -1,0 +1,421 @@
+/* ========================================
+   SportsWatch Page Styles
+   Stream player and controls
+   ======================================== */
+
+.sports-watch-page {
+    min-height: 100vh;
+    background: #0a0a0a;
+    padding-top: 70px;
+}
+
+/* ========================================
+   Header
+   ======================================== */
+
+.watch-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 5%;
+    background: rgba(15, 15, 15, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 70px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.match-title-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.match-title-bar h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.category-badge {
+    padding: 4px 10px;
+    background: rgba(79, 70, 229, 0.8);
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-transform: capitalize;
+    white-space: nowrap;
+}
+
+/* ========================================
+   Main Content Layout
+   ======================================== */
+
+.watch-content {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    padding: 24px 5%;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+/* ========================================
+   Player Container
+   ======================================== */
+
+.player-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.stream-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.player-loading,
+.player-error,
+.player-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.player-loading p,
+.player-error p,
+.player-placeholder p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    text-align: center;
+    padding: 0 20px;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #e50914;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ========================================
+   Controls Panel
+   ======================================== */
+
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.control-section {
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.control-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Source Buttons */
+.source-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.source-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.source-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.source-btn.active {
+    background: rgba(229, 9, 20, 0.2);
+    border-color: #e50914;
+    color: #fff;
+}
+
+.primary-badge {
+    padding: 2px 6px;
+    background: rgba(229, 9, 20, 0.8);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Stream List */
+.stream-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stream-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.stream-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.stream-btn.active {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: rgba(79, 70, 229, 0.5);
+}
+
+.stream-no {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.stream-lang {
+    flex: 1;
+}
+
+.hd-badge {
+    padding: 2px 6px;
+    background: rgba(34, 197, 94, 0.8);
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Match Details */
+.match-details {
+    background: rgba(15, 15, 15, 0.9);
+}
+
+.match-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.team-info,
+.match-time {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.team-label,
+.time-label {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.team-name,
+.time-value {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+/* ========================================
+   Loading/Error States
+   ======================================== */
+
+.watch-loading,
+.watch-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 16px;
+}
+
+.watch-loading p,
+.watch-error p {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.watch-error button {
+    padding: 12px 24px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.watch-error button:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 1024px) {
+    .watch-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .controls-panel {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .control-section {
+        flex: 1;
+        min-width: 200px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sports-watch-page {
+        padding-top: 60px;
+    }
+
+    .watch-header {
+        top: 60px;
+        padding: 12px 4%;
+        gap: 12px;
+    }
+
+    .back-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .match-title-bar h1 {
+        font-size: 16px;
+    }
+
+    .watch-content {
+        padding: 16px 4%;
+    }
+
+    .player-container {
+        border-radius: 8px;
+    }
+
+    .controls-panel {
+        flex-direction: column;
+    }
+
+    .control-section {
+        min-width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .watch-header {
+        flex-wrap: wrap;
+    }
+
+    .match-title-bar {
+        order: 2;
+        flex-basis: 100%;
+        margin-top: 8px;
+    }
+
+    .match-title-bar h1 {
+        font-size: 14px;
+    }
+
+    .category-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .source-buttons {
+        flex-direction: column;
+    }
+
+    .source-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}

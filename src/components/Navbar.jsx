@@ -16,8 +16,10 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const [trendingSearches, setTrendingSearches] = useState([]);
   const [moviesDropdownOpen, setMoviesDropdownOpen] = useState(false);
   const [tvShowsDropdownOpen, setTvShowsDropdownOpen] = useState(false);
+  const [tvDropdownOpen, setTvDropdownOpen] = useState(false);
   const [moviesMenuOpen, setMoviesMenuOpen] = useState(false);
   const [tvShowsMenuOpen, setTvShowsMenuOpen] = useState(false);
+  const [tvMenuOpen, setTvMenuOpen] = useState(false);
   const [platformsMenuOpen, setPlatformsMenuOpen] = useState(false);
   const debounceTimerRef = useRef(null);
 
@@ -394,6 +396,65 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             )}
           </div>
 
+          {/* TV Dropdown */}
+          <div
+            className="nav-dropdown-wrapper"
+            onMouseEnter={() => setTvDropdownOpen(true)}
+            onMouseLeave={() => setTvDropdownOpen(false)}
+          >
+            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
+              TV
+              <span className="nav-badge-new desktop-only">New</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </span>
+
+            {tvDropdownOpen && (
+              <div className="nav-mega-dropdown">
+                {/* Header */}
+                <div className="mega-dropdown-header">
+                  <div className="mega-dropdown-header-title-row">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mega-dropdown-icon">
+                      <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+                      <polyline points="17 2 12 7 7 2" />
+                    </svg>
+                    <h3>TV</h3>
+                  </div>
+                  <p className="mega-dropdown-header-desc">Dive into a world of live television featuring your favorite news, sports, and entertainment. With a constantly evolving channel lineup, you’ll always be in the loop. Experience the best of live broadcasting, delivered straight to your screen, anytime, anywhere.</p>
+                </div>
+
+                <div className="mega-dropdown-grid">
+                  <Link to="/iptv" className="mega-dropdown-card" onClick={() => setTvDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+                        <polyline points="17 2 12 7 7 2" />
+                      </svg>
+                    </div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Live TV</div>
+                      <p>Your destination for live TV. Enjoy news, sports, and entertainment on demand with a fresh, diverse lineup of channels at your fingertips.</p>
+                    </div>
+                  </Link>
+
+                  <Link to="/sports" className="mega-dropdown-card" onClick={() => setTvDropdownOpen(false)}>
+                    <div className="mega-dropdown-card-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        <path d="M2 12h20" />
+                      </svg>
+                    </div>
+                    <div className="mega-dropdown-card-content">
+                      <div className="mega-dropdown-card-title">Live Sports</div>
+                      <p>Stream global sports, matches, and tournaments in real-time. Your front-row seat to every game, anywhere in the world.</p>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
 
           <Link to="/my-list" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -404,13 +465,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             </svg>
             Watchlist
           </Link>
-          <Link to="/iptv" className="nav-link nav-link-live">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
-              <polyline points="17 2 12 7 7 2" />
-            </svg>
-            Live TV
-          </Link>
+
         </div>
 
         {/* PWA Install Button - Desktop View */}
@@ -648,8 +703,26 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               )}
             </div>
 
+            {/* TV Section with Collapsible Submenu */}
+            <div className="side-menu-section">
+              <span
+                className={`nav-link side-menu-section-title ${tvMenuOpen ? 'open' : ''}`}
+                onClick={() => setTvMenuOpen(!tvMenuOpen)}
+              >
+                TV
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="submenu-arrow">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
+              {tvMenuOpen && (
+                <div className="side-menu-submenu">
+                  <Link to="/iptv" className="nav-link submenu-link" onClick={closeMenu}>Live TV</Link>
+                  <Link to="/sports" className="nav-link submenu-link" onClick={closeMenu}>Live Sports</Link>
+                </div>
+              )}
+            </div>
+
             <Link to="/my-list" className="nav-link" onClick={closeMenu}>Watchlist</Link>
-            <Link to="/iptv" className="nav-link" onClick={closeMenu}>Live TV</Link>
 
             {/* PWA Install Button in Mobile Menu - Modal renders via Portal */}
             <div className="side-menu-install">
