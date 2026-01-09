@@ -1,104 +1,38 @@
-/* Native Ad Wrapper - Styled to match movie cards */
+/* Native Ad Wrapper - Non-intrusive placement */
 .native-ad-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  margin: 20px auto;
-  max-width: 1400px;
-  background: transparent;
+  padding: 40px 20px;
+  margin-top: 20px;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(20, 20, 20, 0.5) 50%,
+      transparent 100%);
 }
 
 .native-ad-container {
-  width: 100%;
-  max-width: 100%;
+  max-width: 300px;
   margin: 0 auto;
-}
-
-/* Override Adsterra Native Banner styles to match movie cards */
-/* Target the ad container and its children */
-.native-ad-container>div,
-.native-ad-wrapper iframe,
-.native-ad-container [class*="native"],
-#container-2169057a99b05d1f0c42cb91d4e1e11e>div {
-  background-color: transparent !important;
-}
-
-/* Style individual ad cards */
-.native-ad-container a,
-.native-ad-container [class*="banner"],
-.native-ad-container [class*="item"],
-.native-ad-container [class*="card"] {
-  border-radius: 12px !important;
-  overflow: hidden !important;
-  background: #141414 !important;
-  transition: transform 0.3s ease, box-shadow 0.3s ease !important;
-}
-
-.native-ad-container a:hover,
-.native-ad-container [class*="banner"]:hover,
-.native-ad-container [class*="item"]:hover {
-  transform: scale(1.02) !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5) !important;
-}
-
-/* Style ad images to look like movie posters */
-.native-ad-container img {
-  border-radius: 8px 8px 0 0 !important;
-  object-fit: cover !important;
-}
-
-/* Style ad text/titles */
-.native-ad-container [class*="title"],
-.native-ad-container [class*="text"],
-.native-ad-container p,
-.native-ad-container span {
-  color: #ffffff !important;
-  font-family: inherit !important;
-  text-align: left !important;
-}
-
-/* Style ad descriptions */
-.native-ad-container [class*="desc"],
-.native-ad-container [class*="description"] {
-  color: rgba(255, 255, 255, 0.7) !important;
-  font-size: 0.85rem !important;
-}
-
-/* Remove any orange/yellow backgrounds from ads */
-.native-ad-container [style*="background"],
-.native-ad-container [style*="Background"] {
-  background-color: #141414 !important;
-}
-
-/* Hide "Advertisement" labels or make them subtle */
-.native-ad-container [class*="sponsor"],
-.native-ad-container [class*="ad-label"],
-.native-ad-container [class*="adv"] {
-  color: rgba(255, 255, 255, 0.3) !important;
-  font-size: 0.7rem !important;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .native-ad-wrapper {
-    padding: 15px 10px;
-    min-height: 200px;
+    padding: 30px 15px;
   }
 }
 
 /* 1080p scaling */
 @media (min-width: 1920px) {
   .native-ad-wrapper {
-    padding: 30px;
-    max-width: 1800px;
+    padding: 60px 30px;
   }
 }
 
 /* 4K scaling */
 @media (min-width: 3840px) {
   .native-ad-wrapper {
-    padding: 60px;
-    max-width: 3600px;
+    padding: 120px 60px;
   }
 }
