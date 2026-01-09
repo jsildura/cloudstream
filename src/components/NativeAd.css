@@ -21,7 +21,6 @@
 .native-ad-wrapper iframe,
 .native-ad-container [class*="native"],
 #container-2169057a99b05d1f0c42cb91d4e1e11e>div {
-  background: transparent !important;
   background-color: transparent !important;
 }
 
@@ -69,7 +68,6 @@
 /* Remove any orange/yellow backgrounds from ads */
 .native-ad-container [style*="background"],
 .native-ad-container [style*="Background"] {
-  background: #141414 !important;
   background-color: #141414 !important;
 }
 
@@ -85,6 +83,7 @@
 @media (max-width: 768px) {
   .native-ad-wrapper {
     padding: 15px 10px;
+    min-height: 200px;
   }
 }
 

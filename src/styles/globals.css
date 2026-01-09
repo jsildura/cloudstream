@@ -122,7 +122,6 @@ button:focus-visible,
 input:focus-visible,
 .search-input:focus-visible,
 .navbar-search-input:focus-visible {
-  outline: 3px solid #e50914;
   outline-offset: 2px;
   border-color: #e50914;
 }
