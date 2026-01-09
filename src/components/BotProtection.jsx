@@ -14,16 +14,26 @@ const BotProtection = () => {
         }
 
         // Device detection - skip devtools detection on mobile/TV
+        // This function is more robust and doesn't rely solely on window dimensions
         const isMobileOrTV = () => {
             const ua = navigator.userAgent;
+            // Comprehensive mobile pattern - if UA matches, definitely mobile
             const mobilePatterns = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
             const tvPatterns = /TV|Smart-TV|SmartTV|GoogleTV|AppleTV|BRAVIA|NetCast|Roku|Viera|NETTV|Xbox|PlayStation|Nintendo|Tizen|WebOS/i;
+
+            // If user agent matches mobile/TV patterns, skip detection regardless of screen size
+            if (mobilePatterns.test(ua) || tvPatterns.test(ua)) {
+                return true;
+            }
+
+            // Fallback: touch device with small screen
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             const isSmallScreen = window.innerWidth < 1280 || window.innerHeight < 720;
-            return mobilePatterns.test(ua) || tvPatterns.test(ua) || (isTouchDevice && isSmallScreen);
+            return isTouchDevice && isSmallScreen;
         };
 
-        const skipDevToolsDetection = isMobileOrTV();
+        // Check immediately - if UA clearly indicates mobile, skip devtools detection
+        let skipDevToolsDetection = isMobileOrTV();
 
         // Comprehensive headless/automation browser detection
         const checkHeadless = () => {
@@ -118,7 +128,9 @@ const BotProtection = () => {
 
         // Initialize disable-devtool library dynamically (only once, skip on mobile/TV)
         const initDisableDevtool = async () => {
-            if (skipDevToolsDetection || disableDevtoolInitialized.current) return;
+            // Re-check mobile detection - window dimensions should be stable now
+            const isMobileNow = isMobileOrTV();
+            if (isMobileNow || disableDevtoolInitialized.current) return;
             disableDevtoolInitialized.current = true;
 
             try {
@@ -164,10 +176,19 @@ const BotProtection = () => {
             }
         };
 
-        initDisableDevtool();
+        // Delay devtools detection initialization to allow browser to fully initialize
+        // This prevents false positives on new tabs in mobile browsers where window
+        // dimensions may not be immediately available
+        const devtoolsTimeout = setTimeout(() => {
+            if (!skipDevToolsDetection) {
+                initDisableDevtool();
+            }
+        }, 500);
 
-        // No cleanup needed - disable-devtool manages its own lifecycle
-        return () => { };
+        // Cleanup timeout on unmount
+        return () => {
+            clearTimeout(devtoolsTimeout);
+        };
     }, []);
 
     if (!accessDenied) return null;

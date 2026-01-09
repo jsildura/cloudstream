@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import { useToast } from '../contexts/ToastContext';
 import useWatchHistory from '../hooks/useWatchHistory';
+import { serverConfig, buildServerUrl } from '../config/servers';
 
 const Watch = () => {
   const location = useLocation();
@@ -331,103 +332,18 @@ const Watch = () => {
     };
   }, [isFullscreen]);
 
-  const _serverData = useMemo(() => [
-    {
-      n: 'Server 1', d: 'Fast Streaming. Movies & TV. Main Server.', r: true, ss: true, p: 0,
-      u: ['aHR0cHM6Ly93d3cuenhjc3RyZWFtLnh5ei9lbWJlZC8=', '?autoPlay=true']
-    },
-    {
-      n: 'Server 2', d: 'English Audio Track. Reliable Backup.', r: true, ss: true, p: 0,
-      u: ['aHR0cHM6Ly96eGNzdHJlYW0ueHl6L3BsYXllci8=', '/en']
-    },
-    {
-      n: 'Server 3', d: 'Fast & Ad-free. Auto-play Enabled.', r: true, ss: true, p: 0,
-      u: ['aHR0cHM6Ly92aWRzcmMuY2MvdjIvZW1iZWQv', '?autoPlay=true']
-    },
-    {
-      n: 'Server 4', d: 'Fast & Reliable. Movies, TV & Anime.', r: true, ss: false, p: 0,
-      u: ['aHR0cHM6Ly92aWRzeW5jLnh5ei9lbWJlZC8=', '']
-    },
-    {
-      n: 'Server 5', d: '4K Ultra HD with TMDB Integration.', r: true, ss: false, p: 0,
-      u: ['aHR0cHM6Ly9hcGkuY2luZWJ5LmhvbWVzL2VtYmVkLw==', '']
-    },
-    {
-      n: 'Server 6', d: 'Reliable Server with Vast Collection, Fast Streaming.', r: true, ss: false, p: 5,
-      u: ['aHR0cHM6Ly92aWRzcmMueHl6L2VtYmVkLw==', '']
-    },
-    {
-      n: 'Server 7', d: 'Premium Quality. Customizable Player.', r: false, ss: false, p: 0, ads: true,
-      u: ['aHR0cHM6Ly92aWRsaW5rLnByby8=', '']
-    },
-    {
-      n: 'Server 8', d: 'Lightning Fast. Multiple Mirrors.', r: false, ss: false, p: 0, ads: true,
-      u: ['aHR0cHM6Ly92aWRmYXN0LnByby8=', '']
-    },
-    {
-      n: 'Server 9', d: 'Huge Catalog. Quick Load Times.', r: false, ss: false, p: 0, ads: true,
-      u: ['aHR0cHM6Ly92aXhzcmMudG8v', '']
-    },
-    {
-      n: 'Server 10', d: '4K Movies with Multi-Language Subtitles.', r: false, ss: true, p: 3,
-      u: ['aHR0cHM6Ly9mbW92aWVzNHUuY29tL2VtYmVkL3RtZGItbW92aWUt', '']
-    },
-    {
-      n: 'Server 11', d: '1080p HD Movies. Clean Interface.', r: false, ss: true, p: 1,
-      u: ['aHR0cHM6Ly93d3cudmlka2luZy5uZXQvZW1iZWQvbW92aWUv', '']
-    },
-    {
-      n: 'Server 12', d: 'High Bitrate Movies. Alternative Source.', r: false, ss: false, p: 2, ads: true,
-      u: ['aHR0cHM6Ly92aWRzcmMud3RmL2FwaS8zL21vdmllLz9pZD0=', '']
-    },
-    {
-      n: 'Server 13', d: 'Multi-Source Backup Servers. Subtitle Support.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTM=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
-      u: ['aHR0cHM6Ly9wbGF5ZXIudmlkemVlLnd0Zi9lbWJlZC8=', '']
-    },
-    {
-      n: 'Server 14', d: 'Multi-Source. Customizable Subtitles. Up to 1080p.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTQ=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
-      u: ['aHR0cHM6Ly9wbGF5ZXIudmlkZWFzeS5uZXQv', '']
-    },
-    {
-      n: 'Server 15', d: 'Subtitle Support. Up to 1080p Quality.', r: true, ss: false, p: 0, ads: true, locked: true, pwd: 'c3RyZWFtZmxpeEBfMTU=', // Remove both locked: true, and pwd: '...', to disable the lock for that server.
-      u: ['aHR0cHM6Ly9tYXBwbGUudWsvd2F0Y2gv', '']
-    }
-  ], []);
-
-  const servers = useMemo(() => _serverData.map(s => ({
-    name: s.n,
-    description: s.d,
-    isRecommended: s.r,
-    sandboxSupport: s.ss,
-    hasAds: s.ads || false,
+  // Server configuration is imported from src/config/servers.js
+  // To add/remove/modify servers, edit that file instead of this component
+  const servers = useMemo(() => serverConfig.map(s => ({
+    name: s.name,
+    description: s.description,
+    isRecommended: s.isRecommended,
+    sandboxSupport: s.sandboxSupport,
+    hasAds: s.hasAds || false,
     isLocked: s.locked || false,
-    password: s.pwd || null,
-    getUrl: (season, episode) => {
-      const base = atob(s.u[0]);
-      const suffix = s.u[1];
-      const tvPath = type === 'tv' ? `/${season}/${episode}` : '';
-      switch (s.p) {
-        case 1: // Movie-only path (e.g., /embed/movie/{id})
-          return type === 'movie' ? `${base}${id}${suffix}` : null;
-        case 2: // ID as query param (e.g., ?id={id})
-          return type === 'movie' ? `${base}${id}${suffix}` : null;
-        case 3: // TMDB prefix (e.g., tmdb-movie-{id})
-          return type === 'movie' ? `${base}${id}${suffix}` : null;
-        case 4: // PrimeSRC format: {base}{type}?tmdb={id} with TV support
-          if (type === 'tv') {
-            return `${base}${type}?tmdb=${id}&season=${season}&episode=${episode}`;
-          }
-          return `${base}${type}?tmdb=${id}`;
-        case 5: // vidsrc.xyz format: movie/{id} or tv?tmdb={id}&season=&episode=
-          if (type === 'tv') {
-            return `${base}tv?tmdb=${id}&season=${season}&episode=${episode}`;
-          }
-          return `${base}movie/${id}`;
-        default: // Standard pattern: {base}{type}/{id}{tvPath}{suffix}
-          return `${base}${type}/${id}${tvPath}${suffix}`;
-      }
-    }
-  })), [_serverData, type, id]);
+    password: s.password || null,
+    getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
+  })), [type, id]);
 
 
   useEffect(() => {
