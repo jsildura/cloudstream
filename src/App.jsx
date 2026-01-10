@@ -114,12 +114,17 @@ function App() {
         <ScrollToTop />
         <ScrollToTopButton />
         <Toast />
-        <Navbar
-          onSearch={handleSearch}
-          searchResults={searchResults}
-          onItemClick={handleItemClick}
-          isSearching={isSearching}
-        />
+        {/* Hide Navbar on watch pages for focused viewing */}
+        {!location.pathname.startsWith('/watch') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <Navbar
+              onSearch={handleSearch}
+              searchResults={searchResults}
+              onItemClick={handleItemClick}
+              isSearching={isSearching}
+            />
+          )}
 
         <main>
           <Routes>
@@ -158,7 +163,13 @@ function App() {
             <Route path="*" element={<Home />} />
           </Routes>
         </main>
-        <Footer />
+
+        {/* Hide Footer on watch pages for focused viewing */}
+        {!location.pathname.startsWith('/watch') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <Footer />
+          )}
 
         {isModalOpen && selectedItem && (
           <Modal item={selectedItem} onClose={closeModal} />

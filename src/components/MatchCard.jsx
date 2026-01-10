@@ -21,11 +21,13 @@ const MatchCard = ({ match }) => {
 
     // Base URL for streami.su assets
     const ASSET_BASE = 'https://streami.su';
-    const FALLBACK_POSTER = `${ASSET_BASE}/api/images/poster/fallback.webp`;
 
-    // Construct poster URL - returns null if no poster (fallback handled separately)
+    // Fallback sports background for cards without poster
+    const FALLBACK_BACKGROUND = '/img/sports.jpg';
+
+    // Construct poster URL - returns fallback if no poster
     const getPosterUrl = () => {
-        if (!match.poster) return null;
+        if (!match.poster) return FALLBACK_BACKGROUND;
         // match.poster typically starts with "/" - append .webp if not present
         const poster = match.poster;
         const hasExtension = poster.endsWith('.webp') || poster.endsWith('.jpg') || poster.endsWith('.png');
@@ -51,21 +53,44 @@ const MatchCard = ({ match }) => {
         const isLive = matchDate <= now && now - matchDate < threeHoursMs;
 
         if (isLive) {
-            return { text: 'LIVE', isLive: true };
+            return { text: 'LIVE', isLive: true, badgeType: 'live', topRightBadge: 'LIVE' };
         }
 
-        // Format time
+        // Format time for display
         const timeStr = matchDate.toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: '2-digit',
             hour12: true
         });
 
-        // Determine date prefix
+        // Check if match is today
+        const isToday = matchDay.getTime() === today.getTime();
+
+        // Check if match is tomorrow
+        const isTomorrow = matchDay.getTime() === tomorrow.getTime();
+
+        // Determine top-right badge text and type
+        let topRightBadge = '';
+        let badgeType = '';
+
+        if (isToday) {
+            // Show time only for today's matches (e.g., "2:30 PM")
+            topRightBadge = timeStr;
+            badgeType = 'time';
+        } else {
+            // Show date for future matches (e.g., "Jan 11")
+            topRightBadge = matchDate.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+            });
+            badgeType = 'date';
+        }
+
+        // Full text for footer (keeping for backwards compatibility)
         let datePrefix = '';
-        if (matchDay.getTime() === today.getTime()) {
+        if (isToday) {
             datePrefix = 'Today';
-        } else if (matchDay.getTime() === tomorrow.getTime()) {
+        } else if (isTomorrow) {
             datePrefix = 'Tomorrow';
         } else {
             datePrefix = matchDate.toLocaleDateString('en-US', {
@@ -74,7 +99,12 @@ const MatchCard = ({ match }) => {
             });
         }
 
-        return { text: `${datePrefix} ${timeStr}`, isLive: false };
+        return {
+            text: `${datePrefix} ${timeStr}`,
+            isLive: false,
+            badgeType,
+            topRightBadge
+        };
     };
 
     // Format category name for display
@@ -120,55 +150,61 @@ const MatchCard = ({ match }) => {
 
     return (
         <div className="match-card" onClick={handleClick}>
-            {/* Background Poster/Gradient with all overlays */}
+            {/* Background Poster with all overlays */}
             <div className="match-card-bg">
-                {posterUrl ? (
+                {/* Show poster image, or fallback to sports.jpg only if no team badges */}
+                {match.poster ? (
                     <img
                         src={posterUrl}
                         alt={match.title}
                         loading="lazy"
                         onError={(e) => {
-                            // If poster fails, hide and show gradient behind
-                            e.target.style.display = 'none';
+                            // If poster fails and has team badges, hide image to show gradient
+                            // If no team badges, use fallback sports image
+                            if (hasTeamBadges) {
+                                e.target.style.display = 'none';
+                            } else {
+                                e.target.src = FALLBACK_BACKGROUND;
+                            }
                         }}
                     />
+                ) : !hasTeamBadges ? (
+                    <img
+                        src={FALLBACK_BACKGROUND}
+                        alt={match.title}
+                        loading="lazy"
+                    />
                 ) : null}
-                {/* Always render gradient behind - shows when no poster or poster fails */}
-                <div
-                    className="match-card-gradient"
-                    style={{ background: getDynamicGradient() }}
-                />
+
+                {/* Dynamic gradient - only for matches with team badges and no poster */}
+                {hasTeamBadges && (
+                    <div
+                        className="match-card-gradient"
+                        style={{ background: getDynamicGradient() }}
+                    />
+                )}
+
                 <div className="match-card-overlay" />
 
-                {/* LIVE Badge - Top Right (only for live matches) */}
-                {timeInfo.isLive && (
+                {/* Top Right Badge - LIVE, Time, or Date */}
+                {timeInfo.isLive ? (
                     <div className="match-badge live-top">
                         LIVE
                     </div>
+                ) : (
+                    <div className={`match-badge schedule-top ${timeInfo.badgeType}`}>
+                        {timeInfo.topRightBadge}
+                    </div>
                 )}
 
-                {/* Team Badges or StreamFlix Branding */}
+                {/* Team Badges - only show if available */}
                 {(() => {
-                    // Track loaded badges using closure
                     const homeBadge = homeTeam?.badge;
                     const awayBadge = awayTeam?.badge;
                     const hasBadgeData = homeBadge || awayBadge;
 
                     if (!hasBadgeData) {
-                        return (
-                            <div className="streamed-branding">
-                                <span className="streamed-icon">
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#ec5818" xmlns="http://www.w3.org/2000/svg">
-                                        <g stroke="none" strokeWidth="0"></g>
-                                        <g strokeLinecap="round" strokeLinejoin="round"></g>
-                                        <g>
-                                            <path fillRule="evenodd" d="M11.1758045,11.5299649 C11.7222481,10.7630248 11.6612694,9.95529555 11.2823626,8.50234466 C10.5329929,5.62882187 10.8313891,4.05382867 13.4147321,2.18916004 L14.6756139,1.27904986 L14.9805807,2.80388386 C15.3046861,4.42441075 15.8369398,5.42670671 17.2035766,7.35464078 C17.2578735,7.43122022 17.2578735,7.43122022 17.3124108,7.50814226 C19.2809754,10.2854144 20,11.9596204 20,15 C20,18.6883517 16.2713564,22 12,22 C7.72840879,22 4,18.6888043 4,15 C4,14.9310531 4.00007066,14.9331427 3.98838852,14.6284506 C3.89803284,12.2718054 4.33380946,10.4273676 6.09706666,8.43586022 C6.46961415,8.0150872 6.8930834,7.61067534 7.36962714,7.22370749 L8.42161802,6.36945926 L8.9276612,7.62657706 C9.30157948,8.55546878 9.73969716,9.28566491 10.2346078,9.82150804 C10.6537848,10.2753538 10.9647401,10.8460665 11.1758045,11.5299649 Z M7.59448531,9.76165711 C6.23711779,11.2947332 5.91440928,12.6606068 5.98692012,14.5518252 C6.00041903,14.9039019 6,14.8915108 6,15 C6,17.5278878 8.78360021,20 12,20 C15.2161368,20 18,17.527472 18,15 C18,12.4582072 17.4317321,11.1350292 15.6807305,8.66469725 C15.6264803,8.58818014 15.6264803,8.58818014 15.5719336,8.51124844 C14.5085442,7.0111098 13.8746802,5.96758691 13.4553336,4.8005211 C12.7704786,5.62117775 12.8107447,6.43738988 13.2176374,7.99765534 C13.9670071,10.8711781 13.6686109,12.4461713 11.0852679,14.31084 L9.61227259,15.3740546 L9.50184911,13.5607848 C9.43129723,12.4022487 9.16906461,11.6155508 8.76539217,11.178492 C8.36656566,10.7466798 8.00646835,10.2411426 7.68355027,9.66278925 C7.65342985,9.69565638 7.62374254,9.72861259 7.59448531,9.76165711 Z"></path>
-                                        </g>
-                                    </svg>
-                                </span>
-                                <span className="streamed-text">StreamFlix</span>
-                            </div>
-                        );
+                        return null; // No branding, just show the background
                     }
 
                     return (
@@ -181,13 +217,6 @@ const MatchCard = ({ match }) => {
                                     loading="lazy"
                                     onError={(e) => {
                                         e.target.style.display = 'none';
-                                        // Check if both badges failed - show branding
-                                        const container = e.target.closest('.match-teams');
-                                        const visibleBadges = container?.querySelectorAll('.team-badge:not([style*="display: none"])');
-                                        if (visibleBadges?.length === 0) {
-                                            container.style.display = 'none';
-                                            container.nextElementSibling?.classList.add('show-branding');
-                                        }
                                     }}
                                 />
                             )}
@@ -202,13 +231,6 @@ const MatchCard = ({ match }) => {
                                     loading="lazy"
                                     onError={(e) => {
                                         e.target.style.display = 'none';
-                                        // Check if both badges failed - show branding
-                                        const container = e.target.closest('.match-teams');
-                                        const visibleBadges = container?.querySelectorAll('.team-badge:not([style*="display: none"])');
-                                        if (visibleBadges?.length === 0) {
-                                            container.style.display = 'none';
-                                            container.nextElementSibling?.classList.add('show-branding');
-                                        }
                                     }}
                                 />
                             )}
@@ -216,30 +238,9 @@ const MatchCard = ({ match }) => {
                     );
                 })()}
 
-                {/* StreamFlix branding - hidden by default, shown when badges fail */}
-                <div className="streamed-branding hidden-branding">
-                    <span className="streamed-icon">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="#ec5818" xmlns="http://www.w3.org/2000/svg">
-                            <g stroke="none" strokeWidth="0"></g>
-                            <g strokeLinecap="round" strokeLinejoin="round"></g>
-                            <g>
-                                <path fillRule="evenodd" d="M11.1758045,11.5299649 C11.7222481,10.7630248 11.6612694,9.95529555 11.2823626,8.50234466 C10.5329929,5.62882187 10.8313891,4.05382867 13.4147321,2.18916004 L14.6756139,1.27904986 L14.9805807,2.80388386 C15.3046861,4.42441075 15.8369398,5.42670671 17.2035766,7.35464078 C17.2578735,7.43122022 17.2578735,7.43122022 17.3124108,7.50814226 C19.2809754,10.2854144 20,11.9596204 20,15 C20,18.6883517 16.2713564,22 12,22 C7.72840879,22 4,18.6888043 4,15 C4,14.9310531 4.00007066,14.9331427 3.98838852,14.6284506 C3.89803284,12.2718054 4.33380946,10.4273676 6.09706666,8.43586022 C6.46961415,8.0150872 6.8930834,7.61067534 7.36962714,7.22370749 L8.42161802,6.36945926 L8.9276612,7.62657706 C9.30157948,8.55546878 9.73969716,9.28566491 10.2346078,9.82150804 C10.6537848,10.2753538 10.9647401,10.8460665 11.1758045,11.5299649 Z M7.59448531,9.76165711 C6.23711779,11.2947332 5.91440928,12.6606068 5.98692012,14.5518252 C6.00041903,14.9039019 6,14.8915108 6,15 C6,17.5278878 8.78360021,20 12,20 C15.2161368,20 18,17.527472 18,15 C18,12.4582072 17.4317321,11.1350292 15.6807305,8.66469725 C15.6264803,8.58818014 15.6264803,8.58818014 15.5719336,8.51124844 C14.5085442,7.0111098 13.8746802,5.96758691 13.4553336,4.8005211 C12.7704786,5.62117775 12.8107447,6.43738988 13.2176374,7.99765534 C13.9670071,10.8711781 13.6686109,12.4461713 11.0852679,14.31084 L9.61227259,15.3740546 L9.50184911,13.5607848 C9.43129723,12.4022487 9.16906461,11.6155508 8.76539217,11.178492 C8.36656566,10.7466798 8.00646835,10.2411426 7.68355027,9.66278925 C7.65342985,9.69565638 7.62374254,9.72861259 7.59448531,9.76165711 Z"></path>
-                            </g>
-                        </svg>
-                    </span>
-                    <span className="streamed-text">StreamFlix</span>
-                </div>
-
                 {/* Bottom Info Bar - inside bg container */}
                 <div className="match-card-footer">
-                    {/* Time Badge - Bottom Left (only for non-live matches) */}
-                    {!timeInfo.isLive && (
-                        <div className="match-badge time">
-                            {timeInfo.text}
-                        </div>
-                    )}
-
-                    {/* Category Badge - Bottom Right */}
+                    {/* Category Badge - Bottom Left */}
                     {categoryLabel && (
                         <div className="match-badge category">
                             {categoryLabel}

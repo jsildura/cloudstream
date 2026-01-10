@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './SportsWatch.css';
 
 /**
  * SportsWatch Page Component
- * Displays stream player for a selected sports match
- * Fetches stream sources from streami.su API
+ * Fullscreen stream player with Sources drawer modal
+ * Matches Watch.jsx pattern
  */
 const SportsWatch = () => {
     const { matchId } = useParams();
@@ -22,12 +22,108 @@ const SportsWatch = () => {
     const [selectedStream, setSelectedStream] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [controlsVisible, setControlsVisible] = useState(true);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerTranslateY, setDrawerTranslateY] = useState(0);
+    const [sandboxEnabled, setSandboxEnabled] = useState(false);
+
+    const hideControlsTimerRef = useRef(null);
+    const isDragging = useRef(false);
+    const dragStartY = useRef(0);
+    const drawerTranslateRef = useRef(0);
+
+    // Auto-hide controls after inactivity
+    useEffect(() => {
+        const resetTimer = () => {
+            setControlsVisible(true);
+            if (hideControlsTimerRef.current) {
+                clearTimeout(hideControlsTimerRef.current);
+            }
+            hideControlsTimerRef.current = setTimeout(() => {
+                if (!drawerOpen) {
+                    setControlsVisible(false);
+                }
+            }, 4000);
+        };
+
+        const handleMouseMove = () => resetTimer();
+        const handleClick = () => resetTimer();
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('click', handleClick);
+        resetTimer();
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('click', handleClick);
+            if (hideControlsTimerRef.current) {
+                clearTimeout(hideControlsTimerRef.current);
+            }
+        };
+    }, [drawerOpen]);
+
+    // Drawer drag handlers
+    const handleDragStart = (clientY) => {
+        isDragging.current = true;
+        dragStartY.current = clientY;
+        drawerTranslateRef.current = 0;
+    };
+
+    const handleDragMove = (clientY) => {
+        if (!isDragging.current) return;
+        const deltaY = clientY - dragStartY.current;
+        if (deltaY > 0) {
+            drawerTranslateRef.current = deltaY;
+            setDrawerTranslateY(deltaY);
+        }
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging.current) return;
+        isDragging.current = false;
+        if (drawerTranslateRef.current > 100) {
+            setDrawerOpen(false);
+        }
+        drawerTranslateRef.current = 0;
+        setDrawerTranslateY(0);
+    };
+
+    const handleMouseDown = (e) => {
+        e.preventDefault();
+        handleDragStart(e.clientY);
+
+        const onMouseMove = (moveEvent) => {
+            handleDragMove(moveEvent.clientY);
+        };
+
+        const onMouseUp = () => {
+            handleDragEnd();
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    };
+
+    const handleTouchStart = (e) => {
+        e.preventDefault();
+        handleDragStart(e.touches[0].clientY);
+    };
+
+    const handleTouchMove = (e) => {
+        e.preventDefault();
+        handleDragMove(e.touches[0].clientY);
+    };
+
+    const handleTouchEnd = () => {
+        handleDragEnd();
+    };
 
     // Get match data from navigation state or sessionStorage
     useEffect(() => {
         let matchData = location.state?.match;
 
-        // Fallback to sessionStorage if not in navigation state
         if (!matchData) {
             const stored = sessionStorage.getItem('currentMatch');
             if (stored) {
@@ -47,13 +143,11 @@ const SportsWatch = () => {
         }
     }, [location.state, matchId]);
 
-    // Fetch streams when match is loaded
+    // Fetch streams
     const fetchStreams = useCallback(async (source, id) => {
         try {
             const response = await fetch(`${API_BASE}/stream/${source}/${id}`);
-            if (!response.ok) {
-                throw new Error(`Stream API Error: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Stream API Error: ${response.status}`);
             return await response.json();
         } catch (err) {
             console.error('Failed to fetch streams:', err);
@@ -73,7 +167,6 @@ const SportsWatch = () => {
             setLoading(true);
             setError(null);
 
-            // Try first source
             const firstSource = match.sources[0];
             setSelectedSource(firstSource);
 
@@ -81,7 +174,6 @@ const SportsWatch = () => {
 
             if (streamData && streamData.length > 0) {
                 setStreams(streamData);
-                // Auto-select best stream (HD + English preferred)
                 const bestStream = streamData.find(s => s.hd && s.language === 'English')
                     || streamData.find(s => s.hd)
                     || streamData[0];
@@ -93,9 +185,7 @@ const SportsWatch = () => {
             setLoading(false);
         };
 
-        if (match) {
-            loadStreams();
-        }
+        if (match) loadStreams();
     }, [match, fetchStreams]);
 
     // Handle source change
@@ -104,6 +194,8 @@ const SportsWatch = () => {
 
         setLoading(true);
         setSelectedSource(source);
+        setStreams([]);
+        setSelectedStream(null);
 
         const streamData = await fetchStreams(source.source, source.id);
 
@@ -126,6 +218,7 @@ const SportsWatch = () => {
     // Handle stream selection
     const handleStreamSelect = (stream) => {
         setSelectedStream(stream);
+        setDrawerOpen(false);
     };
 
     // Go back to sports page
@@ -133,149 +226,225 @@ const SportsWatch = () => {
         navigate('/sports');
     };
 
-    // Format source name for display
+    // Format source name
     const formatSourceName = (source) => {
         if (!source) return 'Unknown';
         return source.charAt(0).toUpperCase() + source.slice(1);
     };
 
-    // Loading state
-    if (loading && !match) {
-        return (
-            <div className="sports-watch-page">
-                <div className="watch-loading">
-                    <div className="loading-spinner" />
-                    <p>Loading match...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Error state (no match data)
-    if (error && !match) {
-        return (
-            <div className="sports-watch-page">
-                <div className="watch-error">
-                    <p>{error}</p>
-                    <button onClick={handleBack}>← Back to Sports</button>
-                </div>
-            </div>
-        );
-    }
+    const controlsHiddenClass = controlsVisible ? '' : 'controls-hidden';
 
     return (
-        <div className="sports-watch-page">
-            {/* Header with back button and match info */}
-            <header className="watch-header">
-                <button className="back-btn" onClick={handleBack}>
-                    ← Back
-                </button>
-                <div className="match-title-bar">
-                    <h1>{match?.title || 'Loading...'}</h1>
-                    {match?.category && (
-                        <span className="category-badge">{match.category}</span>
-                    )}
-                </div>
-            </header>
+        <div className="sports-watch-fullscreen">
+            {/* Video Player - Full Screen */}
+            {selectedStream?.embedUrl ? (
+                <iframe
+                    key={`${selectedStream.id}-${sandboxEnabled}`}
+                    src={selectedStream.embedUrl}
+                    title={match?.title || 'Stream Player'}
+                    frameBorder="0"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; encrypted-media"
+                    className="sports-video-player"
+                    {...(sandboxEnabled && {
+                        sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
+                    })}
+                />
+            ) : (
+                <div className="sports-video-player" style={{ background: '#000' }} />
+            )}
 
-            {/* Main Content */}
-            <div className="watch-content">
-                {/* Player Container */}
-                <div className="player-container">
-                    {loading ? (
-                        <div className="player-loading">
-                            <div className="loading-spinner" />
-                            <p>Loading stream...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="player-error">
-                            <p>{error}</p>
-                        </div>
-                    ) : selectedStream?.embedUrl ? (
-                        <iframe
-                            src={selectedStream.embedUrl}
-                            title={match?.title || 'Stream Player'}
-                            frameBorder="0"
-                            allowFullScreen
-                            allow="autoplay; fullscreen; encrypted-media"
-                            className="stream-iframe"
-                        />
-                    ) : (
-                        <div className="player-placeholder">
-                            <p>Select a stream to start watching</p>
-                        </div>
-                    )}
+            {/* Loading Overlay */}
+            {loading && (
+                <div className="sports-watch-loading-overlay">
+                    <div className="sports-loading-spinner" />
+                    <p>Loading stream...</p>
                 </div>
+            )}
 
-                {/* Controls Panel */}
-                <div className="controls-panel">
-                    {/* Source Selector */}
-                    {match?.sources && match.sources.length > 1 && (
-                        <div className="control-section">
-                            <h3>Sources</h3>
-                            <div className="source-buttons">
-                                {match.sources.map((source, index) => (
-                                    <button
-                                        key={`${source.source}-${source.id}`}
-                                        className={`source-btn ${selectedSource?.source === source.source ? 'active' : ''}`}
-                                        onClick={() => handleSourceChange(source)}
-                                    >
-                                        {formatSourceName(source.source)}
-                                        {index === 0 && <span className="primary-badge">Primary</span>}
-                                    </button>
-                                ))}
+            {/* Error Overlay */}
+            {error && !loading && (
+                <div className="sports-watch-error-overlay">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    <h1>Stream Unavailable</h1>
+                    <p>{error}</p>
+                </div>
+            )}
+
+            {/* Back Button - Top Left */}
+            <button
+                className={`sports-watch-overlay-btn sports-watch-back-btn ${controlsHiddenClass}`}
+                onClick={handleBack}
+            >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                <span>Back</span>
+            </button>
+
+            {/* Match Badge - Top Center */}
+            <div className={`sports-watch-match-badge ${controlsHiddenClass}`}>
+                <span className="sports-live-indicator">LIVE</span>
+                <span className="sports-watch-match-title">{match?.title || 'Loading...'}</span>
+                {match?.category && (
+                    <span className="sports-category-badge">{match.category}</span>
+                )}
+            </div>
+
+            {/* Sources Button - Top Right */}
+            <button
+                className={`sports-watch-overlay-btn sports-watch-sources-btn ${controlsHiddenClass}`}
+                onClick={() => setDrawerOpen(true)}
+            >
+                Sources
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="m7 15 5 5 5-5" />
+                    <path d="m7 9 5-5 5 5" />
+                </svg>
+            </button>
+
+            {/* Sources Drawer Modal */}
+            {drawerOpen && (
+                <div className="sports-drawer-overlay" onClick={() => setDrawerOpen(false)}>
+                    <div
+                        className="sports-drawer"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            transform: `translateY(${drawerTranslateY}px)`,
+                            transition: isDragging.current ? 'none' : 'transform 0.3s ease'
+                        }}
+                    >
+                        {/* Drawer Handle */}
+                        <div
+                            className="sports-drawer-handle"
+                            onMouseDown={handleMouseDown}
+                            onTouchStart={handleTouchStart}
+                            onTouchMove={handleTouchMove}
+                            onTouchEnd={handleTouchEnd}
+                        ></div>
+
+                        {/* Sandbox Toggle */}
+                        <div className="sports-sandbox-row">
+                            <div className="sports-sandbox-info">
+                                <p className="sports-sandbox-title">
+                                    Sandbox <span className="sports-sandbox-label">(Adblocker)</span>
+                                </p>
+                                <p className="sports-sandbox-desc">
+                                    Some servers do not support sandbox. Turn it off if video doesn't load.
+                                </p>
                             </div>
+                            <label className="sports-toggle">
+                                <input
+                                    type="checkbox"
+                                    checked={sandboxEnabled}
+                                    onChange={(e) => setSandboxEnabled(e.target.checked)}
+                                />
+                                <span className="sports-toggle-slider"></span>
+                            </label>
                         </div>
-                    )}
 
-                    {/* Stream Selector */}
-                    {streams.length > 1 && (
-                        <div className="control-section">
-                            <h3>Streams</h3>
-                            <div className="stream-list">
-                                {streams.map((stream) => (
+                        {/* Source Tabs */}
+                        {match?.sources && match.sources.length > 0 && (
+                            <div className="sports-source-tabs">
+                                <p className="sports-source-tabs-title">Select Source</p>
+                                <div className="sports-source-tabs-row">
+                                    {match.sources.map((source, index) => (
+                                        <button
+                                            key={`${source.source}-${source.id}`}
+                                            className={`sports-source-tab ${selectedSource?.source === source.source ? 'active' : ''}`}
+                                            onClick={() => handleSourceChange(source)}
+                                        >
+                                            {formatSourceName(source.source)}
+                                            {index === 0 && <span className="sports-source-primary">Primary</span>}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Stream List */}
+                        <div className="sports-stream-list">
+                            <p className="sports-stream-list-title">Select Stream</p>
+                            {streams.length === 0 && !loading && (
+                                <p className="sports-stream-empty">No streams available for this source.</p>
+                            )}
+                            <div className="sports-stream-grid">
+                                {streams.map((stream, index) => (
                                     <button
-                                        key={stream.id}
-                                        className={`stream-btn ${selectedStream?.id === stream.id ? 'active' : ''}`}
+                                        key={`${selectedSource?.source}-${stream.id}-${index}`}
+                                        className={`sports-stream-card ${selectedStream === stream ? 'active' : ''}`}
                                         onClick={() => handleStreamSelect(stream)}
                                     >
-                                        <span className="stream-no">#{stream.streamNo}</span>
-                                        <span className="stream-lang">{stream.language}</span>
-                                        {stream.hd && <span className="hd-badge">HD</span>}
+                                        <div className="sports-stream-card-icon">
+                                            <svg width="24" height="24" viewBox="0 0 32 32">
+                                                <circle cx="16" cy="16" r="16" fill="#090A15" />
+                                                <path
+                                                    fill="#fff"
+                                                    fillRule="evenodd"
+                                                    d="M8.004 19.728a.996.996 0 0 1-.008-1.054l7.478-12.199a.996.996 0 0 1 1.753.104l6.832 14.82a.996.996 0 0 1-.618 1.37l-10.627 3.189a.996.996 0 0 1-1.128-.42l-3.682-5.81Zm8.333-9.686a.373.373 0 0 1 .709-.074l4.712 10.904a.374.374 0 0 1-.236.506L14.18 23.57a.373.373 0 0 1-.473-.431l2.63-13.097Z"
+                                                    clipRule="evenodd"
+                                                />
+                                            </svg>
+                                        </div>
+                                        <div className="sports-stream-card-details">
+                                            <p className="sports-stream-card-name">
+                                                Stream {stream.streamNo}
+                                                {stream.hd && <span className="sports-stream-hd-badge">HD</span>}
+                                            </p>
+                                            <p className="sports-stream-card-desc">
+                                                {stream.language || 'Unknown Language'}
+                                                {selectedStream === stream && ' • Playing'}
+                                            </p>
+                                        </div>
                                     </button>
                                 ))}
                             </div>
                         </div>
-                    )}
 
-                    {/* Match Info */}
-                    <div className="control-section match-details">
-                        <h3>Match Info</h3>
-                        <div className="match-info-grid">
-                            {match?.teams?.home && (
-                                <div className="team-info">
-                                    <span className="team-label">Home</span>
-                                    <span className="team-name">{match.teams.home.name}</span>
+                        {/* Match Details */}
+                        {match && (
+                            <div className="sports-match-details">
+                                <p className="sports-match-details-title">Match Details</p>
+                                <div className="sports-match-details-grid">
+                                    {match.teams?.home && (
+                                        <div className="sports-match-detail-item">
+                                            <span className="sports-match-detail-label">Home</span>
+                                            <span className="sports-match-detail-value">{match.teams.home.name}</span>
+                                        </div>
+                                    )}
+                                    {match.teams?.away && (
+                                        <div className="sports-match-detail-item">
+                                            <span className="sports-match-detail-label">Away</span>
+                                            <span className="sports-match-detail-value">{match.teams.away.name}</span>
+                                        </div>
+                                    )}
+                                    {match.date && (
+                                        <div className="sports-match-detail-item">
+                                            <span className="sports-match-detail-label">Scheduled</span>
+                                            <span className="sports-match-detail-value">{new Date(match.date).toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {match.category && (
+                                        <div className="sports-match-detail-item">
+                                            <span className="sports-match-detail-label">Sport</span>
+                                            <span className="sports-match-detail-value" style={{ textTransform: 'capitalize' }}>{match.category}</span>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                            {match?.teams?.away && (
-                                <div className="team-info">
-                                    <span className="team-label">Away</span>
-                                    <span className="team-name">{match.teams.away.name}</span>
-                                </div>
-                            )}
-                            {match?.date && (
-                                <div className="match-time">
-                                    <span className="time-label">Scheduled</span>
-                                    <span className="time-value">
-                                        {new Date(match.date).toLocaleString()}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* Close Button */}
+                        <button className="sports-drawer-close" onClick={() => setDrawerOpen(false)}>
+                            Close
+                        </button>
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

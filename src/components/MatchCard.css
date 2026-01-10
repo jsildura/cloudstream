@@ -122,6 +122,35 @@
     border-radius: 12px;
 }
 
+/* Schedule Badge - Top Right (Time for today, Date for future) */
+.match-badge.schedule-top {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(30, 30, 30, 0.9);
+    color: rgba(255, 255, 255, 0.95);
+    z-index: 5;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    text-transform: none;
+    font-size: 11px;
+    padding: 5px 10px;
+}
+
+/* Time badge styling (for today's matches) */
+.match-badge.schedule-top.time {
+    background: rgba(40, 40, 40, 0.9);
+}
+
+/* Date badge styling (for future matches) */
+.match-badge.schedule-top.date {
+    background: rgba(50, 50, 50, 0.9);
+}
+
 @keyframes pulse {
 
     0%,
