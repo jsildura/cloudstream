@@ -2,7 +2,7 @@
  * /api/visit - Live Viewer Counter Endpoint
  * 
  * Uses Cloudflare KV to track active visitors with a heartbeat pattern.
- * Each visitor sends a periodic ping (every 30s from client).
+ * Each visitor sends a periodic ping (every 20s from client).
  * Keys expire after 60 seconds, so only active users are counted.
  */
 

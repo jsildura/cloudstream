@@ -3,11 +3,11 @@ import { useState, useEffect, useCallback } from 'react';
 /**
  * useViewerCount - Custom hook for live viewer counting
  * 
- * Sends a heartbeat to /api/visit every 30 seconds with a unique user ID.
+ * Sends a heartbeat to /api/visit every 20 seconds with a unique user ID.
  * Returns the current viewer count from the server.
  */
 
-const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+const HEARTBEAT_INTERVAL = 20000; // 20 seconds
 const STORAGE_KEY = 'streamflix_visitor_uid';
 
 function getOrCreateUid() {
