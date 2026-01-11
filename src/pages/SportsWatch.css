@@ -25,6 +25,19 @@
     position: relative;
 }
 
+/* Click Shield - Captures taps when controls are hidden to prevent ad clicks */
+.sports-click-shield {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; /* Above video (1), below controls (30) */
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
 /* ========================================
    Overlay Buttons
    ======================================== */

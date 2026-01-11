@@ -254,6 +254,17 @@ const SportsWatch = () => {
                 <div className="sports-video-player" style={{ background: '#000' }} />
             )}
 
+            {/* Click Shield - Captures taps when controls are hidden to prevent ad clicks */}
+            {!controlsVisible && !loading && !drawerOpen && (
+                <div
+                    className="sports-click-shield"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setControlsVisible(true);
+                    }}
+                />
+            )}
+
             {/* Loading Overlay */}
             {loading && (
                 <div className="sports-watch-loading-overlay">
