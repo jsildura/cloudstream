@@ -23,6 +23,12 @@ export async function onRequest(context) {
     return new Response(null, { headers: getCorsHeaders() });
   }
 
+  // Skip routes that have their own dedicated handlers
+  // visit.js handles /api/visit for viewer counting
+  if (path === 'visit' || path.startsWith('visit/')) {
+    return context.next();
+  }
+
   try {
     const queryString = url.search;
     const TMDB_BASE_URL = 'https://api.themoviedb.org/3';

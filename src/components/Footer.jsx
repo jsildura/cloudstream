@@ -1,12 +1,22 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useViewerCount } from '../hooks/useViewerCount';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { count, isLoading } = useViewerCount();
 
   return (
     <footer className="footer">
       <div className="footer-container">
+        {/* Live Viewer Counter */}
+        <div className="footer-viewer-count">
+          <span className="viewer-dot"></span>
+          <span className="viewer-text">
+            {isLoading ? '...' : `${count ?? 0} ${count === 1 ? 'User' : 'Users'} Online`}
+          </span>
+        </div>
+
         {/* Social Media Icons */}
         <div className="footer-social-icons">
           <a
@@ -61,7 +71,6 @@ const Footer = () => {
           <Link to="/viu" className="footer-nav-link">Viu</Link>
           <Link to="/crunchyroll" className="footer-nav-link">Crunchyroll</Link>
           <Link to="/peacock" className="footer-nav-link">Peacock</Link>
-
         </nav>
 
         {/* Disclaimer Text */}
