@@ -40,8 +40,8 @@ import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import AdblockModal from './components/AdblockModal';
 import BotProtection from './components/BotProtection';
-// VisitorTracker disabled
 import { ToastProvider } from './contexts/ToastContext';
+import { ViewerCountProvider } from './contexts/ViewerCountContext';
 import Toast from './components/Toast';
 import useTVNavigation from './hooks/useTVNavigation';
 import GlobalChat from './components/GlobalChat';
@@ -107,81 +107,83 @@ function App() {
 
   return (
     <ToastProvider>
-      <div className="App">
-        {/* VisitorTracker disabled */}
-        <BotProtection />
-        <AdblockModal />
-        <ScrollToTop />
-        <ScrollToTopButton />
-        <Toast />
-        {/* Hide Navbar on watch pages for focused viewing */}
-        {!location.pathname.startsWith('/watch') &&
-          !location.pathname.includes('/iptv/watch') &&
-          !location.pathname.includes('/sports/watch') && (
-            <Navbar
-              onSearch={handleSearch}
-              searchResults={searchResults}
-              onItemClick={handleItemClick}
-              isSearching={isSearching}
-            />
+      <ViewerCountProvider>
+        <div className="App">
+          {/* VisitorTracker disabled */}
+          <BotProtection />
+          <AdblockModal />
+          <ScrollToTop />
+          <ScrollToTopButton />
+          <Toast />
+          {/* Hide Navbar on watch pages for focused viewing */}
+          {!location.pathname.startsWith('/watch') &&
+            !location.pathname.includes('/iptv/watch') &&
+            !location.pathname.includes('/sports/watch') && (
+              <Navbar
+                onSearch={handleSearch}
+                searchResults={searchResults}
+                onItemClick={handleItemClick}
+                isSearching={isSearching}
+              />
+            )}
+
+          <main>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/my-list" element={<MyList />} />
+              <Route path="/top-rated" element={<TopRated />} />
+              <Route path="/tv-shows" element={<TVShows />} />
+              <Route path="/popular" element={<Popular />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/trending" element={<TrendingNow />} />
+              <Route path="/anime-movies" element={<AnimeMovies />} />
+              <Route path="/trending-tv" element={<TrendingTV />} />
+              <Route path="/top-rated-tv" element={<TopRatedTV />} />
+              <Route path="/anime-series" element={<AnimeSeries />} />
+              <Route path="/popular-tv" element={<PopularTV />} />
+              <Route path="/watch" element={<Watch />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/privacy" element={<DataPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/collection/:id" element={<CollectionDetails />} />
+              <Route path="/netflix" element={<Netflix />} />
+              <Route path="/disney" element={<Disney />} />
+              <Route path="/prime-video" element={<PrimeVideo />} />
+              <Route path="/apple-tv" element={<AppleTV />} />
+              <Route path="/hbo" element={<HBO />} />
+              <Route path="/viu" element={<Viu />} />
+              <Route path="/crunchyroll" element={<Crunchyroll />} />
+              <Route path="/peacock" element={<Peacock />} />
+              <Route path="/studio/:id" element={<StudioPage />} />
+              <Route path="/iptv" element={<IPTV />} />
+              <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
+              <Route path="/sports" element={<Sports />} />
+              <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
+              <Route path="*" element={<Home />} />
+            </Routes>
+          </main>
+
+          {/* Hide Footer on watch pages for focused viewing */}
+          {!location.pathname.startsWith('/watch') &&
+            !location.pathname.includes('/iptv/watch') &&
+            !location.pathname.includes('/sports/watch') && (
+              <Footer />
+            )}
+
+          {isModalOpen && selectedItem && (
+            <Modal item={selectedItem} onClose={closeModal} />
           )}
 
-        <main>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/my-list" element={<MyList />} />
-            <Route path="/top-rated" element={<TopRated />} />
-            <Route path="/tv-shows" element={<TVShows />} />
-            <Route path="/popular" element={<Popular />} />
-            <Route path="/discover" element={<Discover />} />
-            <Route path="/trending" element={<TrendingNow />} />
-            <Route path="/anime-movies" element={<AnimeMovies />} />
-            <Route path="/trending-tv" element={<TrendingTV />} />
-            <Route path="/top-rated-tv" element={<TopRatedTV />} />
-            <Route path="/anime-series" element={<AnimeSeries />} />
-            <Route path="/popular-tv" element={<PopularTV />} />
-            <Route path="/watch" element={<Watch />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/disclaimer" element={<Disclaimer />} />
-            <Route path="/privacy" element={<DataPolicy />} />
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/collection/:id" element={<CollectionDetails />} />
-            <Route path="/netflix" element={<Netflix />} />
-            <Route path="/disney" element={<Disney />} />
-            <Route path="/prime-video" element={<PrimeVideo />} />
-            <Route path="/apple-tv" element={<AppleTV />} />
-            <Route path="/hbo" element={<HBO />} />
-            <Route path="/viu" element={<Viu />} />
-            <Route path="/crunchyroll" element={<Crunchyroll />} />
-            <Route path="/peacock" element={<Peacock />} />
-            <Route path="/studio/:id" element={<StudioPage />} />
-            <Route path="/iptv" element={<IPTV />} />
-            <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
-            <Route path="/sports" element={<Sports />} />
-            <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
-            <Route path="*" element={<Home />} />
-          </Routes>
-        </main>
-
-        {/* Hide Footer on watch pages for focused viewing */}
-        {!location.pathname.startsWith('/watch') &&
-          !location.pathname.includes('/iptv/watch') &&
-          !location.pathname.includes('/sports/watch') && (
-            <Footer />
-          )}
-
-        {isModalOpen && selectedItem && (
-          <Modal item={selectedItem} onClose={closeModal} />
-        )}
-
-        {/* Global Chat - Hidden on Watch pages */}
-        {!location.pathname.startsWith('/watch') &&
-          !location.pathname.includes('/iptv/watch') &&
-          !location.pathname.includes('/sports/watch') && (
-            <GlobalChat />
-          )}
-      </div>
+          {/* Global Chat - Hidden on Watch pages */}
+          {!location.pathname.startsWith('/watch') &&
+            !location.pathname.includes('/iptv/watch') &&
+            !location.pathname.includes('/sports/watch') && (
+              <GlobalChat />
+            )}
+        </div>
+      </ViewerCountProvider>
     </ToastProvider>
   );
 }
