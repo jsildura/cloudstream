@@ -838,7 +838,163 @@ const IPTV = () => {
             category: 'Movies',
             logo: '/channels/amc_logo.png',
             url: 'https://fl1.moveonjoy.com/AMC_NETWORK/index.m3u8'
+          },
+          {
+            id: 'outside',
+            name: 'Outside',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/22765/outside-tv/logo_20231219_220634_59.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/outsidetv/playlist.m3u8'
+          },
+          {
+            id: 'ufa',
+            name: 'United Fight Alliance',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22778/united-fight-alliance/logo_20231219_223908_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/united-fight-alliance/master.m3u8'
+          },
+          {
+            id: 'documentary+',
+            name: 'Documentary+',
+            category: 'Documentary',
+            logo: 'https://a.jsrdn.com/hls/22943/documentary/logo_20231219_193112_63.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/documentary/master.m3u8'
+          },
+          {
+            id: 'entrepreneur',
+            name: 'Entrepreneur',
+            category: 'Documentary',
+            logo: 'https://a.jsrdn.com/hls/22851/entrepreneur/logo_20231219_201142_47.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/entrepreneur/master.m3u8'
+          },
+          {
+            id: 'craftsytv',
+            name: 'Craftsy TV',
+            category: 'Entertainment',
+            logo: 'https://a.jsrdn.com/hls/23108/craftsytv/logo_20231219_192821_64.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/craftsytv/playlist.m3u8'
+          },
+          {
+            id: 'dronetv',
+            name: 'Drone TV',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/23176/dronetv/logo_20240521_191242_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/dronetv/playlist.m3u8'
+          },
+          {
+            id: 'cooking-panda',
+            name: 'Cooking Panda',
+            category: 'Entertainment',
+            logo: 'https://a.jsrdn.com/hls/22882/cooking-panda/logo_20231219_192638_68.png',
+            url: 'https://api-ott-cookingpanda.ottera.tv/loggingmediaurlpassthrough/a.m3u8?ads.dpname=distrotv&version=12&id=901&partner=distro&ads.rnd=iujz&ads.env_i=bc20e538-df2b-44b9-a433-1b91c33f78d6&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=938&ads.height=528&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22882&ads.content_duration=18000&ads.episode_id=40434&ads.show_id=1210&ads.showCategories=IAB1&ads.episodeCategories=IAB1&ads.genre=Lifestyle%2CEntertainment%2CTravel%2CFood%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Cooking%20Panda&ads.episodetitle=Cooking%20Panda&ads.keywords=cooking%20panda&ads.contenturl=&ads.gdprConsent=&ads.islive=1&ads.streamtype=live&ads.vf=20260110'
+          },
+          {
+            id: 'fuel-tv',
+            name: 'Fuel TV',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/23055/fuel-tv-ww/logo_20231219_202054_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/fuel-tv-ww/playlist.m3u8'
+          },
+          {
+            id: 'oan-plus',
+            name: 'OAN Plus',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/22866/oan-encore/logo_20231219_220536_57.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/oan-encore/playlist.m3u8'
+          },
+          {
+            id: 'africa-news',
+            name: 'Africa News',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/22886/africanews/logo_20231218_175639_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/africanews/africanews-en.m3u8'
+          },
+          {
+            id: 'pickleball-now',
+            name: 'Pickleball Now',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22979/pickleball-now/logo_20260106_185156_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pickleball-now/playlist.m3u8'
+          },
+          {
+            id: 'bowling-tv',
+            name: 'Bowling TV',
+            category: 'Sports',
+            logo: 'https://a.jsrdn.com/hls/22964/bowling-tv/logo_20251210_204815_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/bowling-tv/bowl.m3u8'
+          },
+          {
+            id: 'wine-watches-whiskey',
+            name: 'Wine Watches Whiskey',
+            category: 'Entertainment',
+            logo: 'https://a.jsrdn.com/hls/23241/wine-watches-whiskey/logo_20251217_201432_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/wine-watches-whiskey/index.m3u8'
+          },
+          {
+            id: 'rvtv',
+            name: 'RVTV',
+            category: 'Outdoors',
+            logo: 'https://a.jsrdn.com/hls/23241/rvtv/logo_20251217_201036_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/rvtv/index.m3u8'
+          },
+          {
+            id: 'daystar-espanol',
+            name: 'Daystar Espanol',
+            category: 'Spirituality',
+            logo: 'https://a.jsrdn.com/hls/23240/daystar-espanol/logo_20251209_232554_70.png',
+            url: 'https://hls-live-media-gc.cdn01.net/mpegts/232076_2222907/IHvdJRecZS4mAMfF4YzPuA/1771891200/master_mpegts.m3u8'
+          },
+          {
+            id: 'crime-and-evidence',
+            name: 'Crime and Evidence',
+            category: 'Documentary',
+            logo: 'https://a.jsrdn.com/hls/23181/crime-and-evidence/logo_20250818_194230_68.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/crime-and-evidence/video.m3u8'
+          },
+          {
+            id: 'prime-asia-tv',
+            name: 'Prime Asia TV',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/23215/prime-asia-tv/logo_20251125_201232_70.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/prime-asia-tv/index.m3u8'
+          },
+          {
+            id: 'cgtn-global-biz',
+            name: 'CGTN Global Biz',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/23232/cgtn-global-biz/logo_20251105_004205_68.png',
+            url: 'https://amg01314-amg01314c6-distrotv-us-10220.playouts.now.amagi.tv/playlist/amg01314-cgtn-cgtnglobalbiz-distrotvus/playlist.m3u8'
+          },
+          {
+            id: 'discovering-china',
+            name: 'Discovering China',
+            category: 'Documentary',
+            logo: 'https://a.jsrdn.com/hls/23232/discovering-china/logo_20251105_005016_68.png',
+            url: 'https://amg01314-amg01314c8-distrotv-us-10218.playouts.now.amagi.tv/playlist/amg01314-cgtn-cgtndiscoveringchina-distrotvus/playlist.m3u8'
+          },
+          {
+            id: 'monarch',
+            name: 'Monarch',
+            category: 'Movies',
+            logo: 'https://a.jsrdn.com/hls/22728/monarch/logo_20231219_215904_69.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/monarch/master.m3u8'
+          },
+          {
+            id: 'life-style-by-triptic',
+            name: 'Life Style By Triptic',
+            category: 'Entertainment',
+            logo: 'https://a.jsrdn.com/hls/23024/life-style-by-triptic/logo_20231219_215112_55.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/life-style-by-triptic/master.m3u8'
+          },
+          {
+            id: 'al-arabiya',
+            name: 'Al Arabiya News',
+            category: 'News',
+            logo: 'https://a.jsrdn.com/hls/23094/cgtn/logo_20231219_185401_34.png',
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-arabiya/master.m3u8'
           }
+
+
         ];
 
         // Filter out unwanted channels from the parsed cignal.m3u (IDs 5, 6, 78)
