@@ -16,27 +16,7 @@
 export const serverConfig = [
     {
         name: 'Server 1',
-        description: 'Fast Streaming. Movies & TV. Main Server.',
-        baseUrl: 'https://www.zxcstream.xyz/embed/',
-        suffix: '?autoPlay=true',
-        isRecommended: true,
-        sandboxSupport: true,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 2',
-        description: 'English Audio Track. Reliable Backup.',
-        baseUrl: 'https://zxcstream.xyz/player/',
-        suffix: '/en',
-        isRecommended: true,
-        sandboxSupport: true,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 3',
-        description: 'Fast & Ad-free. Auto-play Enabled.',
+        description: 'Main Server, Fast Streaming.',
         baseUrl: 'https://vidsrc.cc/v2/embed/',
         suffix: '?autoPlay=true',
         isRecommended: true,
@@ -45,18 +25,38 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 4',
-        description: 'Fast & Reliable. Movies, TV & Anime.',
-        baseUrl: 'https://vidsync.xyz/embed/',
+        name: 'Server 2',
+        description: '2nd Reliable Server Backup, Minimal Ads',
+        baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
         isRecommended: true,
         sandboxSupport: false,
+        hasAds: true,
+        pattern: 'vidsrc-xyz',
+    },
+    {
+        name: 'Server 3',
+        description: 'Third Reliable Server Backup',
+        baseUrl: 'https://zxcstream.xyz/player/',
+        suffix: '/en',
+        isRecommended: true,
+        sandboxSupport: true,
         hasAds: false,
         pattern: 'default',
     },
     {
+        name: 'Server 4',
+        description: 'Fast & Reliable Server, Minimal Ads',
+        baseUrl: 'https://vidsync.xyz/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    },
+    {
         name: 'Server 5',
-        description: '4K Ultra HD with TMDB Integration.',
+        description: 'A Good Server Backup with 4K Ultra HD Content.',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
         isRecommended: true,
@@ -66,7 +66,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 6',
-        description: 'Reliable Server with Vast Collection, Fast Streaming.',
+        description: 'Reliable Server with Vast Collections',
         baseUrl: 'https://vidsrc.xyz/embed/',
         suffix: '',
         isRecommended: true,
@@ -76,7 +76,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 7',
-        description: 'Premium Quality. Customizable Player.',
+        description: 'Premium Server, Supports Adaptive Bitrate Switching.',
         baseUrl: 'https://vidlink.pro/',
         suffix: '',
         isRecommended: false,
@@ -96,7 +96,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 9',
-        description: 'Huge Catalog. Quick Load Times.',
+        description: 'Huge Catalog. Fast Streaming.',
         baseUrl: 'https://vixsrc.to/',
         suffix: '',
         isRecommended: false,
@@ -116,7 +116,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 11',
-        description: '1080p HD Movies. Clean Interface, (Movie Only).',
+        description: 'Fast Streaming. (Movie Only).',
         baseUrl: 'https://www.vidking.net/embed/movie/',
         suffix: '',
         isRecommended: false,
@@ -127,7 +127,7 @@ export const serverConfig = [
     {
         name: 'Server 12',
         description: 'High Bitrate Movies. Alternative Source, (Movie Only).',
-        baseUrl: 'https://vidsrc.wtf/api/3/movie/?id=',
+        baseUrl: 'https://vidsrc.wtf/api/3/movie/',
         suffix: '',
         isRecommended: false,
         sandboxSupport: false,
@@ -172,6 +172,16 @@ export const serverConfig = [
         // To disable password protection, remove 'locked' and 'password' properties
         locked: false,
         password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
+    },
+    {
+        name: 'Server 16',
+        description: 'Reliable Server, Fast Streaming.',
+        baseUrl: 'https://www.zxcstream.xyz/embed/',
+        suffix: '?autoPlay=true',
+        isRecommended: false,
+        sandboxSupport: true,
+        hasAds: false,
+        pattern: 'default',
     },
 ];
 
