@@ -451,10 +451,21 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                       <p>Stream global sports, matches, and tournaments in real-time. Your front-row seat to every game, anywhere in the world.</p>
                     </div>
                   </Link>
+
                 </div>
               </div>
             )}
           </div>
+
+          <Link to="/music" className="nav-link">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18V5l12-2v13" />
+              <circle cx="6" cy="18" r="3" />
+              <circle cx="18" cy="16" r="3" />
+            </svg>
+            Music
+            <span className="nav-badge-new desktop-only">New</span>
+          </Link>
 
           <Link to="/my-list" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -718,9 +729,19 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                 <div className="side-menu-submenu">
                   <Link to="/iptv" className="nav-link submenu-link" onClick={closeMenu}>Live TV</Link>
                   <Link to="/sports" className="nav-link submenu-link" onClick={closeMenu}>Live Sports</Link>
+                  <Link to="/music" className="nav-link submenu-link" onClick={closeMenu}>Music Downloads</Link>
                 </div>
               )}
             </div>
+
+            <Link to="/music" className="nav-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+              Music
+            </Link>
 
             <Link to="/my-list" className="nav-link" onClick={closeMenu}>Watchlist</Link>
 

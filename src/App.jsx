@@ -33,6 +33,7 @@ import IPTV from './pages/IPTV';
 import IPTVWatch from './pages/IPTVWatch';
 import Sports from './pages/Sports';
 import SportsWatch from './pages/SportsWatch';
+import Music from './pages/Music';
 import Modal from './components/Modal';
 import { useTMDB } from './hooks/useTMDB';
 import Footer from './components/Footer';
@@ -161,6 +162,7 @@ function App() {
               <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
               <Route path="/sports" element={<Sports />} />
               <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
+              <Route path="/music" element={<Music />} />
               <Route path="*" element={<Home />} />
             </Routes>
           </main>

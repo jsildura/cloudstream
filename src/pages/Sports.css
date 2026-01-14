@@ -5,8 +5,8 @@
 
 .sports-page {
     min-height: 100vh;
-    background: linear-gradient(180deg, #0a0a0a 0%, #141414 100%);
-    padding-top: 70px;
+    background-color: #141414;
+    padding-top: 100px;
     /* Account for fixed navbar */
     padding-bottom: 60px;
 }
@@ -17,7 +17,7 @@
 
 .sports-header {
     padding: 40px 5% 30px;
-    background: linear-gradient(180deg, rgba(20, 20, 20, 0.8) 0%, transparent 100%);
+    background: transparent;
 }
 
 .sports-header-content {
