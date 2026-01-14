@@ -821,3 +821,14 @@ input,
     box-shadow: 0 0 0 5px rgba(229, 9, 20, 0.5);
   }
 }
+
+/* ========================================
+   HIDE FAB BUTTONS WHEN MOBILE MENU OPEN
+   ======================================== */
+body.mobile-menu-open .gc-wrapper,
+body.mobile-menu-open .scroll-to-top-btn {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}

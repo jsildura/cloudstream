@@ -2805,6 +2805,332 @@
   backdrop-filter: blur(2px);
 }
 
+/* ========================================
+   BOTTOM SHEET MOBILE NAVIGATION
+   Inspired by mapple.uk with improvements
+   ======================================== */
+
+.bottom-sheet-menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-height: 85vh;
+  background: linear-gradient(180deg, rgba(18, 18, 18, 0.98) 0%, rgba(0, 0, 0, 0.99) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px 20px 0 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transform: translateY(100%);
+  will-change: transform;
+}
+
+.bottom-sheet-menu.open {
+  transform: translateY(0);
+}
+
+/* Drag Handle */
+.bottom-sheet-handle-container {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 8px 0;
+  cursor: grab;
+  touch-action: none;
+}
+
+.bottom-sheet-handle-container:active {
+  cursor: grabbing;
+}
+
+.bottom-sheet-handle {
+  width: 40px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.bottom-sheet-handle-container:hover .bottom-sheet-handle {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Header */
+.bottom-sheet-header {
+  text-align: center;
+  padding: 8px 20px 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bottom-sheet-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+
+/* Content Container */
+.bottom-sheet-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0 20px 0;
+  overscroll-behavior: contain;
+}
+
+/* Menu Item Container */
+.bottom-sheet-item {
+  margin: 0;
+}
+
+/* Non-expandable link items */
+.bottom-sheet-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Item Header (clickable row) */
+.bottom-sheet-item-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 24px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  user-select: none;
+}
+
+.bottom-sheet-item-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bottom-sheet-item-header:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bottom-sheet-item-header.open {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Item Icon */
+.bottom-sheet-item-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: rgba(255, 255, 255, 0.85);
+  flex-shrink: 0;
+}
+
+.bottom-sheet-item-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Item Label */
+.bottom-sheet-item-label {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.01em;
+}
+
+/* Chevron */
+.bottom-sheet-chevron {
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-item-header.open .bottom-sheet-chevron {
+  transform: rotate(180deg);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Submenu Container */
+.bottom-sheet-submenu {
+  max-height: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+
+.bottom-sheet-submenu.open {
+  max-height: 400px;
+  opacity: 1;
+}
+
+/* Submenu Items */
+.bottom-sheet-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px 14px 62px;
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 400;
+  transition: background 0.2s ease, color 0.2s ease;
+  opacity: 0;
+  transform: translateX(10px);
+  animation: submenuFadeIn 0.25s ease forwards;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Staggered animation for submenu items */
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(2) {
+  animation-delay: 0.08s;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(3) {
+  animation-delay: 0.11s;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(4) {
+  animation-delay: 0.14s;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(5) {
+  animation-delay: 0.17s;
+}
+
+.bottom-sheet-submenu.open .bottom-sheet-submenu-item:nth-child(6) {
+  animation-delay: 0.20s;
+}
+
+@keyframes submenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.bottom-sheet-submenu-item svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.bottom-sheet-submenu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+
+.bottom-sheet-submenu-item:hover svg {
+  opacity: 1;
+}
+
+.bottom-sheet-submenu-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Install Button Container */
+.bottom-sheet-install {
+  padding: 16px 24px 8px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  opacity: 1 !important;
+}
+
+.bottom-sheet-install .install-app-btn {
+  width: 100%;
+  max-width: 220px;
+  margin: 0 auto;
+  justify-content: center;
+  display: flex !important;
+}
+
+
+/* Backdrop Overlay */
+.bottom-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 9998;
+  animation: overlayFadeIn 0.3s ease;
+}
+
+@keyframes overlayFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Staggered animation for main menu items */
+.bottom-sheet-menu.open .bottom-sheet-item {
+  animation: itemSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+  opacity: 0;
+}
+
+.bottom-sheet-menu.open .bottom-sheet-item:nth-child(1) {
+  animation-delay: 0.08s;
+}
+
+.bottom-sheet-menu.open .bottom-sheet-item:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.bottom-sheet-menu.open .bottom-sheet-item:nth-child(3) {
+  animation-delay: 0.16s;
+}
+
+.bottom-sheet-menu.open .bottom-sheet-item:nth-child(4) {
+  animation-delay: 0.20s;
+}
+
+.bottom-sheet-menu.open .bottom-sheet-item:nth-child(5) {
+  animation-delay: 0.24s;
+}
+
+/* Install button should be visible without animation delay issues */
+
+
+@keyframes itemSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 @media (max-width: 768px) {
   .navbar-links {
     display: none;
