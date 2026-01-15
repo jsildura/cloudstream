@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import InstallAppButton from './InstallAppButton';
+import SearchModal from './SearchModal';
 
 const RECENT_SEARCHES_KEY = 'streamflix_recent_searches';
 const MAX_RECENT_SEARCHES = 5;
@@ -22,6 +23,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const [tvMenuOpen, setTvMenuOpen] = useState(false);
   const [platformsMenuOpen, setPlatformsMenuOpen] = useState(false);
   const [trendingMenuOpen, setTrendingMenuOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const debounceTimerRef = useRef(null);
 
   // Bottom sheet drag state
@@ -54,7 +56,14 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             .map(item => ({
               id: item.id,
               name: item.title || item.name,
-              type: item.media_type
+              title: item.title,
+              media_type: item.media_type,
+              type: item.media_type,
+              backdrop_path: item.backdrop_path,
+              poster_path: item.poster_path,
+              overview: item.overview,
+              vote_average: item.vote_average,
+              genre_ids: item.genre_ids
             })) || [];
           setTrendingSearches(trending);
         }
@@ -388,7 +397,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
           >
             <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
               TV
-              <span className="nav-badge-new desktop-only">New</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
@@ -441,7 +449,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               <circle cx="18" cy="16" r="3" />
             </svg>
             Music
-            <span className="nav-badge-new desktop-only">New</span>
           </Link>
 
           <Link to="/my-list" className="nav-link">
@@ -459,156 +466,22 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
         {/* PWA Install Button - Desktop View */}
         <InstallAppButton />
 
-        <div className={`navbar-search-container ${isMobileSearchOpen ? 'mobile-open' : ''}`}>
-          <div className="search-bar-wrapper">
-            <input
-              type="text"
-              placeholder="Search movies and TV shows..."
-              value={searchQuery}
-              onChange={handleInputChange}
-              onFocus={handleInputFocus}
-              onBlur={handleSearchBlur}
-              className="navbar-search-input"
-            />
+        {/* Desktop Search Button - Opens Modal */}
+        <button
+          className="navbar-search-btn"
+          onClick={() => setIsSearchModalOpen(true)}
+          aria-label="Search"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+        </button>
 
-            {/* Clear Button */}
-            {searchQuery && (
-              <button
-                type="button"
-                className="search-clear-btn"
-                onClick={clearSearchInput}
-                aria-label="Clear search"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-            )}
-
-            {/* Search Results Dropdown */}
-            {isSearchFocused && searchQuery && (
-              <div className="search-results-dropdown">
-                <div className="search-results-list">
-                  {searchResults && searchResults.length > 0 ? (
-                    searchResults.map(item => (
-                      <div
-                        key={`${item.id}-${item.media_type}`}
-                        className="search-result-item"
-                        onClick={() => handleItemSelect(item)}
-                      >
-                        <div className="search-result-poster">
-                          {getPosterUrl(item.poster_path) ? (
-                            <img
-                              src={getPosterUrl(item.poster_path)}
-                              alt={item.title || item.name}
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="poster-placeholder">
-                              <span>No Image</span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="search-result-info">
-                          <div className="search-result-title">
-                            {item.title || item.name}
-                          </div>
-                          <div className="search-result-meta">
-                            <span className="search-result-type">
-                              {item.media_type}
-                            </span>
-                            {item.release_date && (
-                              <span className="search-result-year">
-                                ({new Date(item.release_date).getFullYear()})
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : isSearching ? (
-                    <div className="search-loading">
-                      <p>Searching...</p>
-                    </div>
-                  ) : (
-                    <div className="search-no-results">
-                      <p>No results found for "{searchQuery}"</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Suggestions Dropdown (Recent + Trending) */}
-            {showSuggestions && (
-              <div className="search-results-dropdown search-suggestions">
-                {/* Recent Searches */}
-                {recentSearches.length > 0 && (
-                  <div className="search-section">
-                    <div className="search-section-header">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                      </svg>
-                      <span>Recent Searches</span>
-                    </div>
-                    {recentSearches.map((query, index) => (
-                      <div
-                        key={`recent-${index}`}
-                        className="search-suggestion-item"
-                        onClick={() => handleSuggestionClick(query)}
-                      >
-                        <span className="suggestion-text">{query}</span>
-                        <button
-                          type="button"
-                          className="suggestion-remove-btn"
-                          onClick={(e) => removeRecentSearch(query, e)}
-                          aria-label="Remove from recent searches"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Trending Searches */}
-                {trendingSearches.length > 0 && (
-                  <div className="search-section">
-                    <div className="search-section-header">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2v8l4-4"></path>
-                        <path d="M12 2v8l-4-4"></path>
-                        <path d="M20 12a8 8 0 1 1-16 0"></path>
-                      </svg>
-                      <span>Trending Searches This Week</span>
-                    </div>
-                    {trendingSearches.map((item, index) => (
-                      <div
-                        key={`trending-${item.id}-${index}`}
-                        className="search-suggestion-item trending-item"
-                        onClick={() => handleSuggestionClick(item.name)}
-                      >
-                        <span className="trending-rank">{index + 1}</span>
-                        <span className="suggestion-text">{item.name}</span>
-                        <span className="suggestion-type">{item.type}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Search Button */}
+        {/* Mobile Search Button - Opens Modal */}
         <button
           className="mobile-search-btn"
-          onClick={toggleMobileSearch}
+          onClick={() => setIsSearchModalOpen(true)}
           aria-label="Search"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -820,6 +693,18 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
         {isMenuOpen && <div className="bottom-sheet-overlay" onClick={closeMenu}></div>}
 
       </div>
+
+      {/* Search Modal */}
+      {isSearchModalOpen && (
+        <SearchModal
+          searchResults={searchResults}
+          onSearch={onSearch}
+          onClose={() => setIsSearchModalOpen(false)}
+          onItemClick={onItemClick}
+          isSearching={isSearching}
+          trendingItems={trendingSearches}
+        />
+      )}
     </nav >
   );
 };

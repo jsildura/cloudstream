@@ -549,6 +549,38 @@
   align-items: center;
 }
 
+/* Desktop Search Button - Icon that opens modal */
+.navbar-search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin-left: auto;
+}
+
+.navbar-search-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-search-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 1024px) {
+  .navbar-search-btn {
+    display: none;
+  }
+}
+
 /* Mobile Search Button - Shows on mobile/tablet */
 .mobile-search-btn {
   display: none;
@@ -4035,8 +4067,8 @@
 
   /* Row Headers - 2x scaled from 720p */
   .row h2 {
-    font-size: 2.8rem;
-    /* 1.4rem × 2 */
+    font-size: 3rem;
+    /* 1.5rem × 2 */
     margin-bottom: 20px;
     /* 10px × 2 */
   }
@@ -4876,8 +4908,8 @@
   }
 
   .row h2 {
-    font-size: 5.6rem;
-    /* 1.4rem × 4 */
+    font-size: 6rem;
+    /* 1.5rem × 4 */
     margin-bottom: 40px;
     /* 10px × 4 */
   }

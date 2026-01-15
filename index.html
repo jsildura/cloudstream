@@ -131,6 +131,12 @@
       z-index: 9999;
     }
 
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
     .netflix-logo {
       color: #ff000d;
       font-size: 2rem;
@@ -153,11 +159,56 @@
       }
     }
 
+    /* Loading Bar Container */
+    .loading-bar-container {
+      width: 200px;
+      height: 3px;
+      background: rgba(229, 9, 20, 0.2);
+      border-radius: 3px;
+      margin-top: 24px;
+      overflow: hidden;
+    }
+
+    .loading-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #E50914, #ff4d4d, #E50914);
+      background-size: 200% 100%;
+      border-radius: 3px;
+      animation: loading-progress 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards, shimmer 2.5s linear infinite;
+    }
+
+    @keyframes loading-progress {
+      0% {
+        width: 0%;
+      }
+
+      100% {
+        width: 100%;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 100% 0;
+      }
+
+      100% {
+        background-position: -100% 0;
+      }
+    }
+
     /* 720p - 1.5x scaling */
     @media (min-width: 1280px) {
       .netflix-logo {
         font-size: 3rem;
         text-shadow: 0 0 8px #E50914, 0 0 15px #E50914, 0 0 30px #E50914;
+      }
+
+      .loading-bar-container {
+        width: 250px;
+        height: 4px;
+        margin-top: 28px;
       }
     }
 
@@ -167,6 +218,12 @@
         font-size: 4rem;
         text-shadow: 0 0 10px #E50914, 0 0 20px #E50914, 0 0 40px #E50914;
       }
+
+      .loading-bar-container {
+        width: 300px;
+        height: 4px;
+        margin-top: 32px;
+      }
     }
 
     /* 4K - 4x scaling */
@@ -174,6 +231,12 @@
       .netflix-logo {
         font-size: 8rem;
         text-shadow: 0 0 20px #E50914, 0 0 40px #E50914, 0 0 80px #E50914;
+      }
+
+      .loading-bar-container {
+        width: 500px;
+        height: 6px;
+        margin-top: 48px;
       }
     }
   </style>
@@ -185,7 +248,12 @@
 <body>
   <div id="root"></div>
   <div class="loading-screen">
-    <div class="netflix-logo">StreamFlix</div>
+    <div class="loading-content">
+      <div class="netflix-logo">StreamFlix</div>
+      <div class="loading-bar-container">
+        <div class="loading-bar"></div>
+      </div>
+    </div>
   </div>
   <script>
     setTimeout(() => {

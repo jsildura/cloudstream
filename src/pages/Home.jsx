@@ -6,6 +6,8 @@ import SearchModal from '../components/SearchModal';
 import PopularCollections from '../components/PopularCollections';
 import ContinueWatching from '../components/ContinueWatching';
 import StreamingPicks from '../components/StreamingPicks';
+import TrendingSection from '../components/TrendingSection';
+import TrendingAnimeSection from '../components/TrendingAnimeSection';
 import MovieStudios from '../components/MovieStudios';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
@@ -55,9 +57,6 @@ const getCountryFromTimezone = () => {
 };
 
 const Home = () => {
-  const [trendingMovies, setTrendingMovies] = useState([]);
-  const [trendingTV, setTrendingTV] = useState([]);
-  const [trendingAnime, setTrendingAnime] = useState([]);
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [topTenMovies, setTopTenMovies] = useState([]);
   const [userCountry, setUserCountry] = useState({ code: 'US', name: 'Your Country' });
@@ -66,13 +65,10 @@ const Home = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [timeWindow, setTimeWindow] = useState('week');
 
   const {
     movieGenres,
     tvGenres,
-    fetchTrending,
-    fetchTrendingAnime,
     fetchNowPlaying,
     fetchPopularByRegion,
     searchTMDB,
@@ -84,11 +80,7 @@ const Home = () => {
     initializeData();
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      updateTrendingData();
-    }
-  }, [timeWindow]);
+
 
   const initializeData = async () => {
     try {
@@ -98,17 +90,11 @@ const Home = () => {
       const country = getCountryFromTimezone();
       setUserCountry(country);
 
-      const [movies, tvShows, anime, nowPlaying, topTen] = await Promise.all([
-        fetchTrending('movie', timeWindow),
-        fetchTrending('tv', timeWindow),
-        fetchTrendingAnime(),
+      const [nowPlaying, topTen] = await Promise.all([
         fetchNowPlaying(),
         fetchPopularByRegion('movie', country.code)
       ]);
 
-      setTrendingMovies(movies);
-      setTrendingTV(tvShows);
-      setTrendingAnime(anime);
       setNowPlayingMovies(nowPlaying);
       setTopTenMovies(topTen);
     } catch (error) {
@@ -118,23 +104,7 @@ const Home = () => {
     }
   };
 
-  const updateTrendingData = async () => {
-    try {
-      const [movies, tvShows] = await Promise.all([
-        fetchTrending('movie', timeWindow),
-        fetchTrending('tv', timeWindow)
-      ]);
 
-      setTrendingMovies(movies);
-      setTrendingTV(tvShows);
-    } catch (error) {
-      console.error("Failed to update trending data:", error);
-    }
-  };
-
-  const handleTimeWindowToggle = useCallback(() => {
-    setTimeWindow(prev => prev === 'week' ? 'day' : 'week');
-  }, []);
 
   const handleSearch = useCallback(async (query) => {
     if (!query.trim()) {
@@ -205,49 +175,15 @@ const Home = () => {
       {/* Continue Watching Section */}
       <ContinueWatching onItemClick={handleItemClick} />
 
-      <div className="time-window-toggle-container">
-        <div className="time-window-toggle">
-          <span className={`toggle-label ${timeWindow === 'week' ? 'active' : ''}`}>
-            This Week
-          </span>
-          <button
-            className={`toggle-switch ${timeWindow === 'day' ? 'day' : 'week'}`}
-            onClick={handleTimeWindowToggle}
-            aria-label={`Switch to ${timeWindow === 'week' ? 'today' : 'this week'} trending`}
-          >
-            <div className="toggle-slider"></div>
-          </button>
-          <span className={`toggle-label ${timeWindow === 'day' ? 'active' : ''}`}>
-            Today
-          </span>
-        </div>
-      </div>
-
       <div className="content-rows">
-        {/* Side by side trending movies and TV shows */}
-        <div className="trending-side-by-side">
-          {trendingMovies.length > 0 && (
-            <div className="trending-column">
-              <MovieRow
-                title={`Trending Movies ${timeWindow === 'day' ? 'Today' : 'This Week'}`}
-                items={trendingMovies.slice(0, 15)}
-                onItemClick={handleItemClick}
-                columns={3}
-              />
-            </div>
-          )}
+        {/* Trending Today Section */}
+        <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
 
-          {trendingTV.length > 0 && (
-            <div className="trending-column">
-              <MovieRow
-                title={`Trending TV Shows ${timeWindow === 'day' ? 'Today' : 'This Week'}`}
-                items={trendingTV.slice(0, 15)}
-                onItemClick={handleItemClick}
-                columns={3}
-              />
-            </div>
-          )}
-        </div>
+        {/* Trending This Week Section */}
+        <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+
+        {/* Trending Anime Section */}
+        <TrendingAnimeSection onItemClick={handleItemClick} />
 
         {/* Top 10 in Your Country Section */}
         {topTenMovies.length > 0 && (
@@ -288,14 +224,7 @@ const Home = () => {
         {/* Peacock Picks Section */}
         <StreamingPicks provider="peacock" />
 
-        {/* Trending Anime below */}
-        {trendingAnime.length > 0 && (
-          <MovieRow
-            title="Trending Anime"
-            items={trendingAnime}
-            onItemClick={handleItemClick}
-          />
-        )}
+
       </div>
 
       {/* Native Ad - Non-intrusive placement at bottom of homepage */}

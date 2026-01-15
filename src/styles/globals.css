@@ -54,7 +54,6 @@ body {
 
 /* Global focus-visible for all interactive elements */
 *:focus-visible {
-  outline: 3px solid #e50914;
   outline-offset: 3px;
   transition: outline-offset 0.15s ease;
 }

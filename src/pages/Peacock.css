@@ -76,7 +76,7 @@
 .peacock-section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     margin-bottom: 24px;
 }
 
@@ -179,6 +179,11 @@
     .peacock-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         gap: 16px;
+    }
+
+    .peacock-section-header {
+        flex-wrap: wrap;
+        gap: 8px;
     }
 }
 

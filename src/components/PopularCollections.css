@@ -4,7 +4,7 @@
 }
 
 .popular-collections-title {
-    font-size: 1.2rem;
+    font-size: 1.5rem;
     font-weight: 700;
     margin-bottom: 24px;
     color: #fff;
@@ -70,6 +70,13 @@
     .collections-carousel-slide {
         width: 18vw;
         /* Large Desktop - Roughly 5 items */
+    }
+}
+
+/* Mobile: max-width 639px */
+@media (max-width: 639px) {
+    .popular-collections-title {
+        font-size: 1.2rem;
     }
 }
 
