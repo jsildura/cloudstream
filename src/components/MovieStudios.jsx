@@ -303,7 +303,7 @@ const MovieStudios = () => {
                                     style={{ backgroundColor: '#E50914' }}
                                 />
                                 <h3 className="studio-movies-title">
-                                    Top {mediaType === 'movie' ? 'movies' : 'TV shows'} from {selectedStudio.name}
+                                    Top {mediaType === 'movie' ? 'Movies' : 'TV Shows'} from {selectedStudio.name}
                                 </h3>
                             </div>
                             <div className="studio-movies-controls">
