@@ -131,7 +131,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
             });
         },
         threshold: 50,
-        itemsPerSwipe: 6
+        itemsPerSwipe: itemsPerView
     });
 
     const mediaLabel = mediaType === 'movie' ? 'Movies' : 'TV Shows';

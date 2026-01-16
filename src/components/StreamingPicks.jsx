@@ -246,7 +246,7 @@ const StreamingPicks = memo(({ provider = 'netflix' }) => {
             });
         },
         threshold: 50,
-        itemsPerSwipe: 6
+        itemsPerSwipe: itemsPerView
     });
 
     return (

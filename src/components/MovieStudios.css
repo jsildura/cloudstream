@@ -4,22 +4,222 @@
     margin-bottom: 20px;
 }
 
+.movie-studios-header {
+    margin-bottom: 16px;
+}
+
 .movie-studios-title {
     font-size: 1.5rem;
     font-weight: 700;
     color: #fff;
-    margin-bottom: 20px;
+    margin-bottom: 6px;
     letter-spacing: 0.02em;
+}
+
+.movie-studios-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+    margin: 0;
 }
 
 .movie-studios-grid {
     display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-behavior: auto;
+    padding: 4px 0 10px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+    align-items: center;
+}
+
+.movie-studios-grid::-webkit-scrollbar {
+    display: none;
+}
+
+/* Studio Pill (New Design) */
+.studio-pill {
+    flex: 0 0 auto;
+    height: 50px;
+    padding: 0 16px;
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.studio-pill:hover {
+    background: rgba(50, 50, 50, 0.95);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.studio-pill:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.studio-pill:active {
+    transform: translateY(0);
+}
+
+/* Toggle Button */
+.studio-pill-toggle {
+    background: rgba(40, 40, 40, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+    padding: 0 12px;
+    gap: 6px;
+}
+
+.studio-pill-toggle:hover {
+    background: rgba(60, 60, 60, 0.95);
+}
+
+.studio-toggle-icon {
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Studio Logo in Pill */
+.studio-pill-logo {
+    max-height: 35px;
+    max-width: 125px;
+    width: auto;
+    object-fit: contain;
+    opacity: 0.9;
+    transition: opacity 0.2s ease;
+}
+
+.studio-pill:hover .studio-pill-logo {
+    opacity: 1;
+}
+
+/* Studio Name Fallback */
+.studio-pill-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+
+/* Active Studio Pill */
+.studio-pill-active {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.studio-pill-active .studio-pill-logo {
+    opacity: 1;
+}
+
+/* ============================================
+   STUDIO MOVIES SECTION
+   ============================================ */
+
+.studio-movies-section {
+    margin-top: 20px;
+    animation: fadeSlideIn 0.3s ease-out;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.studio-movies-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+}
+
+.studio-movies-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.studio-movies-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.studio-movies-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.studio-movies-header-accent {
+    height: 24px;
+    width: 4px;
+    border-radius: 50px;
+}
+
+.studio-movies-view-all {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    height: 40px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.studio-movies-view-all:hover {
+    color: #fff;
+    border-bottom-color: rgba(255, 255, 255, 0.6);
+}
+
+.studio-movies-view-all svg {
+    width: 18px;
+    height: 18px;
+}
+
+.studio-movies-view-all:hover svg {
+    transform: translateX(2px);
+}
+
+.studio-movies-grid {
+    display: flex;
     gap: 16px;
     overflow-x: auto;
-    overflow-y: hidden;
-    scroll-behavior: auto;
-    /* Changed to auto to prevent fighting with drag scroll */
-    padding-bottom: 10px;
+    overflow-y: visible;
+    padding: 4px 0 10px 0;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -27,80 +227,237 @@
     user-select: none;
 }
 
-.movie-studios-grid::-webkit-scrollbar {
+.studio-movies-grid::-webkit-scrollbar {
     display: none;
 }
 
-/* Studio Card */
-.studio-card {
+/* Movie Card */
+.studio-movie-card {
     flex: 0 0 auto;
-    width: 240px;
-    height: 130px;
-    background: rgba(180, 180, 180, 0.3);
-    border-radius: 8px;
+    width: 280px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.studio-movie-card:hover {
+    transform: scale(1.03);
+}
+
+.studio-movie-backdrop {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(30, 30, 30, 0.8);
+}
+
+.studio-movie-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top right,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.5) 35%,
+            rgba(0, 0, 0, 0.15) 60%,
+            rgba(0, 0, 0, 0) 80%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.studio-movie-backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.studio-movie-no-backdrop {
+    width: 100%;
+    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    border: none;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    background: linear-gradient(135deg, rgba(40, 40, 40, 0.9), rgba(20, 20, 20, 0.9));
+    padding: 16px;
 }
 
-.studio-card:hover {
-    background: rgba(200, 200, 200, 0.4);
-    transform: scale(1.05);
-}
-
-.studio-card:focus {
-    outline: 2px solid var(--netflix-red, #e50914);
-    outline-offset: 2px;
-}
-
-.studio-logo {
-    max-width: 80%;
-    max-height: 60%;
-    object-fit: contain;
-    transition: transform 0.3s ease;
-}
-
-.studio-card:hover .studio-logo {
-    transform: scale(1.05);
-}
-
-.studio-name {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #333;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.studio-movie-no-backdrop span {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    padding: 0 10px;
 }
+
+/* Large Rank Number - Glassy Style */
+.studio-movie-rank {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    font-size: 5rem;
+    font-weight: 800;
+    font-family: 'Inter', 'Roboto', -apple-system, sans-serif;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.15);
+    -webkit-text-stroke: 2px rgba(255, 255, 255, 0.3);
+    text-stroke: 2px rgba(255, 255, 255, 0.3);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Movie Logo Overlay - Right Side */
+.studio-movie-logo-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 45%;
+    max-height: 50%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.studio-movie-logo-overlay img {
+    max-width: 100%;
+    max-height: 60px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* Loading Skeleton */
+.studio-movies-loading {
+    padding: 4px 0;
+}
+
+.studio-movies-skeleton {
+    display: flex;
+    gap: 16px;
+}
+
+.studio-movie-card-skeleton {
+    flex: 0 0 auto;
+    width: 280px;
+    aspect-ratio: 16 / 9;
+    background: linear-gradient(90deg, rgba(40, 40, 40, 0.6) 25%, rgba(60, 60, 60, 0.6) 50%, rgba(40, 40, 40, 0.6) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 12px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.studio-movies-empty {
+    padding: 24px 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
 
 /* Mobile: max-width 767px */
 @media (max-width: 767px) {
     .movie-studios-section {
-        padding: 20px 0;
+        padding: 16px 0;
     }
 
     .movie-studios-title {
         font-size: 1.2rem;
-        margin-bottom: 14px;
+        margin-bottom: 4px;
+    }
+
+    .movie-studios-subtitle {
+        font-size: 0.8rem;
     }
 
     .movie-studios-grid {
+        gap: 8px;
+    }
+
+    .studio-pill {
+        height: 36px;
+        padding: 0 12px;
+    }
+
+    .studio-pill-logo {
+        max-height: 26px;
+        max-width: 90px;
+    }
+
+    .studio-pill-name {
+        font-size: 0.7rem;
+    }
+
+    .studio-toggle-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* Studio Movies Mobile */
+    .studio-movies-section {
+        margin-top: 14px;
+    }
+
+    .studio-movies-title {
+        font-size: 0.95rem;
+    }
+
+    .studio-movies-controls {
+        gap: 8px;
+    }
+
+    .studio-movies-header-left {
+        gap: 6px;
+    }
+
+    .studio-movies-header-accent {
+        height: 14px;
+        width: 2px;
+    }
+
+    .studio-movies-grid {
         gap: 12px;
     }
 
-    .studio-card {
-        width: 160px;
-        height: 90px;
+    .studio-movie-card {
+        width: 200px;
     }
 
-    .studio-name {
-        font-size: 0.8rem;
+    .studio-movie-rank {
+        font-size: 2.5rem;
+        bottom: 6px;
+        left: 8px;
+    }
+
+    .studio-movie-card-skeleton {
+        width: 200px;
+    }
+
+    .studio-movie-logo-overlay img {
+        max-height: 40px;
+    }
+
+    .studio-movies-view-all {
+        padding: 4px 8px;
+        font-size: 0.65rem;
+        height: 28px;
+        gap: 4px;
+    }
+
+    .studio-movies-view-all svg {
+        width: 12px;
+        height: 12px;
     }
 }
 
@@ -114,9 +471,14 @@
         font-size: 1.5rem;
     }
 
-    .studio-card {
-        width: 200px;
-        height: 110px;
+    .studio-pill {
+        height: 38px;
+        padding: 0 14px;
+    }
+
+    .studio-pill-logo {
+        max-height: 20px;
+        max-width: 90px;
     }
 }
 
@@ -126,23 +488,83 @@
         padding: 40px 0;
     }
 
+    .movie-studios-header {
+        margin-bottom: 24px;
+    }
+
     .movie-studios-title {
-        font-size: 3rem;
-        margin-bottom: 30px;
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .movie-studios-subtitle {
+        font-size: 1.1rem;
     }
 
     .movie-studios-grid {
-        gap: 24px;
+        gap: 14px;
     }
 
-    .studio-card {
-        width: 320px;
-        height: 180px;
-        border-radius: 12px;
+    .studio-pill {
+        height: 48px;
+        padding: 0 20px;
     }
 
-    .studio-name {
+    .studio-pill-logo {
+        max-height: 28px;
+        max-width: 120px;
+    }
+
+    .studio-pill-name {
+        font-size: 0.95rem;
+    }
+
+    .studio-toggle-icon {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Studio Movies 1080p */
+    .studio-movies-section {
+        margin-top: 28px;
+    }
+
+    .studio-movies-title {
         font-size: 1.4rem;
+    }
+
+    .studio-movies-grid {
+        gap: 20px;
+    }
+
+    .studio-movie-card {
+        width: 360px;
+    }
+
+    .studio-movie-backdrop {
+        border-radius: 16px;
+    }
+
+    .studio-movie-rank {
+        font-size: 5rem;
+    }
+
+    .studio-movie-card-skeleton {
+        width: 360px;
+        border-radius: 16px;
+    }
+
+    .studio-movies-view-all {
+        gap: 12px;
+        font-size: 1.75rem;
+        padding: 16px 32px;
+        height: 80px;
+        border-bottom-width: 4px;
+    }
+
+    .studio-movies-view-all svg {
+        width: 36px;
+        height: 36px;
     }
 }
 
@@ -152,22 +574,95 @@
         padding: 80px 0;
     }
 
+    .movie-studios-header {
+        margin-bottom: 48px;
+    }
+
     .movie-studios-title {
-        font-size: 6rem;
-        margin-bottom: 60px;
+        font-size: 4rem;
+        margin-bottom: 16px;
+    }
+
+    .movie-studios-subtitle {
+        font-size: 2rem;
     }
 
     .movie-studios-grid {
-        gap: 48px;
+        gap: 28px;
     }
 
-    .studio-card {
-        width: 640px;
-        height: 360px;
+    .studio-pill {
+        height: 96px;
+        padding: 0 40px;
+        border-radius: 999px;
+        border-width: 2px;
+    }
+
+    .studio-pill-logo {
+        max-height: 56px;
+        max-width: 240px;
+    }
+
+    .studio-pill-name {
+        font-size: 1.8rem;
+    }
+
+    .studio-toggle-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Studio Movies 4K */
+    .studio-movies-section {
+        margin-top: 56px;
+    }
+
+    .studio-movies-title {
+        font-size: 2.5rem;
+    }
+
+    .studio-movies-grid {
+        gap: 40px;
+    }
+
+    .studio-movie-card {
+        width: 720px;
+    }
+
+    .studio-movie-backdrop {
         border-radius: 24px;
     }
 
-    .studio-name {
-        font-size: 2.8rem;
+    .studio-movie-rank {
+        font-size: 10rem;
+        bottom: 16px;
+        left: 24px;
+    }
+
+    .studio-movie-card-skeleton {
+        width: 720px;
+        border-radius: 24px;
+    }
+
+    .studio-movies-view-all {
+        gap: 24px;
+        font-size: 3.5rem;
+        padding: 32px 64px;
+        height: 160px;
+        border-bottom-width: 8px;
+    }
+
+    .studio-movies-view-all svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .studio-movies-header-left {
+        gap: 48px;
+    }
+
+    .studio-movies-header-accent {
+        height: 96px;
+        width: 16px;
     }
 }

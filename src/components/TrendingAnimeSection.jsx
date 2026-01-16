@@ -148,7 +148,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
             });
         },
         threshold: 50,
-        itemsPerSwipe: 6
+        itemsPerSwipe: itemsPerView
     });
 
     return (
