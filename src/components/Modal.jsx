@@ -159,7 +159,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current) {
       autoPlayTimerRef.current = setTimeout(() => {
         setIsTrailerPlaying(true);
-      }, 5000); // 5 second delay
+      }, 3000); // 3 second delay
     }
 
     return () => {
