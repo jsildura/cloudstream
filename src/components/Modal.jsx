@@ -79,13 +79,35 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     }
   }, [handleClose]);
 
+  // Ad configuration
+  const AD_URL = 'https://www.effectivegatecpm.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+  const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
   const playButtonClick = useCallback(() => {
-    // Build URL with season/episode if available (from watch history)
+    // Check if this is user's first ever click (grace period)
+    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
+
+    if (!hasClickedBefore) {
+      // First click ever - mark it and skip ad
+      localStorage.setItem('hasClickedWatch', 'true');
+    } else {
+      // Not first click - check cooldown timer
+      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
+      const now = Date.now();
+
+      if (now - lastAdTime >= AD_COOLDOWN_MS) {
+        // Cooldown expired - open ad and reset timer
+        window.open(AD_URL, '_blank');
+        localStorage.setItem('lastAdTrigger', now.toString());
+      }
+    }
+
+    // Normal navigation to watch page (always happens)
     let url = `/watch?type=${item.type}&id=${item.id}`;
     if (item.type === 'tv' && item.lastSeason && item.lastEpisode) {
       url += `&season=${item.lastSeason}&episode=${item.lastEpisode}`;
     }
-    navigate(url);  // Use React Router navigation - NO page reload
+    navigate(url, { state: { fromModal: true } });  // Use React Router navigation - NO page reload
     onClose();  // Close modal after navigation
   }, [item.type, item.id, item.lastSeason, item.lastEpisode, navigate, onClose]);
 
@@ -137,7 +159,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current) {
       autoPlayTimerRef.current = setTimeout(() => {
         setIsTrailerPlaying(true);
-      }, 3000); // 3 second delay
+      }, 5000); // 5 second delay
     }
 
     return () => {

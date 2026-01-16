@@ -15,6 +15,21 @@ const Watch = () => {
   const urlSeason = searchParams.get('season');
   const urlEpisode = searchParams.get('episode');
 
+  // Check if we came from modal navigation (has fromModal flag in state)
+  const cameFromModal = location.state?.fromModal === true;
+
+  // Redirect direct URL access to homepage with modal
+  useEffect(() => {
+    if (type && id && !cameFromModal) {
+      navigate('/', {
+        state: {
+          openModalForContent: { type, id, season: urlSeason, episode: urlEpisode }
+        },
+        replace: true  // Replace history entry so "Back" goes to actual previous page
+      });
+    }
+  }, []);  // Run once on mount
+
   const [currentServer, setCurrentServer] = useState(0);
   const [currentSeason, setCurrentSeason] = useState(urlSeason ? parseInt(urlSeason) : 1);
   const [currentEpisode, setCurrentEpisode] = useState(urlEpisode ? parseInt(urlEpisode) : 1);

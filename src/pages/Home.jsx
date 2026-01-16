@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import BannerSlider from '../components/BannerSlider';
 import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
@@ -57,6 +58,7 @@ const getCountryFromTimezone = () => {
 };
 
 const Home = () => {
+  const location = useLocation();
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [topTenMovies, setTopTenMovies] = useState([]);
   const [userCountry, setUserCountry] = useState({ code: 'US', name: 'Your Country' });
@@ -79,6 +81,47 @@ const Home = () => {
   useEffect(() => {
     initializeData();
   }, []);
+
+  // Handle incoming modal request from Watch redirect
+  useEffect(() => {
+    const modalRequest = location.state?.openModalForContent;
+    if (modalRequest) {
+      openModalForContent(modalRequest);
+      // Clear state to prevent re-opening on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Fetch content and open modal for redirected direct URL access
+  const openModalForContent = async ({ type, id, season, episode }) => {
+    try {
+      const res = await fetch(`/api/${type}/${id}`);
+      const contentData = await res.json();
+
+      const genreNames = contentData.genres?.map(g => g.name) || [];
+
+      const [cast, contentRating] = await Promise.all([
+        fetchCredits(type, id),
+        fetchContentRating(type, id)
+      ]);
+
+      setSelectedItem({
+        ...contentData,
+        type,
+        genres: genreNames,
+        cast: cast.join(', ') || 'N/A',
+        contentRating,
+        // Pass season/episode for TV shows
+        ...(type === 'tv' && season && episode && {
+          lastSeason: parseInt(season),
+          lastEpisode: parseInt(episode)
+        })
+      });
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error('Failed to load content for modal:', error);
+    }
+  };
 
 
 

@@ -151,6 +151,35 @@ const BannerSlider = ({ movies, onItemClick }) => {
     }
   };
 
+  // Ad configuration
+  const AD_URL = 'https://www.effectivegatecpm.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+  const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+
+  // Handle Watch Now button click with ad popup
+  const handleWatchNow = () => {
+    // Check if this is user's first ever click (grace period)
+    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
+
+    if (!hasClickedBefore) {
+      // First click ever - mark it and skip ad
+      localStorage.setItem('hasClickedWatch', 'true');
+    } else {
+      // Not first click - check cooldown timer
+      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
+      const now = Date.now();
+
+      if (now - lastAdTime >= AD_COOLDOWN_MS) {
+        // Cooldown expired - open ad and reset timer
+        window.open(AD_URL, '_blank');
+        localStorage.setItem('lastAdTrigger', now.toString());
+      }
+    }
+
+    // Normal navigation to watch page
+    const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
+    navigate(`/watch?type=${type}&id=${currentMovie.id}`, { state: { fromModal: true } });
+  };
+
   // Split title for last word highlight
   const titleWords = (currentMovie.title || currentMovie.name || '').split(' ');
   const titleMain = titleWords.slice(0, -1).join(' ');
@@ -391,10 +420,7 @@ const BannerSlider = ({ movies, onItemClick }) => {
             {/* Watch Now Button */}
             <button
               className="banner-watch-btn"
-              onClick={() => {
-                const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
-                navigate(`/watch?type=${type}&id=${currentMovie.id}`);
-              }}
+              onClick={handleWatchNow}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="6 3 20 12 6 21 6 3"></polygon>
