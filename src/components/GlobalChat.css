@@ -10,7 +10,7 @@
     right: 20px !important;
     left: auto !important;
     top: auto !important;
-    z-index: 2147483647 !important;
+    z-index: 500;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
