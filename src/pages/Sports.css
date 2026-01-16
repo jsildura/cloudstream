@@ -16,7 +16,7 @@
    ======================================== */
 
 .sports-header {
-    padding: 40px 5% 30px;
+    padding: 40px 4% 30px;
     background: transparent;
 }
 
@@ -25,7 +25,7 @@
     align-items: center;
     gap: 16px;
     max-width: 1400px;
-    margin: 0 auto;
+    margin: 0;
 }
 
 .header-text h1 {
@@ -47,9 +47,9 @@
    ======================================== */
 
 .sports-content {
-    padding: 0 5%;
-    max-width: 1600px;
-    margin: 0 auto;
+    padding: 0 4%;
+    max-width: 3840px;
+    margin: 0;
 }
 
 /* ========================================
@@ -256,7 +256,7 @@
 
 @media (max-width: 1024px) {
     .sports-header {
-        padding: 30px 4% 24px;
+        padding: 30px 1.5% 24px;
     }
 
     .header-text h1 {
@@ -264,7 +264,7 @@
     }
 
     .sports-content {
-        padding: 0 4%;
+        padding: 0 1.5%;
     }
 
     .section-title {
@@ -278,7 +278,7 @@
     }
 
     .sports-header {
-        padding: 24px 4% 20px;
+        padding: 24px 1.5% 20px;
     }
 
     .sports-header-content {
@@ -333,7 +333,7 @@
     }
 
     .sports-content {
-        padding: 0 3%;
+        padding: 0 4%;
     }
 
     .section-count {
@@ -351,7 +351,7 @@
     }
 
     .sports-header {
-        padding: 60px 5% 40px;
+        padding: 260px 4% 40px;
     }
 
 
