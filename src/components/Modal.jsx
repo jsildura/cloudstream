@@ -139,6 +139,37 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
   // Ref to track if user manually toggled the trailer (to prevent auto-play interference)
   const userToggledTrailerRef = useRef(false);
   const autoPlayTimerRef = useRef(null);
+  // Track if user has interacted with page (required for browser autoplay policy)
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
+
+  // Detect user interaction to enable autoplay (browser autoplay policy)
+  // Without user interaction, browsers block autoplay of videos/iframes
+  useEffect(() => {
+    // Check if already marked as interacted (persists during session)
+    if (sessionStorage.getItem('userHasInteracted') === 'true') {
+      setUserHasInteracted(true);
+      return;
+    }
+
+    const markInteracted = () => {
+      setUserHasInteracted(true);
+      sessionStorage.setItem('userHasInteracted', 'true');
+      // Remove listeners after first interaction
+      document.removeEventListener('click', markInteracted);
+      document.removeEventListener('touchstart', markInteracted);
+      document.removeEventListener('keydown', markInteracted);
+    };
+
+    document.addEventListener('click', markInteracted, { once: true });
+    document.addEventListener('touchstart', markInteracted, { once: true, passive: true });
+    document.addEventListener('keydown', markInteracted, { once: true });
+
+    return () => {
+      document.removeEventListener('click', markInteracted);
+      document.removeEventListener('touchstart', markInteracted);
+      document.removeEventListener('keydown', markInteracted);
+    };
+  }, []);
 
   // Toggle trailer playback
   const toggleTrailer = useCallback(() => {
@@ -153,13 +184,17 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     }
   }, [trailerKey]);
 
-  // Auto-play trailer after 3 seconds delay
+  // Auto-play trailer after 7 seconds delay (only if user has interacted with page)
   useEffect(() => {
-    // Only auto-play if trailer key exists, not already playing, and user hasn't toggled manually
-    if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current) {
+    // Only auto-play if:
+    // 1. Trailer key exists
+    // 2. Not already playing
+    // 3. User hasn't toggled manually
+    // 4. User has interacted with the page (browser autoplay policy)
+    if (trailerKey && !isTrailerPlaying && !userToggledTrailerRef.current && userHasInteracted) {
       autoPlayTimerRef.current = setTimeout(() => {
         setIsTrailerPlaying(true);
-      }, 7000); // 7 second delay
+      }, 3000); // 3 second delay
     }
 
     return () => {
@@ -169,7 +204,7 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
         autoPlayTimerRef.current = null;
       }
     };
-  }, [trailerKey, isTrailerPlaying]);
+  }, [trailerKey, isTrailerPlaying, userHasInteracted]);
 
   // Get year from release date
   const year = item.release_date?.substring(0, 4) ||

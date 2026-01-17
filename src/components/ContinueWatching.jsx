@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useWatchHistory from '../hooks/useWatchHistory';
 import './ContinueWatching.css';
@@ -8,6 +8,7 @@ const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 const ContinueWatching = ({ onItemClick }) => {
     const { watchHistory, removeFromHistory, clearHistory } = useWatchHistory();
     const navigate = useNavigate();
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     if (watchHistory.length === 0) {
         return null; // Don't show section if empty
@@ -59,9 +60,16 @@ const ContinueWatching = ({ onItemClick }) => {
     };
 
     const handleClearAll = () => {
-        if (window.confirm('Clear all watch history?')) {
-            clearHistory();
-        }
+        setShowConfirmDialog(true);
+    };
+
+    const handleConfirmClear = () => {
+        clearHistory();
+        setShowConfirmDialog(false);
+    };
+
+    const handleCancelClear = () => {
+        setShowConfirmDialog(false);
     };
 
     const formatTimestamp = (timestamp) => {
@@ -151,6 +159,35 @@ const ContinueWatching = ({ onItemClick }) => {
                     </div>
                 ))}
             </div>
+
+            {/* Custom Confirm Dialog */}
+            {showConfirmDialog && (
+                <div className="confirm-dialog-overlay" onClick={handleCancelClear}>
+                    <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+                        <div className="confirm-dialog-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 6h18" />
+                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                <line x1="10" x2="10" y1="11" y2="17" />
+                                <line x1="14" x2="14" y1="11" y2="17" />
+                            </svg>
+                        </div>
+                        <h3 className="confirm-dialog-title">Clear Watch History</h3>
+                        <p className="confirm-dialog-message">
+                            Are you sure you want to clear all your watch history? This action cannot be undone.
+                        </p>
+                        <div className="confirm-dialog-buttons">
+                            <button className="confirm-dialog-btn confirm-dialog-cancel" onClick={handleCancelClear}>
+                                Cancel
+                            </button>
+                            <button className="confirm-dialog-btn confirm-dialog-confirm" onClick={handleConfirmClear}>
+                                Clear All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

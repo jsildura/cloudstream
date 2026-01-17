@@ -63,7 +63,9 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               poster_path: item.poster_path,
               overview: item.overview,
               vote_average: item.vote_average,
-              genre_ids: item.genre_ids
+              genre_ids: item.genre_ids,
+              release_date: item.release_date,
+              first_air_date: item.first_air_date
             })) || [];
           setTrendingSearches(trending);
         }
