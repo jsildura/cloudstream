@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
+import { getPosterAlt } from '../utils/altTextUtils';
 import './TopTenRow.css';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
@@ -260,7 +261,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                             <div className="top-ten-poster">
                                 <img
                                     src={posterSrc}
-                                    alt={title}
+                                    alt={getPosterAlt(item)}
                                     loading="lazy"
                                     draggable="false"
                                 />

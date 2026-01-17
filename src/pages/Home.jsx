@@ -13,6 +13,7 @@ import MovieStudios from '../components/MovieStudios';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
 import NativeAd from '../components/NativeAd';
+import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 import './Home.css';
 
@@ -207,6 +208,12 @@ const Home = () => {
 
   return (
     <div className="home-page">
+      <MetaTags
+        title="StreamFlix - Watch Movies & TV Shows Online | Free Streaming"
+        description="StreamFlix - Your favorite destination for movies and TV shows. Stream the latest blockbusters, popular TV series, and anime all in one place."
+      />
+      {/* Visually hidden h1 for SEO - provides consistent page heading */}
+      <h1 className="visually-hidden">StreamFlix - Watch Movies & TV Shows Online</h1>
       {/* Use nowPlayingMovies for BannerSlider */}
       {nowPlayingMovies.length > 0 && (
         <BannerSlider

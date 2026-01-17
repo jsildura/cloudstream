@@ -50,23 +50,44 @@
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "StreamFlix",
-      "url": "https://streamflix.stream/",
-      "description": "Your favorite destination for movies and TV shows",
-      "publisher": {
-        "@type": "Organization",
-        "name": "StreamFlix",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https:/streamflix.stream/logo/streamflix.png"
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://streamflix.stream/#website",
+          "name": "StreamFlix",
+          "url": "https://streamflix.stream/",
+          "description": "Your favorite destination for movies and TV shows. Stream the latest blockbusters, popular TV series, and anime all in one place.",
+          "inLanguage": "en-US",
+          "publisher": {
+            "@id": "https://streamflix.stream/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://streamflix.stream/discover?q={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://streamflix.stream/#organization",
+          "name": "StreamFlix",
+          "url": "https://streamflix.stream/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://streamflix.stream/logo/streamflix.png",
+            "width": 512,
+            "height": 512
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer service",
+            "url": "https://streamflix.stream/contact"
+          }
         }
-      },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://streamflix.stream/search/multi?query={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      ]
     }
     </script>
 

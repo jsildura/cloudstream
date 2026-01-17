@@ -4,6 +4,7 @@ import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
 import FilterPanel from '../components/FilterPanel';
+import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 
 const Popular = () => {
@@ -218,6 +219,10 @@ const Popular = () => {
 
   return (
     <div className="movies-page">
+      <MetaTags
+        title="Popular Movies | StreamFlix"
+        description="Discover what everyone is watching right now. Stream the most popular movies trending across the globe for free on StreamFlix."
+      />
       {/* Banner Slider for Top 10 Popular Movies */}
       {topMovies.length > 0 && (
         <BannerSlider movies={topMovies} onItemClick={handleItemClick} />

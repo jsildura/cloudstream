@@ -5,6 +5,7 @@ import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
 import FilterPanel from '../components/FilterPanel';
+import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 
 const TopRated = () => {
@@ -221,6 +222,10 @@ const TopRated = () => {
 
     return (
         <div className="movies-page">
+            <MetaTags
+                title="Top Rated Movies | StreamFlix"
+                description="Discover the highest-rated movies of all time. Stream critically acclaimed masterpieces for free on StreamFlix."
+            />
             {/* Banner Slider for Top Rated Movies */}
             {topMovies.length > 0 && (
                 <BannerSlider movies={topMovies} onItemClick={handleItemClick} />

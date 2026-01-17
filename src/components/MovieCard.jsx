@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
+import { getPosterAlt } from '../utils/altTextUtils';
 
 const MovieCard = memo(({ item, onClick }) => {
   const { POSTER_URL } = useTMDB();
@@ -33,7 +34,7 @@ const MovieCard = memo(({ item, onClick }) => {
         {item.poster_path ? (
           <img
             src={posterSrc}
-            alt={title}
+            alt={getPosterAlt(item)}
             loading="lazy"
           />
         ) : (

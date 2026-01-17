@@ -19,22 +19,47 @@ export default defineConfig(({ mode }) => {
       Sitemap({
         hostname: 'https://streamflix.stream/',
         dynamicRoutes: [
-          '/home',
-          '/movies',
+          // Main content pages
           '/tv-shows',
           '/popular',
-          '/watch?type=movie&amp;id=1062722',
-          '/watch?type=movie&amp;id=1197137',
-          '/watch?type=movie&amp;id=1114967',
-          '/watch?type=movie&amp;id=1571470',
-          '/watch?type=movie&amp;id=617126'
+          '/top-rated',
+          '/discover',
+          '/trending',
+          // Anime pages
+          '/anime-movies',
+          '/anime-series',
+          // TV pages
+          '/trending-tv',
+          '/top-rated-tv',
+          '/popular-tv',
+          // Streaming providers
+          '/netflix',
+          '/disney',
+          '/prime-video',
+          '/hbo',
+          '/apple-tv',
+          '/viu',
+          '/crunchyroll',
+          '/peacock',
+          // Live content
+          '/iptv',
+          '/sports',
+          '/music',
+          // User pages
+          '/my-list',
+          // Legal/info pages
+          '/about',
+          '/disclaimer',
+          '/privacy',
+          '/terms',
+          '/contact'
         ],
         readable: true,
         robots: [
           {
             userAgent: '*',
             allow: '/',
-            disallow: '/api/',
+            disallow: ['/api/', '/watch'],
             crawlDelay: 2,
           },
         ]
@@ -49,6 +74,15 @@ export default defineConfig(({ mode }) => {
       target: "es2022",
       outDir: "dist",
       assetsDir: "assets",
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Vendor chunks for better caching
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-shaka': ['shaka-player'],
+          }
+        }
+      }
     },
     server: {
       host: '0.0.0.0',  // Expose to all network interfaces for mobile testing

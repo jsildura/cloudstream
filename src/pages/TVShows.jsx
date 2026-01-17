@@ -5,6 +5,7 @@ import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
 import FilterPanel from '../components/FilterPanel';
+import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 
 const TVShows = () => {
@@ -207,6 +208,10 @@ const TVShows = () => {
 
   return (
     <div className="tv-shows-page">
+      <MetaTags
+        title="TV Shows | StreamFlix"
+        description="Discover the latest and greatest TV series. Stream popular shows, dramas, and binge-worthy content for free on StreamFlix."
+      />
       {/* Banner Slider for Top 10 TV Shows */}
       {topTvShows.length > 0 && (
         <BannerSlider movies={topTvShows} onItemClick={handleItemClick} />

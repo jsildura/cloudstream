@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, memo, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
+import SchemaMarkup from './SchemaMarkup';
+import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
+import { getBackdropAlt, getPosterAlt, getLogoAlt } from '../utils/altTextUtils';
 
 const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) => {
   const navigate = useNavigate();
@@ -304,214 +307,226 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     };
   }, [isDragging, handleDragMove, handleDragEnd]);
 
+  // Generate schema based on content type (memoized to avoid recalculation)
+  const contentSchema = useMemo(() => {
+    if (!item?.id) return null;
+    const type = item.media_type || item.type || 'movie';
+    return type === 'movie'
+      ? generateMovieSchema(item)
+      : generateTVSeriesSchema(item);
+  }, [item]);
+
   return createPortal(
-    <div className="modal-overlay" onClick={handleBackdropClick}>
-      <div
-        ref={modalContentRef}
-        className={`modal-content-new${isClosing ? ' closing' : ''}`}
-        style={{ transform: 'translate3d(-50%, 0, 0)' }}
-      >
-        {/* Drawer Bar */}
+    <>
+      <SchemaMarkup schema={contentSchema} />
+      <div className="modal-overlay" onClick={handleBackdropClick}>
         <div
-          className="modal-drawer-bar"
-          onMouseDown={handleDragStart}
-          onTouchStart={handleDragStart}
+          ref={modalContentRef}
+          className={`modal-content-new${isClosing ? ' closing' : ''}`}
+          style={{ transform: 'translate3d(-50%, 0, 0)' }}
         >
-          <div className="modal-drawer-handle"></div>
-        </div>
-
-        {/* Close Button */}
-        <button className="modal-close-new" onClick={handleClose}>✕</button>
-
-        {/* Scrollable Content */}
-        <div className={`modal-scroll-container ${isTrailerPlaying ? 'trailer-playing' : ''}`}>
-          {/* Hero Header with Backdrop/Trailer */}
-          <div className="modal-hero">
-            <div className="modal-backdrop-container">
-              {isTrailerPlaying && trailerKey ? (
-                /* YouTube Trailer Iframe - with controls for mobile unmute */
-                <iframe
-                  className="modal-trailer-video"
-                  src={`https://www.youtube-nocookie.com/embed/${trailerKey}?autoplay=1&playsinline=1&loop=1&playlist=${trailerKey}&controls=1&showinfo=0&modestbranding=1&rel=0`}
-                  title={`${item.title || item.name} Trailer`}
-                  frameBorder="0"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              ) : (
-                /* Backdrop Image */
-                <img
-                  src={`${BACKDROP_URL}${item.backdrop_path}`}
-                  alt={item.title || item.name}
-                  className="modal-backdrop-img"
-                />
-              )}
-            </div>
-            {/* Movie Logo/Title Overlay - hide when trailer is playing, wait for logo check */}
-            {!isTrailerPlaying && logoLoaded && (
-              <div className="modal-logo-overlay">
-                {logoPath ? (
-                  <img
-                    src={`${POSTER_URL}${logoPath}`}
-                    alt={item.title || item.name}
-                    className="modal-logo-img"
-                  />
-                ) : (
-                  <h2 className="modal-title-overlay">{item.title || item.name}</h2>
-                )}
-              </div>
-            )}
+          {/* Drawer Bar */}
+          <div
+            className="modal-drawer-bar"
+            onMouseDown={handleDragStart}
+            onTouchStart={handleDragStart}
+          >
+            <div className="modal-drawer-handle"></div>
           </div>
 
-          {/* Content Section */}
-          <div className="modal-body-new">
-            {/* Two Column Main Layout */}
-            <div className="modal-main-layout">
-              {/* Left Column */}
-              <div className="modal-left-col">
-                {/* Action Buttons Row */}
-                <div className="modal-actions-row">
-                  <button onClick={playButtonClick} className="modal-btn-play">
-                    <span className="modal-btn-icon">▷</span>
-                    Watch Now
-                  </button>
-                  <button
-                    onClick={() => {
-                      const wasInList = inWatchlist;
-                      toggleWatchlist(item);
-                      setInWatchlist(!inWatchlist);
-                      if (wasInList) {
-                        showSuccess('Removed from Watchlist');
-                      } else {
-                        showSuccess('Added to Watchlist');
-                      }
-                    }}
-                    className={`modal-btn-icon-only ${inWatchlist ? 'active' : ''}`}
-                    title={inWatchlist ? "Remove from My List" : "Add to My List"}
-                  >
-                    {inWatchlist ? (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M20 6 9 17l-5-5" />
-                      </svg>
-                    ) : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M5 12h14" />
-                        <path d="M12 5v14" />
-                      </svg>
-                    )}
-                  </button>
-                  <button onClick={handleShare} className="modal-btn-icon-only" title="Share">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line></svg>
-                  </button>
-                  <button
-                    onClick={toggleTrailer}
-                    className={`modal-btn-icon-only ${isTrailerPlaying ? 'active' : ''} ${!trailerKey ? 'disabled' : ''}`}
-                    title={isTrailerPlaying ? "Stop Trailer" : "Play Trailer"}
-                    disabled={!trailerKey}
-                  >
-                    {isTrailerPlaying ? (
-                      /* Monitor-X icon when playing */
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="m14.5 12.5-5-5"></path>
-                        <path d="m9.5 12.5 5-5"></path>
-                        <rect width="20" height="14" x="2" y="3" rx="2"></rect>
-                        <path d="M12 17v4"></path>
-                        <path d="M8 21h8"></path>
-                      </svg>
-                    ) : (
-                      /* Monitor-Play icon when stopped */
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="M10 7.75a.75.75 0 0 1 1.142-.638l3.664 2.249a.75.75 0 0 1 0 1.278l-3.664 2.25a.75.75 0 0 1-1.142-.64z"></path>
-                        <path d="M12 17v4"></path>
-                        <path d="M8 21h8"></path>
-                        <rect x="2" y="3" width="20" height="14" rx="2"></rect>
-                      </svg>
-                    )}
-                  </button>
-                </div>
+          {/* Close Button */}
+          <button className="modal-close-new" onClick={handleClose} aria-label="Close details modal">✕</button>
 
-                {/* Metadata Row */}
-                <div className="modal-meta-row">
-                  {year && <span>{year}</span>}
-                  {rating && (
-                    <>
-                      <span className="meta-dot">·</span>
-                      <span className="modal-rating">
-                        <span className="star-icon">☆</span>
-                        {rating}
-                      </span>
-                    </>
-                  )}
-                  {contentRating && (
-                    <>
-                      <span className="meta-dot">·</span>
-                      <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
-                        {contentRating}
-                      </span>
-                    </>
+          {/* Scrollable Content */}
+          <div className={`modal-scroll-container ${isTrailerPlaying ? 'trailer-playing' : ''}`}>
+            {/* Hero Header with Backdrop/Trailer */}
+            <div className="modal-hero">
+              <div className="modal-backdrop-container">
+                {isTrailerPlaying && trailerKey ? (
+                  /* YouTube Trailer Iframe - with controls for mobile unmute */
+                  <iframe
+                    className="modal-trailer-video"
+                    src={`https://www.youtube-nocookie.com/embed/${trailerKey}?autoplay=1&playsinline=1&loop=1&playlist=${trailerKey}&controls=1&showinfo=0&modestbranding=1&rel=0`}
+                    title={`${item.title || item.name} Trailer`}
+                    frameBorder="0"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                ) : (
+                  /* Backdrop Image */
+                  <img
+                    src={`${BACKDROP_URL}${item.backdrop_path}`}
+                    alt={getBackdropAlt(item)}
+                    className="modal-backdrop-img"
+                  />
+                )}
+              </div>
+              {/* Movie Logo/Title Overlay - hide when trailer is playing, wait for logo check */}
+              {!isTrailerPlaying && logoLoaded && (
+                <div className="modal-logo-overlay">
+                  {logoPath ? (
+                    <img
+                      src={`${POSTER_URL}${logoPath}`}
+                      alt={`${item.title || item.name} logo`}
+                      className="modal-logo-img"
+                    />
+                  ) : (
+                    <h2 className="modal-title-overlay">{item.title || item.name}</h2>
                   )}
                 </div>
-
-                {/* Description */}
-                <p className="modal-description-new">{item.overview}</p>
-              </div>
-
-              {/* Right Column - Info */}
-              <div className="modal-right-col">
-                <div className="modal-info-item">
-                  <span className="modal-info-label">Genres:</span>
-                  <span className="modal-info-value">{item.genres?.join(', ') || 'N/A'}</span>
-                </div>
-                <div className="modal-info-item">
-                  <span className="modal-info-label">Cast:</span>
-                  <span className="modal-info-value">{item.cast || 'N/A'}</span>
-                </div>
-                <div className="modal-info-item">
-                  <span className="modal-info-label">Status:</span>
-                  <span className="modal-info-value">{item.status || 'Released'}</span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Collection Section */}
-            {collection.length > 0 && (
-              <div className="modal-section">
-                <h3 className="modal-section-title">{item.collection_name || 'Collection'}</h3>
-                <div className="modal-collection-grid">
-                  {collection.map((movie, index) => (
-                    <div key={index} className="modal-collection-item">
-                      <img
-                        src={`${BACKDROP_URL}${movie.backdrop_path}`}
-                        alt={movie.title || movie.name}
-                        className="modal-collection-img"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Content Section */}
+            <div className="modal-body-new">
+              {/* Two Column Main Layout */}
+              <div className="modal-main-layout">
+                {/* Left Column */}
+                <div className="modal-left-col">
+                  {/* Action Buttons Row */}
+                  <div className="modal-actions-row">
+                    <button onClick={playButtonClick} className="modal-btn-play">
+                      <span className="modal-btn-icon">▷</span>
+                      Watch Now
+                    </button>
+                    <button
+                      onClick={() => {
+                        const wasInList = inWatchlist;
+                        toggleWatchlist(item);
+                        setInWatchlist(!inWatchlist);
+                        if (wasInList) {
+                          showSuccess('Removed from Watchlist');
+                        } else {
+                          showSuccess('Added to Watchlist');
+                        }
+                      }}
+                      className={`modal-btn-icon-only ${inWatchlist ? 'active' : ''}`}
+                      title={inWatchlist ? "Remove from My List" : "Add to My List"}
+                    >
+                      {inWatchlist ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M5 12h14" />
+                          <path d="M12 5v14" />
+                        </svg>
+                      )}
+                    </button>
+                    <button onClick={handleShare} className="modal-btn-icon-only" title="Share">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line></svg>
+                    </button>
+                    <button
+                      onClick={toggleTrailer}
+                      className={`modal-btn-icon-only ${isTrailerPlaying ? 'active' : ''} ${!trailerKey ? 'disabled' : ''}`}
+                      title={isTrailerPlaying ? "Stop Trailer" : "Play Trailer"}
+                      disabled={!trailerKey}
+                    >
+                      {isTrailerPlaying ? (
+                        /* Monitor-X icon when playing */
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="m14.5 12.5-5-5"></path>
+                          <path d="m9.5 12.5 5-5"></path>
+                          <rect width="20" height="14" x="2" y="3" rx="2"></rect>
+                          <path d="M12 17v4"></path>
+                          <path d="M8 21h8"></path>
+                        </svg>
+                      ) : (
+                        /* Monitor-Play icon when stopped */
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M10 7.75a.75.75 0 0 1 1.142-.638l3.664 2.249a.75.75 0 0 1 0 1.278l-3.664 2.25a.75.75 0 0 1-1.142-.64z"></path>
+                          <path d="M12 17v4"></path>
+                          <path d="M8 21h8"></path>
+                          <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
 
-            {/* You May Also Like Section */}
-            {recommendations.length > 0 && (
-              <div className="modal-section">
-                <h3 className="modal-section-title">You may also like</h3>
-                <div className="modal-recommendations-scroll">
-                  {recommendations.map((movie, index) => (
-                    <div key={index} className="modal-recommendation-item">
-                      <img
-                        src={`${POSTER_URL}${movie.poster_path}`}
-                        alt={movie.title || movie.name}
-                        className="modal-recommendation-img"
-                      />
-                    </div>
-                  ))}
+                  {/* Metadata Row */}
+                  <div className="modal-meta-row">
+                    {year && <span>{year}</span>}
+                    {rating && (
+                      <>
+                        <span className="meta-dot">·</span>
+                        <span className="modal-rating">
+                          <span className="star-icon">☆</span>
+                          {rating}
+                        </span>
+                      </>
+                    )}
+                    {contentRating && (
+                      <>
+                        <span className="meta-dot">·</span>
+                        <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
+                          {contentRating}
+                        </span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <p className="modal-description-new">{item.overview}</p>
+                </div>
+
+                {/* Right Column - Info */}
+                <div className="modal-right-col">
+                  <div className="modal-info-item">
+                    <span className="modal-info-label">Genres:</span>
+                    <span className="modal-info-value">{item.genres?.join(', ') || 'N/A'}</span>
+                  </div>
+                  <div className="modal-info-item">
+                    <span className="modal-info-label">Cast:</span>
+                    <span className="modal-info-value">{item.cast || 'N/A'}</span>
+                  </div>
+                  <div className="modal-info-item">
+                    <span className="modal-info-label">Status:</span>
+                    <span className="modal-info-value">{item.status || 'Released'}</span>
+                  </div>
                 </div>
               </div>
-            )}
+
+              {/* Collection Section */}
+              {collection.length > 0 && (
+                <div className="modal-section">
+                  <h3 className="modal-section-title">{item.collection_name || 'Collection'}</h3>
+                  <div className="modal-collection-grid">
+                    {collection.map((movie, index) => (
+                      <div key={index} className="modal-collection-item">
+                        <img
+                          src={`${BACKDROP_URL}${movie.backdrop_path}`}
+                          alt={getBackdropAlt(movie)}
+                          className="modal-collection-img"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* You May Also Like Section */}
+              {recommendations.length > 0 && (
+                <div className="modal-section">
+                  <h3 className="modal-section-title">You may also like</h3>
+                  <div className="modal-recommendations-scroll">
+                    {recommendations.map((movie, index) => (
+                      <div key={index} className="modal-recommendation-item">
+                        <img
+                          src={`${POSTER_URL}${movie.poster_path}`}
+                          alt={getPosterAlt(movie)}
+                          className="modal-recommendation-img"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 });

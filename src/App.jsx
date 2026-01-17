@@ -1,51 +1,81 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+
+// Core components - always loaded (small, needed immediately)
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import TopRated from './pages/TopRated';
-import TVShows from './pages/TVShows';
-import Popular from './pages/Popular';
-import Discover from './pages/Discover';
-import TrendingNow from './pages/TrendingNow';
-import AnimeMovies from './pages/AnimeMovies';
-import TrendingTV from './pages/TrendingTV';
-import TopRatedTV from './pages/TopRatedTV';
-import AnimeSeries from './pages/AnimeSeries';
-import PopularTV from './pages/PopularTV';
-import Watch from './pages/Watch';
-import About from './pages/About';
-import Disclaimer from './pages/Disclaimer';
-import DataPolicy from './pages/DataPolicy';
-import TermsOfService from './pages/TermsOfService';
-import Contact from './pages/Contact';
-import CollectionDetails from './pages/CollectionDetails';
-import Netflix from './pages/Netflix';
-import Disney from './pages/Disney';
-import PrimeVideo from './pages/PrimeVideo';
-import AppleTV from './pages/AppleTV';
-import HBO from './pages/HBO';
-import Viu from './pages/Viu';
-import Crunchyroll from './pages/Crunchyroll';
-import Peacock from './pages/Peacock';
-import StudioPage from './pages/StudioPage';
-import MyList from './pages/MyList';
-import IPTV from './pages/IPTV';
-import IPTVWatch from './pages/IPTVWatch';
-import Sports from './pages/Sports';
-import SportsWatch from './pages/SportsWatch';
-import Music from './pages/Music';
 import Modal from './components/Modal';
-import { useTMDB } from './hooks/useTMDB';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import AdblockModal from './components/AdblockModal';
 import BotProtection from './components/BotProtection';
+import Toast from './components/Toast';
+import GlobalChat from './components/GlobalChat';
+import PageLoader from './components/PageLoader';
+
+// Context providers - always loaded
 import { ToastProvider } from './contexts/ToastContext';
 import { ViewerCountProvider } from './contexts/ViewerCountContext';
-import Toast from './components/Toast';
+
+// Hooks - always loaded
+import { useTMDB } from './hooks/useTMDB';
 import useTVNavigation from './hooks/useTVNavigation';
-import GlobalChat from './components/GlobalChat';
+
+// =============================================
+// LAZY-LOADED PAGE COMPONENTS
+// These are code-split and loaded on-demand
+// =============================================
+
+// Main pages (frequently visited)
+const Home = lazy(() => import('./pages/Home'));
+const Watch = lazy(() => import('./pages/Watch'));
+const MyList = lazy(() => import('./pages/MyList'));
+
+// Movie category pages
+const TopRated = lazy(() => import('./pages/TopRated'));
+const Popular = lazy(() => import('./pages/Popular'));
+const Discover = lazy(() => import('./pages/Discover'));
+const TrendingNow = lazy(() => import('./pages/TrendingNow'));
+const AnimeMovies = lazy(() => import('./pages/AnimeMovies'));
+
+// TV category pages
+const TVShows = lazy(() => import('./pages/TVShows'));
+const TrendingTV = lazy(() => import('./pages/TrendingTV'));
+const TopRatedTV = lazy(() => import('./pages/TopRatedTV'));
+const AnimeSeries = lazy(() => import('./pages/AnimeSeries'));
+const PopularTV = lazy(() => import('./pages/PopularTV'));
+
+// Streaming service pages
+const Netflix = lazy(() => import('./pages/Netflix'));
+const Disney = lazy(() => import('./pages/Disney'));
+const PrimeVideo = lazy(() => import('./pages/PrimeVideo'));
+const AppleTV = lazy(() => import('./pages/AppleTV'));
+const HBO = lazy(() => import('./pages/HBO'));
+const Viu = lazy(() => import('./pages/Viu'));
+const Crunchyroll = lazy(() => import('./pages/Crunchyroll'));
+const Peacock = lazy(() => import('./pages/Peacock'));
+
+// Collection & Studio pages
+const CollectionDetails = lazy(() => import('./pages/CollectionDetails'));
+const StudioPage = lazy(() => import('./pages/StudioPage'));
+
+// IPTV pages (heavy - includes shaka-player)
+const IPTV = lazy(() => import('./pages/IPTV'));
+const IPTVWatch = lazy(() => import('./pages/IPTVWatch'));
+
+// Sports pages
+const Sports = lazy(() => import('./pages/Sports'));
+const SportsWatch = lazy(() => import('./pages/SportsWatch'));
+
+// Music page
+const Music = lazy(() => import('./pages/Music'));
+
+// Info pages (rarely visited)
+const About = lazy(() => import('./pages/About'));
+const Disclaimer = lazy(() => import('./pages/Disclaimer'));
+const DataPolicy = lazy(() => import('./pages/DataPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const Contact = lazy(() => import('./pages/Contact'));
 
 
 function App() {
@@ -129,42 +159,45 @@ function App() {
             )}
 
           <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/my-list" element={<MyList />} />
-              <Route path="/top-rated" element={<TopRated />} />
-              <Route path="/tv-shows" element={<TVShows />} />
-              <Route path="/popular" element={<Popular />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/trending" element={<TrendingNow />} />
-              <Route path="/anime-movies" element={<AnimeMovies />} />
-              <Route path="/trending-tv" element={<TrendingTV />} />
-              <Route path="/top-rated-tv" element={<TopRatedTV />} />
-              <Route path="/anime-series" element={<AnimeSeries />} />
-              <Route path="/popular-tv" element={<PopularTV />} />
-              <Route path="/watch" element={<Watch />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/disclaimer" element={<Disclaimer />} />
-              <Route path="/privacy" element={<DataPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/collection/:id" element={<CollectionDetails />} />
-              <Route path="/netflix" element={<Netflix />} />
-              <Route path="/disney" element={<Disney />} />
-              <Route path="/prime-video" element={<PrimeVideo />} />
-              <Route path="/apple-tv" element={<AppleTV />} />
-              <Route path="/hbo" element={<HBO />} />
-              <Route path="/viu" element={<Viu />} />
-              <Route path="/crunchyroll" element={<Crunchyroll />} />
-              <Route path="/peacock" element={<Peacock />} />
-              <Route path="/studio/:id" element={<StudioPage />} />
-              <Route path="/iptv" element={<IPTV />} />
-              <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
-              <Route path="/sports" element={<Sports />} />
-              <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
-              <Route path="/music" element={<Music />} />
-              <Route path="*" element={<Home />} />
-            </Routes>
+            {/* Suspense wrapper for lazy-loaded routes */}
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/my-list" element={<MyList />} />
+                <Route path="/top-rated" element={<TopRated />} />
+                <Route path="/tv-shows" element={<TVShows />} />
+                <Route path="/popular" element={<Popular />} />
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/trending" element={<TrendingNow />} />
+                <Route path="/anime-movies" element={<AnimeMovies />} />
+                <Route path="/trending-tv" element={<TrendingTV />} />
+                <Route path="/top-rated-tv" element={<TopRatedTV />} />
+                <Route path="/anime-series" element={<AnimeSeries />} />
+                <Route path="/popular-tv" element={<PopularTV />} />
+                <Route path="/watch" element={<Watch />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/privacy" element={<DataPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/collection/:id" element={<CollectionDetails />} />
+                <Route path="/netflix" element={<Netflix />} />
+                <Route path="/disney" element={<Disney />} />
+                <Route path="/prime-video" element={<PrimeVideo />} />
+                <Route path="/apple-tv" element={<AppleTV />} />
+                <Route path="/hbo" element={<HBO />} />
+                <Route path="/viu" element={<Viu />} />
+                <Route path="/crunchyroll" element={<Crunchyroll />} />
+                <Route path="/peacock" element={<Peacock />} />
+                <Route path="/studio/:id" element={<StudioPage />} />
+                <Route path="/iptv" element={<IPTV />} />
+                <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
+                <Route path="/sports" element={<Sports />} />
+                <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
+                <Route path="/music" element={<Music />} />
+                <Route path="*" element={<Home />} />
+              </Routes>
+            </Suspense>
           </main>
 
           {/* Hide Footer on watch pages for focused viewing */}

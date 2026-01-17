@@ -340,10 +340,17 @@
     flex: 0 0 auto;
     width: 280px;
     aspect-ratio: 16 / 9;
-    background: linear-gradient(90deg, rgba(40, 40, 40, 0.6) 25%, rgba(60, 60, 60, 0.6) 50%, rgba(40, 40, 40, 0.6) 75%);
+    background: linear-gradient(110deg,
+            rgba(35, 35, 40, 0.95) 0%,
+            rgba(35, 35, 40, 0.95) 40%,
+            rgba(55, 55, 65, 0.95) 50%,
+            rgba(35, 35, 40, 0.95) 60%,
+            rgba(35, 35, 40, 0.95) 100%);
     background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    animation: shimmer 1.5s infinite ease-in-out;
     border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes shimmer {

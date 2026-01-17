@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import { useTMDB } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
+import { getPosterAlt } from '../utils/altTextUtils';
 import './StreamingPicks.css';
 
 // Media type icons for filter buttons
@@ -288,8 +289,14 @@ const StreamingPicks = memo(({ provider = 'netflix' }) => {
 
             {/* Carousel */}
             {loading ? (
-                <div className="streaming-loading">
-                    <div className="loading-spinner"></div>
+                <div className="streaming-skeleton-container">
+                    <div className="streaming-skeleton-track">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="streaming-skeleton-slide">
+                                <div className="streaming-card-skeleton" />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="streaming-carousel" role="region" aria-roledescription="carousel" {...swipeHandlers}>
@@ -322,7 +329,7 @@ const StreamingPicks = memo(({ provider = 'netflix' }) => {
                                         <div className="streaming-card-gradient"></div>
                                         <img
                                             src={item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/placeholder-poster.jpg'}
-                                            alt={item.title || item.name}
+                                            alt={getPosterAlt(item)}
                                             className="streaming-card-image"
                                             loading="lazy"
                                         />

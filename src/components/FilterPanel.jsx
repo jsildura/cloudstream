@@ -190,13 +190,13 @@ const FilterPanel = ({
     return (
         <>
             {/* Backdrop */}
-            <div className="filter-panel-backdrop" onClick={onClose} />
+            <div className="filter-panel-backdrop" onClick={onClose} aria-hidden="true" />
 
             {/* Panel */}
-            <div className="filter-panel" ref={panelRef}>
+            <div className="filter-panel" ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="filter-panel-title">
                 {/* Header */}
                 <div className="filter-panel-header">
-                    <h2>Filters</h2>
+                    <h2 id="filter-panel-title">Filters</h2>
                     <button className="filter-panel-close" onClick={onClose} aria-label="Close">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -214,12 +214,14 @@ const FilterPanel = ({
                     {/* Genres Section */}
                     <div className="filter-section">
                         <h3 className="filter-section-title">Genres</h3>
-                        <div className="filter-genre-chips">
+                        <div className="filter-genre-chips" role="group" aria-label="Genre filters">
                             {getGenres().map(genre => (
                                 <button
                                     key={genre.id}
                                     className={`filter-genre-chip ${pendingFilters.genres?.includes(genre.id) ? 'selected' : ''}`}
                                     onClick={() => toggleGenre(genre.id)}
+                                    aria-pressed={pendingFilters.genres?.includes(genre.id)}
+                                    aria-label={`Filter by ${genre.name}`}
                                 >
                                     {genre.name}
                                 </button>

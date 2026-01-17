@@ -6,6 +6,7 @@ import React, { useState, useEffect, memo } from 'react';
 import Modal from './Modal';
 import { useTMDB } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
+import { getPosterAlt } from '../utils/altTextUtils';
 import './TrendingSection.css';
 
 // Media type icons
@@ -139,7 +140,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
     const title = `Trending ${mediaLabel} ${timeLabel}`;
 
     return (
-        <div className="trending-section">
+        <div className="trending-section" aria-live="polite" aria-busy={loading}>
             {/* Header */}
             <div className="trending-section-header">
                 <div className="trending-section-header-left">
@@ -168,8 +169,14 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
 
             {/* Carousel */}
             {loading ? (
-                <div className="trending-loading">
-                    <div className="loading-spinner"></div>
+                <div className="trending-skeleton-container">
+                    <div className="trending-skeleton-track">
+                        {[...Array(6)].map((_, i) => (
+                            <div key={i} className="trending-skeleton-slide">
+                                <div className="trending-card-skeleton" />
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ) : (
                 <div className="trending-carousel" role="region" aria-roledescription="carousel" {...swipeHandlers}>
@@ -201,7 +208,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                         <div className="trending-card-gradient"></div>
                                         <img
                                             src={item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/placeholder-poster.jpg'}
-                                            alt={item.title || item.name}
+                                            alt={getPosterAlt({ ...item, media_type: mediaType })}
                                             className="trending-card-image"
                                             loading="lazy"
                                         />

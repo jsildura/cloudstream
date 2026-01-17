@@ -4,6 +4,7 @@ import { useTMDB } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
+import { getPosterAlt } from '../utils/altTextUtils';
 
 const BannerSlider = ({ movies, onItemClick }) => {
   const navigate = useNavigate();
@@ -333,7 +334,7 @@ const BannerSlider = ({ movies, onItemClick }) => {
             <div className="banner-logo-container">
               <img
                 src={`${LOGO_URL}${currentLogoPath}`}
-                alt={currentMovie.title || currentMovie.name}
+                alt={`${currentMovie.title || currentMovie.name} logo`}
                 className="banner-logo-image"
                 onError={(e) => {
                   // Hide the image on error, text fallback will show
@@ -341,14 +342,14 @@ const BannerSlider = ({ movies, onItemClick }) => {
                   e.target.nextElementSibling.style.display = 'block';
                 }}
               />
-              <h1 className="banner-title-new banner-title-fallback" style={{ display: 'none' }}>
+              <h2 className="banner-title-new banner-title-fallback" style={{ display: 'none' }}>
                 {titleMain} <span className="title-highlight">{titleHighlight}</span>
-              </h1>
+              </h2>
             </div>
           ) : (
-            <h1 className="banner-title-new">
+            <h2 className="banner-title-new">
               {titleMain} <span className="title-highlight">{titleHighlight}</span>
-            </h1>
+            </h2>
           )}
 
           {/* IMDb + Metadata Row */}
@@ -539,35 +540,35 @@ const BannerSlider = ({ movies, onItemClick }) => {
             <div className="mobile-poster-card card-far-prev">
               <img
                 src={`${POSTER_URL}${movies[getSlideIndex(-2)]?.poster_path}`}
-                alt={movies[getSlideIndex(-2)]?.title || movies[getSlideIndex(-2)]?.name}
+                alt={getPosterAlt(movies[getSlideIndex(-2)])}
               />
             </div>
             {/* Previous Card */}
             <div className="mobile-poster-card card-prev">
               <img
                 src={`${POSTER_URL}${movies[getSlideIndex(-1)]?.poster_path}`}
-                alt={movies[getSlideIndex(-1)]?.title || movies[getSlideIndex(-1)]?.name}
+                alt={getPosterAlt(movies[getSlideIndex(-1)])}
               />
             </div>
             {/* Active Card */}
             <div className="mobile-poster-card card-active">
               <img
                 src={`${POSTER_URL}${currentMovie.poster_path}`}
-                alt={currentMovie.title || currentMovie.name}
+                alt={getPosterAlt(currentMovie)}
               />
             </div>
             {/* Next Card */}
             <div className="mobile-poster-card card-next">
               <img
                 src={`${POSTER_URL}${movies[getSlideIndex(1)]?.poster_path}`}
-                alt={movies[getSlideIndex(1)]?.title || movies[getSlideIndex(1)]?.name}
+                alt={getPosterAlt(movies[getSlideIndex(1)])}
               />
             </div>
             {/* Far Right Card */}
             <div className="mobile-poster-card card-far-next">
               <img
                 src={`${POSTER_URL}${movies[getSlideIndex(2)]?.poster_path}`}
-                alt={movies[getSlideIndex(2)]?.title || movies[getSlideIndex(2)]?.name}
+                alt={getPosterAlt(movies[getSlideIndex(2)])}
               />
             </div>
           </div>
