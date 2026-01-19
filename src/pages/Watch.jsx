@@ -498,14 +498,9 @@ const Watch = () => {
   };
 
   const handleBack = () => {
-    // Check if there's browser history to go back to
-    // window.history.length > 2 covers most browsers (some start with 1-2)
-    if (window.history.length > 2) {
-      navigate(-1);
-    } else {
-      // No history (user came from direct link), navigate to home
-      navigate('/');
-    }
+    // Navigate directly to homepage to avoid stacked history entries
+    // (changing servers/episodes may add history entries, making navigate(-1) unreliable)
+    navigate('/');
   };
 
   const drawerTranslateRef = useRef(0);
