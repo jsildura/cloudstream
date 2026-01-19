@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 // Core components - always loaded (small, needed immediately)
@@ -89,6 +89,11 @@ function App() {
 
   // Enable TV remote / D-pad arrow key navigation
   useTVNavigation();
+
+  // Signal that React app is mounted and ready - hides the HTML splash screen
+  useEffect(() => {
+    window.dispatchEvent(new Event('app-ready'));
+  }, []);
 
   const handleSearch = async (query) => {
     if (!query.trim()) {

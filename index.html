@@ -150,6 +150,17 @@
       align-items: center;
       justify-content: center;
       z-index: 9999;
+      /* Ensure no white flash during paint */
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.8s ease-out, visibility 0.8s;
+      will-change: opacity;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .loading-content {
@@ -191,21 +202,24 @@
     }
 
     .loading-bar {
-      width: 0%;
+      width: 100%;
       height: 100%;
       background: linear-gradient(90deg, #E50914, #ff4d4d, #E50914);
       background-size: 200% 100%;
       border-radius: 3px;
-      animation: loading-progress 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards, shimmer 2.5s linear infinite;
+      transform-origin: left;
+      transform: scaleX(0);
+      will-change: transform;
+      animation: loading-scale 2s cubic-bezier(0.4, 0, 0.2, 1) forwards, shimmer 1s linear infinite;
     }
 
-    @keyframes loading-progress {
+    @keyframes loading-scale {
       0% {
-        width: 0%;
+        transform: scaleX(0);
       }
 
       100% {
-        width: 100%;
+        transform: scaleX(1);
       }
     }
 
@@ -277,15 +291,51 @@
     </div>
   </div>
   <script>
-    setTimeout(() => {
-      const loadingScreen = document.querySelector('.loading-screen');
-      if (loadingScreen) {
-        loadingScreen.style.opacity = '0';
-        loadingScreen.style.transition = 'opacity 0.5s ease';
+    // Track when splash screen started and if app is ready
+    const splashStartTime = Date.now();
+    const MIN_SPLASH_TIME = 2000; // 2 seconds - Industry standard
+    let appIsReady = false;
 
-        setTimeout(() => loadingScreen.remove(), 500);
+    function hideSplashScreen() {
+      const loadingScreen = document.querySelector('.loading-screen');
+      if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+        loadingScreen.classList.add('hidden');
+
+        // Remove element after transition ends
+        const handleTransitionEnd = () => {
+          loadingScreen.remove();
+        };
+
+        loadingScreen.addEventListener('transitionend', handleTransitionEnd, { once: true });
+
+        // Safety fallback in case transitionend event doesn't fire
+        setTimeout(() => {
+          if (document.body.contains(loadingScreen)) {
+            loadingScreen.remove();
+          }
+        }, 1000); // 0.8s transition + buffer
       }
-    }, 4000);
+    }
+
+    function tryHideSplash() {
+      const elapsed = Date.now() - splashStartTime;
+      if (elapsed >= MIN_SPLASH_TIME) {
+        // Enough time has passed, hide immediately
+        hideSplashScreen();
+      } else {
+        // Wait for remaining time so loading bar can finish
+        setTimeout(hideSplashScreen, MIN_SPLASH_TIME - elapsed);
+      }
+    }
+
+    // Listen for React app ready event
+    window.addEventListener('app-ready', () => {
+      appIsReady = true;
+      tryHideSplash();
+    });
+
+    // Fallback: hide after 6 seconds if React never signals (safety net)
+    setTimeout(hideSplashScreen, 6000);
   </script>
   <script>
     // Register Service Worker for PWA
