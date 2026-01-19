@@ -60,6 +60,57 @@
     margin: 0 auto;
 }
 
+/* === Adsterra Native Banner Layout Overrides === */
+
+/* Target the Adsterra ad wrapper */
+.native-ad-container>div {
+    display: grid !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+/* Desktop/Large screens: 4 columns (4x1 horizontal row) */
+@media (min-width: 769px) {
+    .native-ad-container>div {
+        grid-template-columns: repeat(4, 1fr) !important;
+    }
+}
+
+/* Mobile: 2 columns (2x2 grid) */
+@media (max-width: 768px) {
+    .native-ad-container>div {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+    }
+
+    /* Ensure ad cards don't get cut off */
+    .native-ad-container>div>a,
+    .native-ad-container>div>div {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* Fix image sizing within cards */
+    .native-ad-container img {
+        width: 100% !important;
+        height: auto !important;
+        object-fit: cover !important;
+        border-radius: 8px !important;
+    }
+}
+
+/* Very small screens: still 2x2 but tighter */
+@media (max-width: 400px) {
+    .native-ad-container>div {
+        gap: 8px !important;
+    }
+
+    .native-ad-wrapper {
+        padding: 10px !important;
+    }
+}
+
 /* Responsive adjustments */
 @media (max-width: 639px) {
     .native-ad-section {
