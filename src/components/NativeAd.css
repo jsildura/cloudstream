@@ -1,38 +1,157 @@
-/* Native Ad Wrapper - Non-intrusive placement */
+/* Native Ad Section - Matches site's design pattern */
+.native-ad-section {
+    padding: 0;
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+/* Header - Matches StreamingPicks header pattern */
+.native-ad-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.native-ad-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.native-ad-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.native-ad-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Ad Wrapper - Non-intrusive placement */
 .native-ad-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  margin-top: 20px;
-  background: linear-gradient(to bottom,
-      transparent 0%,
-      rgba(20, 20, 20, 0.5) 50%,
-      transparent 100%);
+    display: inherit;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(to bottom,
+            rgba(20, 20, 20, 0.3) 0%,
+            rgba(30, 30, 30, 0.4) 50%,
+            rgba(20, 20, 20, 0.3) 100%);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .native-ad-container {
-  max-width: 300px;
-  margin: 0 auto;
+    max-width: 100%;
+    margin: 0 auto;
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
-  .native-ad-wrapper {
-    padding: 30px 15px;
-  }
+@media (max-width: 639px) {
+    .native-ad-section {
+        padding: 0;
+    }
+
+    .native-ad-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .native-ad-header-left {
+        gap: 6px;
+    }
+
+    .native-ad-title {
+        font-size: 1.2rem !important;
+    }
+
+    .native-ad-badge {
+        padding: 3px 8px;
+        font-size: 0.6rem;
+    }
+
+    .native-ad-wrapper {
+        padding: 15px;
+        border-radius: 8px;
+    }
 }
 
 /* 1080p scaling */
-@media (min-width: 1920px) {
-  .native-ad-wrapper {
-    padding: 60px 30px;
-  }
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .native-ad-section {
+        padding: 0;
+        margin-bottom: 40px;
+    }
+
+    .native-ad-header {
+        margin-bottom: 32px;
+    }
+
+    .native-ad-header-left {
+        gap: 24px;
+    }
+
+    .native-ad-title {
+        font-size: 3rem;
+    }
+
+    .native-ad-badge {
+        padding: 8px 20px;
+        font-size: 1.4rem;
+        border-radius: 8px;
+    }
+
+    .native-ad-wrapper {
+        padding: 40px;
+        border-radius: 24px;
+    }
 }
 
 /* 4K scaling */
 @media (min-width: 3840px) {
-  .native-ad-wrapper {
-    padding: 120px 60px;
-  }
+    .native-ad-section {
+        padding: 0;
+        margin-bottom: 80px;
+    }
+
+    .native-ad-header {
+        margin-bottom: 64px;
+    }
+
+    .native-ad-header-left {
+        gap: 48px;
+    }
+
+    .native-ad-title {
+        font-size: 6rem;
+    }
+
+    .native-ad-badge {
+        padding: 16px 40px;
+        font-size: 2.8rem;
+        border-radius: 16px;
+    }
+
+    .native-ad-wrapper {
+        padding: 80px;
+        border-radius: 48px;
+    }
+
+    .native-ad-section {
+        border-top-width: 4px;
+    }
 }

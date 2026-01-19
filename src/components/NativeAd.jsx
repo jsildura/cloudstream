@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import './NativeAd.css';
 
 const NativeAd = () => {
     const adContainerRef = useRef(null);
@@ -29,13 +30,24 @@ const NativeAd = () => {
     }, []);
 
     return (
-        <div className="native-ad-wrapper">
-            <div
-                ref={adContainerRef}
-                id="container-2169057a99b05d1f0c42cb91d4e1e11e"
-                className="native-ad-container"
-            />
-        </div>
+        <section className="native-ad-section">
+            {/* Section Header - matches site's design pattern */}
+            <div className="native-ad-header">
+                <div className="native-ad-header-left">
+                    <h2 className="native-ad-title">Don't Miss Out</h2>
+                </div>
+                <span className="native-ad-badge">Ad</span>
+            </div>
+
+            {/* Ad Content */}
+            <div className="native-ad-wrapper">
+                <div
+                    ref={adContainerRef}
+                    id="container-2169057a99b05d1f0c42cb91d4e1e11e"
+                    className="native-ad-container"
+                />
+            </div>
+        </section>
     );
 };
 

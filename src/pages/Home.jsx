@@ -247,6 +247,9 @@ const Home = () => {
         {/* Popular Collections Section */}
         <PopularCollections />
 
+        {/* Native Ad - Placed after Popular Collections */}
+        <NativeAd />
+
         {/* Movie Studios Section */}
         <MovieStudios />
 
@@ -276,9 +279,6 @@ const Home = () => {
 
 
       </div>
-
-      {/* Native Ad - Non-intrusive placement at bottom of homepage */}
-      <NativeAd />
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />
