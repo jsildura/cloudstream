@@ -344,6 +344,8 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
         ) : (
           <div className="banner-backdrop">
             <img
+              srcSet={`https://image.tmdb.org/t/p/w780${currentMovie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${currentMovie.backdrop_path} 1280w`}
+              sizes="(max-width: 768px) 780px, 1280px"
               src={`${BACKDROP_URL}${currentMovie.backdrop_path}`}
               alt={`${currentMovie.title || currentMovie.name} backdrop`}
               className="banner-backdrop-img"
