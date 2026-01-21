@@ -9,6 +9,7 @@ import ContinueWatching from '../components/ContinueWatching';
 import StreamingPicks from '../components/StreamingPicks';
 import TrendingSection from '../components/TrendingSection';
 import TrendingAnimeSection from '../components/TrendingAnimeSection';
+import RecommendedForYou from '../components/RecommendedForYou';
 import MovieStudios from '../components/MovieStudios';
 import LazyLoadSection from '../components/LazyLoadSection';
 // VisitorStats disabled
@@ -219,6 +220,9 @@ const Home = () => {
       <ContinueWatching onItemClick={handleItemClick} />
 
       <div className="content-rows">
+        {/* Recommended For You - Only shows if user has watch history */}
+        <RecommendedForYou onItemClick={handleItemClick} />
+
         {/* Trending Today Section */}
         <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
 

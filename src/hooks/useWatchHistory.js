@@ -10,6 +10,7 @@ const MAX_ITEMS = 20;
  */
 const useWatchHistory = () => {
     const [watchHistory, setWatchHistory] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     // Load watch history from localStorage on mount
     useEffect(() => {
@@ -24,16 +25,18 @@ const useWatchHistory = () => {
         } catch (error) {
             console.error('Failed to load watch history:', error);
         }
+        setIsLoaded(true);
     }, []);
 
-    // Save to localStorage whenever watch history changes
+    // Save to localStorage whenever watch history changes (only after initial load)
     useEffect(() => {
+        if (!isLoaded) return; // Don't save until we've loaded from localStorage
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(watchHistory));
         } catch (error) {
             console.error('Failed to save watch history:', error);
         }
-    }, [watchHistory]);
+    }, [watchHistory, isLoaded]);
 
     // Add or update item in watch history
     const addToHistory = useCallback((item) => {
@@ -113,6 +116,7 @@ const useWatchHistory = () => {
 
     return {
         watchHistory,
+        isLoaded,
         addToHistory,
         updateProgress,
         getWatchHistory,

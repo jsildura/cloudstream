@@ -1,66 +1,125 @@
 /**
- * TrendingSection - Unified trending content section with Movie/TV toggle
- * Replaces the old trending-side-by-side layout with a Netflix Originals style UI
+ * RecommendedForYou - Smart recommendation section based on watch history
+ * Shows "Because you watched [Title]" - hidden if no watch history
  */
-import React, { useState, useEffect, memo } from 'react';
-import Modal from './Modal';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
+import useWatchHistory from '../hooks/useWatchHistory';
 import useSwipe from '../hooks/useSwipe';
 import { getPosterAlt } from '../utils/altTextUtils';
 import './TrendingSection.css';
 
-// Media type icons
-const MEDIA_ICONS = {
-    movie: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
-            <line x1="7" y1="2" x2="7" y2="22"></line>
-            <line x1="17" y1="2" x2="17" y2="22"></line>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <line x1="2" y1="7" x2="7" y2="7"></line>
-            <line x1="2" y1="17" x2="7" y2="17"></line>
-            <line x1="17" y1="7" x2="22" y2="7"></line>
-            <line x1="17" y1="17" x2="22" y2="17"></line>
-        </svg>
-    ),
-    tv: (
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect>
-            <polyline points="17 2 12 7 7 2"></polyline>
-        </svg>
-    )
-};
-
 const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 
-const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
-    const { movieGenres, tvGenres, fetchTrending, fetchCredits, fetchContentRating } = useTMDB();
+const RecommendedForYou = memo(({ onItemClick }) => {
+    const {
+        movieGenres,
+        tvGenres,
+        fetchMovieRecommendations,
+        fetchTVRecommendations,
+        fetchCredits,
+        fetchContentRating
+    } = useTMDB();
+    const { watchHistory, isLoaded: historyLoaded } = useWatchHistory();
 
-    const [content, setContent] = useState([]);
+    const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(6);
-    const [mediaType, setMediaType] = useState('movie');
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [anchorTitle, setAnchorTitle] = useState(null);
 
-    // Fetch content based on media type and time window
-    const fetchContent = async () => {
-        try {
-            setLoading(true);
-            const data = await fetchTrending(mediaType, timeWindow);
-            setContent(data.slice(0, 20));
-            setCurrentIndex(0);
-        } catch (err) {
-            console.error('Error fetching trending content:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Fetch recommendations based on most recent watched item
     useEffect(() => {
-        fetchContent();
-    }, [mediaType, timeWindow]);
+        // Wait for history to load from localStorage first
+        if (!historyLoaded) return;
+
+        const fetchRecommendations = async () => {
+            // No history = don't show this section
+            if (!watchHistory || watchHistory.length === 0) {
+                setLoading(false);
+                setRecommendations([]);
+                return;
+            }
+
+            try {
+                setLoading(true);
+                const anchor = watchHistory[0]; // Most recent item
+
+                const fetchFn = anchor.type === 'movie'
+                    ? fetchMovieRecommendations
+                    : fetchTVRecommendations;
+
+                let data = await fetchFn(anchor.id);
+
+                // Fallback to /similar endpoint if recommendations are empty
+                if (data.length === 0) {
+                    const similarUrl = `/api/${anchor.type}/${anchor.id}/similar`;
+                    const res = await fetch(similarUrl);
+                    if (res.ok) {
+                        const similarData = await res.json();
+                        data = similarData.results || [];
+                    }
+                }
+
+                // Filter out items already in watch history
+                const historyIds = new Set(watchHistory.map(h => h.id));
+                let filtered = data.filter(item => !historyIds.has(item.id));
+
+                // === GENRE DIVERSITY INJECTOR ===
+                // Inject 2 movies from a different genre to prevent echo chambers
+                if (filtered.length >= 5) {
+                    try {
+                        // Get primary genre from recommendations
+                        const recGenres = filtered.flatMap(item => item.genre_ids || []);
+                        const primaryGenre = recGenres[0];
+
+                        // Pick a random different genre (excluding primary)
+                        const diverseGenres = [28, 35, 18, 27, 10749, 878, 53, 16]; // Action, Comedy, Drama, Horror, Romance, SciFi, Thriller, Animation
+                        const otherGenres = diverseGenres.filter(g => g !== primaryGenre);
+                        const randomGenre = otherGenres[Math.floor(Math.random() * otherGenres.length)];
+
+                        // Fetch 2 movies from different genre
+                        const discoverUrl = `/api/discover/movie?with_genres=${randomGenre}&sort_by=popularity.desc`;
+                        const discoverRes = await fetch(discoverUrl);
+                        if (discoverRes.ok) {
+                            const discoverData = await discoverRes.json();
+                            const diverseItems = (discoverData.results || [])
+                                .filter(item => !historyIds.has(item.id) && !filtered.some(f => f.id === item.id))
+                                .slice(0, 2);
+
+                            if (diverseItems.length > 0) {
+                                // Inject at positions 3 and 7
+                                if (diverseItems[0] && filtered.length > 3) {
+                                    filtered.splice(3, 0, diverseItems[0]);
+                                }
+                                if (diverseItems[1] && filtered.length > 7) {
+                                    filtered.splice(7, 0, diverseItems[1]);
+                                }
+                            }
+                        }
+                    } catch {
+                        // Diversity injection failed silently - non-critical feature
+                    }
+                }
+
+                if (filtered.length > 0) {
+                    setRecommendations(filtered.slice(0, 20));
+                    setAnchorTitle(anchor.title);
+                } else {
+                    // No recommendations available - hide section
+                    setRecommendations([]);
+                    setAnchorTitle(null);
+                }
+            } catch (err) {
+                console.error('[RecommendedForYou] Error fetching recommendations:', err);
+                setRecommendations([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRecommendations();
+    }, [historyLoaded, watchHistory, fetchMovieRecommendations, fetchTVRecommendations]);
 
     // Responsive items per view
     useEffect(() => {
@@ -79,14 +138,14 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
         return () => window.removeEventListener('resize', updateItemsPerView);
     }, []);
 
-    const maxIndex = Math.max(0, content.length - itemsPerView);
+    const maxIndex = Math.max(0, recommendations.length - itemsPerView);
     const translateX = currentIndex * (100 / itemsPerView);
 
     const handlePrevious = () => setCurrentIndex(prev => Math.max(0, prev - 1));
     const handleNext = () => setCurrentIndex(prev => Math.min(maxIndex, prev + 1));
 
-    const handleItemClick = async (item) => {
-        const type = mediaType;
+    const handleItemClick = useCallback(async (item) => {
+        const type = item.media_type || (item.first_air_date ? 'tv' : 'movie');
         const genreMap = type === 'movie' ? movieGenres : tvGenres;
         const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
 
@@ -104,25 +163,10 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
             contentRating
         };
 
-        // Use parent's onItemClick if provided, otherwise handle internally
         if (onItemClick) {
             onItemClick(enrichedItem);
-        } else {
-            setSelectedItem(enrichedItem);
-            setIsModalOpen(true);
         }
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setSelectedItem(null);
-    };
-
-    const handleMediaTypeClick = (type) => {
-        if (type !== mediaType) {
-            setMediaType(type);
-        }
-    };
+    }, [movieGenres, tvGenres, fetchCredits, fetchContentRating, onItemClick]);
 
     const swipeHandlers = useSwipe({
         onSwipe: (itemsToMove) => {
@@ -135,38 +179,34 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
         itemsPerSwipe: itemsPerView
     });
 
-    const mediaLabel = mediaType === 'movie' ? 'Movies' : 'TV Shows';
-    const timeLabel = timeWindow === 'day' ? 'Today' : 'This Week';
-    const title = `Trending ${mediaLabel} ${timeLabel}`;
+    // Don't render if no recommendations or still loading with no history
+    if (!loading && recommendations.length === 0) {
+        return null;
+    }
+
+    // Wait for history to load before deciding to hide
+    if (!historyLoaded) {
+        return null; // Still loading from localStorage
+    }
+
+    // Don't render skeleton if no history after load
+    if (loading && watchHistory.length === 0) {
+        return null;
+    }
+
+    const sectionTitle = anchorTitle
+        ? `Because you watched ${anchorTitle}`
+        : 'Recommended For You';
 
     return (
         <div className="trending-section" aria-live="polite" aria-busy={loading}>
-            {/* Header */}
             <div className="trending-section-header">
                 <div className="trending-section-header-left">
-                    <h2 className="trending-section-title">{title}</h2>
-                </div>
-
-                {/* Media Type Filter Buttons */}
-                <div className="trending-media-filters">
-                    <button
-                        className={`trending-media-btn ${mediaType === 'movie' ? 'active' : ''}`}
-                        onClick={() => handleMediaTypeClick('movie')}
-                    >
-                        {MEDIA_ICONS.movie}
-                        <span className="media-label">Movies</span>
-                    </button>
-                    <button
-                        className={`trending-media-btn ${mediaType === 'tv' ? 'active' : ''}`}
-                        onClick={() => handleMediaTypeClick('tv')}
-                    >
-                        {MEDIA_ICONS.tv}
-                        <span className="media-label">TV Shows</span>
-                    </button>
+                    <div className="trending-section-header-accent"></div>
+                    <h2 className="trending-section-title">{sectionTitle}</h2>
                 </div>
             </div>
 
-            {/* Carousel */}
             {loading ? (
                 <div className="trending-skeleton-container">
                     <div className="trending-skeleton-track">
@@ -184,9 +224,9 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                             className="trending-carousel-track"
                             style={{ transform: `translate3d(-${translateX}%, 0px, 0px)` }}
                         >
-                            {content.map((item) => (
+                            {recommendations.map((item) => (
                                 <div
-                                    key={`${mediaType}-${item.id}`}
+                                    key={item.id}
                                     className="trending-carousel-slide"
                                     role="group"
                                     aria-roledescription="slide"
@@ -207,7 +247,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                         <div className="trending-card-gradient"></div>
                                         <img
                                             src={item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/placeholder-poster.jpg'}
-                                            alt={getPosterAlt({ ...item, media_type: mediaType })}
+                                            alt={getPosterAlt(item)}
                                             className="trending-card-image"
                                             loading="lazy"
                                         />
@@ -220,7 +260,6 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                         </div>
                     </div>
 
-                    {/* Navigation buttons */}
                     <button
                         className="trending-carousel-btn trending-carousel-prev"
                         onClick={handlePrevious}
@@ -246,14 +285,9 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                     </button>
                 </div>
             )}
-
-            {/* Modal (only if not using parent's onItemClick) */}
-            {!onItemClick && isModalOpen && selectedItem && (
-                <Modal item={selectedItem} onClose={closeModal} />
-            )}
         </div>
     );
 });
 
-TrendingSection.displayName = 'TrendingSection';
-export default TrendingSection;
+RecommendedForYou.displayName = 'RecommendedForYou';
+export default RecommendedForYou;

@@ -8,10 +8,28 @@ import SchemaMarkup from './SchemaMarkup';
 import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
 import { getBackdropAlt, getPosterAlt, getLogoAlt } from '../utils/altTextUtils';
 
-const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) => {
+const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs = [], collection = [] }) => {
   const navigate = useNavigate();
-  const { BACKDROP_URL, POSTER_URL, fetchVideos, fetchLogo } = useTMDB();
+  const {
+    BACKDROP_URL,
+    POSTER_URL,
+    fetchVideos,
+    fetchLogo,
+    fetchMovieRecommendations,
+    fetchTVRecommendations,
+    fetchCredits,
+    fetchContentRating,
+    movieGenres,
+    tvGenres
+  } = useTMDB();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
+
+  // Current item being displayed (can change when clicking recommendations)
+  const [item, setItem] = useState(initialItem);
+
+  // Internal recommendations state
+  const [internalRecs, setInternalRecs] = useState([]);
+  const [recsLoading, setRecsLoading] = useState(true);
   const { showSuccess } = useToast();
   const [inWatchlist, setInWatchlist] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -44,11 +62,20 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
     return 'rating-badge-gray';
   };
 
-  // Fetch trailer key, logo when modal opens. Use pre-loaded contentRating if available.
+  // Fetch trailer key, logo, and recommendations when modal opens or item changes
   useEffect(() => {
     const loadData = async () => {
       if (item?.id) {
         const type = item.media_type || item.type || 'movie';
+
+        // Reset states for new item
+        setTrailerKey(null);
+        setLogoPath(null);
+        setLogoLoaded(false);
+        setIsTrailerPlaying(false);
+        setRecsLoading(true);
+
+        // Fetch trailer and logo
         const [key, logo] = await Promise.all([
           fetchVideos(type, item.id),
           fetchLogo(type, item.id)
@@ -61,10 +88,34 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
         if (item.contentRating) {
           setContentRating(item.contentRating);
         }
+
+        // Fetch recommendations internally
+        try {
+          const fetchRecs = type === 'movie' ? fetchMovieRecommendations : fetchTVRecommendations;
+          let recs = await fetchRecs(item.id);
+
+          // Fallback to similar if no recommendations
+          if (!recs || recs.length === 0) {
+            const similarUrl = `/api/${type}/${item.id}/similar`;
+            const res = await fetch(similarUrl);
+            if (res.ok) {
+              const data = await res.json();
+              recs = data.results || [];
+            }
+          }
+
+          // Limit to 10 items and filter out current item
+          setInternalRecs(recs.filter(r => r.id !== item.id).slice(0, 10));
+        } catch (err) {
+          console.error('Failed to fetch recommendations:', err);
+          setInternalRecs([]);
+        } finally {
+          setRecsLoading(false);
+        }
       }
     };
     loadData();
-  }, [item?.id, item?.media_type, item?.type, item?.contentRating, fetchVideos, fetchLogo]);
+  }, [item?.id, item?.media_type, item?.type, item?.contentRating, fetchVideos, fetchLogo, fetchMovieRecommendations, fetchTVRecommendations]);
 
   // Animated close handler
   const handleClose = useCallback(() => {
@@ -138,6 +189,38 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
       }
     }
   }, [item.title, item.name, item.type, item.id]);
+
+  // Handle clicking a recommendation card - update modal to show that content
+  const handleRecClick = useCallback(async (recItem) => {
+    const type = recItem.media_type || (recItem.first_air_date ? 'tv' : 'movie');
+    const genreMap = type === 'movie' ? movieGenres : tvGenres;
+    const genreNames = recItem.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
+
+    // Fetch additional details
+    const [cast, rating] = await Promise.all([
+      fetchCredits(type, recItem.id),
+      fetchContentRating(type, recItem.id)
+    ]);
+
+    // Enrich item with all necessary data
+    const enrichedItem = {
+      ...recItem,
+      type,
+      media_type: type,
+      genres: genreNames,
+      cast: cast.join(', ') || 'N/A',
+      contentRating: rating
+    };
+
+    // Update modal to show the clicked recommendation
+    setItem(enrichedItem);
+
+    // Scroll modal back to top
+    const scrollContainer = document.querySelector('.modal-scroll-container');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [movieGenres, tvGenres, fetchCredits, fetchContentRating]);
 
   // Ref to track if user manually toggled the trailer (to prevent auto-play interference)
   const userToggledTrailerRef = useRef(false);
@@ -506,19 +589,44 @@ const Modal = memo(({ item, onClose, recommendations = [], collection = [] }) =>
               )}
 
               {/* You May Also Like Section */}
-              {recommendations.length > 0 && (
+              {(internalRecs.length > 0 || recsLoading) && (
                 <div className="modal-section">
                   <h3 className="modal-section-title">You may also like</h3>
                   <div className="modal-recommendations-scroll">
-                    {recommendations.map((movie, index) => (
-                      <div key={index} className="modal-recommendation-item">
-                        <img
-                          src={`${POSTER_URL}${movie.poster_path}`}
-                          alt={getPosterAlt(movie)}
-                          className="modal-recommendation-img"
-                        />
-                      </div>
-                    ))}
+                    {recsLoading ? (
+                      // Skeleton loading state
+                      [...Array(5)].map((_, i) => (
+                        <div key={i} className="modal-recommendation-item skeleton">
+                          <div className="modal-recommendation-skeleton" />
+                        </div>
+                      ))
+                    ) : (
+                      internalRecs.map((rec) => (
+                        <div
+                          key={rec.id}
+                          className="modal-recommendation-item clickable"
+                          onClick={() => handleRecClick(rec)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              handleRecClick(rec);
+                            }
+                          }}
+                        >
+                          <img
+                            src={rec.poster_path ? `${POSTER_URL}${rec.poster_path}` : '/placeholder-poster.jpg'}
+                            alt={getPosterAlt(rec)}
+                            className="modal-recommendation-img"
+                            loading="lazy"
+                          />
+                          <div className="modal-recommendation-overlay">
+                            <span className="modal-recommendation-title">{rec.title || rec.name}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}

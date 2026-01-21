@@ -16,16 +16,9 @@
 .trending-section-header-left {
     display: flex;
     align-items: center;
-    gap: 12px;
     flex: 1;
 }
 
-.trending-section-header-accent {
-    height: 24px;
-    width: 4px;
-    border-radius: 50px;
-    background-color: #E50914;
-}
 
 .trending-section-title {
     font-size: 1.5rem;
@@ -324,17 +317,8 @@
         gap: 8px;
     }
 
-    .trending-section-header-left {
-        gap: 6px;
-    }
-
     .trending-section-title {
         font-size: 1.2rem !important;
-    }
-
-    .trending-section-header-accent {
-        height: 14px;
-        width: 2px;
     }
 
     .trending-media-btn {
@@ -359,14 +343,7 @@
         margin-bottom: 32px;
     }
 
-    .trending-section-header-left {
-        gap: 24px;
-    }
 
-    .trending-section-header-accent {
-        height: 48px;
-        width: 8px;
-    }
 
     .trending-section-title {
         font-size: 3rem;
@@ -451,14 +428,8 @@
         margin-bottom: 64px;
     }
 
-    .trending-section-header-left {
-        gap: 48px;
-    }
 
-    .trending-section-header-accent {
-        height: 96px;
-        width: 16px;
-    }
+
 
     .trending-section-title {
         font-size: 6rem;
