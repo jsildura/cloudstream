@@ -589,9 +589,12 @@
 }
 
 @keyframes skeleton-shimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
   }
+
   50% {
     opacity: 1;
   }
@@ -1281,8 +1284,8 @@
 
   /* Blur backdrop on mobile */
   .banner-backdrop {
-    filter: blur(3px);
-    opacity: 0.5;
+    filter: blur(1px);
+    opacity: 0.7;
   }
 
   /* Show desktop content on mobile - redesigned layout */
