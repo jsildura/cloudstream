@@ -10,6 +10,7 @@ import StreamingPicks from '../components/StreamingPicks';
 import TrendingSection from '../components/TrendingSection';
 import TrendingAnimeSection from '../components/TrendingAnimeSection';
 import MovieStudios from '../components/MovieStudios';
+import LazyLoadSection from '../components/LazyLoadSection';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
 import NativeAd from '../components/NativeAd';
@@ -197,14 +198,7 @@ const Home = () => {
     setSearchResults([]);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="loading-screen">
-        <div className="loading-spinner"></div>
-        <p>Loading amazing content...</p>
-      </div>
-    );
-  }
+
 
   return (
     <div className="home-page">
@@ -214,13 +208,12 @@ const Home = () => {
       />
       {/* Visually hidden h1 for SEO - provides consistent page heading */}
       <h1 className="visually-hidden">StreamFlix - Watch Movies & TV Shows Online</h1>
-      {/* Use nowPlayingMovies for BannerSlider */}
-      {nowPlayingMovies.length > 0 && (
-        <BannerSlider
-          movies={nowPlayingMovies.slice(0, 10)}
-          onItemClick={handleItemClick}
-        />
-      )}
+      {/* Use nowPlayingMovies for BannerSlider - shows skeleton while loading */}
+      <BannerSlider
+        movies={nowPlayingMovies.slice(0, 10)}
+        onItemClick={handleItemClick}
+        loading={loading}
+      />
 
       {/* Continue Watching Section */}
       <ContinueWatching onItemClick={handleItemClick} />
@@ -245,37 +238,59 @@ const Home = () => {
         )}
 
         {/* Popular Collections Section */}
-        <PopularCollections />
+        <LazyLoadSection minHeight="350px">
+          <PopularCollections />
+        </LazyLoadSection>
 
         {/* Native Ad - Placed after Popular Collections */}
-        <NativeAd />
+        <LazyLoadSection minHeight="200px">
+          <NativeAd />
+        </LazyLoadSection>
 
         {/* Movie Studios Section */}
-        <MovieStudios />
+        <LazyLoadSection minHeight="300px">
+          <MovieStudios />
+        </LazyLoadSection>
 
         {/* Netflix Originals Section */}
-        <StreamingPicks provider="netflix" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="netflix" />
+        </LazyLoadSection>
 
         {/* Disney+ Picks Section */}
-        <StreamingPicks provider="disney" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="disney" />
+        </LazyLoadSection>
 
         {/* Prime Video Featured Section */}
-        <StreamingPicks provider="prime" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="prime" />
+        </LazyLoadSection>
 
         {/* Apple TV+ Originals Section */}
-        <StreamingPicks provider="apple" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="apple" />
+        </LazyLoadSection>
 
         {/* HBO Originals Section */}
-        <StreamingPicks provider="hbo" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="hbo" />
+        </LazyLoadSection>
 
         {/* VIU Picks Section */}
-        <StreamingPicks provider="viu" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="viu" />
+        </LazyLoadSection>
 
         {/* Crunchyroll Anime Section */}
-        <StreamingPicks provider="crunchyroll" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="crunchyroll" />
+        </LazyLoadSection>
 
         {/* Peacock Picks Section */}
-        <StreamingPicks provider="peacock" />
+        <LazyLoadSection minHeight="350px">
+          <StreamingPicks provider="peacock" />
+        </LazyLoadSection>
 
 
       </div>

@@ -6,7 +6,7 @@ import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { getPosterAlt } from '../utils/altTextUtils';
 
-const BannerSlider = ({ movies, onItemClick }) => {
+const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -83,15 +83,19 @@ const BannerSlider = ({ movies, onItemClick }) => {
     setIsTrailerPlaying(false); // Stop trailer when changing slides
   };
 
-  if (!movies.length) return null;
+  // Determine if we should show skeleton (loading or no movies)
+  const showSkeleton = loading || !movies.length;
 
-  const currentMovie = movies[currentSlide];
+  // Safe currentMovie - use first movie or a placeholder object when no movies
+  const currentMovie = movies.length > 0 ? movies[currentSlide] : { id: 0 };
   const currentLogoKey = `${currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv')}_${currentMovie.id}`;
   const currentLogoPath = logoCache[currentLogoKey];
   const currentTrailerKey = trailerCache[currentLogoKey];
 
   // Fetch trailer for current movie
   useEffect(() => {
+    if (showSkeleton) return; // Skip fetch when in skeleton mode
+
     const fetchTrailer = async () => {
       if (!trailerCache[currentLogoKey] && currentMovie.id) {
         const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
@@ -105,7 +109,7 @@ const BannerSlider = ({ movies, onItemClick }) => {
     if (fetchVideos) {
       fetchTrailer();
     }
-  }, [currentMovie.id, currentLogoKey, fetchVideos]);
+  }, [currentMovie.id, currentLogoKey, fetchVideos, showSkeleton]);
 
   // Toggle trailer playback
   const toggleTrailer = () => {
@@ -195,6 +199,8 @@ const BannerSlider = ({ movies, onItemClick }) => {
 
   // Fetch content rating for current movie
   useEffect(() => {
+    if (showSkeleton) return; // Skip fetch when in skeleton mode
+
     const fetchRating = async () => {
       if (!ratingCache[currentLogoKey] && currentMovie.id) {
         const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
@@ -208,13 +214,15 @@ const BannerSlider = ({ movies, onItemClick }) => {
     if (fetchContentRating) {
       fetchRating();
     }
-  }, [currentMovie.id, currentLogoKey, fetchContentRating]);
+  }, [currentMovie.id, currentLogoKey, fetchContentRating, showSkeleton]);
 
   // Get content rating from cache or fallback
   const contentRating = ratingCache[currentLogoKey] || (currentMovie.adult ? 'R' : 'NR');
 
   // Fetch runtime for current movie/TV show
   useEffect(() => {
+    if (showSkeleton) return; // Skip fetch when in skeleton mode
+
     const fetchRuntime = async () => {
       if (!runtimeCache[currentLogoKey] && currentMovie.id) {
         const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
@@ -261,7 +269,7 @@ const BannerSlider = ({ movies, onItemClick }) => {
     if (fetchMovieDetails && fetchTVDetails && fetchSeasonEpisodes) {
       fetchRuntime();
     }
-  }, [currentMovie.id, currentLogoKey, fetchMovieDetails, fetchTVDetails, fetchSeasonEpisodes]);
+  }, [currentMovie.id, currentLogoKey, fetchMovieDetails, fetchTVDetails, fetchSeasonEpisodes, showSkeleton]);
 
   // Format runtime as "Xh Ym"
   const formatRuntime = (minutes) => {
@@ -294,6 +302,21 @@ const BannerSlider = ({ movies, onItemClick }) => {
     maxItems: 3 // Max slides to move per swipe on banner
   });
 
+  // Skeleton loading - shown when loading or no movies
+  if (showSkeleton) {
+    return (
+      <div className="banner-slider banner-skeleton">
+        <div className="banner-skeleton-backdrop" />
+        <div className="banner-skeleton-content">
+          <div className="banner-skeleton-title" />
+          <div className="banner-skeleton-meta" />
+          <div className="banner-skeleton-description" />
+          <div className="banner-skeleton-buttons" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="banner-slider">
       {/* Progress Bar */}
@@ -319,12 +342,15 @@ const BannerSlider = ({ movies, onItemClick }) => {
             />
           </div>
         ) : (
-          <div
-            className="banner-backdrop"
-            style={{
-              backgroundImage: `url(${BACKDROP_URL}${currentMovie.backdrop_path})`
-            }}
-          />
+          <div className="banner-backdrop">
+            <img
+              src={`${BACKDROP_URL}${currentMovie.backdrop_path}`}
+              alt={`${currentMovie.title || currentMovie.name} backdrop`}
+              className="banner-backdrop-img"
+              fetchPriority="high"
+              loading="eager"
+            />
+          </div>
         )}
 
         {/* Desktop Content - Hidden on Mobile */}
@@ -555,6 +581,8 @@ const BannerSlider = ({ movies, onItemClick }) => {
               <img
                 src={`${POSTER_URL}${currentMovie.poster_path}`}
                 alt={getPosterAlt(currentMovie)}
+                fetchPriority="high"
+                loading="eager"
               />
             </div>
             {/* Next Card */}

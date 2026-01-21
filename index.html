@@ -297,10 +297,9 @@
     </div>
   </div>
   <script>
-    // Track when splash screen started and if app is ready
+    // Splash screen logic - shows for minimum 2 seconds, then hides when React is ready
     const splashStartTime = Date.now();
-    const MIN_SPLASH_TIME = 2000; // 2 seconds - Industry standard
-    let appIsReady = false;
+    const MIN_SPLASH_TIME = 2000; // 2 seconds minimum splash
 
     function hideSplashScreen() {
       const loadingScreen = document.querySelector('.loading-screen');
@@ -335,10 +334,7 @@
     }
 
     // Listen for React app ready event
-    window.addEventListener('app-ready', () => {
-      appIsReady = true;
-      tryHideSplash();
-    });
+    window.addEventListener('app-ready', tryHideSplash);
 
     // Fallback: hide after 6 seconds if React never signals (safety net)
     setTimeout(hideSplashScreen, 6000);
