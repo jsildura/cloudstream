@@ -6746,7 +6746,7 @@ select.filter-dropdown {
     font-size: 11px;
     padding: 8px 14px;
     gap: 6px;
-    max-width: 90%;
+    max-width: 100%;
   }
 
   .watch-lazy-server-hint svg {
