@@ -221,7 +221,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 ) : (
                     displayContent.map((item, index) => {
                         const backdropSrc = item.backdrop_path
-                            ? `${BACKDROP_URL}${item.backdrop_path}`
+                            ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
                             : item.poster_path
                                 ? `https://image.tmdb.org/t/p/w780${item.poster_path}`
                                 : null;
