@@ -56,6 +56,14 @@
     transition: transform 0.2s ease;
 }
 
+/* Subtitle */
+.top-ten-section .top-ten-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
+    margin: 4px 0 0 0;
+}
+
 /* Carousel Container */
 .top-ten-section .top-ten-carousel {
     display: flex;

@@ -234,7 +234,7 @@
 /* Movie Card */
 .studio-movie-card {
     flex: 0 0 auto;
-    width: 280px;
+    width: 380px;
     cursor: pointer;
     transition: transform 0.2s ease;
 }

@@ -35,6 +35,7 @@ const NativeAd = () => {
             <div className="native-ad-header">
                 <div className="native-ad-header-left">
                     <h2 className="native-ad-title">Don't Miss Out</h2>
+                    <p className="native-ad-subtitle">Explore the Hype</p>
                 </div>
                 <span className="native-ad-badge">Ad</span>
             </div>

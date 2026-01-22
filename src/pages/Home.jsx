@@ -14,6 +14,7 @@ import MovieStudios from '../components/MovieStudios';
 import LazyLoadSection from '../components/LazyLoadSection';
 // VisitorStats disabled
 import TopTenRow from '../components/TopTenRow';
+import PopularOnStreamflix from '../components/PopularOnStreamflix';
 import NativeAd from '../components/NativeAd';
 import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
@@ -222,6 +223,9 @@ const Home = () => {
       <div className="content-rows">
         {/* Recommended For You - Only shows if user has watch history */}
         <RecommendedForYou onItemClick={handleItemClick} />
+
+        {/* Popular on Streamflix - Top 10 most-watched this week */}
+        <PopularOnStreamflix onItemClick={handleItemClick} />
 
         {/* Trending Today Section */}
         <TrendingSection timeWindow="day" onItemClick={handleItemClick} />

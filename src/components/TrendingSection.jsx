@@ -138,6 +138,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
     const mediaLabel = mediaType === 'movie' ? 'Movies' : 'TV Shows';
     const timeLabel = timeWindow === 'day' ? 'Today' : 'This Week';
     const title = `Trending ${mediaLabel} ${timeLabel}`;
+    const subtitle = timeWindow === 'day' ? "Watch the Best Today" : "Weekly Highlights";
 
     return (
         <div className="trending-section" aria-live="polite" aria-busy={loading}>
@@ -145,6 +146,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
             <div className="trending-section-header">
                 <div className="trending-section-header-left">
                     <h2 className="trending-section-title">{title}</h2>
+                    <p className="trending-section-subtitle">{subtitle}</p>
                 </div>
 
                 {/* Media Type Filter Buttons */}

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import { useToast } from '../contexts/ToastContext';
 import useWatchHistory from '../hooks/useWatchHistory';
+import usePopularTracking from '../hooks/usePopularTracking';
 import { serverConfig, buildServerUrl } from '../config/servers';
 import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
@@ -81,6 +82,7 @@ const Watch = () => {
   const { POSTER_URL } = useTMDB();
   const { showNowPlaying } = useToast();
   const { addToHistory } = useWatchHistory();
+  const { trackWatch } = usePopularTracking();
   const hasShownToast = useRef(false);
   const wakeLockRef = useRef(null);
 
@@ -226,8 +228,14 @@ const Watch = () => {
           totalSeasons: seasons.length,
         }),
       });
+
+      // Track view for "Popular on Streamflix" section
+      trackWatch(contentInfo.id, type, {
+        title: contentInfo.title || contentInfo.name,
+        poster_path: contentInfo.poster_path
+      });
     }
-  }, [playerLoaded, contentInfo, currentSeason, currentEpisode, type, seasons.length, addToHistory]);
+  }, [playerLoaded, contentInfo, currentSeason, currentEpisode, type, seasons.length, addToHistory, trackWatch]);
 
   const isBot = () => {
     if (typeof navigator === 'undefined') return false;

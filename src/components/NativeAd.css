@@ -15,8 +15,9 @@
 
 .native-ad-header-left {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
     flex: 1;
 }
 
@@ -24,6 +25,13 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: #fff;
+    margin: 0;
+}
+
+.native-ad-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 400;
     margin: 0;
 }
 

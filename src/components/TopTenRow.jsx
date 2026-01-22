@@ -226,6 +226,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             <h2 className="top-ten-title">
                 Top 10 in {countryName}
             </h2>
+            <p className="top-ten-subtitle">What {countryName} is Watching</p>
 
             <div
                 className={`top-ten-carousel${isDragging ? ' dragging' : ''}`}

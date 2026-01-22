@@ -161,6 +161,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                     <h2 className="trending-section-title">
                         {animeType === 'movie' ? 'Trending Anime Movies' : 'Trending Anime Series'}
                     </h2>
+                    <p className="trending-section-subtitle">Animated Hits from Japan & Beyond</p>
                 </div>
 
                 {/* Anime Type Filter Buttons */}
