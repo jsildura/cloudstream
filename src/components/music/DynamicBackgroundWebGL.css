@@ -1,0 +1,35 @@
+/* DynamicBackgroundWebGL.css - WebGL animated background styles */
+
+.dynamic-background-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    /* Dark overlay removed for fullscreen vibrancy */
+    background: transparent;
+}
+
+.dynamic-background-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Apply blur for soft gradient effect */
+    filter: blur(50px);
+    transform: scale(1.2);
+    opacity: 0.6;
+}
+
+/* Fallback gradient when WebGL is not available */
+.dynamic-background-container.no-webgl {
+    background: linear-gradient(135deg,
+            rgba(15, 23, 42, 1) 0%,
+            rgba(30, 41, 59, 1) 50%,
+            rgba(15, 23, 42, 1) 100%);
+}

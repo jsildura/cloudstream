@@ -253,13 +253,30 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                         </div>
                                     )}
                                     <div className="popular-streamflix-rank">{index + 1}</div>
-                                    {logoSrc && (
+                                    {logoSrc ? (
                                         <div className="popular-streamflix-logo-overlay">
                                             <img
                                                 src={logoSrc}
                                                 alt={item.title || 'Content logo'}
                                                 draggable="false"
                                             />
+                                        </div>
+                                    ) : (
+                                        <div className="popular-streamflix-title-overlay">
+                                            {(() => {
+                                                const words = (item.title || '').split(' ');
+                                                if (words.length === 1) {
+                                                    return <span className="popular-streamflix-title-last">{words[0]}</span>;
+                                                }
+                                                const lastWord = words.pop();
+                                                return (
+                                                    <>
+                                                        <span>{words.join(' ')}</span>
+                                                        <span>&nbsp;</span>
+                                                        <span className="popular-streamflix-title-last">{lastWord}</span>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </div>

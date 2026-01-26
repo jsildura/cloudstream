@@ -65,18 +65,9 @@ const AdblockModal = () => {
                     baitContainer.parentNode.removeChild(baitContainer);
                 }
 
-                // Additional check: Try to fetch a known ad-related domain
-                try {
-                    const response = await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
-                        method: 'HEAD',
-                        mode: 'no-cors',
-                        cache: 'no-store'
-                    });
-                    // If we get here without error, ads might be working
-                } catch (e) {
-                    // Fetch blocked - likely ad blocker
-                    blocked = true;
-                }
+                // Note: We intentionally do NOT check fetch to ad domains here
+                // because network failures, CORS issues, and connectivity problems
+                // can cause false positives. The bait element check above is more reliable.
 
             } catch (error) {
                 console.error('Adblock detection error:', error);

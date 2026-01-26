@@ -1,0 +1,583 @@
+/**
+ * Music Global Styles
+ * 
+ * Ported from tidal-ui/src/app.css
+ * Design system tokens, glass effects, animations, performance optimizations
+ */
+
+/* ============================================
+   DESIGN SYSTEM TOKENS
+   ============================================ */
+
+/* Performance-optimized blur and effects */
+:root[data-music-performance='medium'] {
+    --perf-blur-high: 22px;
+    --perf-blur-medium: 18px;
+    --perf-blur-low: 14px;
+    --perf-saturate: 125%;
+}
+
+:root[data-music-performance='low'] {
+    --perf-blur-high: 0px;
+    --perf-blur-medium: 0px;
+    --perf-blur-low: 0px;
+    --perf-saturate: 100%;
+}
+
+:root[data-music-performance='low'] .music-app * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-music-performance='low'] .music-app .glass-panel,
+:root[data-music-performance='low'] .music-app .glass-toolbar,
+:root[data-music-performance='low'] .music-app .settings-menu,
+:root[data-music-performance='low'] .music-app .audio-player {
+    background-color: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.2) !important;
+    box-shadow: none !important;
+}
+
+:root:not([data-music-performance='medium']):not([data-music-performance='low']) {
+    --perf-blur-high: 32px;
+    --perf-blur-medium: 28px;
+    --perf-blur-low: 24px;
+    --perf-saturate: 160%;
+}
+
+/* Enhanced Color Palette for Music */
+:root {
+    /* Primary Blues */
+    --music-color-primary-50: #eff6ff;
+    --music-color-primary-100: #dbeafe;
+    --music-color-primary-200: #bfdbfe;
+    --music-color-primary-300: #93c5fd;
+    --music-color-primary-400: #60a5fa;
+    --music-color-primary-500: #3b82f6;
+    --music-color-primary-600: #2563eb;
+    --music-color-primary-700: #1d4ed8;
+    --music-color-primary-800: #1e40af;
+    --music-color-primary-900: #1e3a8a;
+
+    /* Accent Purples */
+    --music-color-accent-400: #a78bfa;
+    --music-color-accent-500: #8b5cf6;
+    --music-color-accent-600: #7c3aed;
+
+    /* Gradients */
+    --music-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --music-gradient-hero: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --music-gradient-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+
+    /* Neutrals (Slate) */
+    --music-color-neutral-50: #f8fafc;
+    --music-color-neutral-100: #f1f5f9;
+    --music-color-neutral-200: #e2e8f0;
+    --music-color-neutral-300: #cbd5e1;
+    --music-color-neutral-400: #94a3b8;
+    --music-color-neutral-500: #64748b;
+    --music-color-neutral-600: #475569;
+    --music-color-neutral-700: #334155;
+    --music-color-neutral-800: #1e293b;
+    --music-color-neutral-900: #0f172a;
+    --music-color-neutral-950: #020617;
+
+    /* Semantic Colors */
+    --music-color-success: #22c55e;
+    --music-color-warning: #f59e0b;
+    --music-color-error: #ef4444;
+
+    /* Spacing Scale */
+    --music-space-1: 0.25rem;
+    --music-space-2: 0.5rem;
+    --music-space-3: 0.75rem;
+    --music-space-4: 1rem;
+    --music-space-5: 1.25rem;
+    --music-space-6: 1.5rem;
+    --music-space-8: 2rem;
+    --music-space-10: 2.5rem;
+    --music-space-12: 3rem;
+    --music-space-16: 4rem;
+
+    /* Border Radius */
+    --music-radius-sm: 0.375rem;
+    --music-radius-md: 0.5rem;
+    --music-radius-lg: 0.75rem;
+    --music-radius-xl: 1rem;
+    --music-radius-2xl: 1.25rem;
+    --music-radius-full: 9999px;
+
+    /* Shadows */
+    --music-shadow-glow-sm: 0 0 10px rgba(102, 126, 234, 0.15);
+    --music-shadow-glow-md: 0 0 20px rgba(102, 126, 234, 0.2);
+    --music-shadow-glow-lg: 0 0 40px rgba(102, 126, 234, 0.25);
+
+    /* Transitions */
+    --music-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --music-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --music-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --music-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ============================================
+   GRADIENT UTILITIES
+   ============================================ */
+
+.music-gradient-primary {
+    background: var(--music-gradient-primary);
+}
+
+.music-gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.music-gradient-text-hero {
+    background: var(--music-gradient-hero);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: music-gradient-shift 8s ease infinite;
+}
+
+@keyframes music-gradient-shift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* ============================================
+   GLASS EFFECT UTILITIES
+   ============================================ */
+
+.music-glass-subtle {
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(var(--perf-blur-low, 24px)) saturate(var(--perf-saturate, 160%));
+    -webkit-backdrop-filter: blur(var(--perf-blur-low, 24px)) saturate(var(--perf-saturate, 160%));
+    border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.music-glass-medium {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(var(--perf-blur-medium, 28px)) saturate(var(--perf-saturate, 160%));
+    -webkit-backdrop-filter: blur(var(--perf-blur-medium, 28px)) saturate(var(--perf-saturate, 160%));
+    border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.music-glass-strong {
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(var(--perf-blur-high, 32px)) saturate(var(--perf-saturate, 160%));
+    -webkit-backdrop-filter: blur(var(--perf-blur-high, 32px)) saturate(var(--perf-saturate, 160%));
+    border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+/* ============================================
+   HOVER AND INTERACTION EFFECTS
+   ============================================ */
+
+.music-hover-lift {
+    transition: transform var(--music-transition-base), box-shadow var(--music-transition-base);
+}
+
+.music-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.music-glow-on-hover {
+    transition: box-shadow var(--music-transition-base);
+}
+
+.music-glow-on-hover:hover {
+    box-shadow: var(--music-shadow-glow-md);
+}
+
+.music-card-interactive {
+    transition:
+        transform var(--music-transition-base),
+        box-shadow var(--music-transition-base),
+        border-color var(--music-transition-slow);
+}
+
+.music-card-interactive:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow:
+        0 20px 50px rgba(2, 6, 23, 0.4),
+        var(--music-shadow-glow-sm);
+    border-color: rgba(148, 163, 184, 0.25);
+}
+
+/* ============================================
+   MOBILE PERFORMANCE OPTIMIZATIONS
+   ============================================ */
+
+@media (max-width: 768px) {
+    :root:not([data-music-performance='low']) {
+        --perf-blur-high: 16px;
+        --perf-blur-medium: 12px;
+        --perf-blur-low: 8px;
+        --perf-saturate: 130%;
+    }
+
+    :root[data-music-performance='medium'] {
+        --perf-blur-high: 12px;
+        --perf-blur-medium: 8px;
+        --perf-blur-low: 6px;
+        --perf-saturate: 120%;
+    }
+}
+
+/* Touch device optimizations */
+@media (pointer: coarse) {
+    .music-hover-lift:hover {
+        transform: none;
+    }
+
+    .music-hover-lift:active {
+        transform: scale(0.98);
+    }
+
+    .music-card-interactive:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .music-card-interactive:active {
+        transform: scale(0.99);
+        background: rgba(148, 163, 184, 0.08);
+    }
+}
+
+/* ============================================
+   ANIMATION KEYFRAMES
+   ============================================ */
+
+@keyframes music-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes music-fade-out {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes music-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes music-slide-down {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes music-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes music-pulse-subtle {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes music-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes music-bounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes music-equalizer {
+
+    0%,
+    100% {
+        transform: scaleY(0.3);
+    }
+
+    50% {
+        transform: scaleY(1);
+    }
+}
+
+/* Animation utilities */
+.music-animate-fade-in {
+    animation: music-fade-in 0.2s ease forwards;
+}
+
+.music-animate-slide-up {
+    animation: music-slide-up 0.3s ease forwards;
+}
+
+.music-animate-scale-in {
+    animation: music-scale-in 0.2s ease forwards;
+}
+
+.music-animate-pulse {
+    animation: music-pulse-subtle 2s ease-in-out infinite;
+}
+
+.music-animate-spin {
+    animation: music-spin 1s linear infinite;
+}
+
+/* ============================================
+   REDUCED MOTION PREFERENCES
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .music-app *,
+    .music-app *::before,
+    .music-app *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .music-gradient-text-hero {
+        animation: none;
+        background-size: 100% 100%;
+    }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+.music-app ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.music-app ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: 4px;
+}
+
+.music-app ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 4px;
+}
+
+.music-app ::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+.music-app * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.3) rgba(15, 23, 42, 0.3);
+}
+
+/* ============================================
+   QUALITY BADGES
+   ============================================ */
+
+.music-quality-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.125rem 0.375rem;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.music-quality-badge--hires,
+.music-quality-badge--max {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+    color: #fbbf24;
+}
+
+.music-quality-badge--lossless,
+.music-quality-badge--cd {
+    background: rgba(102, 126, 234, 0.15);
+    color: rgba(102, 126, 234, 0.9);
+}
+
+.music-quality-badge--atmos {
+    background: rgba(139, 92, 246, 0.15);
+    color: rgba(139, 92, 246, 0.9);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.music-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 24px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--music-transition-base);
+}
+
+.music-btn--primary {
+    background: #fff;
+    color: #0a0a0f;
+}
+
+.music-btn--primary:hover:not(:disabled) {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+.music-btn--secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.music-btn--secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.music-btn--ghost {
+    background: transparent;
+    color: rgba(148, 163, 184, 0.8);
+}
+
+.music-btn--ghost:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.music-btn--icon {
+    padding: 0.625rem;
+    border-radius: 50%;
+}
+
+.music-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   INPUT STYLES
+   ============================================ */
+
+.music-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #fff;
+    font-size: 0.9375rem;
+    transition: all var(--music-transition-base);
+}
+
+.music-input::placeholder {
+    color: rgba(148, 163, 184, 0.5);
+}
+
+.music-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(102, 126, 234, 0.4);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ============================================
+   GPU ACCELERATION & CONTAINMENT
+   ============================================ */
+
+.music-gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.music-contain-layout {
+    contain: layout;
+}
+
+.music-contain-paint {
+    contain: paint;
+}
+
+.music-contain-content {
+    contain: content;
+}
+
+/* ============================================
+   SAFE AREA PADDING
+   ============================================ */
+
+.music-safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.music-safe-area-x {
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+}

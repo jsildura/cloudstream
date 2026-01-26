@@ -1,0 +1,146 @@
+/* DynamicBackground.css - Dynamic album art background */
+
+.dynamic-background {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.dynamic-background--static {
+    background: linear-gradient(180deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+}
+
+/* Background Image */
+.dynamic-background__image {
+    position: absolute;
+    inset: -50px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(80px) saturate(1.2);
+    opacity: 0.3;
+    transform: scale(1.1);
+    transition: opacity 0.5s ease;
+}
+
+.dynamic-background__image--in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+.dynamic-background__image--out {
+    animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(1.15);
+    }
+
+    to {
+        opacity: 0.3;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 0.3;
+        transform: scale(1.1);
+    }
+
+    to {
+        opacity: 0;
+        transform: scale(1.05);
+    }
+}
+
+/* Gradient Overlay */
+.dynamic-background__gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+            rgba(10, 10, 15, 0.7) 0%,
+            rgba(10, 10, 15, 0.5) 40%,
+            rgba(10, 10, 15, 0.8) 70%,
+            rgba(10, 10, 15, 0.95) 100%);
+}
+
+/* Animated Orbs */
+.dynamic-background__orbs {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
+
+.dynamic-background__orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    opacity: 0.15;
+    animation: float 20s ease-in-out infinite;
+}
+
+.dynamic-background__orb--1 {
+    width: 400px;
+    height: 400px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    top: 10%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.dynamic-background__orb--2 {
+    width: 350px;
+    height: 350px;
+    background: linear-gradient(135deg, #764ba2, #667eea);
+    top: 40%;
+    right: 10%;
+    animation-delay: -7s;
+}
+
+.dynamic-background__orb--3 {
+    width: 300px;
+    height: 300px;
+    background: linear-gradient(135deg, #1a1a2e, #667eea);
+    bottom: 10%;
+    left: 40%;
+    animation-delay: -14s;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    25% {
+        transform: translate(30px, -30px) scale(1.05);
+    }
+
+    50% {
+        transform: translate(-20px, 20px) scale(0.95);
+    }
+
+    75% {
+        transform: translate(-30px, -20px) scale(1.02);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .dynamic-background__image {
+        transition: opacity 0.3s ease;
+    }
+
+    .dynamic-background__image--in,
+    .dynamic-background__image--out {
+        animation: none;
+    }
+
+    .dynamic-background__orb {
+        animation: none;
+    }
+}

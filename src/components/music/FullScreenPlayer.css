@@ -1,0 +1,288 @@
+.fullscreen-player {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: slideUpFullscreen 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes slideUpFullscreen {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.fullscreen-player__bg {
+    position: absolute !important;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 1;
+}
+
+/* Content Layout */
+.fullscreen-player__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+    width: 100%;
+    /* No padding here, container handles logic */
+    padding: 0;
+    height: 100%;
+    overflow-y: auto;
+}
+
+/* 
+   Key constraint: match width to the square art. 
+   Set max-width based on height to ensure square art fits and controls match width.
+*/
+.fullscreen-player__center-container {
+    width: 100%;
+    /* Reduce to 65vh to leave vertical space for controls */
+    max-width: min(65vh, 88vw);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    padding-bottom: 40px;
+    padding-top: 6vh;
+    /* Add visual breathing room at top */
+}
+
+/* Album Art */
+.fullscreen-player__art-section {
+    flex: 1;
+    /* Remove padding as requested */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Ensure it doesn't collapse */
+    min-height: 200px;
+    margin-bottom: 30px;
+}
+
+.fullscreen-player__art-wrapper {
+    position: relative;
+    width: 100%;
+    /* Ensure aspect ratio 1/1 holds the width */
+    aspect-ratio: 1/1;
+    max-height: 100%;
+    /* Safety clamp */
+    border-radius: 12px;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.fullscreen-player__art {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+    display: block;
+}
+
+.fullscreen-player__art.is-paused {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+}
+
+/* Metadata */
+.fullscreen-player__metadata {
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.fullscreen-player__text-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+}
+
+.fullscreen-player__title {
+    font-size: 1.25rem;
+    /* Reduced from 1.6rem */
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fullscreen-player__artist {
+    font-size: 1rem;
+    /* Reduced from 1.2rem */
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Progress Section */
+.fullscreen-player__progress-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.fullscreen-player__progress-bar {
+    height: 4px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+    transition: height 0.2s;
+}
+
+.fullscreen-player__progress-bar:hover {
+    height: 6px;
+}
+
+.fullscreen-player__progress-fill {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+/* Thumb */
+.fullscreen-player__progress-thumb {
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.fullscreen-player__progress-bar:hover .fullscreen-player__progress-thumb {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.0);
+}
+
+.fullscreen-player__time-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    margin-top: -2px;
+}
+
+/* Controls Row */
+.fullscreen-player__controls-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.fullscreen-player__more-btn {
+    grid-column: 1;
+    justify-self: start;
+}
+
+.fullscreen-player__playback-group {
+    grid-column: 2;
+    justify-self: center;
+    display: flex;
+    align-items: center;
+    gap: 60px;
+}
+
+.fullscreen-player__lyrics-btn {
+    grid-column: 3;
+    justify-self: end;
+}
+
+.fullscreen-player__control-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, opacity 0.1s;
+}
+
+.fullscreen-player__control-btn:active {
+    transform: scale(0.9);
+    opacity: 0.7;
+}
+
+.fullscreen-player__control-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* More and Lyrics buttons color */
+.fullscreen-player__more-btn,
+.fullscreen-player__lyrics-btn {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.fullscreen-player__more-btn:hover,
+.fullscreen-player__lyrics-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+}
+
+/* Sizing specific icons */
+.fullscreen-player__play-btn svg {
+    width: 48px;
+    /* Reduced from 65px */
+    height: 48px;
+}
+
+.fullscreen-player__skip-btn svg {
+    width: 32px;
+    /* Reduced from 40px */
+    height: 32px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .fullscreen-player__center-container {
+        /* On mobile, use width based logic */
+        max-width: 88vw;
+        padding-bottom: 30px;
+    }
+
+    .fullscreen-player__art-section {
+        margin-bottom: 20px;
+    }
+
+    .fullscreen-player__playback-group {
+        gap: 40px;
+    }
+
+    .fullscreen-player__title {
+        font-size: 1.4rem;
+    }
+}

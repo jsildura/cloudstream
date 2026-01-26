@@ -26,31 +26,21 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - network first with error handling
+// Fetch event - only intercept same-origin requests
 self.addEventListener('fetch', (event) => {
-    // Just pass through to network - no caching for now
-    // This satisfies PWA requirements while keeping the app always up-to-date
+    // Get the request URL
+    const url = new URL(event.request.url);
+
+    // Skip cross-origin requests entirely - let the browser handle them natively
+    // This prevents Cross-Origin-Resource-Policy (CORP) errors
+    if (url.origin !== self.location.origin) {
+        return; // Don't call event.respondWith, let it pass through
+    }
+
+    // Only handle same-origin requests
     event.respondWith(
         fetch(event.request).catch((error) => {
-            // Silently handle failures for ad scripts and external resources
-            // Common ad domains to ignore
-            const adDomains = [
-                'effectivegatecpm.com',
-                'adsterra',
-                'doubleclick',
-                'googlesyndication',
-                'googleadservices'
-            ];
-
-            const isAdScript = adDomains.some(domain =>
-                event.request.url.includes(domain)
-            );
-
-            // Only log non-ad failures
-            if (!isAdScript) {
-                console.log('Fetch failed for:', event.request.url, error);
-            }
-
+            console.log('Fetch failed for:', event.request.url, error);
             // Return empty response to prevent errors
             return new Response('', {
                 status: 503,

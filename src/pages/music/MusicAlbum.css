@@ -1,0 +1,306 @@
+/* MusicAlbum.css - Album page styles */
+
+.music-album {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+    padding: 1rem;
+    margin: 0;
+    width: 100%;
+    max-width: 1400px;
+    box-sizing: border-box;
+}
+
+.music-album--loading,
+.music-album--error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 400px;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.music-album--error button {
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.music-album__spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Back Button */
+.music-album__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(148, 163, 184, 0.8);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-left: -0.75rem;
+}
+
+.music-album__back:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+/* Header */
+.music-album__header {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-end;
+}
+
+.music-album__cover {
+    width: 280px;
+    height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.music-album__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.music-album__cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(148, 163, 184, 0.4);
+}
+
+/* Info */
+.music-album__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.music-album__type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.music-album__title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.music-album__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: rgba(148, 163, 184, 0.8);
+}
+
+.music-album__artist {
+    font-weight: 500;
+    color: #fff;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.music-album__artist:hover {
+    color: #667eea;
+}
+
+.music-album__separator {
+    color: rgba(148, 163, 184, 0.4);
+}
+
+.music-album__year,
+.music-album__duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.music-album__quality {
+    display: inline-flex;
+    padding: 0.25rem 0.625rem;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 0.5rem;
+}
+
+.music-album__quality--hireslossless {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+    color: #fbbf24;
+}
+
+.music-album__quality--lossless {
+    background: rgba(102, 126, 234, 0.15);
+    color: rgba(102, 126, 234, 0.9);
+}
+
+/* Actions */
+.music-album__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.music-album__btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.50rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.music-album__btn--primary {
+    background: #fff;
+    color: #0a0a0f;
+}
+
+.music-album__btn--primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+.music-album__btn--secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.music-album__btn--secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.music-album__btn--secondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Download Progress Button */
+.music-album__btn--downloading {
+    position: relative;
+    overflow: hidden;
+    background: rgba(102, 126, 234, 0.2);
+    color: #fff;
+}
+
+.music-album__btn--downloading::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg,
+            rgba(102, 126, 234, 0.4) 0%,
+            rgba(102, 126, 234, 0.4) var(--download-progress, 0%),
+            transparent var(--download-progress, 0%));
+    transition: background 0.3s ease;
+    z-index: 0;
+}
+
+.music-album__btn--downloading>* {
+    position: relative;
+    z-index: 1;
+}
+
+.music-album__btn--downloading .music-album__spinner {
+    margin-right: 0.25rem;
+}
+
+/* Tracks */
+.music-album__tracks {
+    margin-top: 1rem;
+}
+
+/* Copyright */
+.music-album__copyright {
+    font-size: 0.75rem;
+    color: rgba(148, 163, 184, 0.5);
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .music-album__header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .music-album__cover {
+        width: 200px;
+        height: 200px;
+    }
+
+    .music-album__info {
+        align-items: center;
+    }
+
+    .music-album__title {
+        font-size: 1.75rem;
+    }
+
+    .music-album__meta {
+        justify-content: center;
+    }
+
+    .music-album__actions {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 900px) {
+    .music-album__actions {
+        flex-wrap: wrap;
+    }
+}
+
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .music-album {
+        padding: 1rem 3.5rem;
+    }
+}

@@ -391,13 +391,31 @@ const MovieStudios = () => {
                                                 </div>
                                             )}
                                             <div className="studio-movie-rank">{index + 1}</div>
-                                            {movieLogos[movie.id] && (
+                                            {movieLogos[movie.id] ? (
                                                 <div className="studio-movie-logo-overlay">
                                                     <img
                                                         src={`${LOGO_URL}${movieLogos[movie.id]}`}
                                                         alt={movie.name || movie.title}
                                                         draggable="false"
                                                     />
+                                                </div>
+                                            ) : (
+                                                <div className="studio-movie-title-overlay">
+                                                    {(() => {
+                                                        const title = movie.name || movie.title || '';
+                                                        const words = title.split(' ');
+                                                        if (words.length === 1) {
+                                                            return <span className="studio-movie-title-last">{words[0]}</span>;
+                                                        }
+                                                        const lastWord = words.pop();
+                                                        return (
+                                                            <>
+                                                                <span>{words.join(' ')}</span>
+                                                                <span>&nbsp;</span>
+                                                                <span className="studio-movie-title-last">{lastWord}</span>
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </div>
                                             )}
                                         </div>

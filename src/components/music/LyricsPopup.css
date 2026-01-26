@@ -1,0 +1,311 @@
+/* LyricsPopup.css - Lyrics popup modal styles */
+/* Ported from tidal-ui LyricsPopup.svelte */
+
+.lyrics-popup__overlay {
+    position: fixed;
+    top: 70px;
+    /* Below navbar */
+    left: 0;
+    right: 0;
+    bottom: var(--audio-player-height, 110px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    z-index: 90;
+    animation: lyricsOverlayFadeIn 0.25s ease;
+}
+
+@keyframes lyricsOverlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.lyrics-popup {
+    width: min(900px, calc(100% - 2rem));
+    height: clamp(400px, 65vh, 600px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 1.25rem;
+    background: rgba(20, 25, 35, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    backdrop-filter: blur(32px) saturate(160%);
+    -webkit-backdrop-filter: blur(32px) saturate(160%);
+    box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.5),
+        0 4px 18px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+    animation: lyricsPopupSlideUp 0.3s ease;
+    transition:
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.lyrics-popup--maximized {
+    width: calc(100% - 2rem);
+    height: calc(100% - 1rem);
+    max-width: none;
+    max-height: none;
+    border-radius: 1rem;
+}
+
+@keyframes lyricsPopupSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header */
+.lyrics-popup__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(71, 85, 105, 0.35);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.lyrics-popup__heading {
+    flex: 1;
+    min-width: 0;
+}
+
+.lyrics-popup__title-text {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #f8fafc;
+}
+
+.lyrics-popup__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.875rem;
+    color: rgba(203, 213, 245, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.lyrics-popup__album {
+    margin: 0.15rem 0 0;
+    font-size: 0.75rem;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.lyrics-popup__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.lyrics-popup__icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(226, 232, 240, 0.9);
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease,
+        box-shadow 160ms ease;
+}
+
+.lyrics-popup__icon-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.lyrics-popup__icon-button:not(:disabled):hover {
+    background: rgba(96, 165, 250, 0.15);
+    border-color: rgba(96, 165, 250, 0.5);
+    transform: scale(1.05);
+}
+
+.lyrics-popup__icon-button .animate-spin {
+    animation: lyricsSpin 0.8s linear infinite;
+}
+
+@keyframes lyricsSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Body */
+.lyrics-popup__body {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    overflow: hidden;
+}
+
+.lyrics-popup__component-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    border-radius: 0.875rem;
+    background: rgba(10, 15, 25, 0.7);
+    border: 1px solid rgba(59, 73, 99, 0.4);
+    overflow: hidden;
+}
+
+.am-lyrics-element {
+    flex: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    color: inherit;
+}
+
+.am-lyrics-element::part(container) {
+    padding: 1.5rem;
+    padding-block: 2.5rem;
+    box-sizing: border-box;
+}
+
+.am-lyrics-element::part(line) {
+    scroll-margin-block-start: min(32vh, 9rem);
+    scroll-margin-block-end: min(28vh, 7rem);
+}
+
+/* Maximized state font scaling */
+@media (min-width: 640px) {
+    .lyrics-popup--maximized .am-lyrics-element {
+        font-size: clamp(1.05rem, 0.85rem + 1.2vw, 1.85rem);
+        line-height: 1.6;
+        letter-spacing: 0.01em;
+    }
+
+    .lyrics-popup--maximized .am-lyrics-element::part(line) {
+        padding-block: clamp(0.65rem, 0.45rem + 0.8vw, 1.2rem);
+    }
+}
+
+/* Placeholder states */
+.lyrics-popup__placeholder {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+    color: rgba(203, 213, 245, 0.7);
+    padding: 2rem;
+}
+
+.lyrics-popup__message {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.lyrics-popup__retry {
+    border: 1px solid rgba(96, 165, 250, 0.6);
+    background: rgba(96, 165, 250, 0.1);
+    color: #bfdbfe;
+    border-radius: 9999px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background 160ms ease,
+        border-color 160ms ease;
+}
+
+.lyrics-popup__retry:hover {
+    background: rgba(96, 165, 250, 0.2);
+    border-color: rgba(147, 197, 253, 0.8);
+}
+
+.lyrics-popup__spinner {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 2px solid rgba(148, 163, 184, 0.3);
+    border-top-color: rgba(148, 163, 184, 0.9);
+    animation: lyricsSpin 0.85s linear infinite;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .lyrics-popup__overlay {
+        padding: 0;
+        align-items: stretch;
+        justify-content: stretch;
+        top: 60px;
+        bottom: 0;
+    }
+
+    .lyrics-popup {
+        border-radius: 0;
+        border: none;
+        width: 100%;
+        height: 100%;
+        max-height: none;
+    }
+
+    .lyrics-popup__header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+
+    .lyrics-popup__header-actions {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
+    .lyrics-popup__body {
+        padding: 0.75rem;
+    }
+
+    .lyrics-popup__component-wrapper {
+        border-radius: 0.75rem;
+    }
+
+    /* Hide maximize button on mobile - already full screen */
+    .lyrics-popup__icon-button[aria-label*="aximize"] {
+        display: none;
+    }
+
+    .am-lyrics-element::part(container) {
+        padding: 1.5rem;
+        padding-block: 2.5rem;
+    }
+
+    .am-lyrics-element::part(line) {
+        scroll-margin-block-start: min(40vh, 9rem);
+        scroll-margin-block-end: min(28vh, 6.5rem);
+    }
+}

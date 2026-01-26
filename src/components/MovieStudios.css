@@ -326,6 +326,37 @@
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
 }
 
+/* Title Overlay Fallback (when no logo) */
+.studio-movie-title-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 60%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: flex-end;
+    text-align: right;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-style: italic;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+}
+
+.studio-movie-title-overlay span {
+    display: inline;
+}
+
+.studio-movie-title-last {
+    color: #e50914;
+}
+
 /* Loading Skeleton */
 .studio-movies-loading {
     padding: 4px 0;
@@ -453,6 +484,10 @@
 
     .studio-movie-logo-overlay img {
         max-height: 40px;
+    }
+
+    .studio-movie-title-overlay {
+        font-size: 0.85rem;
     }
 
     .studio-movies-view-all {
@@ -671,5 +706,9 @@
     .studio-movies-header-accent {
         height: 96px;
         width: 16px;
+    }
+
+    .studio-movie-title-overlay {
+        font-size: 2rem;
     }
 }

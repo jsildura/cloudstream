@@ -1,0 +1,110 @@
+/* TrackMenu.css */
+
+.track-menu-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: transparent;
+}
+
+.track-menu {
+    position: fixed;
+    z-index: 9999;
+    min-width: 220px;
+    background: rgba(30, 30, 35, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    padding: 0.5rem;
+    animation: menu-fade-in 0.15s ease-out;
+    color: #fff;
+    font-size: 0.875rem;
+}
+
+@keyframes menu-fade-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.track-menu__group {
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.track-menu__group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.track-menu__group:first-child {
+    padding-top: 0;
+}
+
+.track-menu__item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.875rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+}
+
+.track-menu__item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.track-menu__item svg {
+    opacity: 0.7;
+}
+
+.track-menu__item:hover svg {
+    opacity: 1;
+}
+
+/* Toast Notification for actions */
+.track-menu-toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 30, 35, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    padding: 0.75rem 1.5rem;
+    border-radius: 24px;
+    z-index: 10000;
+    font-size: 0.875rem;
+    animation: toast-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes toast-slide-up {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}

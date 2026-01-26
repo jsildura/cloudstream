@@ -1,0 +1,175 @@
+/* MusicHomeSkeleton.css */
+
+.music-home-skeleton {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.5rem;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    animation: fadeIn 0.3s ease;
+}
+
+.music-home-skeleton * {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.music-home-skeleton__hero {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 0 3rem;
+    text-align: center;
+}
+
+.music-home-skeleton__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 600px;
+}
+
+.music-home-skeleton__title-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.music-home-skeleton__title {
+    width: 300px;
+    height: 3.5rem;
+    border-radius: 8px;
+}
+
+.music-home-skeleton__version {
+    width: 40px;
+    height: 1.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.music-home-skeleton__slogan {
+    width: 400px;
+    height: 1.25rem;
+    border-radius: 4px;
+}
+
+.music-home-skeleton__search {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.music-home-skeleton__input-wrapper {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.music-home-skeleton__input {
+    flex: 1;
+    height: 54px;
+    /* Matches input height */
+    border-radius: 12px;
+}
+
+.music-home-skeleton__settings {
+    width: 140px;
+    height: 54px;
+    border-radius: 12px;
+}
+
+.music-home-skeleton__tabs {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    width: 100%;
+}
+
+.music-home-skeleton__tab {
+    flex: 1;
+    height: 42px;
+    border-radius: 8px;
+}
+
+/* Animation */
+.skeleton-pulse {
+    background: rgba(255, 255, 255, 0.05);
+    animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    50% {
+        opacity: 0.7;
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .music-home-skeleton {
+        padding: 0;
+    }
+
+    .music-home-skeleton__hero {
+        padding: 1rem 1rem 2rem;
+        /* Reduced padding to match pages */
+    }
+
+    .music-home-skeleton__title-wrapper {
+        width: 100%;
+    }
+
+    .music-home-skeleton__title {
+        width: 60%;
+        max-width: 300px;
+        height: 3rem;
+        /* Slightly smaller height */
+    }
+
+    .music-home-skeleton__slogan {
+        width: 80%;
+        max-width: 400px;
+    }
+
+    .music-home-skeleton__search {
+        padding: 0 1rem;
+        box-sizing: border-box;
+    }
+
+    .music-home-skeleton__input-wrapper {
+        flex-direction: row;
+        gap: 0.75rem;
+    }
+
+    .music-home-skeleton__settings {
+        width: 50px;
+        /* Exact match to 50px button */
+        height: 54px;
+        border-radius: 12px;
+    }
+
+    .music-home-skeleton__tabs {
+        overflow-x: auto;
+    }
+
+    .music-home-skeleton__tab {
+        flex: 1;
+        min-width: 0;
+    }
+}

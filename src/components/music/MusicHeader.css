@@ -1,0 +1,388 @@
+/* MusicHeader.css - Header and settings menu styles */
+
+.music-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 0;
+    /* Slightly tighter padding */
+    margin: 0 1.7rem;
+}
+
+@media (max-width: 768px) {
+    .music-header {
+        margin: 0;
+        padding-left: 1rem;
+        /* Add internal padding since we removed external margin */
+        padding-right: 1rem;
+    }
+}
+
+.music-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 1600px;
+    /* Constraint width if needed, but flex usually handles it */
+    margin: 0 auto;
+    padding: 0 1.5rem;
+    /* Ensure horizontal padding matches content */
+}
+
+/* Brand/Logo */
+.music-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.2s ease;
+}
+
+.music-header__brand:hover {
+    opacity: 0.9;
+}
+
+@keyframes gradient-shift {
+
+    0%,
+    100% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Toolbar */
+.music-header__toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Settings Trigger */
+.music-header__settings {
+    position: relative;
+    height: 32px;
+    /* Fixed height for consistency */
+}
+
+.music-header__settings-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 100%;
+    padding: 0 0.75rem;
+    background: transparent;
+    border: 1px solid transparent;
+    /* More subtle border */
+    border-radius: 9999px;
+    color: #fff;
+    font-size: 0.8125rem;
+    /* 13px */
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.music-header__settings-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.music-header__settings-btn.is-active {
+    background: #fff;
+    border-color: #fff;
+    color: #000;
+}
+
+.music-header__settings-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.music-header__settings-text {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .music-header__settings-text {
+        display: inline;
+    }
+}
+
+.music-header__quality-badge {
+    position: relative;
+    /* Context for separator */
+    padding-left: 0.5rem;
+    margin-left: 0.125rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    /* Dimmer quality text */
+    border-left: 1px solid rgba(255, 255, 255, 0.15);
+    /* Separator line like in Tidal reference (sometimes implied by spacing, but added for structure) */
+    line-height: 1;
+}
+
+.music-header__settings-btn.is-active .music-header__quality-badge {
+    color: rgba(0, 0, 0, 0.6);
+    border-left-color: rgba(0, 0, 0, 0.15);
+}
+
+.music-header__chevron {
+    display: flex;
+    opacity: 0.5;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.music-header__settings-btn:hover .music-header__chevron {
+    opacity: 0.8;
+}
+
+.music-header__chevron.is-open {
+    transform: rotate(180deg);
+}
+
+/* Overlay */
+.music-settings-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+/* Modal */
+.music-settings-menu {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 1.25rem;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    animation: scaleIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.music-settings-menu__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Settings Section */
+.music-settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.music-settings-section--bordered {
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.music-settings-section__heading {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: rgba(148, 163, 184, 0.7);
+    margin: 0 0 0.25rem;
+}
+
+.music-settings-section__footnote {
+    font-size: 0.75rem;
+    color: rgba(148, 163, 184, 0.5);
+    margin: 0.5rem 0 0;
+    line-height: 1.4;
+}
+
+/* Options Grid */
+.music-settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.music-settings-options--compact {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+}
+
+/* Option Button */
+.music-settings-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.music-settings-option:hover:not(.is-disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.music-settings-option.is-active {
+    background: rgba(102, 126, 234, 0.12);
+    border-color: rgba(102, 126, 234, 0.25);
+}
+
+.music-settings-option.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.music-settings-option--compact {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.625rem;
+}
+
+.music-settings-option__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.music-settings-option__label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.music-settings-option__description {
+    font-size: 0.75rem;
+    color: rgba(148, 163, 184, 0.6);
+}
+
+.music-settings-option__check {
+    flex-shrink: 0;
+    color: #667eea;
+}
+
+.music-settings-option__chip {
+    padding: 0.125rem 0.375rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: rgba(148, 163, 184, 0.8);
+}
+
+.music-settings-option__chip.is-active {
+    background: rgba(102, 126, 234, 0.25);
+    color: #667eea;
+}
+
+/* Actions */
+.music-settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.music-settings-action {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.music-settings-action:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.music-settings-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.music-settings-action__label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .music-settings-menu {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        max-width: none;
+        border-radius: 16px 16px 0 0;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+
+    .music-settings-options--compact {
+        flex-direction: column;
+    }
+
+}

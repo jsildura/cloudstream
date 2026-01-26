@@ -67,8 +67,13 @@ const IPTVWatch = lazy(() => import('./pages/IPTVWatch'));
 const Sports = lazy(() => import('./pages/Sports'));
 const SportsWatch = lazy(() => import('./pages/SportsWatch'));
 
-// Music page
-const Music = lazy(() => import('./pages/Music'));
+// Music pages (native React port of tidal-ui)
+const MusicApp = lazy(() => import('./pages/music/MusicApp'));
+const MusicHome = lazy(() => import('./pages/music/MusicHome'));
+const MusicAlbum = lazy(() => import('./pages/music/MusicAlbum'));
+const MusicArtist = lazy(() => import('./pages/music/MusicArtist'));
+const MusicTrack = lazy(() => import('./pages/music/MusicTrack'));
+const MusicPlaylist = lazy(() => import('./pages/music/MusicPlaylist'));
 
 // Info pages (rarely visited)
 const About = lazy(() => import('./pages/About'));
@@ -149,7 +154,8 @@ function App() {
           <BotProtection />
           <AdblockModal />
           <ScrollToTop />
-          <ScrollToTopButton />
+          {/* Hide ScrollToTopButton on music pages */}
+          {!location.pathname.startsWith('/music') && <ScrollToTopButton />}
           <Toast />
           {/* Hide Navbar on watch pages for focused viewing */}
           {!location.pathname.startsWith('/watch') &&
@@ -199,14 +205,22 @@ function App() {
                 <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
                 <Route path="/sports" element={<Sports />} />
                 <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
-                <Route path="/music" element={<Music />} />
+                {/* Music routes - nested under MusicApp layout */}
+                <Route path="/music" element={<MusicApp />}>
+                  <Route index element={<MusicHome />} />
+                  <Route path="album/:id" element={<MusicAlbum />} />
+                  <Route path="artist/:id" element={<MusicArtist />} />
+                  <Route path="track/:id" element={<MusicTrack />} />
+                  <Route path="playlist/:id" element={<MusicPlaylist />} />
+                </Route>
                 <Route path="*" element={<Home />} />
               </Routes>
             </Suspense>
           </main>
 
-          {/* Hide Footer on watch pages for focused viewing */}
+          {/* Hide Footer on watch/music pages for focused viewing */}
           {!location.pathname.startsWith('/watch') &&
+            !location.pathname.startsWith('/music') &&
             !location.pathname.includes('/iptv/watch') &&
             !location.pathname.includes('/sports/watch') && (
               <Footer />
@@ -216,8 +230,9 @@ function App() {
             <Modal item={selectedItem} onClose={closeModal} />
           )}
 
-          {/* Global Chat - Hidden on Watch pages */}
+          {/* Global Chat - Hidden on Watch and Music pages */}
           {!location.pathname.startsWith('/watch') &&
+            !location.pathname.startsWith('/music') &&
             !location.pathname.includes('/iptv/watch') &&
             !location.pathname.includes('/sports/watch') && (
               <GlobalChat />

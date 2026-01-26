@@ -3,13 +3,61 @@ import path from "path"
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa';
 import Sitemap from 'vite-plugin-sitemap'
+import http from 'http';
+import https from 'https';
+
+const corsProxyPlugin = () => ({
+  name: 'cors-proxy',
+  configureServer(server) {
+    // Mock visit endpoint
+    server.middlewares.use('/api/visit', (req, res, next) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ success: true }));
+    });
+
+    // Proxy endpoint
+    server.middlewares.use('/api/proxy', (req, res, next) => {
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      const targetUrl = urlObj.searchParams.get('url');
+
+      if (!targetUrl) {
+        res.statusCode = 400;
+        res.end('Missing url parameter');
+        return;
+      }
+
+      const client = targetUrl.startsWith('https') ? https : http;
+
+      const proxyReq = client.get(targetUrl, (proxyRes) => {
+        res.statusCode = proxyRes.statusCode;
+
+        // Copy headers but handle CORS
+        Object.keys(proxyRes.headers).forEach(key => {
+          res.setHeader(key, proxyRes.headers[key]);
+        });
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        proxyRes.pipe(res);
+      });
+
+      proxyReq.on('error', (err) => {
+        console.error('Proxy error:', err);
+        res.statusCode = 500;
+        res.end('Proxy failed');
+      });
+    });
+  }
+});
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   return {
     plugins: [
       react(),
+      corsProxyPlugin(),
       VitePWA({
+        // ... (rest of the file)
         registerType: 'autoUpdate',
         workbox: {
           globPatterns: [
@@ -86,6 +134,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',  // Expose to all network interfaces for mobile testing
+      // Note: COOP/COEP headers removed - they block cross-origin images from TMDB
       proxy: {
         '/api': {
           target: 'https://api.themoviedb.org/3',
