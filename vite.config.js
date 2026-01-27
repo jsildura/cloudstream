@@ -102,7 +102,8 @@ export default defineConfig(({ mode }) => {
           '/terms',
           '/contact'
         ],
-        readable: true
+        readable: true,
+        generateRobotsTxt: false
       }),
     ],
     resolve: {
