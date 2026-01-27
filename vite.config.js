@@ -102,15 +102,7 @@ export default defineConfig(({ mode }) => {
           '/terms',
           '/contact'
         ],
-        readable: true,
-        robots: [
-          {
-            userAgent: '*',
-            allow: '/',
-            disallow: ['/api/', '/watch'],
-            crawlDelay: 2,
-          },
-        ]
+        readable: true
       }),
     ],
     resolve: {
