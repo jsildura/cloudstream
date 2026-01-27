@@ -19,7 +19,7 @@ import {
 import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import { losslessAPI } from '../../lib/music';
-import FullScreenPlayer from './FullscreenPlayer';
+import FullScreenPlayer from './FullScreenPlayer';
 import './AudioPlayer.css';
 
 /**
