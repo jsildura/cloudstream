@@ -7,6 +7,7 @@
     flex-direction: column;
     overflow: hidden;
     animation: slideUpFullscreen 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    will-change: transform;
 }
 
 @keyframes slideUpFullscreen {
@@ -46,8 +47,8 @@
 */
 .fullscreen-player__center-container {
     width: 100%;
-    /* Reduce to 65vh to leave vertical space for controls */
-    max-width: min(65vh, 88vw);
+    /* Reduce to 62vh to leave vertical space for controls */
+    max-width: min(62vh, 88vw);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -66,20 +67,32 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Ensure it doesn't collapse */
-    min-height: 200px;
-    margin-bottom: 30px;
+    /* Allow it to shrink below 200px if needed to save text */
+    min-height: 0;
+    margin-bottom: 2vh;
+    /* Use relative spacing */
+    overflow: hidden;
+    /* Prevent spillover */
 }
 
 .fullscreen-player__art-wrapper {
     position: relative;
-    width: 100%;
-    /* Ensure aspect ratio 1/1 holds the width */
-    aspect-ratio: 1/1;
+    /* Flexible scaling that respects both width and height limits */
+    width: auto;
+    height: auto;
+    max-width: 100%;
     max-height: 100%;
-    /* Safety clamp */
+    aspect-ratio: 1/1;
+
     border-radius: 12px;
     transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    /* Ensure image containment */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Center image if wrapper is larger (unlikely with above rules but safe) */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    /* Subtle shadow for depth */
 }
 
 .fullscreen-player__art {
@@ -96,6 +109,8 @@
 
 /* Metadata */
 .fullscreen-player__metadata {
+    flex-shrink: 0;
+    /* Never shrink metadata */
     margin-bottom: 12px;
     display: flex;
     justify-content: space-between;
@@ -284,5 +299,148 @@
 
     .fullscreen-player__title {
         font-size: 1.4rem;
+    }
+}
+
+/* ========================================
+   LYRICS MODE LAYOUT (Desktop Side-by-Side)
+   ======================================== */
+
+.fullscreen-player__content.with-lyrics {
+    flex-direction: row;
+    align-items: flex-start;
+    /* Align tops */
+    justify-content: center;
+    padding: 0 4vw;
+    gap: 6vw;
+    /* Increased gap */
+    overflow: hidden !important;
+}
+
+/* Adjust Center Container ("Player" part) when in lyrics mode */
+.fullscreen-player__content.with-lyrics .fullscreen-player__center-container {
+    width: auto;
+    flex: 0 0 45%;
+    /* Default grow */
+    max-width: 445px;
+    margin: 0;
+    padding-top: 10vh;
+    padding-bottom: 5vh;
+    justify-content: flex-start;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+/* Lyrics Pane */
+.fullscreen-player__lyrics-pane {
+    flex: 1;
+    /* Take remaining space */
+    width: auto;
+    max-width: 800px;
+    /* Prevent lines becoming unreadably long on ultra-wide */
+    height: 100%;
+    padding-top: 12vh;
+    /* Slightly lower visually balances headerless look */
+    display: flex;
+    flex-direction: column;
+    animation: fadeInLyrics 0.5s ease;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+@keyframes fadeInLyrics {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.fullscreen-player__lyrics-content {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullscreen-player__lyrics-content .lyrics-content {
+    flex: 1;
+    min-height: 0;
+    /* Crucial for nested flex scrolling */
+}
+
+/* Re-style AmLyricsWrapper children for this context */
+.fullscreen-player__lyrics-content .am-lyrics-fullscreen {
+    font-size: clamp(0.9rem, 1.2vw, 1.4rem);
+    /* Reduced from 1rem/1.5vw/1.5rem */
+    text-align: left;
+    line-height: 1.4;
+    height: 100%;
+    /* Force component to fit */
+    display: block;
+}
+
+/* Hide the lyrics header (format select, download) in this view too */
+.lyrics-header,
+.fullscreen-player__lyrics-content am-lyrics::part(header) {
+    display: none !important;
+}
+
+/* Adjust padding for the embedded context */
+.fullscreen-player__lyrics-content .am-lyrics-fullscreen::part(container) {
+    padding-top: 0;
+    padding-bottom: 20vh;
+    /* Hide scrollbars within the shadow DOM if supported */
+    scrollbar-width: none;
+    /* Firefox & Chrome 121+ */
+    -ms-overflow-style: none;
+}
+
+/* Fallback hiding for host element */
+.fullscreen-player__lyrics-content am-lyrics {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.fullscreen-player__lyrics-content am-lyrics::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ensure active line is visible */
+.fullscreen-player__lyrics-content .am-lyrics-fullscreen::part(line) {
+    scroll-margin-block-start: 25vh;
+}
+
+/* Active Lyrics Button State */
+.fullscreen-player__lyrics-btn.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+/* Hide lyrics pane on mobile even if active (safety) */
+@media (max-width: 1100px) {
+    .fullscreen-player__content.with-lyrics {
+        flex-direction: column;
+        padding: 0;
+    }
+
+    .fullscreen-player__content.with-lyrics .fullscreen-player__center-container {
+        width: 100%;
+        max-width: 88vw;
+        height: 100%;
+    }
+
+    .fullscreen-player__lyrics-pane {
+        display: none;
+    }
+
+    /* Hide lyrics toggle button on mobile/tablet */
+    .fullscreen-player__lyrics-btn {
+        display: none;
     }
 }

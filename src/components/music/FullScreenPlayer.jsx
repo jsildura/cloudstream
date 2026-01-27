@@ -17,6 +17,7 @@ import {
 import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import DynamicBackgroundWebGL from './DynamicBackgroundWebGL';
 import TrackMenu from './TrackMenu';
+import AmLyricsWrapper from './AmLyricsWrapper';
 import './FullScreenPlayer.css';
 
 /**
@@ -54,6 +55,7 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
     const [seekPosition, setSeekPosition] = useState(0);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [menuPosition, setMenuPosition] = useState(null);
+    const [isLyricsVisible, setIsLyricsVisible] = useState(false);
     const containerRef = useRef(null);
     const progressRef = useRef(null);
 
@@ -173,13 +175,27 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
     const artistName = currentTrack.artist?.name ?? currentTrack.artists?.[0]?.name ?? 'Unknown Artist';
     const progress = duration > 0 ? ((isSeeking ? seekPosition : currentTime) / duration) * 100 : 0;
 
+    const [showBackground, setShowBackground] = useState(false);
+
+    // Defer heavy background render until animation completes
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setShowBackground(true);
+        }, 450); // Slightly longer than the 400ms slide-up animation
+        return () => clearTimeout(timer);
+    }, []);
+
+    // ... (rest of component) ...
+
     return (
         <>
             {ReactDOM.createPortal(
                 <div className="fullscreen-player" ref={containerRef}>
-                    <DynamicBackgroundWebGL className="fullscreen-player__bg" coverUrl={coverUrl} />
+                    {showBackground && (
+                        <DynamicBackgroundWebGL className="fullscreen-player__bg" coverUrl={coverUrl} />
+                    )}
 
-                    <div className="fullscreen-player__content">
+                    <div className={`fullscreen-player__content ${isLyricsVisible ? 'with-lyrics' : ''}`}>
                         {/* Center Container for proper vertical spacing */}
                         <div className="fullscreen-player__center-container">
 
@@ -279,14 +295,20 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
 
                                 {/* Lyrics Button (Far Right) */}
                                 <button
-                                    className="fullscreen-player__control-btn fullscreen-player__lyrics-btn"
-                                    onClick={onLyricsOpen}
-                                    style={{ display: 'none' }} // Temporarily hidden
+                                    className={`fullscreen-player__control-btn fullscreen-player__lyrics-btn ${isLyricsVisible ? 'active' : ''}`}
+                                    onClick={() => setIsLyricsVisible(!isLyricsVisible)}
                                 >
                                     <MicVocal size={24} />
                                 </button>
                             </div>
                         </div>
+
+                        {/* Lyrics Pane (Desktop) */}
+                        {isLyricsVisible && (
+                            <div className="fullscreen-player__lyrics-pane">
+                                <AmLyricsWrapper className="fullscreen-player__lyrics-content" />
+                            </div>
+                        )}
                     </div>
                 </div>,
                 document.body

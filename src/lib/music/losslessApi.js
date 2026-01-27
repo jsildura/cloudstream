@@ -922,15 +922,54 @@ class LosslessAPI {
         let sampleRate = null;
         let bitDepth = null;
         let lastError = null;
+        let effectiveQuality = quality;
 
+        // Hi-Res to CD Lossless fallback: if Hi-Res is requested, try it first
+        // but fall back to LOSSLESS if it fails or returns lower quality
+        if (quality === 'HI_RES_LOSSLESS') {
+            try {
+                const hiResLookup = await this.getTrack(trackId, 'HI_RES_LOSSLESS');
+                const returnedQuality = hiResLookup.info?.audioQuality;
+
+                // Check if the returned quality is actually Hi-Res
+                const isHiRes = returnedQuality === 'HI_RES_LOSSLESS' || returnedQuality === 'HI_RES';
+                if (!isHiRes) {
+                    console.log(`[Stream] Track ${trackId} does not support Hi-Res (returned: ${returnedQuality}), using LOSSLESS stream`);
+                }
+
+                // Use the lookup we already have - it contains valid stream data
+                replayGain = hiResLookup.info.trackReplayGain ?? null;
+                sampleRate = hiResLookup.info.sampleRate ?? null;
+                bitDepth = hiResLookup.info.bitDepth ?? null;
+
+                if (hiResLookup.originalTrackUrl) {
+                    return { url: hiResLookup.originalTrackUrl, replayGain, sampleRate, bitDepth };
+                }
+
+                const manifestUrl = this.extractStreamUrlFromManifest(hiResLookup.info.manifest);
+                if (manifestUrl) {
+                    return { url: manifestUrl, replayGain, sampleRate, bitDepth };
+                }
+
+                // If we got here, Hi-Res lookup succeeded but no URL - try LOSSLESS explicitly
+                effectiveQuality = 'LOSSLESS';
+            } catch (hiResError) {
+                // Hi-Res request failed, fall back to LOSSLESS
+                console.log(`[Stream] Hi-Res failed for track ${trackId}, falling back to CD Lossless`);
+                effectiveQuality = 'LOSSLESS';
+            }
+        }
+
+        // Main streaming loop (used for LOSSLESS fallback or non-Hi-Res requests)
         for (let attempt = 1; attempt <= 3; attempt++) {
             try {
-                const lookup = await this.getTrack(trackId, quality);
+                const lookup = await this.getTrack(trackId, effectiveQuality);
+
                 replayGain = lookup.info.trackReplayGain ?? null;
                 sampleRate = lookup.info.sampleRate ?? null;
                 bitDepth = lookup.info.bitDepth ?? null;
 
-                const isLossless = quality === 'LOSSLESS' || quality === 'HI_RES_LOSSLESS';
+                const isLossless = effectiveQuality === 'LOSSLESS' || effectiveQuality === 'HI_RES_LOSSLESS';
 
                 if (lookup.originalTrackUrl && isLossless) {
                     return { url: lookup.originalTrackUrl, replayGain, sampleRate, bitDepth };

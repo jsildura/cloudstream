@@ -21,9 +21,10 @@
     height: 100%;
     object-fit: cover;
     /* Apply blur for soft gradient effect */
-    filter: blur(50px);
+    filter: blur(80px) saturate(1.8) brightness(0.4);
     transform: scale(1.2);
-    opacity: 0.6;
+    /* opacity: 0.9; -- Matching LyricsPopup intensity */
+    opacity: 0.9;
 }
 
 /* Fallback gradient when WebGL is not available */

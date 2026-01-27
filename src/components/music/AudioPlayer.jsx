@@ -19,7 +19,7 @@ import {
 import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import { losslessAPI } from '../../lib/music';
-import FullScreenPlayer from './FullScreenPlayer';
+import FullScreenPlayer from './FullscreenPlayer';
 import './AudioPlayer.css';
 
 /**
@@ -272,12 +272,6 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                                         className="audio-player__cover-fullscreen-btn"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            // Request fullscreen first (needs user gesture)
-                                            const doc = document.documentElement;
-                                            if (doc.requestFullscreen) doc.requestFullscreen();
-                                            else if (doc.webkitRequestFullscreen) doc.webkitRequestFullscreen();
-                                            else if (doc.msRequestFullscreen) doc.msRequestFullscreen();
-
                                             setShowFullScreen(true);
                                         }}
                                         aria-label="Fullscreen"
@@ -400,7 +394,7 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                     <div className="audio-player__volume">
                         <button
                             className="audio-player__btn audio-player__btn--secondary"
-                            onClick={() => setVolume(volume === 0 ? 0.8 : 0)}
+                            onClick={() => setVolume(volume === 0 ? 1 : 0)}
                             aria-label={volume === 0 ? 'Unmute' : 'Mute'}
                         >
                             <VolumeIcon size={18} />

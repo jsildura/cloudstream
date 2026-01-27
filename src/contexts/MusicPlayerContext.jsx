@@ -21,7 +21,7 @@ const getInitialState = () => {
         isPlaying: false,
         currentTime: 0,
         duration: 0,
-        volume: 0.8,
+        volume: 1.0,
         quality: AUDIO_QUALITIES.LOSSLESS,
         qualitySource: 'manual', // 'auto' | 'manual'
         isLoading: false,
