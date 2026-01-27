@@ -273,6 +273,16 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setShowFullScreen(true);
+                                            // Trigger browser native fullscreen
+                                            if (document.documentElement.requestFullscreen) {
+                                                document.documentElement.requestFullscreen().catch(err => {
+                                                    console.warn('Error attempting to enable fullscreen:', err);
+                                                });
+                                            } else if (document.documentElement.webkitRequestFullscreen) { // Safari/Chrome fallback
+                                                document.documentElement.webkitRequestFullscreen();
+                                            } else if (document.documentElement.msRequestFullscreen) { // IE11 fallback
+                                                document.documentElement.msRequestFullscreen();
+                                            }
                                         }}
                                         aria-label="Fullscreen"
                                     >
