@@ -91,8 +91,7 @@ const SettingsButton = () => {
             <button
                 type="button"
                 className={`settings-menu-btn ${showSettingsMenu ? 'is-active' : ''}`}
-                onClick={(e) => {
-                    e.stopPropagation();
+                onClick={() => {
                     setShowSettingsMenu(true);
                 }}
                 aria-haspopup="true"

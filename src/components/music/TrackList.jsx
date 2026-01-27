@@ -65,12 +65,15 @@ const TrackListItem = React.memo(({
     const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown Artist';
 
     const handlePlayClick = (e) => {
-        e.stopPropagation();
+        // Allow bubbling for ads, but prevent action buttons from triggering play
+        if (e.target.closest('.track-list-item__action-btn') || e.target.closest('.track-list-item__more-btn')) {
+            return;
+        }
         onPlay?.(track, index);
     };
 
     const handleDownloadClick = (e) => {
-        e.stopPropagation();
+        // e.stopPropagation(); // Allow bubbling for ads
         onDownload?.(track);
     };
 
@@ -172,7 +175,7 @@ const TrackListItem = React.memo(({
                     className="track-list-item__action-btn track-list-item__more-btn"
                     aria-label="More options"
                     onClick={(e) => {
-                        e.stopPropagation();
+                        // e.stopPropagation(); // Allow bubbling for ads
                         // Get button position for menu
                         const rect = e.currentTarget.getBoundingClientRect();
                         onMenuOpen?.(track.id, { x: rect.left, y: rect.bottom + 5 });
