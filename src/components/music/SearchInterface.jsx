@@ -18,7 +18,7 @@ import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import { useMusicSearch, SEARCH_TABS, TAB_CONFIG } from '../../contexts/MusicSearchContext';
 import { isTidalUrl, parseTidalUrl } from '../../lib/music/urlParser';
 import { isSupportedStreamingUrl, convertToTidal, isSpotifyPlaylistUrl } from '../../lib/music/songlink';
-import useDownloadUI from '../../hooks/music/useDownloadUI';
+import { useDownloadContext } from '../../contexts/DownloadContext';
 
 import SettingsButton from './SettingsMenu';
 import './SearchInterface.css';
@@ -63,8 +63,9 @@ const SearchInterface = ({ onNavigate }) => {
         beginTrackDownload,
         updateTrackProgress,
         completeTrackDownload,
-        errorTrackDownload
-    } = useDownloadUI();
+        errorTrackDownload,
+        storePendingDownload
+    } = useDownloadContext();
 
     // Derived state for TrackList from useDownloadUI tasks
     const downloadingIds = new Set(tasks.map(t => t.track.id));
@@ -220,7 +221,7 @@ const SearchInterface = ({ onNavigate }) => {
     }, [results, setQueue, play]);
 
     /**
-     * Handle track download with progress tracking
+     * Handle track download with progress tracking (deferred save for ad modal)
      */
     const handleTrackDownload = useCallback(async (track) => {
         const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown';
@@ -232,6 +233,7 @@ const SearchInterface = ({ onNavigate }) => {
         try {
             const result = await downloadTrack(track, quality, {
                 convertAacToMp3,
+                deferSave: true, // Store blob, don't trigger save yet
                 callbacks: {
                     onProgress: (received, total) => {
                         updateTrackProgress(taskId, received, total);
@@ -240,6 +242,10 @@ const SearchInterface = ({ onNavigate }) => {
             });
 
             if (result.success) {
+                // Store the blob for deferred save
+                if (result.blob && result.filename) {
+                    storePendingDownload(result.blob, result.filename);
+                }
                 completeTrackDownload(taskId);
             } else {
                 errorTrackDownload(taskId, result.error);
@@ -250,7 +256,7 @@ const SearchInterface = ({ onNavigate }) => {
             errorTrackDownload(taskId, err);
             setError(`Download failed: ${err.message}`);
         }
-    }, [quality, convertAacToMp3, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload, setError]);
+    }, [quality, convertAacToMp3, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload, storePendingDownload, setError]);
 
     /**
      * Clear search

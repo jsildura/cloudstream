@@ -1,0 +1,260 @@
+/* ============================================
+   Download Ad Modal - Streamflix Theme
+   ============================================ */
+
+.download-ad-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.download-ad-modal {
+    position: relative;
+    width: 90%;
+    max-width: 340px;
+    max-height: calc(100vh - 48px);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid rgba(229, 9, 20, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow:
+        0 0 40px rgba(229, 9, 20, 0.15),
+        0 25px 50px -12px rgba(0, 0, 0, 0.8);
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Close Button */
+.download-ad-modal__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.download-ad-modal__close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+/* Header */
+.download-ad-modal__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.download-ad-modal__icon {
+    flex-shrink: 0;
+}
+
+.download-ad-modal__icon--loading {
+    color: #e50914;
+    animation: spin 1s linear infinite;
+}
+
+.download-ad-modal__icon--success {
+    color: #2ecc71;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.download-ad-modal__title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+/* Track Info */
+.download-ad-modal__track {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.download-ad-modal__track-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.download-ad-modal__track-artist {
+    font-size: 0.8rem;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Progress Bar */
+.download-ad-modal__progress-container {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.download-ad-modal__progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #e50914, #ff4d4d);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.download-ad-modal__progress-text {
+    display: block;
+    text-align: center;
+    font-size: 0.7rem;
+    color: #888;
+    margin-bottom: 8px;
+}
+
+/* Ad Container */
+.download-ad-modal__ad-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 0;
+    transform: scale(0.85);
+    transform-origin: center top;
+}
+
+.download-ad-modal__ad-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+}
+
+/* Footer */
+.download-ad-modal__footer {
+    display: flex;
+    justify-content: center;
+}
+
+.download-ad-modal__btn {
+    padding: 10px 32px;
+    background: #e50914;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.download-ad-modal__btn:hover {
+    background: #ff1f2a;
+    transform: translateY(-1px);
+}
+
+.download-ad-modal__countdown {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+/* Responsive - Small height screens */
+@media (max-height: 600px) {
+    .download-ad-modal {
+        padding: 12px;
+    }
+
+    .download-ad-modal__header {
+        margin-bottom: 6px;
+    }
+
+    .download-ad-modal__track {
+        padding: 8px;
+        margin-bottom: 6px;
+    }
+
+    .download-ad-modal__ad-container {
+        transform: scale(0.75);
+        margin-bottom: 6px;
+    }
+
+    .download-ad-modal__btn {
+        padding: 8px 24px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Responsive - Mobile width */
+@media (max-width: 400px) {
+    .download-ad-modal {
+        padding: 14px 12px;
+        max-width: 320px;
+    }
+
+    .download-ad-modal__title {
+        font-size: 0.95rem;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 320px) {
+    .download-ad-modal__ad-container {
+        transform: scale(0.7);
+    }
+}

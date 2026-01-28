@@ -151,10 +151,14 @@ const MusicArtist = () => {
 
     return (
         <div className="music-artist">
-            {/* Back Button */}
+            {/* Back Button - stopImmediatePropagation prevents ad script interception */}
             <button
                 className="music-artist__back"
-                onClick={() => navigate(-1)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.nativeEvent.stopImmediatePropagation();
+                    navigate(-1);
+                }}
             >
                 <ArrowLeft size={20} />
                 <span>Back</span>

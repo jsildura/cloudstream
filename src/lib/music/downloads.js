@@ -476,6 +476,10 @@ export async function downloadTrackWithRetry(trackId, quality, filename, track, 
 
 /**
  * Download a single track
+ * 
+ * Options:
+ * - deferSave: If true, returns { blob, filename } instead of triggering download
+ *              This allows the caller to defer the save dialog (e.g., for ad interstitials)
  */
 export async function downloadTrack(track, quality, options = {}) {
     const artistName = track.artist?.name ?? formatArtists(track.artists);
@@ -487,6 +491,11 @@ export async function downloadTrack(track, quality, options = {}) {
     const result = await downloadTrackWithRetry(track.id, quality, filename, track, options.callbacks, downloadOptions);
 
     if (result.success && result.blob) {
+        // If deferSave is true, return the blob instead of triggering download
+        if (options.deferSave) {
+            return { success: true, blob: result.blob, filename, deferred: true };
+        }
+
         triggerFileDownload(result.blob, filename);
         return { success: true, filename };
     }
@@ -607,22 +616,16 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
         // Download cover if requested
         if (downloadCoverSeperately && album.cover) {
             try {
-                // Reuse existing downloadCover but we need the blob, not trigger download
-                // We'll verify what downloadCover does. It triggers download. 
-                // We should probably fetch it manually here or modify downloadCover to return blob.
-                // For now, let's just fetch it here to be safe and simple.
                 const coverSizes = ['1280', '640', '320'];
                 let coverAdded = false;
 
                 for (const size of coverSizes) {
                     if (coverAdded) break;
-                    // Fetch directly from Tidal CDN - it allows CORS for images
                     const coverUrl = `https://resources.tidal.com/images/${album.cover.replace(/-/g, '/')}/${size}x${size}.jpg`;
                     try {
                         const response = await fetch(coverUrl, { signal: AbortSignal.timeout(15000) });
                         if (response.ok) {
                             const blob = await response.blob();
-                            // simple check if it's an image
                             if (blob.size > 0 && blob.type.startsWith('image/')) {
                                 const ext = blob.type.split('/')[1] || 'jpg';
                                 zip.file(`${artistName} - ${albumTitle} - cover.${ext}`, blob);
@@ -638,10 +641,36 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
             }
         }
 
+        const zipFilename = `${artistName} - ${albumTitle}.zip`;
+
         if (failedCount < total) {
             try {
                 const zipContent = await zip.generateAsync({ type: 'blob' });
-                triggerFileDownload(zipContent, `${artistName} - ${albumTitle}.zip`);
+
+                // If deferSave is true, return the blob instead of triggering download
+                if (options.deferSave) {
+                    // Summary logging
+                    const successCount = total - failedCount;
+                    console.log(`[Album Download] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                    console.log(`[Album Download] Complete: "${albumTitle}" (ZIP)`);
+                    console.log(`[Album Download] ✓ Success: ${successCount}/${total} tracks`);
+                    if (failedCount > 0) {
+                        console.log(`[Album Download] ✗ Failed: ${failedCount} track(s)`);
+                    }
+                    console.log(`[Album Download] ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+                    return {
+                        success: failedCount === 0,
+                        blob: zipContent,
+                        filename: zipFilename,
+                        deferred: true,
+                        successCount,
+                        failedCount,
+                        total
+                    };
+                }
+
+                triggerFileDownload(zipContent, zipFilename);
             } catch (err) {
                 console.error('Failed to generate ZIP file:', err);
                 return { success: false, error: err };

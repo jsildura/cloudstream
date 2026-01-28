@@ -4,11 +4,17 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import AudioPlayer from '../../components/music/AudioPlayer';
 import DynamicBackgroundWebGL from '../../components/music/DynamicBackgroundWebGL';
 import LyricsPopup from '../../components/music/LyricsPopup';
+import DownloadAdModal from '../../components/ads/DownloadAdModal';
+import { preloadAdScript } from '../../components/ads/AdInterstitial';
 import { MusicPreferencesProvider, useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import { MusicPlayerProvider, useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import { MusicSearchProvider } from '../../contexts/MusicSearchContext';
+import { DownloadProvider } from '../../contexts/DownloadContext';
 import '../../styles/music.css';
 import './MusicApp.css';
+
+// Preload ad script when music app loads
+preloadAdScript();
 
 /**
  * MusicAppContent - Inner component that uses preferences context
@@ -115,6 +121,9 @@ const MusicAppContent = () => {
                 isOpen={isLyricsOpen}
                 onClose={() => setIsLyricsOpen(false)}
             />
+
+            {/* Download Ad Modal */}
+            <DownloadAdModal />
         </div>
     );
 };
@@ -137,7 +146,9 @@ const MusicApp = () => {
         <MusicPreferencesProvider>
             <MusicPlayerProvider>
                 <MusicSearchProvider>
-                    <MusicAppContent />
+                    <DownloadProvider>
+                        <MusicAppContent />
+                    </DownloadProvider>
                 </MusicSearchProvider>
             </MusicPlayerProvider>
         </MusicPreferencesProvider>

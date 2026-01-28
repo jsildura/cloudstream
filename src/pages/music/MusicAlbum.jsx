@@ -15,7 +15,7 @@ import ShareButton from '../../components/music/ShareButton';
 import { losslessAPI, downloadTrack, buildTrackFilename, downloadAlbum } from '../../lib/music';
 import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
-import useDownloadUI from '../../hooks/music/useDownloadUI';
+import { useDownloadContext } from '../../contexts/DownloadContext';
 import './MusicAlbum.css';
 
 /**
@@ -68,8 +68,11 @@ const MusicAlbum = () => {
         beginTrackDownload,
         updateTrackProgress,
         completeTrackDownload,
-        errorTrackDownload
-    } = useDownloadUI();
+        errorTrackDownload,
+        storePendingDownload,
+        openAdModal,
+        updateAlbumProgress
+    } = useDownloadContext();
 
     // Load album data
     useEffect(() => {
@@ -117,11 +120,9 @@ const MusicAlbum = () => {
         play();
     }, [tracks, setQueue, play]);
 
-    // Download track
+    // Download track (deferred save for ad modal)
     const handleTrackDownload = useCallback(async (track) => {
         const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown';
-        // buildTrackFilename is handled inside downloadTrack if not provided, 
-        // but we need it for the UI task start
         const filename = buildTrackFilename(album, track, quality, artistName, convertAacToMp3);
 
         const { taskId } = beginTrackDownload(track, filename);
@@ -129,6 +130,7 @@ const MusicAlbum = () => {
         try {
             const result = await downloadTrack(track, quality, {
                 convertAacToMp3,
+                deferSave: true, // Store blob, don't trigger save yet
                 callbacks: {
                     onProgress: (received, total) => {
                         updateTrackProgress(taskId, received, total);
@@ -137,6 +139,10 @@ const MusicAlbum = () => {
             });
 
             if (result.success) {
+                // Store the blob for deferred save
+                if (result.blob && result.filename) {
+                    storePendingDownload(result.blob, result.filename);
+                }
                 completeTrackDownload(taskId);
             } else {
                 errorTrackDownload(taskId, result.error);
@@ -145,21 +151,40 @@ const MusicAlbum = () => {
             console.error('Download failed:', err);
             errorTrackDownload(taskId, err);
         }
-    }, [quality, convertAacToMp3, album, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload]);
+    }, [quality, convertAacToMp3, album, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload, storePendingDownload]);
 
-    // Download all tracks with progress tracking
+    // Download all tracks with progress tracking (deferred save for ad modal)
     const handleDownloadAll = useCallback(async () => {
         if (bulkDownload.isActive) return;
 
         const total = tracks.length;
         setBulkDownload({ isActive: true, completed: 0, total });
 
+        // Create a pseudo-track for the modal to display album info
+        const albumTrack = {
+            title: album?.title ?? 'Album',
+            artists: album?.artists ?? [{ name: album?.artist?.name ?? 'Unknown Artist' }]
+        };
+
+        // Open ad modal at start with album tracking enabled
+        openAdModal(albumTrack, { isAlbum: true, total });
+
         try {
-            await downloadAlbum(album, tracks, quality, {
+            const result = await downloadAlbum(album, tracks, quality, {
                 onTrackDownloaded: (completed, total, track) => {
                     setBulkDownload(prev => ({ ...prev, completed }));
+                    updateAlbumProgress(completed, total); // Update modal counter
                 }
-            }, { mode: 'zip', convertAacToMp3 });
+            }, {
+                mode: 'zip',
+                convertAacToMp3,
+                deferSave: true // Return blob instead of auto-downloading
+            });
+
+            // Store the ZIP blob for deferred save
+            if (result.success && result.blob && result.filename) {
+                storePendingDownload(result.blob, result.filename);
+            }
         } catch (err) {
             console.error('Bulk download failed', err);
         } finally {
@@ -168,7 +193,7 @@ const MusicAlbum = () => {
                 setBulkDownload({ isActive: false, completed: 0, total: 0 });
             }, 2000);
         }
-    }, [tracks, bulkDownload.isActive, album, quality, convertAacToMp3]);
+    }, [tracks, bulkDownload.isActive, album, quality, convertAacToMp3, openAdModal, storePendingDownload, updateAlbumProgress]);
 
     // Get cover URL
     const getCoverUrl = (size = 640) => {
@@ -218,10 +243,14 @@ const MusicAlbum = () => {
 
     return (
         <div className="music-album">
-            {/* Back Button */}
+            {/* Back Button - stopImmediatePropagation prevents ad script interception */}
             <button
                 className="music-album__back"
-                onClick={() => navigate(-1)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.nativeEvent.stopImmediatePropagation();
+                    navigate(-1);
+                }}
             >
                 <ArrowLeft size={20} />
                 <span>Back</span>
