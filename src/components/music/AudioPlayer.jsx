@@ -185,6 +185,123 @@ const AudioPlayer = ({ onLyricsOpen }) => {
         }
     }, [volume]);
 
+    // Media Session API for lock screen / notification center controls
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return;
+        if (!currentTrack) return;
+
+        const artistName = currentTrack.artist?.name ?? currentTrack.artists?.[0]?.name ?? 'Unknown Artist';
+        const albumTitle = currentTrack.album?.title ?? '';
+
+        // Initial metadata without artwork (set immediately for responsiveness)
+        try {
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: currentTrack.title ?? 'Unknown',
+                artist: artistName,
+                album: albumTitle,
+                artwork: []
+            });
+        } catch (err) {
+            console.warn('Failed to set initial media session metadata:', err);
+        }
+
+        // Async function to set artwork - use direct URLs (browser may use cached images)
+        const loadArtwork = async () => {
+            if (!currentTrack.album?.cover && !currentTrack.cover) return;
+
+            const coverId = currentTrack.album?.cover ?? currentTrack.cover;
+            const coverPath = coverId.replace(/-/g, '/');
+
+            // Generate multiple sizes - browser picks the best one
+            const sizes = [96, 128, 192, 256, 384, 512];
+            const artwork = sizes.map(size => ({
+                src: `https://resources.tidal.com/images/${coverPath}/${size}x${size}.jpg`,
+                sizes: `${size}x${size}`,
+                type: 'image/jpeg'
+            }));
+
+            try {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: currentTrack.title ?? 'Unknown',
+                    artist: artistName,
+                    album: albumTitle,
+                    artwork
+                });
+                console.log('[MediaSession] Metadata set with artwork URLs');
+            } catch (err) {
+                console.warn('[MediaSession] Failed to set artwork:', err);
+            }
+        };
+
+        loadArtwork();
+
+        // Set action handlers
+        navigator.mediaSession.setActionHandler('play', () => {
+            play();
+        });
+
+        navigator.mediaSession.setActionHandler('pause', () => {
+            pause();
+        });
+
+        navigator.mediaSession.setActionHandler('previoustrack', () => {
+            if (hasPrevious) previous();
+        });
+
+        navigator.mediaSession.setActionHandler('nexttrack', () => {
+            if (hasNext) next();
+        });
+
+        // Seek handlers (optional but nice to have)
+        try {
+            navigator.mediaSession.setActionHandler('seekto', (details) => {
+                if (details.seekTime !== undefined && audioRef.current) {
+                    audioRef.current.currentTime = details.seekTime;
+                    setCurrentTime(details.seekTime);
+                }
+            });
+        } catch (e) {
+            // seekto not supported in all browsers
+        }
+
+        // Cleanup action handlers on unmount
+        return () => {
+            try {
+                navigator.mediaSession.setActionHandler('play', null);
+                navigator.mediaSession.setActionHandler('pause', null);
+                navigator.mediaSession.setActionHandler('previoustrack', null);
+                navigator.mediaSession.setActionHandler('nexttrack', null);
+                navigator.mediaSession.setActionHandler('seekto', null);
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        };
+    }, [currentTrack, play, pause, next, previous, hasNext, hasPrevious, setCurrentTime]);
+
+    // Update playback state in Media Session
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return;
+
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    }, [isPlaying]);
+
+    // Update position state for lock screen seek bar (Android Chrome)
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return;
+        if (!navigator.mediaSession.setPositionState) return;
+        if (!duration || duration <= 0) return;
+
+        try {
+            navigator.mediaSession.setPositionState({
+                duration: duration,
+                playbackRate: 1,
+                position: Math.min(currentTime, duration)
+            });
+        } catch (err) {
+            // Some browsers don't fully support position state
+        }
+    }, [currentTime, duration]);
+
     // Progress bar interaction
     const handleProgressClick = useCallback((e) => {
         if (!progressRef.current || !duration) return;

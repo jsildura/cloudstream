@@ -55,7 +55,7 @@ const SearchInterface = ({ onNavigate }) => {
     const lastSearchQueryRef = useRef('');
 
     const { setQueue, play, currentTrack, isPlaying, enqueue, enqueueNext } = useMusicPlayer();
-    const { region, playbackQuality: quality } = useMusicPreferences();
+    const { region, playbackQuality: quality, convertAacToMp3 } = useMusicPreferences();
 
     // Download UI state for individual track progress
     const {
@@ -225,12 +225,13 @@ const SearchInterface = ({ onNavigate }) => {
     const handleTrackDownload = useCallback(async (track) => {
         const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown';
         const album = track.album ?? { title: 'Unknown Album' };
-        const filename = buildTrackFilename(album, track, quality, artistName);
+        const filename = buildTrackFilename(album, track, quality, artistName, convertAacToMp3);
 
         const { taskId } = beginTrackDownload(track, filename);
 
         try {
             const result = await downloadTrack(track, quality, {
+                convertAacToMp3,
                 callbacks: {
                     onProgress: (received, total) => {
                         updateTrackProgress(taskId, received, total);
@@ -249,7 +250,7 @@ const SearchInterface = ({ onNavigate }) => {
             errorTrackDownload(taskId, err);
             setError(`Download failed: ${err.message}`);
         }
-    }, [quality, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload, setError]);
+    }, [quality, convertAacToMp3, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload, setError]);
 
     /**
      * Clear search

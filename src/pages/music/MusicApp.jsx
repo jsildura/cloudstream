@@ -38,8 +38,18 @@ const MusicAppContent = () => {
         setPerformanceMode
     } = useMusicPreferences();
 
-    // Update document title based on route
+    // Update document title based on current track or route
     useEffect(() => {
+        // If there's a current track, show track info in title
+        if (currentTrack) {
+            const artistName = currentTrack.artist?.name ?? currentTrack.artists?.[0]?.name ?? '';
+            const trackTitle = currentTrack.title ?? 'Unknown';
+            const prefix = isPlaying ? '▶ ' : '';
+            document.title = `${prefix}${trackTitle} • ${artistName} | Streamflix Music`;
+            return;
+        }
+
+        // Otherwise use route-based titles
         const titles = {
             '/music': 'Music | Streamflix',
             '/music/album': 'Album | Streamflix Music',
@@ -58,7 +68,7 @@ const MusicAppContent = () => {
         return () => {
             document.title = 'Streamflix';
         };
-    }, [location.pathname]);
+    }, [location.pathname, currentTrack, isPlaying]);
 
     // Set performance attribute on document
     useEffect(() => {

@@ -59,7 +59,7 @@ const MusicPlaylist = () => {
     });
 
     const { setQueue, play, currentTrack, isPlaying, enqueue, enqueueNext } = useMusicPlayer();
-    const { playbackQuality: quality } = useMusicPreferences();
+    const { playbackQuality: quality, convertAacToMp3 } = useMusicPreferences();
 
     // Download UI state for individual track progress
     const {
@@ -122,12 +122,13 @@ const MusicPlaylist = () => {
     const handleTrackDownload = useCallback(async (track) => {
         const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown';
         const album = track.album ?? { title: 'Unknown Album' };
-        const filename = buildTrackFilename(album, track, quality, artistName);
+        const filename = buildTrackFilename(album, track, quality, artistName, convertAacToMp3);
 
         const { taskId } = beginTrackDownload(track, filename);
 
         try {
             const result = await downloadTrack(track, quality, {
+                convertAacToMp3,
                 callbacks: {
                     onProgress: (received, total) => {
                         updateTrackProgress(taskId, received, total);
@@ -144,7 +145,7 @@ const MusicPlaylist = () => {
             console.error('Download failed:', err);
             errorTrackDownload(taskId, err);
         }
-    }, [quality, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload]);
+    }, [quality, convertAacToMp3, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload]);
 
     // Download all tracks with progress tracking
     const handleDownloadAll = useCallback(async () => {
@@ -160,6 +161,7 @@ const MusicPlaylist = () => {
                 }
             }, {
                 mode: 'zip',
+                convertAacToMp3,
                 preferredArtistName: playlist?.creator?.name ?? 'Unknown'
             });
         } catch (err) {
@@ -170,7 +172,7 @@ const MusicPlaylist = () => {
                 setBulkDownload({ isActive: false, completed: 0, total: 0 });
             }, 2000);
         }
-    }, [tracks, bulkDownload.isActive, playlist, quality]);
+    }, [tracks, bulkDownload.isActive, playlist, quality, convertAacToMp3]);
 
     // Get cover URL
     const getCoverUrl = (size = 640) => {

@@ -60,7 +60,7 @@ const MusicAlbum = () => {
     });
 
     const { setQueue, play, currentTrack, isPlaying, enqueue, enqueueNext } = useMusicPlayer();
-    const { playbackQuality: quality } = useMusicPreferences();
+    const { playbackQuality: quality, convertAacToMp3 } = useMusicPreferences();
 
     // Download UI state
     const {
@@ -122,12 +122,13 @@ const MusicAlbum = () => {
         const artistName = track.artist?.name ?? track.artists?.[0]?.name ?? 'Unknown';
         // buildTrackFilename is handled inside downloadTrack if not provided, 
         // but we need it for the UI task start
-        const filename = buildTrackFilename(album, track, quality, artistName);
+        const filename = buildTrackFilename(album, track, quality, artistName, convertAacToMp3);
 
         const { taskId } = beginTrackDownload(track, filename);
 
         try {
             const result = await downloadTrack(track, quality, {
+                convertAacToMp3,
                 callbacks: {
                     onProgress: (received, total) => {
                         updateTrackProgress(taskId, received, total);
@@ -144,7 +145,7 @@ const MusicAlbum = () => {
             console.error('Download failed:', err);
             errorTrackDownload(taskId, err);
         }
-    }, [quality, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload]);
+    }, [quality, convertAacToMp3, album, beginTrackDownload, updateTrackProgress, completeTrackDownload, errorTrackDownload]);
 
     // Download all tracks with progress tracking
     const handleDownloadAll = useCallback(async () => {
@@ -158,7 +159,7 @@ const MusicAlbum = () => {
                 onTrackDownloaded: (completed, total, track) => {
                     setBulkDownload(prev => ({ ...prev, completed }));
                 }
-            }, { mode: 'zip' });
+            }, { mode: 'zip', convertAacToMp3 });
         } catch (err) {
             console.error('Bulk download failed', err);
         } finally {
@@ -167,7 +168,7 @@ const MusicAlbum = () => {
                 setBulkDownload({ isActive: false, completed: 0, total: 0 });
             }, 2000);
         }
-    }, [tracks, bulkDownload.isActive, album, quality]);
+    }, [tracks, bulkDownload.isActive, album, quality, convertAacToMp3]);
 
     // Get cover URL
     const getCoverUrl = (size = 640) => {

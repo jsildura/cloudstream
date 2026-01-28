@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom';
-import { Settings, ChevronDown, Check, Download, Archive, FileSpreadsheet } from 'lucide-react';
+import { Settings, ChevronDown, Check } from 'lucide-react';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import './SettingsMenu.css';
 
@@ -57,10 +57,6 @@ const SettingsButton = () => {
         setPlaybackQuality,
         convertAacToMp3,
         toggleConvertAacToMp3,
-        downloadCoversSeperately,
-        toggleDownloadCovers,
-        downloadMode,
-        setDownloadMode,
         performanceMode,
         setPerformanceMode
     } = useMusicPreferences();
@@ -77,14 +73,7 @@ const SettingsButton = () => {
         setShowSettingsMenu(false);
     };
 
-    const handleQueueDownload = () => {
-        // Placeholder for queue download logic integration
-        alert('Queue download feature coming soon.');
-    };
 
-    const handleExportCsv = () => {
-        alert('Export CSV feature coming soon.');
-    };
 
     return (
         <>
@@ -154,76 +143,10 @@ const SettingsButton = () => {
                                         {convertAacToMp3 ? 'On' : 'Off'}
                                     </span>
                                 </button>
-                                <button
-                                    type="button"
-                                    onClick={toggleDownloadCovers}
-                                    className={`music-settings-option ${downloadCoversSeperately ? 'is-active' : ''}`}
-                                    aria-pressed={downloadCoversSeperately}
-                                >
-                                    <span className="music-settings-option__content">
-                                        <span className="music-settings-option__label">Download covers separately</span>
-                                        <span className="music-settings-option__description">Save cover.jpg alongside audio files.</span>
-                                    </span>
-                                    <span className={`music-settings-option__chip ${downloadCoversSeperately ? 'is-active' : ''}`}>
-                                        {downloadCoversSeperately ? 'On' : 'Off'}
-                                    </span>
-                                </button>
+
                             </section>
 
-                            {/* Queue Exports Section */}
-                            <section className="music-settings-section">
-                                <p className="music-settings-section__heading">Queue Exports</p>
-                                <div className="music-settings-options music-settings-options--compact">
-                                    <button
-                                        type="button"
-                                        onClick={() => setDownloadMode('individual')}
-                                        className={`music-settings-option music-settings-option--compact ${downloadMode === 'individual' ? 'is-active' : ''}`}
-                                        aria-pressed={downloadMode === 'individual'}
-                                    >
-                                        <span className="music-settings-option__content">
-                                            <span className="music-settings-option__label">
-                                                <Download size={16} />
-                                                <span>Individual files</span>
-                                            </span>
-                                        </span>
-                                        {downloadMode === 'individual' && (
-                                            <Check size={14} className="music-settings-option__check" />
-                                        )}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDownloadMode('zip')}
-                                        className={`music-settings-option music-settings-option--compact ${downloadMode === 'zip' ? 'is-active' : ''}`}
-                                        aria-pressed={downloadMode === 'zip'}
-                                    >
-                                        <span className="music-settings-option__content">
-                                            <span className="music-settings-option__label">
-                                                <Archive size={16} />
-                                                <span>ZIP archive</span>
-                                            </span>
-                                        </span>
-                                        {downloadMode === 'zip' && (
-                                            <Check size={14} className="music-settings-option__check" />
-                                        )}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setDownloadMode('csv')}
-                                        className={`music-settings-option music-settings-option--compact ${downloadMode === 'csv' ? 'is-active' : ''}`}
-                                        aria-pressed={downloadMode === 'csv'}
-                                    >
-                                        <span className="music-settings-option__content">
-                                            <span className="music-settings-option__label">
-                                                <FileSpreadsheet size={16} />
-                                                <span>Export links</span>
-                                            </span>
-                                        </span>
-                                        {downloadMode === 'csv' && (
-                                            <Check size={14} className="music-settings-option__check" />
-                                        )}
-                                    </button>
-                                </div>
-                            </section>
+
 
                             {/* Performance Mode Section */}
                             <section className="music-settings-section">
@@ -248,49 +171,7 @@ const SettingsButton = () => {
                                 </div>
                             </section>
 
-                            {/* Queue Actions Section */}
-                            <section className="music-settings-section music-settings-section--bordered">
-                                <p className="music-settings-section__heading">Queue Actions</p>
-                                <div className="music-settings-actions">
-                                    <button
-                                        type="button"
-                                        onClick={handleQueueDownload}
-                                        className="music-settings-action"
-                                    >
-                                        <span className="music-settings-action__label">
-                                            {downloadMode === 'zip' ? (
-                                                <>
-                                                    <Archive size={16} />
-                                                    <span>Download queue</span>
-                                                </>
-                                            ) : downloadMode === 'csv' ? (
-                                                <>
-                                                    <FileSpreadsheet size={16} />
-                                                    <span>Export queue links</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Download size={16} />
-                                                    <span>Download queue</span>
-                                                </>
-                                            )}
-                                        </span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={handleExportCsv}
-                                        className="music-settings-action"
-                                    >
-                                        <span className="music-settings-action__label">
-                                            <FileSpreadsheet size={16} />
-                                            <span>Export links as CSV</span>
-                                        </span>
-                                    </button>
-                                </div>
-                                <p className="music-settings-section__footnote">
-                                    Queue actions follow your selection above. ZIP bundles require at least two tracks.
-                                </p>
-                            </section>
+
                         </div>
                     </div>
                 </div>,

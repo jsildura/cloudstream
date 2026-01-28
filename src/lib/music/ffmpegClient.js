@@ -12,8 +12,9 @@
  * and will only be loaded when conversion features are used.
  */
 
-// Use @ffmpeg/core-st (single-threaded) - specifically designed to work without SharedArrayBuffer
-const CORE_BASE_URL = 'https://unpkg.com/@ffmpeg/core-st@0.12.6/dist/umd';
+// Use @ffmpeg/core@0.12.10 to match installed @ffmpeg/ffmpeg@0.12.x
+// This is the same version used by tidal-ui
+const CORE_BASE_URL = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm';
 const CORE_JS_NAME = 'ffmpeg-core.js';
 const CORE_WASM_NAME = 'ffmpeg-core.wasm';
 
@@ -264,20 +265,33 @@ export async function getFFmpeg(options) {
             const FFmpegConstructor = await ensureFFmpegClass();
             const instance = new FFmpegConstructor();
 
-            // Use direct CDN URLs - more reliable than blob URLs for WASM loading
-            const coreURL = `${CORE_BASE_URL}/${CORE_JS_NAME}`;
-            const wasmURL = `${CORE_BASE_URL}/${CORE_WASM_NAME}`;
+            console.log('[FFmpeg] Starting WASM download and compilation...');
 
-            console.log('[FFmpeg] Starting WASM compilation/load (single-threaded @ffmpeg/core-st)...');
-            console.log(`[FFmpeg] Core URL: ${coreURL}`);
+            // Download assets and create blob URLs (more reliable than direct CDN URLs)
+            const assets = await ensureAssets(options);
 
-            // classWorkerURL: false disables web worker (single-threaded mode)
-            await instance.load({
-                coreURL,
-                wasmURL,
-                classWorkerURL: false
-            });
+            console.log('[FFmpeg] Assets downloaded, loading FFmpeg...');
+
+            // Load with timeout to prevent infinite hang (120s for slower systems)
+            const LOAD_TIMEOUT_MS = 120000; // 120 seconds
+
+            const loadWithTimeout = Promise.race([
+                instance.load({
+                    coreURL: assets.coreUrl,
+                    wasmURL: assets.wasmUrl,
+                    classWorkerURL: false
+                }),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error(`FFmpeg compilation timed out after ${LOAD_TIMEOUT_MS / 1000}s`)), LOAD_TIMEOUT_MS)
+                )
+            ]);
+
+            await loadWithTimeout;
             console.log('[FFmpeg] Instance loaded successfully.');
+
+            // Cleanup blob URLs
+            URL.revokeObjectURL(assets.coreUrl);
+            URL.revokeObjectURL(assets.wasmUrl);
 
             ffmpegInstance = instance;
             return instance;

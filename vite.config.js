@@ -15,7 +15,7 @@ const corsProxyPlugin = () => ({
       res.end(JSON.stringify({ success: true }));
     });
 
-    // Proxy endpoint
+    // General proxy endpoint
     server.middlewares.use('/api/proxy', (req, res, next) => {
       const urlObj = new URL(req.url, `http://${req.headers.host}`);
       const targetUrl = urlObj.searchParams.get('url');
@@ -124,6 +124,9 @@ export default defineConfig(({ mode }) => {
           }
         }
       }
+    },
+    optimizeDeps: {
+      exclude: ['@ffmpeg/ffmpeg', '@ffmpeg/util']
     },
     server: {
       host: '0.0.0.0',  // Expose to all network interfaces for mobile testing

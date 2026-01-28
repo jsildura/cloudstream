@@ -11,6 +11,7 @@
  */
 
 import { losslessAPI } from './losslessApi';
+import { embedMetadata as embedMetadataFn, isFFmpegAvailable, convertAacToMp3 as convertAacToMp3Fn } from './ffmpegClient.js';
 import JSZip from 'jszip';
 import { API_CONFIG } from './musicConfig';
 
@@ -50,6 +51,138 @@ function detectImageFormat(data) {
     }
 
     return null;
+}
+
+/**
+ * Build metadata object from track data for FFmpeg embedding
+ */
+function buildTrackMetadata(track) {
+    const album = track.album ?? {};
+    const artists = track.artists ?? [];
+
+    // Format artist names
+    const artistName = formatArtists(artists);
+    const albumArtist = album.artist?.name ??
+        (album.artists && album.artists.length > 0 ? album.artists[0]?.name : null) ??
+        (artists.length > 0 ? artists[0]?.name : null);
+
+    // Build title with version if present
+    let title = track.title ?? 'Unknown';
+    if (track.version) {
+        title = `${title} (${track.version})`;
+    }
+
+    // Extract year from release date
+    let year = null;
+    const releaseDate = album.releaseDate ?? track.streamStartDate;
+    if (releaseDate) {
+        const yearMatch = /^(\d{4})/.exec(releaseDate);
+        if (yearMatch?.[1]) {
+            year = yearMatch[1];
+        }
+    }
+
+    // Build track number string (e.g., "3/12")
+    let trackStr = null;
+    const trackNumber = Number(track.trackNumber);
+    const totalTracks = Number(album.numberOfTracks);
+    if (Number.isFinite(trackNumber) && trackNumber > 0) {
+        trackStr = Number.isFinite(totalTracks) && totalTracks > 0
+            ? `${trackNumber}/${totalTracks}`
+            : `${trackNumber}`;
+    }
+
+    // Build disc number string (e.g., "1/2")
+    let discStr = null;
+    const discNumber = Number(track.volumeNumber);
+    const totalDiscs = Number(album.numberOfVolumes);
+    if (Number.isFinite(discNumber) && discNumber > 0) {
+        discStr = Number.isFinite(totalDiscs) && totalDiscs > 0
+            ? `${discNumber}/${totalDiscs}`
+            : `${discNumber}`;
+    }
+
+    return {
+        title,
+        artist: artistName,
+        album: album.title ?? null,
+        albumArtist: albumArtist ?? null,
+        year,
+        track: trackStr,
+        disc: discStr,
+        copyright: album.copyright ?? null,
+        isrc: track.isrc ?? null,
+        replayGainTrack: track.replayGain ? `${track.replayGain} dB` : null,
+        replayGainAlbum: null // Not typically available in track data
+    };
+}
+
+/**
+ * Fetch album cover art as Uint8Array for embedding
+ */
+async function fetchCoverAsUint8Array(coverId) {
+    if (!coverId) return null;
+
+    const coverSizes = ['1280', '640', '320'];
+
+    for (const size of coverSizes) {
+        const rawCoverUrl = `https://resources.tidal.com/images/${coverId.replace(/-/g, '/')}/${size}x${size}.jpg`;
+        const coverUrl = getProxyUrl(rawCoverUrl);
+
+        try {
+            const response = await fetch(coverUrl, {
+                signal: AbortSignal.timeout(10000)
+            });
+
+            if (!response.ok) continue;
+
+            const contentType = response.headers.get('Content-Type');
+            if (contentType && !contentType.startsWith('image/')) continue;
+
+            const arrayBuffer = await response.arrayBuffer();
+            if (!arrayBuffer || arrayBuffer.byteLength === 0) continue;
+
+            const uint8Array = new Uint8Array(arrayBuffer);
+
+            // Validate it's actually an image
+            const imageFormat = detectImageFormat(uint8Array);
+            if (!imageFormat) continue;
+
+            console.log(`[Cover] Fetched album cover (${size}x${size}, ${(uint8Array.length / 1024).toFixed(1)} KB)`);
+            return uint8Array;
+        } catch (err) {
+            // Try next size
+        }
+    }
+
+    console.warn('[Cover] Failed to fetch album cover at any size');
+    return null;
+}
+
+/**
+ * Get audio format string from MIME type for FFmpeg
+ */
+function getAudioFormatFromMime(mimeType) {
+    const normalized = (mimeType ?? '').split(';')[0]?.trim().toLowerCase();
+    switch (normalized) {
+        case 'audio/flac':
+        case 'audio/x-flac':
+            return 'flac';
+        case 'audio/mpeg':
+        case 'audio/mp3':
+            return 'mp3';
+        case 'audio/mp4':
+        case 'audio/aac':
+        case 'audio/x-m4a':
+            return 'm4a';
+        case 'audio/wav':
+        case 'audio/x-wav':
+            return 'wav';
+        case 'audio/ogg':
+            return 'ogg';
+        default:
+            return 'flac'; // Default to FLAC for lossless
+    }
 }
 
 /**
@@ -203,6 +336,10 @@ export async function downloadTrackWithRetry(trackId, quality, filename, track, 
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
 
+            // Get content type from response headers
+            const contentType = response.headers.get('content-type') ?? 'audio/flac';
+            const mimeType = contentType.split(';')[0]?.trim() ?? 'audio/flac';
+
             // Get total length
             const contentLength = response.headers.get('content-length');
             const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
@@ -224,11 +361,93 @@ export async function downloadTrackWithRetry(trackId, quality, filename, track, 
                 }
             }
 
-            // Assemble blob - save raw audio without metadata embedding for faster downloads
-            const blob = new Blob(chunks, { type: 'audio/flac' });
+            // Assemble raw blob first
+            let blob = new Blob(chunks, { type: mimeType });
+            let metadataEmbedded = false;
+            let convertedToMp3 = false;
 
-            console.log(`[Track Download] ✓ Success: "${trackTitle}" (${(blob.size / 1024 / 1024).toFixed(2)} MB)${attempt > 1 ? ` - succeeded on attempt ${attempt}` : ''}`);
-            return { success: true, blob };
+            // Embed metadata if enabled (default: true)
+            const shouldEmbedMetadata = options.embedMetadata !== false;
+
+            if (shouldEmbedMetadata && track) {
+                try {
+                    // Check if FFmpeg is available
+                    const ffmpegAvailable = await isFFmpegAvailable();
+
+                    if (ffmpegAvailable) {
+                        console.log(`[Track Download] Embedding metadata for "${trackTitle}"...`);
+
+                        // Build metadata from track info
+                        const metadata = buildTrackMetadata(track);
+
+                        // Fetch cover art
+                        const coverData = await fetchCoverAsUint8Array(track.album?.cover);
+
+                        // Convert blob to Uint8Array
+                        const audioArrayBuffer = await blob.arrayBuffer();
+                        const audioData = new Uint8Array(audioArrayBuffer);
+
+                        // Determine audio format
+                        const format = getAudioFormatFromMime(mimeType);
+
+                        // Embed metadata using FFmpeg
+                        const processedData = await embedMetadataFn(audioData, format, metadata, coverData);
+
+                        // Create new blob with processed data
+                        blob = new Blob([processedData], { type: mimeType });
+                        metadataEmbedded = true;
+
+                        console.log(`[Track Download] ✓ Metadata embedded successfully`);
+                    } else {
+                        console.log(`[Track Download] FFmpeg not available, skipping metadata embedding`);
+                    }
+                } catch (embedError) {
+                    console.warn(`[Track Download] Metadata embedding failed, using raw audio:`, embedError);
+                    // Continue with raw blob - graceful degradation
+                }
+            }
+
+            // Convert AAC to MP3 if enabled and applicable (LOW or HIGH quality = AAC)
+            const shouldConvertToMp3 = options.convertAacToMp3 === true;
+            const isAacQuality = options.quality === 'LOW' || options.quality === 'HIGH';
+
+            if (shouldConvertToMp3 && isAacQuality) {
+                try {
+                    const ffmpegAvailable = await isFFmpegAvailable();
+
+                    if (ffmpegAvailable) {
+                        console.log(`[Track Download] Converting AAC to MP3 for "${trackTitle}"...`);
+
+                        // Convert blob to Uint8Array
+                        const aacArrayBuffer = await blob.arrayBuffer();
+                        const aacData = new Uint8Array(aacArrayBuffer);
+
+                        // Build metadata for MP3
+                        const metadata = track ? buildTrackMetadata(track) : null;
+
+                        // Convert AAC to MP3 using FFmpeg
+                        const mp3Data = await convertAacToMp3Fn(aacData, { metadata });
+
+                        // Create MP3 blob
+                        blob = new Blob([mp3Data], { type: 'audio/mpeg' });
+                        convertedToMp3 = true;
+
+                        console.log(`[Track Download] ✓ Converted to MP3 successfully`);
+                    } else {
+                        console.log(`[Track Download] FFmpeg not available, skipping AAC to MP3 conversion`);
+                    }
+                } catch (convertError) {
+                    console.warn(`[Track Download] AAC to MP3 conversion failed, using original format:`, convertError);
+                    // Continue with original blob - graceful degradation
+                }
+            }
+
+            const statusParts = [];
+            if (metadataEmbedded) statusParts.push('with metadata');
+            if (convertedToMp3) statusParts.push('converted to MP3');
+            const statusMsg = statusParts.length > 0 ? ` (${statusParts.join(', ')})` : ' (raw)';
+            console.log(`[Track Download] ✓ Success: "${trackTitle}" (${(blob.size / 1024 / 1024).toFixed(2)} MB)${statusMsg}${attempt > 1 ? ` - succeeded on attempt ${attempt}` : ''}`);
+            return { success: true, blob, metadataEmbedded, convertedToMp3 };
         } catch (error) {
             const errorObj = error instanceof Error ? error : new Error(String(error));
             console.warn(
@@ -261,7 +480,9 @@ export async function downloadTrack(track, quality, options = {}) {
     const album = track.album ?? { title: 'Unknown Album' };
     const filename = options.filename ?? buildTrackFilename(album, track, quality, artistName, options.convertAacToMp3);
 
-    const result = await downloadTrackWithRetry(track.id, quality, filename, track, options.callbacks, options);
+    // Pass quality in options for conversion check
+    const downloadOptions = { ...options, quality };
+    const result = await downloadTrackWithRetry(track.id, quality, filename, track, options.callbacks, downloadOptions);
 
     if (result.success && result.blob) {
         triggerFileDownload(result.blob, filename);
@@ -367,7 +588,7 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
                 filename,
                 track,
                 callbacks,
-                { convertAacToMp3 }
+                { convertAacToMp3, quality }
             );
 
             if (result.success && result.blob) {
@@ -462,7 +683,7 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
             filename,
             track,
             callbacks,
-            { convertAacToMp3 }
+            { convertAacToMp3, quality }
         );
 
         if (result.success && result.blob) {
