@@ -119,6 +119,7 @@ function buildTrackMetadata(track) {
 
 /**
  * Fetch album cover art as Uint8Array for embedding
+ * Note: Tidal's image CDN allows CORS, so we fetch directly without proxy
  */
 async function fetchCoverAsUint8Array(coverId) {
     if (!coverId) return null;
@@ -126,12 +127,12 @@ async function fetchCoverAsUint8Array(coverId) {
     const coverSizes = ['1280', '640', '320'];
 
     for (const size of coverSizes) {
-        const rawCoverUrl = `https://resources.tidal.com/images/${coverId.replace(/-/g, '/')}/${size}x${size}.jpg`;
-        const coverUrl = getProxyUrl(rawCoverUrl);
+        // Fetch directly from Tidal CDN - it allows CORS for images
+        const coverUrl = `https://resources.tidal.com/images/${coverId.replace(/-/g, '/')}/${size}x${size}.jpg`;
 
         try {
             const response = await fetch(coverUrl, {
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(15000) // Increased timeout for slower connections
             });
 
             if (!response.ok) continue;
@@ -151,6 +152,7 @@ async function fetchCoverAsUint8Array(coverId) {
             console.log(`[Cover] Fetched album cover (${size}x${size}, ${(uint8Array.length / 1024).toFixed(1)} KB)`);
             return uint8Array;
         } catch (err) {
+            console.warn(`[Cover] Failed to fetch ${size}x${size}:`, err.message);
             // Try next size
         }
     }
