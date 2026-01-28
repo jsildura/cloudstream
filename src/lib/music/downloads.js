@@ -501,12 +501,12 @@ export async function downloadCover(coverId, preferredFilename = 'cover') {
     const coverSizes = ['1280', '640', '320'];
 
     for (const size of coverSizes) {
-        const rawCoverUrl = `https://resources.tidal.com/images/${coverId.replace(/-/g, '/')}/${size}x${size}.jpg`;
-        const coverUrl = getProxyUrl(rawCoverUrl);
+        // Fetch directly from Tidal CDN - it allows CORS for images
+        const coverUrl = `https://resources.tidal.com/images/${coverId.replace(/-/g, '/')}/${size}x${size}.jpg`;
 
         try {
             const response = await fetch(coverUrl, {
-                signal: AbortSignal.timeout(10000)
+                signal: AbortSignal.timeout(15000)
             });
 
             if (!response.ok) continue;
@@ -616,10 +616,10 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
 
                 for (const size of coverSizes) {
                     if (coverAdded) break;
-                    const rawCoverUrl = `https://resources.tidal.com/images/${album.cover.replace(/-/g, '/')}/${size}x${size}.jpg`;
-                    const coverUrl = getProxyUrl(rawCoverUrl);
+                    // Fetch directly from Tidal CDN - it allows CORS for images
+                    const coverUrl = `https://resources.tidal.com/images/${album.cover.replace(/-/g, '/')}/${size}x${size}.jpg`;
                     try {
-                        const response = await fetch(coverUrl, { signal: AbortSignal.timeout(10000) });
+                        const response = await fetch(coverUrl, { signal: AbortSignal.timeout(15000) });
                         if (response.ok) {
                             const blob = await response.blob();
                             // simple check if it's an image
