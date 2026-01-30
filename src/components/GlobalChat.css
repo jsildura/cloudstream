@@ -632,6 +632,7 @@
     font-size: 0.95rem;
     word-break: break-word;
     line-height: 1.4;
+    width: fit-content;
     max-width: 100%;
     position: relative !important;
     overflow: visible !important;
