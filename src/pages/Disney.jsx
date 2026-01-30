@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import FilterPanel from '../components/FilterPanel';
+import MediaTypeToggle from '../components/MediaTypeToggle';
 import { useTMDB } from '../hooks/useTMDB';
 import './Disney.css';
 
 const Disney = () => {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
     const [movies, setMovies] = useState([]);
@@ -25,6 +25,7 @@ const Disney = () => {
     // Filter states
     const [showFilters, setShowFilters] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [activeMediaType, setActiveMediaType] = useState('movie'); // 'movie' or 'tv'
     const [filters, setFilters] = useState({
         sort_by: searchParams.get('sort_by') || 'popularity.desc',
         year: searchParams.get('year') ? parseInt(searchParams.get('year')) : undefined,
@@ -271,9 +272,7 @@ const Disney = () => {
         setSelectedItem(null);
     };
 
-    const handleBack = () => {
-        navigate(-1);
-    };
+
 
     // Handle filter panel apply
     const handleApplyFilters = (newFilters) => {
@@ -310,13 +309,13 @@ const Disney = () => {
         return (
             <div className="disney-page">
                 <div className="disney-page-header">
-                    <button onClick={handleBack} className="back-button">
+                    <Link to="/" className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m12 19-7-7 7-7"></path>
                             <path d="M19 12H5"></path>
                         </svg>
                         Back
-                    </button>
+                    </Link>
                     <div className="disney-page-title-section">
                         <img
                             src="/provider/disney_plus.png"
@@ -340,13 +339,13 @@ const Disney = () => {
         <div className="disney-page">
             {/* Page Header */}
             <div className="disney-page-header">
-                <button onClick={handleBack} className="back-button">
+                <Link to="/" className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m12 19-7-7 7-7"></path>
                         <path d="M19 12H5"></path>
                     </svg>
                     Back
-                </button>
+                </Link>
                 <div className="disney-page-title-section">
                     <img
                         src="/provider/disney_plus.png"
@@ -370,15 +369,16 @@ const Disney = () => {
                     sort_by: filters.sort_by || 'popularity.desc'
                 }}
                 onApply={handleApplyFilters}
-                mediaType="movie"
+                mediaType={activeMediaType}
             />
 
-            {/* Movies Section */}
+            {/* Content Section - Single unified section with toggle */}
             <section className="disney-section">
                 <div className="disney-section-header">
-                    <div className="disney-section-accent"></div>
-                    <h2 className="disney-section-title">Movies</h2>
-                    <span className="disney-section-count">{filteredMovies.length} titles</span>
+                    <MediaTypeToggle
+                        activeType={activeMediaType}
+                        onToggle={setActiveMediaType}
+                    />
                     <button className="select-filter-btn" onClick={() => setIsFilterPanelOpen(true)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -402,38 +402,45 @@ const Disney = () => {
                         )}
                     </button>
                 </div>
-                <div className="disney-grid">
-                    {filteredMovies.map(movie => (
-                        <MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />
-                    ))}
-                </div>
-                {moviesPage < moviesTotalPages && (
-                    <div className="load-more-container">
-                        <button className="load-more-btn disney-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
-                            {loadingMoreMovies ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
-                        </button>
-                    </div>
-                )}
-            </section>
 
-            {/* TV Shows Section */}
-            <section className="disney-section">
-                <div className="disney-section-header">
-                    <div className="disney-section-accent"></div>
-                    <h2 className="disney-section-title">TV Shows</h2>
-                    <span className="disney-section-count">{filteredTVShows.length} titles</span>
-                </div>
-                <div className="disney-grid">
-                    {filteredTVShows.map(show => (
-                        <MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />
-                    ))}
-                </div>
-                {tvPage < tvTotalPages && (
-                    <div className="load-more-container">
-                        <button className="load-more-btn disney-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
-                            {loadingMoreTV ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
-                        </button>
-                    </div>
+                <span className="disney-section-count">
+                    {activeMediaType === 'movie' ? filteredMovies.length : filteredTVShows.length} titles
+                </span>
+
+                {/* Movies Grid */}
+                {activeMediaType === 'movie' && (
+                    <>
+                        <div className="disney-grid">
+                            {filteredMovies.map(movie => (
+                                <MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />
+                            ))}
+                        </div>
+                        {moviesPage < moviesTotalPages && (
+                            <div className="load-more-container">
+                                <button className="load-more-btn disney-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
+                                    {loadingMoreMovies ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* TV Shows Grid */}
+                {activeMediaType === 'tv' && (
+                    <>
+                        <div className="disney-grid">
+                            {filteredTVShows.map(show => (
+                                <MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />
+                            ))}
+                        </div>
+                        {tvPage < tvTotalPages && (
+                            <div className="load-more-container">
+                                <button className="load-more-btn disney-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
+                                    {loadingMoreTV ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

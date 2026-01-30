@@ -36,16 +36,6 @@ export const serverConfig = [
     },
     {
         name: 'Server 3',
-        description: 'Fast & Reliable Server, Minimal Ads',
-        baseUrl: 'https://vidsync.xyz/embed/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 4',
         description: 'A Good Server Backup with 4K Ultra HD Content.',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
@@ -55,7 +45,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 5',
+        name: 'Server 4',
         description: 'Reliable Server with Vast Collections',
         baseUrl: 'https://vidsrc.xyz/embed/',
         suffix: '',
@@ -65,7 +55,7 @@ export const serverConfig = [
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 6',
+        name: 'Server 5',
         description: 'Fast Streaming Server.',
         baseUrl: 'https://screenfetch.xyz/embed/',
         suffix: '',
@@ -73,6 +63,16 @@ export const serverConfig = [
         sandboxSupport: false,
         hasAds: false,
         pattern: 'primesrc',
+    },
+    {
+        name: 'Server 6',
+        description: 'Fast & Reliable Server, Minimal Ads',
+        baseUrl: 'https://vidsync.xyz/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
     },
     {
         name: 'Server 7',

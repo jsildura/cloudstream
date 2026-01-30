@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import FilterPanel from '../components/FilterPanel';
+import MediaTypeToggle from '../components/MediaTypeToggle';
 import { useTMDB } from '../hooks/useTMDB';
 import './Viu.css';
 
 const Viu = () => {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
     const [movies, setMovies] = useState([]);
@@ -21,6 +21,7 @@ const Viu = () => {
     const [loadingMoreTV, setLoadingMoreTV] = useState(false);
     const [selectedItem, setSelectedItem] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [activeMediaType, setActiveMediaType] = useState('movie');
 
     const [showFilters, setShowFilters] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -216,7 +217,7 @@ const Viu = () => {
         setSelectedItem(null);
     };
 
-    const handleBack = () => navigate(-1);
+
 
     // Handle filter panel apply
     const handleApplyFilters = (newFilters) => {
@@ -240,12 +241,12 @@ const Viu = () => {
         return (
             <div className="viu-page">
                 <div className="viu-page-header">
-                    <button onClick={handleBack} className="back-button">
+                    <Link to="/" className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>
                         </svg>
                         Back
-                    </button>
+                    </Link>
                     <div className="viu-page-title-section">
                         <img src="/provider/viu.png" alt="VIU" className="viu-page-logo" />
                     </div>
@@ -260,16 +261,21 @@ const Viu = () => {
 
     const filteredMovies = getFilteredMovies();
     const filteredTVShows = getFilteredTVShows();
+    const currentContent = activeMediaType === 'movie' ? filteredMovies : filteredTVShows;
+    const currentPage = activeMediaType === 'movie' ? moviesPage : tvPage;
+    const totalPages = activeMediaType === 'movie' ? moviesTotalPages : tvTotalPages;
+    const isLoadingMore = activeMediaType === 'movie' ? loadingMoreMovies : loadingMoreTV;
+    const loadMore = activeMediaType === 'movie' ? loadMoreMovies : loadMoreTV;
 
     return (
         <div className="viu-page">
             <div className="viu-page-header">
-                <button onClick={handleBack} className="back-button">
+                <Link to="/" className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m12 19-7-7 7-7"></path><path d="M19 12H5"></path>
                     </svg>
                     Back
-                </button>
+                </Link>
                 <div className="viu-page-title-section">
                     <img src="/provider/viu.png" alt="VIU" className="viu-page-logo" />
                 </div>
@@ -286,14 +292,12 @@ const Viu = () => {
                     sort_by: filters.sort_by || 'popularity.desc'
                 }}
                 onApply={handleApplyFilters}
-                mediaType="movie"
+                mediaType={activeMediaType}
             />
 
             <section className="viu-content-section">
                 <div className="viu-section-header">
-                    <div className="viu-section-accent"></div>
-                    <h2 className="viu-section-title">Movies</h2>
-                    <span className="viu-section-count">{filteredMovies.length} titles</span>
+                    <MediaTypeToggle activeType={activeMediaType} onToggle={setActiveMediaType} />
                     <button className="select-filter-btn" onClick={() => setIsFilterPanelOpen(true)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -309,31 +313,14 @@ const Viu = () => {
                         )}
                     </button>
                 </div>
+                <span className="viu-section-count">{currentContent.length} titles</span>
                 <div className="viu-grid">
-                    {filteredMovies.map(movie => (<MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />))}
+                    {currentContent.map(item => (<MovieCard key={item.id} item={item} onClick={() => handleItemClick(item)} />))}
                 </div>
-                {moviesPage < moviesTotalPages && (
+                {currentPage < totalPages && (
                     <div className="load-more-container">
-                        <button className="load-more-btn viu-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
-                            {loadingMoreMovies ? <><div className="btn-spinner"></div>Loading...</> : <>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>}
-                        </button>
-                    </div>
-                )}
-            </section>
-
-            <section className="viu-content-section">
-                <div className="viu-section-header">
-                    <div className="viu-section-accent"></div>
-                    <h2 className="viu-section-title">TV Shows</h2>
-                    <span className="viu-section-count">{filteredTVShows.length} titles</span>
-                </div>
-                <div className="viu-grid">
-                    {filteredTVShows.map(show => (<MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />))}
-                </div>
-                {tvPage < tvTotalPages && (
-                    <div className="load-more-container">
-                        <button className="load-more-btn viu-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
-                            {loadingMoreTV ? <><div className="btn-spinner"></div>Loading...</> : <>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>}
+                        <button className="load-more-btn viu-load-more" onClick={loadMore} disabled={isLoadingMore}>
+                            {isLoadingMore ? <><div className="btn-spinner"></div>Loading...</> : <>Load More {activeMediaType === 'movie' ? 'Movies' : 'TV Shows'}<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>}
                         </button>
                     </div>
                 )}

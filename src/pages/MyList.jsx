@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
@@ -13,7 +13,29 @@ const MyList = () => {
     const { showSuccess } = useToast();
     const [selectedItem, setSelectedItem] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [sortBy, setSortBy] = useState('addedAt'); // addedAt, title, rating
+
+    // Sort logic
+    const [sortBy, setSortBy] = useState('addedAt');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    const sortOptions = [
+        { value: 'addedAt', label: 'Recently Added' },
+        { value: 'title', label: 'Title A-Z' },
+        { value: 'rating', label: 'Highest Rated' }
+    ];
+
+    // Click outside to close dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // Sort watchlist based on selected option
     const sortedWatchlist = [...watchlist].sort((a, b) => {
@@ -59,20 +81,62 @@ const MyList = () => {
         showSuccess('Removed from Watchlist');
     };
 
+    const selectedLabel = sortOptions.find(opt => opt.value === sortBy)?.label || 'Sort By';
+
     return (
         <div className="mylist-page">
             <div className="mylist-header">
-                <h1 className="mylist-title">My List</h1>
+                <h1 className="mylist-title">My Watchlist</h1>
                 <div className="mylist-controls">
-                    <select
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        className="mylist-sort-select"
-                    >
-                        <option value="addedAt">Recently Added</option>
-                        <option value="title">Title A-Z</option>
-                        <option value="rating">Highest Rated</option>
-                    </select>
+                    {/* Custom Dropdown */}
+                    <div className="mylist-custom-select" ref={dropdownRef}>
+                        <div
+                            className={`mylist-custom-select-trigger ${isDropdownOpen ? 'open' : ''}`}
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            role="button"
+                            tabIndex={0}
+                        >
+                            <span>{selectedLabel}</span>
+                            <svg
+                                className="mylist-select-arrow"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                        {isDropdownOpen && (
+                            <div className="mylist-custom-select-options">
+                                {sortOptions.map(option => (
+                                    <div
+                                        key={option.value}
+                                        className={`mylist-custom-option ${sortBy === option.value ? 'selected' : ''}`}
+                                        onClick={() => {
+                                            setSortBy(option.value);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        role="option"
+                                        aria-selected={sortBy === option.value}
+                                    >
+                                        <span>{option.label}</span>
+                                        {sortBy === option.value && (
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mylist-check-icon">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {watchlist.length > 0 && (
                         <button
                             onClick={() => {

@@ -82,13 +82,6 @@
     margin-bottom: 24px;
 }
 
-.disney-section-accent {
-    height: 24px;
-    width: 4px;
-    background: #1d4ed8;
-    /* Disney+ blue */
-    border-radius: 50px;
-}
 
 .disney-section-title {
     font-size: 1.5rem;
@@ -100,6 +93,8 @@
 .disney-section-count {
     color: rgba(255, 255, 255, 0.5);
     font-size: 0.875rem;
+    display: block;
+    margin-bottom: 16px;
 }
 
 /* Filter button in section header */
@@ -112,7 +107,7 @@
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s ease;
@@ -229,8 +224,14 @@
         gap: 16px;
     }
 
+    .disney-section-header {
+        flex-wrap: nowrap;
+        gap: 12px;
+    }
+
     .disney-section-header .select-filter-btn {
-        padding: 6px 12px;
+        margin-left: 0;
+        padding: 12px 12px;
         font-size: 0.8rem;
         gap: 6px;
     }
@@ -287,10 +288,6 @@
         margin-bottom: 28px;
     }
 
-    .disney-section-accent {
-        height: 28px;
-        width: 5px;
-    }
 
     .disney-section-title {
         font-size: 1.75rem;
@@ -406,13 +403,6 @@
         /* 12px × 4 */
         margin-bottom: 96px;
         /* 24px × 4 */
-    }
-
-    .disney-section-accent {
-        height: 96px;
-        /* 24px × 4 */
-        width: 16px;
-        /* 4px × 4 */
     }
 
     .disney-section-title {

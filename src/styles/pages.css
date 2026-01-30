@@ -1498,6 +1498,11 @@
   padding-top: 10px;
 }
 
+.page-title-section {
+  padding: 40px 16px 20px;
+  background: transparent;
+}
+
 .row {
   margin-bottom: 40px;
 }

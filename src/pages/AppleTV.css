@@ -99,6 +99,8 @@
 .appletv-section-count {
     color: rgba(255, 255, 255, 0.5);
     font-size: 0.875rem;
+    display: block;
+    margin-bottom: 16px;
 }
 
 /* Filter button in section header */
@@ -111,7 +113,7 @@
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s ease;
@@ -230,8 +232,12 @@
     }
 
     .appletv-section-header {
-        flex-wrap: wrap;
-        gap: 8px;
+        flex-wrap: nowrap;
+        gap: 12px;
+    }
+
+    .appletv-section-header .select-filter-btn {
+        margin-left: 0;
     }
 }
 

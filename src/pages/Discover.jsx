@@ -231,10 +231,7 @@ const Discover = () => {
             )}
 
             {/* Page Title and Description */}
-            <div className="page-title-section" style={{
-                padding: '40px 4% 20px',
-                background: 'transparent'
-            }}>
+            <div className="page-title-section">
                 <h1 style={{
                     fontSize: '2rem',
                     fontWeight: '700',

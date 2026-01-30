@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import FilterPanel from '../components/FilterPanel';
+import MediaTypeToggle from '../components/MediaTypeToggle';
 import { useTMDB } from '../hooks/useTMDB';
 import './PrimeVideo.css';
 
 const PrimeVideo = () => {
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
     const [movies, setMovies] = useState([]);
@@ -24,6 +24,7 @@ const PrimeVideo = () => {
 
     const [showFilters, setShowFilters] = useState(false);
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+    const [activeMediaType, setActiveMediaType] = useState('movie'); // 'movie' or 'tv'
     const [filters, setFilters] = useState({
         sort_by: searchParams.get('sort_by') || 'popularity.desc',
         year: searchParams.get('year') ? parseInt(searchParams.get('year')) : undefined,
@@ -243,9 +244,7 @@ const PrimeVideo = () => {
         setSelectedItem(null);
     };
 
-    const handleBack = () => {
-        navigate(-1);
-    };
+
 
     // Handle filter panel apply
     const handleApplyFilters = (newFilters) => {
@@ -269,13 +268,13 @@ const PrimeVideo = () => {
         return (
             <div className="primevideo-page">
                 <div className="primevideo-page-header">
-                    <button onClick={handleBack} className="back-button">
+                    <Link to="/" className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="m12 19-7-7 7-7"></path>
                             <path d="M19 12H5"></path>
                         </svg>
                         Back
-                    </button>
+                    </Link>
                     <div className="primevideo-page-title-section">
                         <img
                             src="/provider/prime_video.png"
@@ -299,13 +298,13 @@ const PrimeVideo = () => {
         <div className="primevideo-page">
             {/* Page Header */}
             <div className="primevideo-page-header">
-                <button onClick={handleBack} className="back-button">
+                <Link to="/" className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m12 19-7-7 7-7"></path>
                         <path d="M19 12H5"></path>
                     </svg>
                     Back
-                </button>
+                </Link>
                 <div className="primevideo-page-title-section">
                     <img src="/provider/prime_video.png" alt="Prime Video" className="primevideo-page-logo" />
                 </div>
@@ -322,14 +321,15 @@ const PrimeVideo = () => {
                     sort_by: filters.sort_by || 'popularity.desc'
                 }}
                 onApply={handleApplyFilters}
-                mediaType="movie"
+                mediaType={activeMediaType}
             />
 
             <section className="primevideo-content-section">
                 <div className="primevideo-section-header">
-                    <div className="primevideo-section-accent"></div>
-                    <h2 className="primevideo-section-title">Movies</h2>
-                    <span className="primevideo-section-count">{filteredMovies.length} titles</span>
+                    <MediaTypeToggle
+                        activeType={activeMediaType}
+                        onToggle={setActiveMediaType}
+                    />
                     <button className="select-filter-btn" onClick={() => setIsFilterPanelOpen(true)}>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
@@ -345,33 +345,41 @@ const PrimeVideo = () => {
                         )}
                     </button>
                 </div>
-                <div className="primevideo-grid">
-                    {filteredMovies.map(movie => (<MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />))}
-                </div>
-                {moviesPage < moviesTotalPages && (
-                    <div className="load-more-container">
-                        <button className="load-more-btn primevideo-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
-                            {loadingMoreMovies ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
-                        </button>
-                    </div>
-                )}
-            </section>
 
-            <section className="primevideo-content-section">
-                <div className="primevideo-section-header">
-                    <div className="primevideo-section-accent"></div>
-                    <h2 className="primevideo-section-title">TV Shows</h2>
-                    <span className="primevideo-section-count">{filteredTVShows.length} titles</span>
-                </div>
-                <div className="primevideo-grid">
-                    {filteredTVShows.map(show => (<MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />))}
-                </div>
-                {tvPage < tvTotalPages && (
-                    <div className="load-more-container">
-                        <button className="load-more-btn primevideo-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
-                            {loadingMoreTV ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
-                        </button>
-                    </div>
+                <span className="primevideo-section-count">
+                    {activeMediaType === 'movie' ? filteredMovies.length : filteredTVShows.length} titles
+                </span>
+
+                {/* Movies Grid */}
+                {activeMediaType === 'movie' && (
+                    <>
+                        <div className="primevideo-grid">
+                            {filteredMovies.map(movie => (<MovieCard key={movie.id} item={movie} onClick={() => handleItemClick(movie)} />))}
+                        </div>
+                        {moviesPage < moviesTotalPages && (
+                            <div className="load-more-container">
+                                <button className="load-more-btn primevideo-load-more" onClick={loadMoreMovies} disabled={loadingMoreMovies}>
+                                    {loadingMoreMovies ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More Movies<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* TV Shows Grid */}
+                {activeMediaType === 'tv' && (
+                    <>
+                        <div className="primevideo-grid">
+                            {filteredTVShows.map(show => (<MovieCard key={show.id} item={show} onClick={() => handleItemClick(show)} />))}
+                        </div>
+                        {tvPage < tvTotalPages && (
+                            <div className="load-more-container">
+                                <button className="load-more-btn primevideo-load-more" onClick={loadMoreTV} disabled={loadingMoreTV}>
+                                    {loadingMoreTV ? (<><div className="btn-spinner"></div>Loading...</>) : (<>Load More TV Shows<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg></>)}
+                                </button>
+                            </div>
+                        )}
+                    </>
                 )}
             </section>
 

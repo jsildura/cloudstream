@@ -43,7 +43,15 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                             // Fetch images to get logo
                             const type = item.type || 'movie';
                             const response = await fetch(`/api/${type}/${item.id}/images`);
-                            const imagesData = await response.json();
+                            // Fetch details to get rating
+                            const detailsPromise = type === 'movie'
+                                ? fetchMovieDetails(item.id)
+                                : fetchTVDetails(item.id);
+
+                            const [imagesData, details] = await Promise.all([
+                                response.json(),
+                                detailsPromise
+                            ]);
 
                             // Get English logo or first available
                             const logos = imagesData.logos || [];
@@ -58,7 +66,8 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                             return {
                                 ...item,
                                 logo_path: englishLogo?.file_path || null,
-                                backdrop_path: backdrop_path || item.poster_path
+                                backdrop_path: backdrop_path || item.poster_path,
+                                vote_average: details.vote_average
                             };
                         } catch (error) {
                             return item;
@@ -252,7 +261,22 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                             <span>{item.title || 'No Image'}</span>
                                         </div>
                                     )}
+                                    <div className="popular-streamflix-hover-overlay">
+                                        <button className="popular-streamflix-play-btn" tabIndex="-1">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                                <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                     <div className="popular-streamflix-rank">{index + 1}</div>
+                                    {item.vote_average > 0 && (
+                                        <div className="popular-streamflix-rating">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#FFC107" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            </svg>
+                                            <span>{item.vote_average.toFixed(1)}</span>
+                                        </div>
+                                    )}
                                     {logoSrc ? (
                                         <div className="popular-streamflix-logo-overlay">
                                             <img

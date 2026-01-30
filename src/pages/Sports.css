@@ -264,12 +264,13 @@
     }
 
     .sports-content {
-        padding: 0 1.5%;
+        padding: 0 16px;
     }
 
     .section-title {
         font-size: 18px;
     }
+
 }
 
 @media (max-width: 768px) {
@@ -278,7 +279,7 @@
     }
 
     .sports-header {
-        padding: 24px 1.5% 20px;
+        padding: 24px 16px 20px;
     }
 
     .sports-header-content {

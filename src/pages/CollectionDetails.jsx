@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import { popularCollections } from '../data/collectionsData';
@@ -8,7 +8,7 @@ import './CollectionDetails.css';
 
 const CollectionDetails = () => {
     const { id } = useParams();
-    const navigate = useNavigate();
+
     const { POSTER_URL, BACKDROP_URL, movieGenres, tvGenres, fetchCredits } = useTMDB();
 
     const [collection, setCollection] = useState(null);
@@ -77,9 +77,7 @@ const CollectionDetails = () => {
         setSelectedItem(null);
     };
 
-    const handleBack = () => {
-        navigate(-1);
-    };
+
 
     if (error) {
         return (
@@ -87,9 +85,9 @@ const CollectionDetails = () => {
                 <div className="collection-error">
                     <h2>Error</h2>
                     <p>{error}</p>
-                    <button onClick={handleBack} className="back-button">
+                    <Link to="/" className="back-button">
                         Go Back
-                    </button>
+                    </Link>
                 </div>
             </div>
         );
@@ -111,13 +109,13 @@ const CollectionDetails = () => {
                         </div>
 
                         <div className="collection-hero-content">
-                            <button onClick={handleBack} className="back-button">
+                            <Link to="/" className="back-button">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="m12 19-7-7 7-7"></path>
                                     <path d="M19 12H5"></path>
                                 </svg>
                                 Back
-                            </button>
+                            </Link>
 
                             <h1 className="collection-title">{collection.name}</h1>
                             <p className="collection-description">{collection.description}</p>

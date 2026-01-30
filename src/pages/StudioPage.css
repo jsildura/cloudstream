@@ -83,12 +83,7 @@
     margin-bottom: 24px;
 }
 
-.studio-section-accent {
-    height: 24px;
-    width: 4px;
-    background: var(--studio-color, #e50914);
-    border-radius: 50px;
-}
+
 
 .studio-section-title {
     font-size: 1.5rem;
@@ -100,6 +95,8 @@
 .studio-section-count {
     color: rgba(255, 255, 255, 0.5);
     font-size: 0.875rem;
+    display: block;
+    margin-bottom: 16px;
 }
 
 /* Filter button in section header */
@@ -112,7 +109,7 @@
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.2);
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.2s ease;
@@ -283,7 +280,7 @@
     }
 
     .studio-section-header .select-filter-btn {
-        padding: 6px 12px;
+        padding: 12px 12px;
         font-size: 0.8rem;
         gap: 6px;
     }
@@ -350,10 +347,7 @@
         margin-bottom: 28px;
     }
 
-    .studio-section-accent {
-        height: 28px;
-        width: 5px;
-    }
+
 
     .studio-section-title {
         font-size: 1.75rem;
@@ -460,10 +454,7 @@
         margin-bottom: 96px;
     }
 
-    .studio-section-accent {
-        height: 96px;
-        width: 16px;
-    }
+
 
     .studio-section-title {
         font-size: 6rem;
