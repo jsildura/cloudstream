@@ -694,6 +694,14 @@ function GlobalChat() {
                 };
 
                 setNickname(finalNickname);
+                setAdminNickname(finalNickname);
+
+                // Convert badge icon (e.g. 'fa-crown') back to badge ID (e.g. 'crown') for settings UI
+                const matchingBadge = ADMIN_BADGES.find(b => b.icon === finalBadge);
+                if (matchingBadge) {
+                    setAdminBadge(matchingBadge.id);
+                }
+
                 setIsSetup(false);
                 loadMessages();
 
