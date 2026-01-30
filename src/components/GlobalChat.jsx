@@ -657,13 +657,29 @@ function GlobalChat() {
             const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
             if (inputHash === storedHash) {
-                // Fetch persistent admin profile from LocalStorage (fallback since DB rule might block global read)
-                const savedNickname = localStorage.getItem('sf_admin_nickname');
-                const savedAvatar = localStorage.getItem('sf_admin_avatar');
-                const savedBadge = localStorage.getItem('sf_admin_badge');
+                // Fetch persistent admin profile from Firebase (cross-device sync)
+                let savedNickname = null;
+                let savedAvatar = null;
+                let savedBadge = null;
 
-                // DEBUG ALERT
-                alert(`DEBUG LOGIN: Read from LS:\nNick: ${savedNickname}\nAvatar: ${savedAvatar}\nBadge: ${savedBadge}`);
+                try {
+                    const profileSnapshot = await dbRef.current.ref('secrets/admin_profile').once('value');
+                    if (profileSnapshot.exists()) {
+                        const profile = profileSnapshot.val();
+                        savedNickname = profile.nickname;
+                        savedAvatar = profile.avatarUrl;
+                        savedBadge = profile.adminBadge;
+                        // Cache to localStorage for offline access
+                        if (savedNickname) localStorage.setItem('sf_admin_nickname', savedNickname);
+                        if (savedAvatar) localStorage.setItem('sf_admin_avatar', savedAvatar);
+                        if (savedBadge) localStorage.setItem('sf_admin_badge', savedBadge);
+                    }
+                } catch (e) {
+                    console.warn('Firebase admin profile read failed, using localStorage fallback:', e);
+                    savedNickname = localStorage.getItem('sf_admin_nickname');
+                    savedAvatar = localStorage.getItem('sf_admin_avatar');
+                    savedBadge = localStorage.getItem('sf_admin_badge');
+                }
 
                 const finalNickname = savedNickname || ADMIN_NICKNAME;
                 const finalAvatarUrl = savedAvatar || ADMIN_AVATAR;
@@ -2042,10 +2058,21 @@ function GlobalChat() {
                                             console.warn('DB Update failed (likely permissions), proceeding with local save.');
                                         }
 
-                                        // Persist to LocalStorage
+                                        // Persist to LocalStorage (offline cache)
                                         localStorage.setItem('sf_admin_nickname', adminNickname.trim() || ADMIN_NICKNAME);
                                         localStorage.setItem('sf_admin_avatar', newAvatarUrl);
                                         localStorage.setItem('sf_admin_badge', selectedBadge?.icon || 'fa-crown');
+
+                                        // Persist to Firebase for cross-device sync
+                                        try {
+                                            await dbRef.current.ref('secrets/admin_profile').set({
+                                                nickname: adminNickname.trim() || ADMIN_NICKNAME,
+                                                avatarUrl: newAvatarUrl,
+                                                adminBadge: selectedBadge?.icon || 'fa-crown'
+                                            });
+                                        } catch (e) {
+                                            console.warn('Failed to save admin profile to Firebase:', e);
+                                        }
 
                                         userDataRef.current = {
                                             ...userDataRef.current,
