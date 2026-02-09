@@ -132,9 +132,18 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',  // Expose to all network interfaces for mobile testing
       // Note: COOP/COEP headers removed - they block cross-origin images from TMDB
       proxy: {
+        // Only proxy /api paths that are NOT handled by local middleware
+        // /api/proxy and /api/visit are handled by corsProxyPlugin middleware
         '/api': {
           target: 'https://api.themoviedb.org/3',
           changeOrigin: true,
+          bypass: (req, res, proxyOptions) => {
+            // Let corsProxyPlugin middleware handle these paths
+            if (req.url.startsWith('/api/proxy') || req.url.startsWith('/api/visit')) {
+              return req.url;
+            }
+            return null; // Proxy to TMDB
+          },
           rewrite: (path) => path.replace(/^\/api/, ''),
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req, res) => {

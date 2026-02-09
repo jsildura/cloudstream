@@ -7,8 +7,12 @@
 
 /**
  * CORS proxy services for fallback
+ * Priority order:
+ * 1. Local proxy (works in both dev via vite middleware and prod via Cloudflare Function)
+ * 2. External proxies as last resort
  */
 const CORS_PROXIES = [
+    (url) => `/api/proxy?url=${encodeURIComponent(url)}`,
     (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
@@ -28,15 +32,20 @@ export async function extractPaletteFromImage(
     stretchedWidth = 32,
     stretchedHeight = 18
 ) {
-    // Try direct fetch first
-    try {
-        const palette = await fetchAndExtract(imageUrl, gridWidth, gridHeight, stretchedWidth, stretchedHeight);
-        if (palette) return palette;
-    } catch (e) {
-        console.debug('Direct fetch failed, trying proxies...', e.message);
+    // Check if URL is external (cross-origin) - skip direct fetch for these
+    const isExternal = imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+
+    // Only try direct fetch for same-origin URLs (they won't have CORS issues)
+    if (!isExternal) {
+        try {
+            const palette = await fetchAndExtract(imageUrl, gridWidth, gridHeight, stretchedWidth, stretchedHeight);
+            if (palette) return palette;
+        } catch (e) {
+            console.debug('Direct fetch failed, trying proxies...', e.message);
+        }
     }
 
-    // Try each CORS proxy
+    // For external URLs, use proxy (first one is our local /api/proxy)
     for (const proxyFn of CORS_PROXIES) {
         try {
             const proxiedUrl = proxyFn(imageUrl);

@@ -69,6 +69,7 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
     const currentStateTextureRef = useRef(0);
     const currentCoverUrlRef = useRef(null); // Track changing url string
     const isVisibleRef = useRef(true);
+    const isCleanedUpRef = useRef(false);
 
     // Get state from contexts
     const { performanceMode } = useMusicPreferences();
@@ -292,8 +293,11 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
     // Main animation loop
     const animate = useCallback((currentTime) => {
         const gl = glRef.current;
-        if (!gl || !isVisibleRef.current || isLightweight) {
-            animationFrameIdRef.current = requestAnimationFrame(animate);
+        // Skip if cleaned up, not visible, or in lightweight mode
+        if (!gl || isCleanedUpRef.current || !isVisibleRef.current || isLightweight) {
+            if (!isCleanedUpRef.current) {
+                animationFrameIdRef.current = requestAnimationFrame(animate);
+            }
             return;
         }
 
@@ -323,6 +327,9 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
 
     // Update from track (extract colors from album art)
     const updateFromTrack = useCallback(async (coverUrl) => {
+        // Skip if component is being/has been cleaned up
+        if (isCleanedUpRef.current) return;
+
         try {
             const palette = await extractPaletteFromImage(
                 coverUrl,
@@ -331,6 +338,9 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
                 STRETCHED_GRID_WIDTH,
                 STRETCHED_GRID_HEIGHT
             );
+
+            // Check again after async operation
+            if (isCleanedUpRef.current) return;
 
             // Shift current target to previous
             previousPaletteRef.current = targetPaletteRef.current.length > 0
@@ -427,8 +437,12 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
         animationFrameIdRef.current = requestAnimationFrame(animate);
 
         return () => {
+            // Mark as cleaned up first to prevent animation loop from using deleted resources
+            isCleanedUpRef.current = true;
+
             if (animationFrameIdRef.current) {
                 cancelAnimationFrame(animationFrameIdRef.current);
+                animationFrameIdRef.current = null;
             }
             // Cleanup WebGL resources
             if (gl) {
@@ -438,6 +452,14 @@ const DynamicBackgroundWebGL = ({ coverUrl, className = '', style = {} }) => {
                 if (colorRenderTextureRef.current) gl.deleteTexture(colorRenderTextureRef.current);
                 if (blurTexture1Ref.current) gl.deleteTexture(blurTexture1Ref.current);
                 if (blurTexture2Ref.current) gl.deleteTexture(blurTexture2Ref.current);
+
+                // Clear refs to prevent accidental reuse
+                paletteTextureRef.current = null;
+                cellStateTextureRef.current = null;
+                cellStateTexture2Ref.current = null;
+                colorRenderTextureRef.current = null;
+                blurTexture1Ref.current = null;
+                blurTexture2Ref.current = null;
             }
         };
     }, [initializeCellStates, animate]);
