@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './IPTV.css';
 
-const M3U_URL = 'https://viplaylist.vercel.app/cignal.m3u';
+const M3U_URL = 'https://raw.githubusercontent.com/ryansnetcafe/ott-playlist/refs/heads/main/ryansnetcafe.m3u';
 const OFFLINE_CHANNELS_KEY = 'iptv_offline_channels';
 const FAVORITES_KEY = 'iptv_favorites';
 
@@ -232,7 +232,7 @@ const IPTV = () => {
             logo: 'https://icon2.cleanpng.com/20180702/pfc/kisspng-axn-television-channel-sony-channel-television-sho-axn-5b3a0ac39f5e85.1062681315305304996528.jpg',
             category: 'Entertainment',
             url: 'https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/cg_axn_sd/default/index.mpd',
-            licenseKey: 'fd5d928f5d974ca4983f6e9295dfe410:3aaa001ddc142fedbb9d5557be43792f'
+            licenseKey: '8a6c2f1e9d7b4c5aa1f04d2b7e9c1f88:05e6bfa4b6805c46b772f35326b26b36'
           },
           // HLS Channels (No DRM)
           {
@@ -284,7 +284,7 @@ const IPTV = () => {
             logo: 'https://i.pinimg.com/736x/5a/66/65/5a666508bc5851a6a9c1151e7eefff3d.jpg',
             category: 'News',
             url: 'https://qp-pldt-live-bpk-02-prod.akamaized.net/bpk-tv/abc_aus/default/index.mpd',
-            licenseKey: '389497f9f8584a57b234e27e430e04b7:3b85594c7f88604adf004e45c03511c0'
+            licenseKey: 'd6f1a8c29b7e4d5a8f332c1e9d7b6a90:790bd17b9e623e832003a993a2de1d87'
           },
           {
             id: 'amc-plus',
@@ -338,7 +338,7 @@ const IPTV = () => {
             logo: 'https://i.imgur.com/fx1Y2Eh.png',
             category: 'Entertainment',
             url: 'https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/dr_rockentertainment/default/index.mpd',
-            licenseKey: 'e4ee0cf8ca9746f99af402ca6eed8dc7:be2a096403346bc1d0bb0f812822bb62'
+            licenseKey: 'a8b2d6f14c9e4d7a8f552c1e9b7d6a30:b61a33a4281e7c8e68b24b9af466f7b4'
           },
           {
             id: 'aniplus',
@@ -407,13 +407,6 @@ const IPTV = () => {
             url: 'https://amg19223-amg19223c8-amgplt0351.playout.now3.amagi.tv/playlist/amg19223-amg19223c8-amgplt0351/playlist.m3u8'
           },
           {
-            id: 'iwatch-bilyonaryo',
-            name: 'Bilyonaryo',
-            logo: 'https://i.imgur.com/W00t4Qn.png',
-            category: 'News',
-            url: 'https://amg19223-amg19223c11-amgplt0352.playout.now3.amagi.tv/ts-eu-w1-n2/playlist/amg19223-amg19223c11-amgplt0352/playlist.m3u8'
-          },
-          {
             id: 'iwatch-red-box-movies',
             name: 'Red Box Movies',
             logo: 'https://i.imgur.com/OrGCnPg.jpg',
@@ -421,14 +414,6 @@ const IPTV = () => {
             url: 'https://7732c5436342497882363a8cd14ceff4.mediatailor.us-east-1.amazonaws.com/v1/master/04fd913bb278d8775298c26fdca9d9841f37601f/Plex_NewMovies/playlist.m3u8'
           },
           // === Source Live Play ===
-          {
-            id: 'warner-tv',
-            name: 'Warner TV',
-            logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png',
-            category: 'Movies',
-            url: 'https://unifi-live2.secureswiftcontent.com/Content/DASH/Live/channel(WarnerTV)/master.mpd',
-            licenseKey: '6f4ea7be45af4275a8d76845fb19dba5:b02208ea61a2cdbf5b09440bc3157f04'
-          },
           {
             id: 'iwatch-dubai-one',
             name: 'Dubai One',
@@ -458,14 +443,6 @@ const IPTV = () => {
             category: 'Sports',
             url: 'https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/cg_spotv2hd/default/index.mpd',
             licenseKey: '7eea72d6075245a99ee3255603d58853:6848ef60575579bf4d415db1032153ed'
-          },
-          {
-            id: 'rock-action',
-            name: 'Rock Action',
-            logo: 'https://uploads-ssl.webflow.com/64e961c3862892bff815289d/64f57100366fe5c8cb6088a7_logo_ext_web.png',
-            category: 'Entertainment',
-            url: 'https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/dr_rockextreme/default/index.mpd',
-            licenseKey: '0f852fb8412b11edb8780242ac120002:4cbc004d8c444f9f996db42059ce8178'
           },
           {
             id: 'cna',
@@ -577,7 +554,7 @@ const IPTV = () => {
             name: 'Fifa',
             category: 'Sports',
             logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/FIFA%2B_%282025%29.svg/2560px-FIFA%2B_%282025%29.svg.png',
-            url: 'https://ca333c39.wurl.com/v1/sysdata_s_p_a_fifa_6/ohlscdn_us/V00000000/0/HLS/playlist_3000k_20251020T100738.m3u8'
+            url: 'https://ca333c39.wurl.com/v1/sysdata_s_p_a_fifa_6/ohlscdn_us/V00000003/0/HLS/playlist_3000k_20260113T143637.m3u8'
           },
           {
             id: 'tsn-1',
@@ -641,11 +618,11 @@ const IPTV = () => {
             url: 'https://amg00056-amg00056c6-rakuten-uk-3235.playouts.now.amagi.tv/1080p/index.m3u8'
           },
           {
-            id: 'mtv-live-us',
-            name: 'MTV Live US',
+            id: 'mtv',
+            name: 'MTV',
             category: 'Music',
             logo: 'https://static.wikia.nocookie.net/logopedia/images/5/58/MTV_Live_%28orange%29.svg',
-            url: 'https://fl1.moveonjoy.com/MTV_LIVE/manifest.mpd'
+            url: 'https://moj.myiyad.workers.dev/MTV/index.m3u8'
           },
           {
             id: 'kix',
@@ -653,7 +630,7 @@ const IPTV = () => {
             category: 'Sports',
             logo: 'https://upload.wikimedia.org/wikipedia/commons/0/0b/KIX_logo.svg',
             url: 'https://qp-pldt-live-bpk-01-prod.akamaized.net/bpk-tv/kix_hd1/default/index.mpd',
-            licenseKey: 'a8d5712967cd495ca80fdc425bc61d6b:f248c29525ed4c40cc39baeee9634735'
+            licenseKey: 'c9d4b7a18e2f4d6c9a103f5b7e1c2d88:7f3139092bf87d8aa51ee40e6294d376'
           },
           {
             id: 'animal-planet-hd-in',
@@ -715,7 +692,7 @@ const IPTV = () => {
             id: 'nat-geo-wild',
             name: 'Nat Geo Wild',
             logo: '/channels/national_geo_wild.png',
-            url: 'https://fl1.moveonjoy.com/Nat_Geo_Wild/index.m3u8'
+            url: 'https://moj.myiyad.workers.dev/Nat_Geo_Wild/index.m3u8'
           },
 
           // Source www.distro.tv/live
@@ -724,14 +701,14 @@ const IPTV = () => {
             name: 'Wild Nature',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/23208/wild-nature/logo_20250401_214215_70.png',
-            url: 'https://dg5rg8emlfy55.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildNature2/491.m3u8'
+            url: 'https://dg5rg8emlfy55.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildNature2/491.m3u8?ads.dpname=distrotv&ads.rnd=t2gs&ads.env_i=1b44d0a6-a32a-4be7-a52c-facf3cdd98c4&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23208&ads.content_duration=18000&ads.episode_id=139666&ads.show_id=5311&ads.showCategories=IAB20&ads.episodeCategories=IAB20&ads.genre=Travel%2CNature%2COutdoors%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Wild%20Nature&ads.episodetitle=Wild%20Nature&ads.keywords=Nature%2COutdoors%2CWild%20Life%2Cdeer%2Celk%2Cbear%2Cwhitetail%2Cturkey%2Csheep%2Cmountain%20goat%2Cwaterfowl%2Cgeese%2Cmule%20deer%2Ccoyote&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.islive=1&ads.streamtype=live&ads.vf=bMSH8FQZL90'
           },
           {
             id: 'euronews',
             name: 'Euronews (EN)',
             category: 'News',
             logo: 'https://a.jsrdn.com/hls/22886/euronews/logo_20231218_175557_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/manifest/0bc8e8376bd8417a1b6761138aa41c26c7309312/euronews/316027a1-87ae-45ad-9535-9f3d05ad2c0b/5.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/euronews/euronews-en.m3u8?ads.dpname=distrotv&ads.rnd=tpd6&ads.env_i=4e83602e-7b56-4c2f-b94e-472251abab81&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22886&ads.content_duration=18000&ads.episode_id=45143&ads.show_id=1244&ads.showCategories=IAB12&ads.episodeCategories=IAB12&ads.genre=News%2CGlobal%20News%2CEnglish&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=Euronews&ads.episodetitle=Euronews&ads.keywords=euronnews&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=SI66KXKjTgC'
           },
           {
             id: 'unleashed-dogtv',
@@ -745,35 +722,35 @@ const IPTV = () => {
             name: 'PLL Network',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/22964/pll-network-ww/logo_20240626_232614_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pll-network-ww/pll.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pll-network-ww/pll.m3u8?ads.dpname=distrotv&ads.rnd=vzfv&ads.env_i=d562135e-8b7a-474b-9866-d4336d8ed20b&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22964&ads.content_duration=18000&ads.episode_id=130883&ads.show_id=5154&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CLacrosse%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=PLL%20Network&ads.episodetitle=PLL%20Network&ads.keywords=Sports%2CLacrosse%2CPLL%2CPremier%20Lacrosse%20League&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=eo9wFrpfCW8'
           },
           {
             id: 'mtrspt1',
             name: 'MTRSPT1',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/23099/mtrspt1/logo_20250122_232635_70.png',
-            url: 'https://amg02873-kravemedia-mtrspt1-distrotv-mnsrl.amagi.tv/ts-us-w2-n1/playlist/amg02873-kravemedia-mtrspt1-distrotv/playlist.m3u8'
+            url: 'https://cdn-uw2-prod.tsv2.amagi.tv/linear/amg02873-kravemedia-mtrspt1-distrotv/playlist.m3u8?ads.dpname=distrotv&c_producer=Krave%20Media&dnt=0&app_bundle=&app_name=DistroTV&app_store_url=&did=&app_domain=&device_make=&device_model=&coppa=0&ads.rnd=9m3m&ads.env_i=dfdb74da-356a-48a2-9e6f-5478e09d67f3&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23099&ads.content_duration=18000&ads.episode_id=99076&ads.show_id=3489&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CAuto%20Racing%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=MTRSPT1&ads.episodetitle=MTRSPT1&ads.keywords=motorsports%2Cracing%2Clive%20racing%2Csports%2Csuperbike%2Cmotorcycle%2Csupercar%2Ccar&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.islive=1&ads.streamtype=live&ads.vf=zQHZKM0zA8K'
           },
           {
             id: 'motorracing',
             name: 'Motor Racing',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/22705/motorracing/logo_20231219_215946_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/manifest/0bc8e8376bd8417a1b6761138aa41c26c7309312/motorracing/301877df-89fb-4935-b20d-c03e7e242eab/2.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/motorracing/master.m3u8?ads.dpname=distrotv&ads.rnd=bwxa&ads.env_i=81060797-c152-49dd-99d7-6c94bc0e3f6a&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22705&ads.content_duration=18000&ads.episode_id=54754&ads.show_id=1714&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CAuto%20Racing%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=MotorRacing&ads.episodetitle=MotorRacing&ads.keywords=motorracing&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=gz8gsCq0yVe'
           },
           {
             id: 'wfnnetwork',
             name: 'WFN: World Fishing Network',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/23208/wfn-world-fishing-network/logo_20250911_182344_70.png',
-            url: 'https://d3b3ldcvgsu291.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WFN/477.m3u8'
+            url: 'https://d3b3ldcvgsu291.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WFN/477.m3u8?ads.dpname=distrotv&ads.rnd=3ysg&ads.env_i=3869ce5c-db3e-4f6f-8357-3d1bed4726b3&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=320&ads.height=180&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23208&ads.content_duration=18000&ads.episode_id=142221&ads.show_id=5365&ads.showCategories=IAB9&ads.episodeCategories=IAB9&ads.genre=Sports%2CLifestyle%2CNature%2CReality%20TV%2CEnglish&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=WFN%3A%20World%20Fishing%20Network&ads.episodetitle=WFN%3A%20World%20Fishing%20Network&ads.keywords=Fishing%2CAngler&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.islive=1&ads.streamtype=live&ads.vf=y45J5EaUkXW'
           },
           {
             id: 'horizonsports',
             name: 'Horizon Sports',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/22705/horizon-sports/logo_20231219_213910_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/horizon-sports/master.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/horizon-sports/master.m3u8?ads.dpname=distrotv&ads.rnd=nzeo&ads.env_i=0046e88d-4f54-4f84-8ae7-5caa5fe3ed4e&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22705&ads.content_duration=18000&ads.episode_id=11063&ads.show_id=415&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CAction%2FAdventure%2CLifestyle%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Horizon%20Sports&ads.episodetitle=Horizon%20Sports&ads.keywords=horizon%20sports%2Coutdoors%2Cadventure%2Caction&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=Kso-HsJE58a'
           },
           {
             id: 'daystartv',
@@ -787,50 +764,35 @@ const IPTV = () => {
             name: 'Elevation Church Network',
             category: 'Spirituality',
             logo: 'https://a.jsrdn.com/hls/23224/elevation-church-network/logo_20250623_165558_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/elevation-church-network/playlist.m3u8'
-          },
-          {
-            id: 'kidstv',
-            name: 'Kids TV',
-            category: 'Kids',
-            logo: 'https://a.jsrdn.com/hls/23088/kids-tv/logo_20231219_214656_61.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kids-tv/master_en.m3u8'
-          },
-
-          {
-            id: 'toonzkids',
-            name: 'Toonz Kids',
-            category: 'Kids',
-            logo: 'https://a.jsrdn.com/hls/23131/toonzkids/logo_20231219_223312_67.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/toonzkids/master.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/elevation-church-network/playlist.m3u8?ads.dpname=distrotv&ads.rnd=040g&ads.env_i=cf2c7d3a-55eb-4241-99f3-45e06f0d586a&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23224&ads.content_duration=18000&ads.episode_id=140685&ads.show_id=5347&ads.showCategories=IAB23&ads.episodeCategories=IAB23&ads.genre=Lifestyle%2CDevotional%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Elevation%20Church%20Network&ads.episodetitle=Elevation%20Church%20Network&ads.keywords=god%2Creligion%2Cjesus%2Celevation%20church&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=rbLrz09sccO'
           },
           {
             id: 'gusto-tv',
             name: 'Gusto TV',
             category: 'Reality',
             logo: 'https://a.jsrdn.com/hls/23062/gusto-tv/logo_20231219_202519_56.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/gusto-tv/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/gusto-tv/playlist.m3u8?ads.dpname=distrotv&ads.rnd=vfer&ads.env_i=cdebc2be-caeb-4e0e-8732-67624f97d6ee&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23062&ads.content_duration=18000&ads.episode_id=83408&ads.show_id=3187&ads.showCategories=IAB8&ads.episodeCategories=IAB8&ads.genre=Lifestyle%2CFood%2CTravel%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Gusto%20TV&ads.episodetitle=Gusto%20TV&ads.keywords=Gusto%20TV%2CCooking%2CFood%2CCuisine&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=gusto&ads.islive=1&ads.streamtype=live&ads.vf=BaOY1-iQYO0'
           },
           {
             id: 'kaloopy',
             name: 'Kaloopy',
             category: 'Entertainment',
             logo: 'https://a.jsrdn.com/hls/22868/kaloopy/logo_20231219_214555_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kaloopy/master.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kaloopy/master.m3u8?ads.dpname=distrotv&ads.rnd=16e2&ads.env_i=b70a433d-116e-4d54-b610-8a27ae094f78&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22868&ads.content_duration=18000&ads.episode_id=73234&ads.show_id=1093&ads.showCategories=IAB1&ads.episodeCategories=IAB1&ads.genre=Entertainment%2CLifestyle%2CSports%2CMusic%2CGaming%2CEnglish&ads.showRating=TV-14&ads.episodeRating=TV-14&ads.language=en&ads.showtitle=Kaloopy&ads.episodetitle=Kaloopy&ads.keywords=Nascar%2Cmens%20lifestyle%2Ccall%20of%20duty%2Cgaming%2Cfitness%2Ctech%2Cmens%20fashion%2Chouse%20music%2Cmotorcycles%2Ccars%2Csoccer%2Cmotorsport%2Ctravel%2Cbeach%2Ccalifornia%2Cufc%2Cmilitary%2Csurfing%2Cskating%2Cfashion&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=R8XTvvAQP3O'
           },
           {
             id: 'wild-tv',
             name: 'Wild TV',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/23208/wild-tv/logo_20250401_215043_70.png',
-            url: 'https://d1tm3cz23db55z.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildTV/476.m3u8'
+            url: 'https://d1tm3cz23db55z.cloudfront.net/v1/master/9d062541f2ff39b5c0f48b743c6411d25f62fc25/DistroTV-MuxIP-WildTV/476.m3u8?ads.dpname=distrotv&ads.rnd=ib8e&ads.env_i=667dca9e-028c-4bce-bf17-15d0fe48271c&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23208&ads.content_duration=18000&ads.episode_id=139667&ads.show_id=5312&ads.showCategories=IAB9&ads.episodeCategories=IAB9&ads.genre=Lifestyle%2CNature%2COutdoors%2CHunting%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Wild%20TV&ads.episodetitle=Wild%20TV&ads.keywords=Wild%20Life%2Chunting%2Cfishing%2Cdeer%2Celk%2Cbear%2Ccoyote%2Cwhitetail%2Cturkey%2Csheep%2Cmountain%20goat%2Cwaterfowl%2Cgeese%2Cmule%20deer%2Carchery%2Cscope%2Coutdoors%2Coff%20road%2Ccamping%2Cadventure&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.islive=1&ads.streamtype=live&ads.vf=TwqcI0hRcw8'
           },
           {
             id: 'true-history',
             name: 'True History',
             category: 'Documentary',
             logo: 'https://a.jsrdn.com/hls/23001/true-history/logo_20231219_223655_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/true-history/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/true-history/playlist.m3u8?ads.dpname=distrotv&ads.rnd=fz0s&ads.env_i=dc6202c3-1d27-43be-8038-6bd1fc745abf&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23001&ads.content_duration=18000&ads.episode_id=66893&ads.show_id=2540&ads.showCategories=IAB5&ads.episodeCategories=IAB5&ads.genre=Education%2CInfotainment%2CDocumentary%2CHistory%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=True%20History&ads.episodetitle=True%20History&ads.keywords=True%2CHistory%2CTrue%20History&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=89drVzPzy4C'
           },
           {
             id: 'AMC',
@@ -844,42 +806,21 @@ const IPTV = () => {
             name: 'Outside',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/22765/outside-tv/logo_20231219_220634_59.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/outsidetv/playlist.m3u8'
-          },
-          {
-            id: 'ufa',
-            name: 'United Fight Alliance',
-            category: 'Sports',
-            logo: 'https://a.jsrdn.com/hls/22778/united-fight-alliance/logo_20231219_223908_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/united-fight-alliance/master.m3u8'
-          },
-          {
-            id: 'documentary+',
-            name: 'Documentary+',
-            category: 'Documentary',
-            logo: 'https://a.jsrdn.com/hls/22943/documentary/logo_20231219_193112_63.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/documentary/master.m3u8'
-          },
-          {
-            id: 'entrepreneur',
-            name: 'Entrepreneur',
-            category: 'Documentary',
-            logo: 'https://a.jsrdn.com/hls/22851/entrepreneur/logo_20231219_201142_47.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/entrepreneur/master.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/outsidetv/playlist.m3u8?ads.dpname=distrotv&ads.rnd=xbig&ads.env_i=75f4e5cc-91e1-4b16-9b55-2e6c1595a69e&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22765&ads.content_duration=18000&ads.episode_id=15976&ads.show_id=543&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CAction%2FAdventure%2CLifestyle%2CNature%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Outside&ads.episodetitle=Outside&ads.keywords=outdoors%2Coutside&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=outsidetv&ads.islive=1&ads.streamtype=live&ads.vf=khmM_SEALZu'
           },
           {
             id: 'craftsytv',
             name: 'Craftsy TV',
             category: 'Entertainment',
             logo: 'https://a.jsrdn.com/hls/23108/craftsytv/logo_20231219_192821_64.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/craftsytv/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/craftsytv/playlist.m3u8?ads.dpname=distrotv&ads.rnd=urbq&ads.env_i=ea3af02f-8fcc-4204-be18-07147fa2206f&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23108&ads.content_duration=18000&ads.episode_id=100517&ads.show_id=3570&ads.showCategories=IAB9&ads.episodeCategories=IAB9&ads.genre=Lifestyle%2CInfotainment%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=CraftsyTV&ads.episodetitle=CraftsyTV&ads.keywords=Quilting%2CKnitting%2CCrochet%2CCake%20Decorating%2CBaking%2CCooking%2CYoga%2CWoodworking%2CSlow%20TV%2CJewelry%20Making%2CPhotography%2CDrawing%2CHome%20Decor%2CPainting%2CPaper%20Crafting&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=xnFPPJhXaN0'
           },
           {
             id: 'dronetv',
             name: 'Drone TV',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/23176/dronetv/logo_20240521_191242_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/dronetv/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/dronetv/playlist.m3u8?ads.dpname=distrotv&ads.rnd=9eig&ads.env_i=63816b71-9634-4526-9ba4-f22389399348&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23176&ads.content_duration=18000&ads.episode_id=129395&ads.show_id=5143&ads.showCategories=IAB20&ads.episodeCategories=IAB1&ads.genre=Travel%2CNature%2CLifestyle%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=DroneTV&ads.episodetitle=DroneTV&ads.keywords=drones%2Cdrone%20videos%2Cfirst%20person%20view%20drones%2Cfpv%2Cfpv%20drones%2Caerial%20cinematography%2Ctravel%20by%20drone&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=Bd3_LbEzva0'
           },
           {
             id: 'cooking-panda',
@@ -893,49 +834,49 @@ const IPTV = () => {
             name: 'Fuel TV',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/23055/fuel-tv-ww/logo_20231219_202054_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/fuel-tv-ww/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/fuel-tv-ww/playlist.m3u8?ads.dpname=distrotv&ads.rnd=flaf&ads.env_i=575c9337-87d4-41ec-9e4e-9550c55373d2&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23055&ads.content_duration=18000&ads.episode_id=81997&ads.show_id=3166&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CAction%2FAdventure%2CEnglish&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=FUEL%20TV&ads.episodetitle=FUEL%20TV&ads.keywords=FUEL%20TV%2COutdoor%2CAction%2CSports%2CAction%20Sports&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=XdGvWhBrSpK'
           },
           {
             id: 'oan-plus',
             name: 'OAN Plus',
             category: 'News',
             logo: 'https://a.jsrdn.com/hls/22866/oan-encore/logo_20231219_220536_57.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/oan-encore/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/oan-encore/playlist.m3u8?ads.dpname=distrotv&ads.rnd=asec&ads.env_i=165798d3-01fd-478d-89f0-9d3da8c78d39&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22866&ads.content_duration=18000&ads.episode_id=34008&ads.show_id=1095&ads.showCategories=IAB12&ads.episodeCategories=IAB12&ads.genre=News%2CGlobal%20News%2CEnglish&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=OAN%20Plus&ads.episodetitle=OAN%20Plus&ads.keywords=one%20america%20news%20network%2Coann%2Coan%2Cone%20america%20news&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=lYh9UEAYTcW'
           },
           {
             id: 'africa-news',
             name: 'Africa News',
             category: 'News',
             logo: 'https://a.jsrdn.com/hls/22886/africanews/logo_20231218_175639_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/africanews/africanews-en.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/africanews/africanews-en.m3u8?ads.dpname=distrotv&ads.rnd=0zvp&ads.env_i=0c25b71e-39d2-4a52-b6e7-c5b2eda71304&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22886&ads.content_duration=18000&ads.episode_id=78921&ads.show_id=3120&ads.showCategories=IAB12&ads.episodeCategories=IAB12&ads.genre=News%2CGlobal%20News%2CAfrican&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=Africanews&ads.episodetitle=Africanews&ads.keywords=Africa%2CNews%2CAfricanews%2Cafrican&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=GQp9zyIMa8q'
           },
           {
             id: 'pickleball-now',
             name: 'Pickleball Now',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/22979/pickleball-now/logo_20260106_185156_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pickleball-now/playlist.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/pickleball-now/playlist.m3u8?ads.dpname=distrotv&ads.rnd=dhva&ads.env_i=b073c0ba-9323-4481-8340-499082eaf34e&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22979&ads.content_duration=18000&ads.episode_id=144646&ads.show_id=5387&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CLifestyle%2CDocumentary%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Pickleball%20Now&ads.episodetitle=Pickleball%20Now&ads.keywords=pickleball%2Cpickleball%20live%2Cpickleball%20highlights%2Cpickleball%20tv%2Cpickleball%20tournaments%2Cpickleball%20players%2Cpickleball%20interviews%2Cpickleball%20league%2Cpickleball%20training%2Cpickleball%20rules%2Cpickleball%20tips%2Cglobal%20pickleball%2Cpickleball%20matches%2Cpickleball%20now%2Cpickleball%20now%20tv&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=pb2eNpKJfSa'
           },
           {
             id: 'bowling-tv',
             name: 'Bowling TV',
             category: 'Sports',
             logo: 'https://a.jsrdn.com/hls/22964/bowling-tv/logo_20251210_204815_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/bowling-tv/bowl.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/bowling-tv/bowl.m3u8?ads.dpname=distrotv&ads.rnd=r0qu&ads.env_i=a05ed00d-de6a-4523-87f5-2ab10183d328&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22964&ads.content_duration=18000&ads.episode_id=144314&ads.show_id=5381&ads.showCategories=IAB17&ads.episodeCategories=IAB17&ads.genre=Sports%2CBowling%2CEnglish&ads.showRating=TV-G&ads.episodeRating=TV-G&ads.language=en&ads.showtitle=Bowling%20TV&ads.episodetitle=Bowling%20TV&ads.keywords=Bowling%2CStrike%2CSpare&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=m_nhoG8oCZm'
           },
           {
             id: 'wine-watches-whiskey',
             name: 'Wine Watches Whiskey',
             category: 'Entertainment',
             logo: 'https://a.jsrdn.com/hls/23241/wine-watches-whiskey/logo_20251217_201432_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/wine-watches-whiskey/index.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/wine-watches-whiskey/index.m3u8?ads.dpname=distrotv&ads.rnd=bz7y&ads.env_i=ac33688b-161e-49fb-b469-f8adb52b4ecb&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23241&ads.content_duration=18000&ads.episode_id=144408&ads.show_id=5385&ads.showCategories=IAB9&ads.episodeCategories=IAB9&ads.genre=Lifestyle%2CCollectors%2CLuxury%2CEnglish&ads.showRating=TV-MA&ads.episodeRating=TV-MA&ads.language=en&ads.showtitle=Wine%2C%20Watches%20%26%20Whiskey&ads.episodetitle=Wine%2C%20Watches%20%26%20Whiskey&ads.keywords=Wine%2CWatches%2CWhiskey&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=zzhaQUmo7jK'
           },
           {
             id: 'rvtv',
             name: 'RVTV',
             category: 'Outdoors',
             logo: 'https://a.jsrdn.com/hls/23241/rvtv/logo_20251217_201036_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/rvtv/index.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/rvtv/index.m3u8?ads.dpname=distrotv&ads.rnd=smqv&ads.env_i=692f9adf-3667-4ef5-84c4-cba92d62a45e&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23241&ads.content_duration=18000&ads.episode_id=144407&ads.show_id=5384&ads.showCategories=IAB2&ads.episodeCategories=IAB2&ads.genre=Lifestyle%2CTravel%2CAutomotive%2CEnglish&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=en&ads.showtitle=RVTV&ads.episodetitle=RVTV&ads.keywords=Recreational%2CVehicle&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=oRy-XNIE3qu'
           },
           {
             id: 'daystar-espanol',
@@ -949,14 +890,14 @@ const IPTV = () => {
             name: 'Crime and Evidence',
             category: 'Documentary',
             logo: 'https://a.jsrdn.com/hls/23181/crime-and-evidence/logo_20250818_194230_68.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/crime-and-evidence/video.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/crime-and-evidence/video.m3u8?ads.dpname=distrotv&ads.rnd=2jqo&ads.env_i=233d075e-1ed3-45b9-afe5-bf3055311ffe&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23181&ads.content_duration=18000&ads.episode_id=141347&ads.show_id=5358&ads.showCategories=IAB1&ads.episodeCategories=IAB1&ads.genre=Entertainment%2CTrue%20Crime%2CDocumentary%2CEnglish&ads.showRating=TV-14&ads.episodeRating=TV-14&ads.language=en&ads.showtitle=Crime%20%26%20Evidence&ads.episodetitle=Crime%20%26%20Evidence&ads.keywords=True%20crime%2Ccriminal%20investigations%2Cforensics%2Creal%20cases%2Claw%20enforcement%2Cjustice&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=aQ6rnnT7wem'
           },
           {
             id: 'prime-asia-tv',
             name: 'Prime Asia TV',
             category: 'News',
             logo: 'https://a.jsrdn.com/hls/23215/prime-asia-tv/logo_20251125_201232_70.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/prime-asia-tv/index.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/prime-asia-tv/index.m3u8?ads.dpname=distrotv&ads.rnd=lx6b&ads.env_i=f42a4c22-8af0-4b61-9f7b-1325a1f22e8e&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23215&ads.content_duration=18000&ads.episode_id=144082&ads.show_id=5378&ads.showCategories=IAB12&ads.episodeCategories=IAB12&ads.genre=News%2CCurrent%20Affairs%2CPolitics%2CAsian&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=pa&ads.showtitle=Prime%20Asia%20Tv&ads.episodetitle=Prime%20Asia%20Tv&ads.keywords=Latest%20Punjabi%20News%2CPunjabi%20Language%20News%2CPunjabi%20Entertainment%20News%2CPunjabi%20News%2CPunjab%20News&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=UJIlmkJFykq'
           },
           {
             id: 'cgtn-global-biz',
@@ -973,30 +914,87 @@ const IPTV = () => {
             url: 'https://amg01314-amg01314c8-distrotv-us-10218.playouts.now.amagi.tv/playlist/amg01314-cgtn-cgtndiscoveringchina-distrotvus/playlist.m3u8'
           },
           {
-            id: 'monarch',
-            name: 'Monarch',
-            category: 'Movies',
-            logo: 'https://a.jsrdn.com/hls/22728/monarch/logo_20231219_215904_69.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/monarch/master.m3u8'
-          },
-          {
-            id: 'life-style-by-triptic',
-            name: 'Life Style By Triptic',
-            category: 'Entertainment',
-            logo: 'https://a.jsrdn.com/hls/23024/life-style-by-triptic/logo_20231219_215112_55.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/life-style-by-triptic/master.m3u8'
-          },
-          {
             id: 'al-arabiya',
             name: 'Al Arabiya News',
             category: 'News',
             logo: 'https://a.jsrdn.com/hls/23094/cgtn/logo_20231219_185401_34.png',
-            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-arabiya/master.m3u8'
+            url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/al-arabiya/master.m3u8?ads.dpname=distrotv&ads.rnd=3kar&ads.env_i=0374a561-79d4-4296-abe6-9da48c94a96d&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=23137&ads.content_duration=18000&ads.episode_id=120048&ads.show_id=4924&ads.showCategories=IAB12&ads.episodeCategories=IAB12&ads.genre=News%2CRegional%20News%2CMiddle%20Eastern&ads.showRating=TV-PG&ads.episodeRating=TV-PG&ads.language=ar&ads.showtitle=Al%20Arabiya&ads.episodetitle=Al%20Arabiya&ads.keywords=Arab%2CNews&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=NDX0hcTs9qa'
+          },
+          // Source PH-Corner
+          {
+            id: 'star-movies',
+            name: 'Star Movies HD',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg',
+            url: 'http://103.175.242.10:8080/starmovies/index.m3u8'
+          },
+          {
+            id: 'barely-legal',
+            name: 'Barely Legal',
+            category: 'Entertainment',
+            logo: 'https://dcassetcdn.com/design_img/596551/203438/203438_4041728_596551_image.jpg',
+            url: 'https://video.beeline.tv/live/d/channel420.isml/manifest-stb.mpd',
+            licenseKey: 'bf0bdbb8a0e83ec6ba8b7f42d27a6925:f4051d1dd36e66e085264b9b342641c5'
+          },
+          {
+            id: 'babes-tv',
+            name: 'Babes TV',
+            category: 'Entertainment',
+            logo: 'https://www.poda.cz/wp-content/uploads/2024/04/babes-tv-2024.png',
+            url: 'https://video.beeline.tv/live/d/channel472.isml/manifest-stb.mpd',
+            licenseKey: '996d754bd00695c04644c3fa44c25183:5d5fcedc221c1ce858519d60442a107a'
+          },
+          {
+            id: 'brazzers-tv-europe',
+            name: 'Brazzers TV Europe',
+            category: 'Entertainment',
+            logo: 'https://www.cableman.ru/sites/default/files/brazzers_tv.png',
+            url: 'https://video.beeline.tv/live/d/channel012.isml/manifest-stb.mpd',
+            licenseKey: '30a943cb79dccfa9c2b579bb8274cf85:4e3643d08495456c936e8b77d620d496'
+          },
+          {
+            id: 'exxxotica',
+            name: 'Exxxotica',
+            category: 'Entertainment',
+            logo: 'https://radioimg.audacy.com/aiu-media/39d3d2937937758f30f6096a92-116186e2-0f80-4786-8d25-0c8e03281444.png?width=800',
+            url: 'https://video.beeline.tv/live/d/channel442.isml/manifest-stb.mpd',
+            licenseKey: '3d5bd327009443ddeee322e210dda78a:f41de33f25ffd33284a11210e8889282'
+          },
+          {
+            id: 'french-lover',
+            name: 'French Lover',
+            category: 'Entertainment',
+            logo: 'https://www.agsat.com.ua/wa-data/public/shop/products/86/38/3886/images/4939/4939.500-3886.jpg',
+            url: 'https://video.beeline.tv/live/d/channel252.isml/manifest-stb.mpd',
+            licenseKey: '2757ba26637acecfa143237f5a32e2c7:3e69642d9f9e23f0568eeb9d6a1ca48a'
+          },
+          {
+            id: 'playboy-tv',
+            name: 'Playboy TV',
+            category: 'Entertainment',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Play_Boy_TV_logo_2016.svg',
+            url: 'https://video.beeline.tv/live/d/channel047.isml/manifest-stb.mpd',
+            licenseKey: '8b4af3cb6ba681d3df359cd404c11776:9b010f4ba2a71a3ef2706aed3549189b'
+          },
+          {
+            id: 'red-lips',
+            name: 'Red Lips',
+            category: 'Entertainment',
+            logo: 'https://www.cableman.ru/sites/default/files/red_lips.jpg',
+            url: 'https://video.beeline.tv/live/d/channel443.isml/manifest-stb.mpd',
+            licenseKey: '6fd536019350b37721cba80ef055972c:07d787ee89a0cad2d21983b4e0c792c7'
           }
+
+
         ];
 
-        // Filter out unwanted channels from the parsed cignal.m3u (IDs 5, 6, 78)
-        const excludedIds = [5, 6, 78];
+        // Excluded Channels
+        const excludedIds = [
+          104, 221, 9, 204, 163, 76, 194, 42, 188, 189,
+          46, 198, 218, 219, 220, 10, 202, 217, 68, 222,
+          147, 183, 51, 203, 0, 166, 236, 78, 100, 199,
+          211, 155, 170, 60, 187, 148, 61, 223, 233, 231,
+          169, 171, 182, 172, 181, 191, 186, 178, 180, 196, 62, 149, 2, 165, 177, 26, 193, 136, 190, 234, 112, 34, 69];
         const filteredParsed = parsed.filter(ch => !excludedIds.includes(ch.id));
 
         const allChannels = [...manualChannels, ...filteredParsed];
@@ -1224,18 +1222,18 @@ const IPTV = () => {
           onMouseMove={handleMouseMove}
         >
           {[
-            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 1 },
+            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 156 },
             { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
-            { rank: 3, name: 'TV5', logo: 'https://static.wikia.nocookie.net/tv5network/images/9/95/TV5_HD_2024.svg', channelId: 9 },
-            { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 39 },
+            { rank: 3, name: 'TV5', logo: 'https://static.wikia.nocookie.net/tv5network/images/9/95/TV5_HD_2024.svg', channelId: 8 },
+            { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 63 },
             { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg', channelId: 'cinema-one' },
-            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 30 },
-            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 36 },
-            { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 57 },
+            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 79 },
+            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 102 },
+            { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 80 },
             { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
-            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 52 },
-            { rank: 11, name: 'Animal Planet HD (IN)', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 'animal-planet-hd-in' },
-            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 'warner-tv' },
+            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 70 },
+            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 58 },
+            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 96 },
           ].map(item => {
             const channel = channels.find(c => c.id === item.channelId);
             return (
