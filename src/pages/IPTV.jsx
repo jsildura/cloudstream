@@ -291,7 +291,8 @@ const IPTV = () => {
             name: 'AMC+',
             logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png?v=1650990755',
             category: 'Entertainment',
-            url: 'https://bcovlive-a.akamaihd.net/ba853de442c140b7b3dc020001597c0a/us-east-1/6245817279001/profile_0/chunklist.m3u8'
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/PDX/clients/dash/enc/0f5clvxn6o/out/v1/d5a953bb19734fa3baa1776266887fcb/cenc.mpd',
+            licenseKey: '59a51164c2c915352f04066a06f6e807:eba5cc362d1d63c0fe6460febca0fd11'
           },
           {
             id: 'anc',
@@ -776,7 +777,7 @@ const IPTV = () => {
           {
             id: 'kaloopy',
             name: 'Kaloopy',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://a.jsrdn.com/hls/22868/kaloopy/logo_20231219_214555_68.png',
             url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kaloopy/master.m3u8?ads.dpname=distrotv&ads.rnd=16e2&ads.env_i=b70a433d-116e-4d54-b610-8a27ae094f78&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22868&ads.content_duration=18000&ads.episode_id=73234&ads.show_id=1093&ads.showCategories=IAB1&ads.episodeCategories=IAB1&ads.genre=Entertainment%2CLifestyle%2CSports%2CMusic%2CGaming%2CEnglish&ads.showRating=TV-14&ads.episodeRating=TV-14&ads.language=en&ads.showtitle=Kaloopy&ads.episodetitle=Kaloopy&ads.keywords=Nascar%2Cmens%20lifestyle%2Ccall%20of%20duty%2Cgaming%2Cfitness%2Ctech%2Cmens%20fashion%2Chouse%20music%2Cmotorcycles%2Ccars%2Csoccer%2Cmotorsport%2Ctravel%2Cbeach%2Ccalifornia%2Cufc%2Cmilitary%2Csurfing%2Cskating%2Cfashion&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=R8XTvvAQP3O'
           },
@@ -931,7 +932,7 @@ const IPTV = () => {
           {
             id: 'barely-legal',
             name: 'Barely Legal',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://dcassetcdn.com/design_img/596551/203438/203438_4041728_596551_image.jpg',
             url: 'https://video.beeline.tv/live/d/channel420.isml/manifest-stb.mpd',
             licenseKey: 'bf0bdbb8a0e83ec6ba8b7f42d27a6925:f4051d1dd36e66e085264b9b342641c5'
@@ -939,7 +940,7 @@ const IPTV = () => {
           {
             id: 'babes-tv',
             name: 'Babes TV',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://www.poda.cz/wp-content/uploads/2024/04/babes-tv-2024.png',
             url: 'https://video.beeline.tv/live/d/channel472.isml/manifest-stb.mpd',
             licenseKey: '996d754bd00695c04644c3fa44c25183:5d5fcedc221c1ce858519d60442a107a'
@@ -947,7 +948,7 @@ const IPTV = () => {
           {
             id: 'brazzers-tv-europe',
             name: 'Brazzers TV Europe',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://www.cableman.ru/sites/default/files/brazzers_tv.png',
             url: 'https://video.beeline.tv/live/d/channel012.isml/manifest-stb.mpd',
             licenseKey: '30a943cb79dccfa9c2b579bb8274cf85:4e3643d08495456c936e8b77d620d496'
@@ -955,7 +956,7 @@ const IPTV = () => {
           {
             id: 'exxxotica',
             name: 'Exxxotica',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://radioimg.audacy.com/aiu-media/39d3d2937937758f30f6096a92-116186e2-0f80-4786-8d25-0c8e03281444.png?width=800',
             url: 'https://video.beeline.tv/live/d/channel442.isml/manifest-stb.mpd',
             licenseKey: '3d5bd327009443ddeee322e210dda78a:f41de33f25ffd33284a11210e8889282'
@@ -963,7 +964,7 @@ const IPTV = () => {
           {
             id: 'french-lover',
             name: 'French Lover',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://www.agsat.com.ua/wa-data/public/shop/products/86/38/3886/images/4939/4939.500-3886.jpg',
             url: 'https://video.beeline.tv/live/d/channel252.isml/manifest-stb.mpd',
             licenseKey: '2757ba26637acecfa143237f5a32e2c7:3e69642d9f9e23f0568eeb9d6a1ca48a'
@@ -971,7 +972,7 @@ const IPTV = () => {
           {
             id: 'playboy-tv',
             name: 'Playboy TV',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Play_Boy_TV_logo_2016.svg',
             url: 'https://video.beeline.tv/live/d/channel047.isml/manifest-stb.mpd',
             licenseKey: '8b4af3cb6ba681d3df359cd404c11776:9b010f4ba2a71a3ef2706aed3549189b'
@@ -979,12 +980,156 @@ const IPTV = () => {
           {
             id: 'red-lips',
             name: 'Red Lips',
-            category: 'Entertainment',
+            category: '18+',
             logo: 'https://www.cableman.ru/sites/default/files/red_lips.jpg',
             url: 'https://video.beeline.tv/live/d/channel443.isml/manifest-stb.mpd',
             licenseKey: '6fd536019350b37721cba80ef055972c:07d787ee89a0cad2d21983b4e0c792c7'
+          },
+          // Source Ph-Corner
+          {
+            id: 'action-max-east',
+            name: 'Action Max HD East',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/ActionMax_logo.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/995zvakyej/out/v1/3fa049c0afea4a83bb5f508f1859f160/cenc.mpd',
+            licenseKey: '136a75130b82cdf89cb5f05d739b663f:0ef360ff75bb11b7f0982a86b86d39ae'
+          },
+          {
+            id: 'cinemax-east',
+            name: 'Cinemax HD East',
+            category: 'Movies',
+            logo: 'https://divign0fdw3sv.cloudfront.net/Images/ChannelLogo/contenthub/337_144.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/rckhgp0mdp/out/v1/3952b81ea31d45b38372b128371301d2/cenc.mpd',
+            licenseKey: '3a5fc143bea61aa94eee0479933d5e72:8a365e8c3e2b8efdbcaab16d07c3b929'
+          },
+          {
+            id: 'cinemax-west',
+            name: 'Cinemax West',
+            category: 'Movies',
+            logo: 'https://divign0fdw3sv.cloudfront.net/Images/ChannelLogo/contenthub/337_144.png',
+            url: 'https://a181aivottlinear-a.akamaihd.net/OTTB/iad-nitro/live/clients/dash/enc/zewdvsfpre/out/v1/d65e537877cc4112b8fd88c6210f39da/cenc.mpd',
+            licenseKey: 'bf813dc4a32e0e9bcbce4446a65f4b12:eb9973b1a30c76812aa7ca8864b6a3c1'
+          },
+          {
+            id: 'more-max-east',
+            name: 'More MAX HD East',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/MoreMax_Logo.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/bw5g1vx3k9/out/v1/6913f190498b44c8a705e91728401769/cenc.mpd',
+            licenseKey: '046c374a3db594dfb32cba86d2e4f72f:04c00a6ed0fc4ce37841210a42eeeb35'
+          },
+          {
+            id: 'more-max-west',
+            name: '5StarMAX East',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/MoreMax_Logo.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/yfo5p7nmtt/out/v1/fdce98358ffb47c9b6314feb9cfeda3f/cenc.mpd',
+            licenseKey: '81a74ef0cf71e28d5d9bc55d5fd7921a:884e89f90a9f5cbaaa5c2a451e1d8f86'
+          },
+          {
+            id: 'hbo-east',
+            name: 'HBO East',
+            category: 'Movies',
+            logo: 'https://images.now-tv.com/shares/channelPreview/img/en_hk/color/ch115_170_122',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/ez2jwhkmke/out/v1/75466d737d52406e8a1c85dc70c9f183/cenc.mpd',
+            licenseKey: '6ab1caa245e2d8cc4e26e0e1b63fe661:22c42d7a1679f50ca4ad37b4c1ad97fe'
+          },
+          {
+            id: 'hbo-zone',
+            name: 'HBO Zone',
+            category: 'Movies',
+            logo: 'https://static.wikia.nocookie.net/logopedia/images/c/cc/HBO_Zone_2000.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/u7xfabrc5b/out/v1/67371e988d6649afbde43ba1e9747550/cenc.mpd',
+            licenseKey: '0b380bec87af5c16ee145bbf8cd7d65e:edcb65d1269bd76f166d6bc56114211f'
+          },
+          {
+            id: 'hbo-comedy',
+            name: 'HBO Comedy',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/8/84/HBO_Comedy_logo.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/f6ns8qsqde/out/v1/0827e077a8224107a1e6137627cc8198/cenc.mpd',
+            licenseKey: '217624a3983b3593ca7d1f3b01042d4f:fecaa3486d9deef3f7f0e1a95b662cb7'
+          },
+          {
+            id: 'hbo-west',
+            name: 'HBO West',
+            category: 'Movies',
+            logo: 'https://images.now-tv.com/shares/channelPreview/img/en_hk/color/ch115_170_122',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/zzhnlvao6q/out/v1/66f60c1d629549a78a22cc2913bfb3d1/cenc.mpd',
+            licenseKey: '266fed45577cd293af39165e8073bc19:8e805607852c0606ecc553bd234d78b2'
+          },
+          {
+            id: 'reelz',
+            name: 'REELZ Channel',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/en/b/b1/Reelz_Channel_Logo.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/IAD/clients/dash/enc/dhdemvb6ff/out/v1/2dbabadc0d204aa9aad2c2e5d29af5c0/cenc.mpd',
+            licenseKey: '2312fd39721560ea14f98caf3464195e:93713bb73be2d8aedf3eeb898850e7d5'
+          },
+          {
+            id: 'screenpix-action',
+            name: 'Screenpix Action',
+            category: 'Movies',
+            logo: 'https://static.wikia.nocookie.net/logopedia/images/2/27/ScreenPix_Action.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/PDX/clients/dash/enc/2bsytxoitz/out/v1/312e6d1e20e744c0a9bf25519f6da91b/cenc.mpd',
+            licenseKey: 'a340ce5a22ce1a5f54c2c5dd18e8fe7d:afa091d637e61d585ad036fd4b8a3235'
+          },
+          {
+            id: 'screenpix-westerns',
+            name: 'Screenpix Westerns',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/ScreenPix_Logo_2019.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/PDX/clients/dash/enc/ikqumnhhew/out/v1/1f50afbc65ba48e79f8325022bdb72a0/cenc.mpd',
+            licenseKey: '429d2a8c13dc9a40a13ef8d4e2325209:631892e5f5451b5596528e194c44d95b'
+          },
+          {
+            id: 'screenpix',
+            name: 'Screenpix',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/7/7a/ScreenPix_Logo_2019.png',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/PDX/clients/dash/enc/9lvpst0mpb/out/v1/ba33b946c96e4a60886e2d91156398cd/cenc.mpd',
+            licenseKey: '537cc6cb07fe4bcc63d06c3018d5e35c:7420e0237883a05e4d2ddafaf114b050'
+          },
+          {
+            id: 'mgm-drive-in',
+            name: 'MGM Drive-in',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/f/f3/MGM%2B_Drive-In_2023.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/ijf9c1nj9l/out/v1/d8018bfb87ac4be1840dbc18b31f2fed/cenc.mpd',
+            licenseKey: '0b74cf4e95c3dac51f8445d044d5fa11:abe32ddf4ab8e451b505354d55629785'
+          },
+          {
+            id: 'mgm-hits',
+            name: 'MGM Hits',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/MGM%2B_Hits_2023.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/6twfogu6go/out/v1/fe3c6ff9c8d94b2187e2e87b4edacca8/cenc.mpd',
+            licenseKey: '563740ab2942d108384539e507d268a3:fb51835b952fab5a9d5233c771da1d3d'
+          },
+          {
+            id: 'mgm-marquee',
+            name: 'MGM Marquee',
+            category: 'Movies',
+            logo: 'http://upload.wikimedia.org/wikipedia/commons/4/41/MGM%2B_Marquee_2023.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/y7rqqxcdk4/out/v1/fb99f1f5705d4f3194e9a234ef717bd5/cenc.mpd',
+            licenseKey: 'edec01accce094e2e105f76a8fac1a48:0c536390abb52439b4cac20bfe96daea'
+          },
+          {
+            id: 'mgm-plus',
+            name: 'MGM+',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/4/49/MGM%2B_logo.svg',
+            url: 'https://ottb.live.cf.ww.aiv-cdn.net/pdx-nitro/live/clients/dash/enc/ck8h9qqlfr/out/v1/34a373fb214d4e1590a3ab397b2d7af1/cenc.mpd',
+            licenseKey: 'ea46cd84fc0fcaefc45b5d1d9b977db4:715a77d80b090e9f964e3616ca9e66d2'
+          },
+          {
+            id: 'tudn',
+            name: 'TUDN',
+            category: 'Sports',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6c/TUDN_Logo.svg',
+            url: 'https://zap-live1-ott.izzigo.tv/11/out/u/dash/TUDN-HD/default.mpd',
+            licenseKey: '2722647f77b44824c432a3c4555830a2:1734befb82f4b438bd84195f6c212e7b'
           }
-
 
         ];
 
@@ -1033,7 +1178,7 @@ const IPTV = () => {
   }, [channels, searchQuery, categoryFilter, favorites, offlineChannels]);
 
   // key categories Entertainment, Movies, News, Sports, Kids, Documentary, and Pinoy
-  const categories = ['Favorites', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Outdoors', 'Reality', 'Music', 'Spirituality', 'Pinoy', 'Offline'];
+  const categories = ['18+', 'Entertainment', 'Movies', 'News', 'Sports', 'Kids', 'Documentary', 'Outdoors', 'Reality', 'Music', 'Spirituality', 'Pinoy', 'Offline'];
 
   const getCategoryCount = (cat) => {
     if (cat === 'Favorites') return favorites.length;
@@ -1224,7 +1369,7 @@ const IPTV = () => {
           {[
             { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 156 },
             { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
-            { rank: 3, name: 'TV5', logo: 'https://static.wikia.nocookie.net/tv5network/images/9/95/TV5_HD_2024.svg', channelId: 8 },
+            { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg', channelId: 'star-movies' },
             { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 63 },
             { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg', channelId: 'cinema-one' },
             { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 79 },
@@ -1256,6 +1401,72 @@ const IPTV = () => {
           })}
         </div>
       </section>
+
+      {/* Favorites Section */}
+      {(() => {
+        const favoriteChannels = favorites
+          .map(favId => channels.find(c => c.id === favId))
+          .filter(Boolean);
+
+        if (favoriteChannels.length === 0) return null;
+
+        return (
+          <section className="iptv-favorites-section">
+            <div className="iptv-top10-header">Favorites</div>
+            <div
+              className="iptv-favorites-list"
+              onMouseDown={(e) => {
+                const el = e.currentTarget;
+                el._isDown = true;
+                el._isDragging = false;
+                el._startX = e.pageX - el.offsetLeft;
+                el._scrollLeft = el.scrollLeft;
+                el.style.cursor = 'grabbing';
+              }}
+              onMouseLeave={(e) => {
+                const el = e.currentTarget;
+                el._isDown = false;
+                el.style.cursor = 'grab';
+              }}
+              onMouseUp={(e) => {
+                const el = e.currentTarget;
+                el._isDown = false;
+                el.style.cursor = 'grab';
+                setTimeout(() => { el._isDragging = false; }, 0);
+              }}
+              onMouseMove={(e) => {
+                const el = e.currentTarget;
+                if (!el._isDown) return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - el._startX) * 2;
+                el.scrollLeft = el._scrollLeft - walk;
+                if (Math.abs(x - el._startX) > 5) el._isDragging = true;
+              }}
+            >
+              {favoriteChannels.map(channel => (
+                <div
+                  key={channel.id}
+                  className="iptv-favorites-item"
+                  onClick={(e) => {
+                    if (e.currentTarget.parentElement._isDragging) return;
+                    handleChannelClick(channel);
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleChannelClick(channel)}
+                  aria-label={`Favorite: ${channel.name}`}
+                >
+                  <div className="iptv-top10-logo-container">
+                    <img src={channel.logo} alt={channel.name} className="iptv-top10-logo" loading="lazy" draggable="false" />
+                  </div>
+                  <span className="iptv-favorites-name">{channel.name}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
 
       <div className="iptv-filters">
         <div className="iptv-search-container">

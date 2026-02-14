@@ -131,6 +131,67 @@
   object-fit: contain;
 }
 
+/* ========================================
+   FAVORITES SECTION
+   ======================================== */
+
+.iptv-favorites-section {
+  margin-bottom: 2.5rem;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.iptv-favorites-list {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 40px 8px 0;
+  scroll-behavior: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+}
+
+.iptv-favorites-list::-webkit-scrollbar {
+  display: none;
+}
+
+.iptv-favorites-item {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  width: 100px;
+}
+
+.iptv-favorites-item:hover {
+  transform: scale(1.05);
+}
+
+.iptv-favorites-item:focus-visible {
+  outline: 2px solid var(--netflix-red);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.iptv-favorites-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Loading & Error States */
 .iptv-loading,
 .iptv-error {

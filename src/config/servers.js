@@ -86,6 +86,19 @@ export const serverConfig = [
     },
     {
         name: 'Server 8',
+        description: 'Subtitle Support. Up to 4k Quality.',
+        baseUrl: 'https://mapple.uk/watch/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+        // To disable password protection, remove 'locked' and 'password' properties
+        locked: false,
+        password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
+    },
+    {
+        name: 'Server 9',
         description: 'Lightning Fast. Multiple Mirrors.',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
@@ -95,7 +108,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 9',
+        name: 'Server 10',
         description: 'Huge Catalog. Fast Streaming.',
         baseUrl: 'https://vixsrc.to/',
         suffix: '',
@@ -105,7 +118,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 10',
+        name: 'Server 11',
         description: '4K Movies with Multi-Language Subtitles, (Movie Only).',
         baseUrl: 'https://fmovies4u.com/embed/movie/',
         suffix: '',
@@ -115,7 +128,7 @@ export const serverConfig = [
         pattern: 'movie-only', // Updated format: /embed/movie/{id}
     },
     {
-        name: 'Server 11',
+        name: 'Server 12',
         description: 'Fast Streaming. (Movie Only).',
         baseUrl: 'https://www.vidking.net/embed/movie/',
         suffix: '',
@@ -125,7 +138,7 @@ export const serverConfig = [
         pattern: 'movie-only',
     },
     {
-        name: 'Server 12',
+        name: 'Server 13',
         description: 'Fast Streaming. also (Movie Only)',
         baseUrl: 'https://vidsrc.wtf/api/3/movie/',
         suffix: '',
@@ -135,7 +148,7 @@ export const serverConfig = [
         pattern: 'query-id', // Movie-only
     },
     {
-        name: 'Server 13',
+        name: 'Server 14',
         description: 'Multi-Source Backup Servers. Subtitle Support.',
         baseUrl: 'https://player.vidzee.wtf/embed/',
         suffix: '',
@@ -148,7 +161,7 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTM=', // Base64 encoded
     },
     {
-        name: 'Server 14',
+        name: 'Server 15',
         description: 'Multi-Source. Customizable Subtitles. Up to 1080p.',
         baseUrl: 'https://player.videasy.net/',
         suffix: '',
@@ -159,19 +172,6 @@ export const serverConfig = [
         // To disable password protection, remove 'locked' and 'password' properties
         locked: false,
         password: 'c3RyZWFtZmxpeEBfMTQ=', // Base64 encoded
-    },
-    {
-        name: 'Server 15',
-        description: 'Subtitle Support. Up to 1080p Quality.',
-        baseUrl: 'https://mapple.uk/watch/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-        // To disable password protection, remove 'locked' and 'password' properties
-        locked: false,
-        password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
     },
     {
         name: 'Server 16',
@@ -185,7 +185,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 17',
-        description: 'Main Server, Fast Streaming.',
+        description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
         isRecommended: false,

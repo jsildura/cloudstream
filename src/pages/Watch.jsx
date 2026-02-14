@@ -4,6 +4,7 @@ import { useTMDB } from '../hooks/useTMDB';
 import { useToast } from '../contexts/ToastContext';
 import useWatchHistory from '../hooks/useWatchHistory';
 import usePopularTracking from '../hooks/usePopularTracking';
+import useWatchlist from '../hooks/useWatchlist';
 import { serverConfig, buildServerUrl } from '../config/servers';
 import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
@@ -83,8 +84,10 @@ const Watch = () => {
   const { showNowPlaying } = useToast();
   const { addToHistory } = useWatchHistory();
   const { trackWatch } = usePopularTracking();
+  const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const hasShownToast = useRef(false);
   const wakeLockRef = useRef(null);
+  const isSaved = contentInfo ? isInWatchlist(contentInfo.id) : false;
 
   // Screen Wake Lock - Prevents screen from turning off during playback
   // Works on: Chrome 84+, Safari iOS 16.4+, Edge 84+, Brave, Opera
@@ -295,11 +298,9 @@ const Watch = () => {
     if (hideControlsTimer.current) {
       clearTimeout(hideControlsTimer.current);
     }
-    if (isFullscreen) {
-      hideControlsTimer.current = setTimeout(() => {
-        setControlsVisible(false);
-      }, 3000);
-    }
+    hideControlsTimer.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3000);
   };
 
   useEffect(() => {
@@ -309,39 +310,34 @@ const Watch = () => {
         document.mozFullScreenElement ||
         document.msFullscreenElement);
       setIsFullscreen(isFs);
-      if (isFs) {
-        resetHideTimer();
-      } else {
-        setControlsVisible(true);
-        if (hideControlsTimer.current) {
-          clearTimeout(hideControlsTimer.current);
-        }
-      }
+      resetHideTimer();
     };
 
     const handleDocumentMouseMove = () => {
-      if (document.fullscreenElement || document.webkitFullscreenElement) {
-        resetHideTimer();
-      }
+      resetHideTimer();
     };
 
-    const handleKeyDown = (e) => {
-      if (isFullscreen) {
-        resetHideTimer();
-      }
+    const handleTouchActivity = () => {
+      resetHideTimer();
+    };
+
+    const handleKeyDown = () => {
+      resetHideTimer();
     };
 
     const handleFocusIn = () => {
-      if (isFullscreen) {
-        resetHideTimer();
-      }
+      resetHideTimer();
     };
+
+    // Start initial auto-hide timer
+    resetHideTimer();
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
     document.addEventListener('mozfullscreenchange', handleFullscreenChange);
     document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     document.addEventListener('mousemove', handleDocumentMouseMove);
+    document.addEventListener('touchstart', handleTouchActivity, { passive: true });
     document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('focusin', handleFocusIn);
 
@@ -351,6 +347,7 @@ const Watch = () => {
       document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
       document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
       document.removeEventListener('mousemove', handleDocumentMouseMove);
+      document.removeEventListener('touchstart', handleTouchActivity);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('focusin', handleFocusIn);
       if (hideControlsTimer.current) {
@@ -696,7 +693,7 @@ const Watch = () => {
     <>
       <MetaTags {...metaData} />
       <SchemaMarkup schema={videoSchema} />
-      <div className={`watch-fullscreen${isFullscreen ? ' css-fullscreen-mode' : ''}`} ref={watchContainerRef} onMouseMove={resetHideTimer} onTouchStart={resetHideTimer}>
+      <div className={`watch-fullscreen${isFullscreen ? ' css-fullscreen-mode' : ''}${controlsVisible ? ' sidebar-visible' : ''}`} ref={watchContainerRef} onMouseMove={resetHideTimer} onTouchStart={resetHideTimer}>
         {/* Video Player - Lazy Loaded */}
         {playerLoaded ? (
           <>
@@ -712,12 +709,13 @@ const Watch = () => {
                 sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
               })}
             />
-            {/* Invisible overlay to capture mouse when controls hidden in fullscreen */}
-            {isFullscreen && !controlsVisible && (
+            {/* Invisible overlay to capture touch/mouse when controls are hidden */}
+            {!controlsVisible && (
               <div
                 className="watch-mouse-capture"
                 onMouseMove={resetHideTimer}
                 onClick={resetHideTimer}
+                onTouchStart={resetHideTimer}
               />
             )}
           </>
@@ -758,202 +756,159 @@ const Watch = () => {
           </div>
         )}
 
-        {/* Overlay Buttons */}
-        <button className={`watch-overlay-btn watch-back-btn${!controlsVisible ? ' controls-hidden' : ''}`} onClick={handleBack}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m12 19-7-7 7-7"></path>
-            <path d="M19 12H5"></path>
-          </svg>
-          Back
-        </button>
-
-        <button className={`watch-overlay-btn watch-server-btn${!controlsVisible ? ' controls-hidden' : ''}`} onClick={() => setServerDrawerOpen(true)}>
-          Server
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m7 15 5 5 5-5"></path>
-            <path d="m7 9 5-5 5 5"></path>
-          </svg>
-        </button>
-
-
-
-
-
-        {/* TV Episode Badge with Integrated Fullscreen & Warning */}
-        {type === 'tv' && (
-          <div className={`watch-episode-badge${!controlsVisible ? ' controls-hidden' : ''}`}>
-            {/* Episode Text - Clickable to open episode drawer */}
+        {/* Vertical Control Bar */}
+        <div className={`watch-control-bar${controlsVisible ? ' visible' : ''}`}>
+          {/* Back Button */}
+          <div className="watch-control-bar-item">
             <button
-              className="watch-episode-badge-text"
-              onClick={() => setEpisodeDrawerOpen(true)}
-              aria-label="Open episode selector"
+              className="watch-control-bar-btn"
+              onClick={handleBack}
+              title="Back to Home"
+              aria-label="Back to Home"
             >
-              S{currentSeason} <span className="badge-dot">•</span> E{currentEpisode}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                <path fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48" d="M244 400 100 256l144-144M120 256h292" />
+              </svg>
             </button>
+            <span className="watch-control-bar-label">Back</span>
+          </div>
 
-            {/* Fullscreen Button - Middle */}
+          {/* Episodes Button - TV Shows Only */}
+          {type === 'tv' && (
+            <div className="watch-control-bar-item">
+              <button
+                className="watch-control-bar-btn"
+                onClick={() => setEpisodeDrawerOpen(true)}
+                title={`S${currentSeason} E${currentEpisode}`}
+                aria-label="Open episode selector"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8" />
+                  <path d="M12 17v4" />
+                  <path d="m10 9 4 2.5L10 14V9z" />
+                </svg>
+              </button>
+              <span className="watch-control-bar-label">S{currentSeason} E{currentEpisode}</span>
+            </div>
+          )}
+
+          {/* Save / Watchlist Button */}
+          <div className="watch-control-bar-item">
             <button
-              className="watch-episode-badge-btn watch-episode-badge-fullscreen"
+              className={`watch-control-bar-btn${isSaved ? ' active' : ''}`}
+              onClick={() => {
+                if (contentInfo) {
+                  toggleWatchlist({
+                    id: contentInfo.id,
+                    title: contentInfo.title || contentInfo.name,
+                    poster_path: contentInfo.poster_path,
+                    backdrop_path: contentInfo.backdrop_path,
+                    type: type,
+                    vote_average: contentInfo.vote_average,
+                    release_date: contentInfo.release_date || contentInfo.first_air_date,
+                    overview: contentInfo.overview,
+                    genre_ids: contentInfo.genre_ids,
+                  });
+                }
+              }}
+              title={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
+              aria-label={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            >
+              {isSaved ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                  <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                  <path fill="none" d="M0 0h24v24H0z" />
+                  <path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z" />
+                </svg>
+              )}
+            </button>
+            <span className="watch-control-bar-label">Save</span>
+          </div>
+
+          {/* Server Button */}
+          <div className="watch-control-bar-item">
+            <button
+              className="watch-control-bar-btn server-pulse"
+              onClick={() => setServerDrawerOpen(true)}
+              title="Change Server"
+              aria-label="Change Server"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                <path d="M4.08 5.227A3 3 0 0 1 6.979 3H17.02a3 3 0 0 1 2.9 2.227l2.113 7.926A5.228 5.228 0 0 0 18.75 12H5.25a5.228 5.228 0 0 0-3.284 1.153L4.08 5.227Z" />
+                <path fillRule="evenodd" d="M5.25 13.5a3.75 3.75 0 1 0 0 7.5h13.5a3.75 3.75 0 1 0 0-7.5H5.25Zm10.5 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm3.75-.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <span className="watch-control-bar-label">Server</span>
+          </div>
+
+          {/* Fullscreen Button */}
+          <div className="watch-control-bar-item">
+            <button
+              className="watch-control-bar-btn"
               onClick={() => {
                 if (watchContainerRef.current) {
                   const elem = watchContainerRef.current;
                   const doc = document;
-
                   const isCurrentlyFullscreen = doc.fullscreenElement ||
                     doc.webkitFullscreenElement ||
                     doc.mozFullScreenElement ||
                     doc.msFullscreenElement ||
                     isFullscreen;
-
                   if (!isCurrentlyFullscreen) {
                     if (elem.requestFullscreen) {
-                      elem.requestFullscreen().then(() => {
-                        setIsFullscreen(true);
-                      }).catch(err => {
-                        console.log('Standard fullscreen failed, trying fallback:', err);
-                        setIsFullscreen(true);
-                      });
+                      elem.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => setIsFullscreen(true));
                     } else if (elem.webkitRequestFullscreen) {
-                      elem.webkitRequestFullscreen();
-                      setIsFullscreen(true);
+                      elem.webkitRequestFullscreen(); setIsFullscreen(true);
                     } else if (elem.webkitEnterFullscreen) {
-                      elem.webkitEnterFullscreen();
-                      setIsFullscreen(true);
+                      elem.webkitEnterFullscreen(); setIsFullscreen(true);
                     } else if (elem.mozRequestFullScreen) {
-                      elem.mozRequestFullScreen();
-                      setIsFullscreen(true);
+                      elem.mozRequestFullScreen(); setIsFullscreen(true);
                     } else if (elem.msRequestFullscreen) {
-                      elem.msRequestFullscreen();
-                      setIsFullscreen(true);
+                      elem.msRequestFullscreen(); setIsFullscreen(true);
                     } else {
                       setIsFullscreen(true);
                     }
                   } else {
                     if (doc.exitFullscreen) {
-                      doc.exitFullscreen().then(() => {
-                        setIsFullscreen(false);
-                      }).catch(() => setIsFullscreen(false));
+                      doc.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => setIsFullscreen(false));
                     } else if (doc.webkitExitFullscreen) {
-                      doc.webkitExitFullscreen();
-                      setIsFullscreen(false);
+                      doc.webkitExitFullscreen(); setIsFullscreen(false);
                     } else if (doc.mozCancelFullScreen) {
-                      doc.mozCancelFullScreen();
-                      setIsFullscreen(false);
+                      doc.mozCancelFullScreen(); setIsFullscreen(false);
                     } else if (doc.msExitFullscreen) {
-                      doc.msExitFullscreen();
-                      setIsFullscreen(false);
+                      doc.msExitFullscreen(); setIsFullscreen(false);
                     } else {
                       setIsFullscreen(false);
                     }
                   }
                 }
               }}
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
             >
               {isFullscreen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
-                  <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
-                  <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
-                  <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                  <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                  <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                  <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                  <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                  <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                  <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                  <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
                 </svg>
               )}
             </button>
-
+            <span className="watch-control-bar-label">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
           </div>
-        )}
-
-        {/* Movie Badge with Fullscreen & Warning (matches TV badge for uniformity) */}
-        {type === 'movie' && (
-          <div className={`watch-episode-badge${!controlsVisible ? ' controls-hidden' : ''}`}>
-            {/* Movie Text - Not clickable */}
-            <span className="watch-episode-badge-label">Movie</span>
-
-            {/* Fullscreen Button */}
-            <button
-              className="watch-episode-badge-btn watch-episode-badge-fullscreen"
-              onClick={() => {
-                if (watchContainerRef.current) {
-                  const elem = watchContainerRef.current;
-                  const doc = document;
-
-                  const isCurrentlyFullscreen = doc.fullscreenElement ||
-                    doc.webkitFullscreenElement ||
-                    doc.mozFullScreenElement ||
-                    doc.msFullscreenElement ||
-                    isFullscreen;
-
-                  if (!isCurrentlyFullscreen) {
-                    if (elem.requestFullscreen) {
-                      elem.requestFullscreen().then(() => {
-                        setIsFullscreen(true);
-                      }).catch(err => {
-                        console.log('Standard fullscreen failed, trying fallback:', err);
-                        setIsFullscreen(true);
-                      });
-                    } else if (elem.webkitRequestFullscreen) {
-                      elem.webkitRequestFullscreen();
-                      setIsFullscreen(true);
-                    } else if (elem.webkitEnterFullscreen) {
-                      elem.webkitEnterFullscreen();
-                      setIsFullscreen(true);
-                    } else if (elem.mozRequestFullScreen) {
-                      elem.mozRequestFullScreen();
-                      setIsFullscreen(true);
-                    } else if (elem.msRequestFullscreen) {
-                      elem.msRequestFullscreen();
-                      setIsFullscreen(true);
-                    } else {
-                      setIsFullscreen(true);
-                    }
-                  } else {
-                    if (doc.exitFullscreen) {
-                      doc.exitFullscreen().then(() => {
-                        setIsFullscreen(false);
-                      }).catch(() => setIsFullscreen(false));
-                    } else if (doc.webkitExitFullscreen) {
-                      doc.webkitExitFullscreen();
-                      setIsFullscreen(false);
-                    } else if (doc.mozCancelFullScreen) {
-                      doc.mozCancelFullScreen();
-                      setIsFullscreen(false);
-                    } else if (doc.msExitFullscreen) {
-                      doc.msExitFullscreen();
-                      setIsFullscreen(false);
-                    } else {
-                      setIsFullscreen(false);
-                    }
-                  }
-                }
-              }}
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            >
-              {isFullscreen ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
-                  <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
-                  <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
-                  <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                  <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                  <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                  <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
-                </svg>
-              )}
-            </button>
-
-          </div>
-        )}
+        </div>
 
         {/* Server Drawer Overlay */}
         {serverDrawerOpen && (

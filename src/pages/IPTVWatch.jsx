@@ -655,7 +655,7 @@ const getManualChannels = () => [
 
         id: 'kaloopy',
         name: 'Kaloopy',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://a.jsrdn.com/hls/22868/kaloopy/logo_20231219_214555_68.png',
         url: 'https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/kaloopy/master.m3u8?ads.dpname=distrotv&ads.rnd=16e2&ads.env_i=b70a433d-116e-4d54-b610-8a27ae094f78&ads.env_u=&ads.name=DistroTV&ads.bundle=&ads.storeurl=&ads.appCategory=entertainment&ads.app_version=202105131041&ads.width=1344&ads.height=756&ads.deviceId=&ads.deviceDNT=0&ads.gdpr=0&ads.us_privacy=0&ads.aid=&ads.deviceMake=Web&ads.deviceIdType=localStorage&ads.deviceConnectionType=2&ads.deviceCategory=web&ads.client_ip=103.107.83.132&ads.geo=PH&ads.lat=9.98920&ads.long=122.80880&ads.dma=&ads.geoType=2&ads.contentid=22868&ads.content_duration=18000&ads.episode_id=73234&ads.show_id=1093&ads.showCategories=IAB1&ads.episodeCategories=IAB1&ads.genre=Entertainment%2CLifestyle%2CSports%2CMusic%2CGaming%2CEnglish&ads.showRating=TV-14&ads.episodeRating=TV-14&ads.language=en&ads.showtitle=Kaloopy&ads.episodetitle=Kaloopy&ads.keywords=Nascar%2Cmens%20lifestyle%2Ccall%20of%20duty%2Cgaming%2Cfitness%2Ctech%2Cmens%20fashion%2Chouse%20music%2Cmotorcycles%2Ccars%2Csoccer%2Cmotorsport%2Ctravel%2Cbeach%2Ccalifornia%2Cufc%2Cmilitary%2Csurfing%2Cskating%2Cfashion&ads.contenturl=&ads.gdprConsent=&ads.paln=&ads.tagname=dtv&ads.islive=1&ads.streamtype=live&ads.vf=R8XTvvAQP3O'
     },
@@ -819,7 +819,7 @@ const getManualChannels = () => [
     {
         id: 'barely-legal',
         name: 'Barely Legal',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://dcassetcdn.com/design_img/596551/203438/203438_4041728_596551_image.jpg',
         url: 'https://video.beeline.tv/live/d/channel420.isml/manifest-stb.mpd',
         licenseKey: 'bf0bdbb8a0e83ec6ba8b7f42d27a6925:f4051d1dd36e66e085264b9b342641c5'
@@ -827,7 +827,7 @@ const getManualChannels = () => [
     {
         id: 'babes-tv',
         name: 'Babes TV',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://www.poda.cz/wp-content/uploads/2024/04/babes-tv-2024.png',
         url: 'https://video.beeline.tv/live/d/channel472.isml/manifest-stb.mpd',
         licenseKey: '996d754bd00695c04644c3fa44c25183:5d5fcedc221c1ce858519d60442a107a'
@@ -835,7 +835,7 @@ const getManualChannels = () => [
     {
         id: 'brazzers-tv-europe',
         name: 'Brazzers TV Europe',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://www.cableman.ru/sites/default/files/brazzers_tv.png',
         url: 'https://video.beeline.tv/live/d/channel012.isml/manifest-stb.mpd',
         licenseKey: '30a943cb79dccfa9c2b579bb8274cf85:4e3643d08495456c936e8b77d620d496'
@@ -843,7 +843,7 @@ const getManualChannels = () => [
     {
         id: 'exxxotica',
         name: 'Exxxotica',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://radioimg.audacy.com/aiu-media/39d3d2937937758f30f6096a92-116186e2-0f80-4786-8d25-0c8e03281444.png?width=800',
         url: 'https://video.beeline.tv/live/d/channel442.isml/manifest-stb.mpd',
         licenseKey: '3d5bd327009443ddeee322e210dda78a:f41de33f25ffd33284a11210e8889282'
@@ -851,7 +851,7 @@ const getManualChannels = () => [
     {
         id: 'french-lover',
         name: 'French Lover',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://www.agsat.com.ua/wa-data/public/shop/products/86/38/3886/images/4939/4939.500-3886.jpg',
         url: 'https://video.beeline.tv/live/d/channel252.isml/manifest-stb.mpd',
         licenseKey: '2757ba26637acecfa143237f5a32e2c7:3e69642d9f9e23f0568eeb9d6a1ca48a'
@@ -859,7 +859,7 @@ const getManualChannels = () => [
     {
         id: 'playboy-tv',
         name: 'Playboy TV',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Play_Boy_TV_logo_2016.svg',
         url: 'https://video.beeline.tv/live/d/channel047.isml/manifest-stb.mpd',
         licenseKey: '8b4af3cb6ba681d3df359cd404c11776:9b010f4ba2a71a3ef2706aed3549189b'
@@ -867,7 +867,7 @@ const getManualChannels = () => [
     {
         id: 'red-lips',
         name: 'Red Lips',
-        category: 'Entertainment',
+        category: '18+',
         logo: 'https://www.cableman.ru/sites/default/files/red_lips.jpg',
         url: 'https://video.beeline.tv/live/d/channel443.isml/manifest-stb.mpd',
         licenseKey: '6fd536019350b37721cba80ef055972c:07d787ee89a0cad2d21983b4e0c792c7'
@@ -1473,7 +1473,7 @@ const IPTVWatch = () => {
 
     return (
         <div
-            className={`iptv-watch-fullscreen${isFullscreen ? ' css-fullscreen-mode' : ''}`}
+            className={`iptv-watch-fullscreen${isFullscreen ? ' css-fullscreen-mode' : ''}${controlsVisible ? ' sidebar-visible' : ''}`}
             ref={containerRef}
             onMouseMove={resetHideTimer}
             onTouchStart={resetHideTimer}
@@ -1506,6 +1506,15 @@ const IPTVWatch = () => {
                             </button>
                         </div>
                     )}
+                    {/* Invisible overlay to capture touch/mouse when controls are hidden */}
+                    {!controlsVisible && (
+                        <div
+                            className="watch-mouse-capture"
+                            onMouseMove={resetHideTimer}
+                            onClick={resetHideTimer}
+                            onTouchStart={resetHideTimer}
+                        />
+                    )}
                 </>
             ) : (
                 <div
@@ -1534,57 +1543,74 @@ const IPTVWatch = () => {
                 </div>
             )}
 
-            {/* Back Button */}
-            <button
-                className={`iptv-watch-overlay-btn iptv-watch-back-btn${!controlsVisible && playerLoaded ? ' controls-hidden' : ''}`}
-                onClick={handleBack}
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m12 19-7-7 7-7"></path>
-                    <path d="M19 12H5"></path>
-                </svg>
-                Back
-            </button>
-
-            {/* Live Badge - Top Center */}
+            {/* Live Badge - Top Center (info only, buttons moved to vertical bar) */}
             <div className={`iptv-watch-live-badge${!controlsVisible && playerLoaded ? ' controls-hidden' : ''}`}>
                 <span className="iptv-live-indicator">LIVE</span>
-                <span className="iptv-watch-channel-name">{channel?.name || 'AMC USA Test'}</span>
-                {/* Channel Strip Toggle */}
-                {channels.length > 0 && (
+                <span className="iptv-watch-channel-name">{channel?.name || 'Channel'}</span>
+            </div>
+
+            {/* Vertical Control Bar */}
+            <div className={`watch-control-bar${controlsVisible ? ' visible' : ''}`}>
+                {/* Back Button */}
+                <div className="watch-control-bar-item">
                     <button
-                        className="iptv-watch-badge-btn"
-                        onClick={toggleChannelStrip}
-                        tabIndex={0}
-                        aria-label="Show channel list"
+                        className="watch-control-bar-btn"
+                        onClick={handleBack}
+                        title="Back to IPTV"
+                        aria-label="Back to IPTV"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <rect x="2" y="3" width="20" height="14" rx="2" />
-                            <path d="M8 21h8" /><path d="M12 17v4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                            <path fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48" d="M244 400 100 256l144-144M120 256h292" />
                         </svg>
                     </button>
+                    <span className="watch-control-bar-label">Back</span>
+                </div>
+
+                {/* Channels Button */}
+                {channels.length > 0 && (
+                    <div className="watch-control-bar-item">
+                        <button
+                            className="watch-control-bar-btn server-pulse"
+                            onClick={toggleChannelStrip}
+                            title="Channel List"
+                            aria-label="Show channel list"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" />
+                                <path d="M8 21h8" />
+                                <path d="M12 17v4" />
+                            </svg>
+                        </button>
+                        <span className="watch-control-bar-label">Channels</span>
+                    </div>
                 )}
-                <button
-                    className="iptv-watch-badge-btn"
-                    onClick={toggleFullscreen}
-                    aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                >
-                    {isFullscreen ? (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
-                            <path d="M21 8h-3a2 2 0 0 1-2-2V3"></path>
-                            <path d="M3 16h3a2 2 0 0 1 2 2v3"></path>
-                            <path d="M16 21v-3a2 2 0 0 1 2-2h3"></path>
-                        </svg>
-                    ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 8V5a2 2 0 0 1 2-2h3"></path>
-                            <path d="M16 3h3a2 2 0 0 1 2 2v3"></path>
-                            <path d="M21 16v3a2 2 0 0 1-2 2h-3"></path>
-                            <path d="M8 21H5a2 2 0 0 1-2-2v-3"></path>
-                        </svg>
-                    )}
-                </button>
+
+                {/* Fullscreen Button */}
+                <div className="watch-control-bar-item">
+                    <button
+                        className="watch-control-bar-btn"
+                        onClick={toggleFullscreen}
+                        title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                    >
+                        {isFullscreen ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                                <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                                <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                                <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                            </svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                                <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                                <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                                <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                            </svg>
+                        )}
+                    </button>
+                    <span className="watch-control-bar-label">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
+                </div>
             </div>
             {/* Harvester Iframe - Loads Mapple to generate keys (extension captures them) */}
             {channel?.mappleId && (

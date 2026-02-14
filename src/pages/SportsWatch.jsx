@@ -26,6 +26,9 @@ const SportsWatch = () => {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerTranslateY, setDrawerTranslateY] = useState(0);
     const [sandboxEnabled, setSandboxEnabled] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const containerRef = useRef(null);
 
     const hideControlsTimerRef = useRef(null);
     const isDragging = useRef(false);
@@ -43,7 +46,7 @@ const SportsWatch = () => {
                 if (!drawerOpen) {
                     setControlsVisible(false);
                 }
-            }, 4000);
+            }, 3000);
         };
 
         const handleMouseMove = () => resetTimer();
@@ -61,6 +64,50 @@ const SportsWatch = () => {
             }
         };
     }, [drawerOpen]);
+
+    // Fullscreen toggle
+    const toggleFullscreen = () => {
+        if (!containerRef.current) return;
+        const elem = containerRef.current;
+        const doc = document;
+        if (!doc.fullscreenElement && !doc.webkitFullscreenElement && !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+            setIsFullscreen(true);
+        } else {
+            if (doc.exitFullscreen) {
+                doc.exitFullscreen();
+            } else if (doc.webkitExitFullscreen) {
+                doc.webkitExitFullscreen();
+            } else if (doc.mozCancelFullScreen) {
+                doc.mozCancelFullScreen();
+            } else if (doc.msExitFullscreen) {
+                doc.msExitFullscreen();
+            }
+            setIsFullscreen(false);
+        }
+    };
+
+    // Sync fullscreen state on external changes (e.g. Esc key)
+    useEffect(() => {
+        const handleFsChange = () => {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+            setIsFullscreen(isFs);
+        };
+        document.addEventListener('fullscreenchange', handleFsChange);
+        document.addEventListener('webkitfullscreenchange', handleFsChange);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFsChange);
+            document.removeEventListener('webkitfullscreenchange', handleFsChange);
+        };
+    }, []);
 
     // Drawer drag handlers
     const handleDragStart = (clientY) => {
@@ -235,7 +282,11 @@ const SportsWatch = () => {
     const controlsHiddenClass = controlsVisible ? '' : 'controls-hidden';
 
     return (
-        <div className="sports-watch-fullscreen">
+        <div
+            className={`sports-watch-fullscreen${isFullscreen ? ' css-fullscreen-mode' : ''}${controlsVisible ? ' sidebar-visible' : ''}`}
+            ref={containerRef}
+            onTouchStart={() => { setControlsVisible(true); }}
+        >
             {/* Video Player - Full Screen */}
             {selectedStream?.embedUrl ? (
                 <iframe
@@ -286,17 +337,6 @@ const SportsWatch = () => {
                 </div>
             )}
 
-            {/* Back Button - Top Left */}
-            <button
-                className={`sports-watch-overlay-btn sports-watch-back-btn ${controlsHiddenClass}`}
-                onClick={handleBack}
-            >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5M12 19l-7-7 7-7" />
-                </svg>
-                <span>Back</span>
-            </button>
-
             {/* Match Badge - Top Center */}
             <div className={`sports-watch-match-badge ${controlsHiddenClass}`}>
                 <span className="sports-live-indicator">LIVE</span>
@@ -306,17 +346,66 @@ const SportsWatch = () => {
                 )}
             </div>
 
-            {/* Sources Button - Top Right */}
-            <button
-                className={`sports-watch-overlay-btn sports-watch-sources-btn ${controlsHiddenClass}`}
-                onClick={() => setDrawerOpen(true)}
-            >
-                Sources
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="m7 15 5 5 5-5" />
-                    <path d="m7 9 5-5 5 5" />
-                </svg>
-            </button>
+            {/* Vertical Control Bar */}
+            <div className={`watch-control-bar${controlsVisible ? ' visible' : ''}`}>
+                {/* Back Button */}
+                <div className="watch-control-bar-item">
+                    <button
+                        className="watch-control-bar-btn"
+                        onClick={handleBack}
+                        title="Back to Home"
+                        aria-label="Back to Home"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                            <path fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="48" d="M244 400 100 256l144-144M120 256h292" />
+                        </svg>
+                    </button>
+                    <span className="watch-control-bar-label">Back</span>
+                </div>
+
+                {/* Server Button */}
+                <div className="watch-control-bar-item">
+                    <button
+                        className="watch-control-bar-btn server-pulse"
+                        onClick={() => setDrawerOpen(true)}
+                        title="Server"
+                        aria-label="Server"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                            <path d="M4.08 5.227A3 3 0 0 1 6.979 3H17.02a3 3 0 0 1 2.9 2.227l2.113 7.926A5.228 5.228 0 0 0 18.75 12H5.25a5.228 5.228 0 0 0-3.284 1.153L4.08 5.227Z" />
+                            <path fillRule="evenodd" d="M5.25 13.5a3.75 3.75 0 1 0 0 7.5h13.5a3.75 3.75 0 1 0 0-7.5H5.25Zm10.5 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm3.75-.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                    <span className="watch-control-bar-label">Server</span>
+                </div>
+
+                {/* Fullscreen Button */}
+                <div className="watch-control-bar-item">
+                    <button
+                        className="watch-control-bar-btn"
+                        onClick={toggleFullscreen}
+                        title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+                    >
+                        {isFullscreen ? (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                                <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                                <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                                <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                            </svg>
+                        ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                                <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                                <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                                <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                            </svg>
+                        )}
+                    </button>
+                    <span className="watch-control-bar-label">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
+                </div>
+            </div>
 
             {/* Sources Drawer Modal */}
             {drawerOpen && (
@@ -361,7 +450,7 @@ const SportsWatch = () => {
                         {/* Source Tabs */}
                         {match?.sources && match.sources.length > 0 && (
                             <div className="sports-source-tabs">
-                                <p className="sports-source-tabs-title">Select Source</p>
+                                <p className="sports-source-tabs-title">Select Server</p>
                                 <div className="sports-source-tabs-row">
                                     {match.sources.map((source, index) => (
                                         <button

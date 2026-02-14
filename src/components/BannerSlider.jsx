@@ -342,7 +342,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             />
           </div>
         ) : (
-          <div className="banner-backdrop">
+          <div className="banner-backdrop" key={currentSlide}>
             <img
               srcSet={`https://image.tmdb.org/t/p/w780${currentMovie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${currentMovie.backdrop_path} 1280w`}
               sizes="(max-width: 768px) 780px, 1280px"
@@ -359,7 +359,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
         <div className="banner-content banner-desktop-content">
           {/* Title - Logo Image or Text Fallback */}
           {currentLogoPath ? (
-            <div className="banner-logo-container">
+            <div className="banner-logo-container" key={`logo-${currentSlide}`}>
               <img
                 src={`${LOGO_URL}${currentLogoPath}`}
                 alt={`${currentMovie.title || currentMovie.name} logo`}
@@ -375,13 +375,13 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
               </h2>
             </div>
           ) : (
-            <h2 className="banner-title-new">
+            <h2 className="banner-title-new" key={`title-${currentSlide}`}>
               {titleMain} <span className="title-highlight">{titleHighlight}</span>
             </h2>
           )}
 
           {/* IMDb + Metadata Row */}
-          <div className="banner-meta-row">
+          <div className="banner-meta-row" key={`meta-${currentSlide}`}>
             <span className="imdb-badge">IMDb</span>
             <span className="meta-rating">{currentMovie.vote_average?.toFixed(1) || '8.5'}</span>
             <span className="meta-separator">·</span>
@@ -411,7 +411,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </div>
 
           {/* Description */}
-          <p className="banner-description-new">
+          <p className="banner-description-new" key={`desc-${currentSlide}`}>
             {currentMovie.overview?.length > 200
               ? `${currentMovie.overview.substring(0, 200)}...`
               : currentMovie.overview
@@ -419,7 +419,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </p>
 
           {/* Action Buttons Row */}
-          <div className="banner-actions-row">
+          <div className="banner-actions-row" key={`actions-${currentSlide}`}>
             {/* Play Trailer Button */}
             <button
               className={`banner-action-icon ${isTrailerPlaying ? 'active' : ''} ${!currentTrailerKey ? 'disabled' : ''}`}
@@ -518,7 +518,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </div>
 
           {/* Genre Tags - Dynamic based on movie data */}
-          <div className="banner-genre-tags">
+          <div className="banner-genre-tags" key={`genres-${currentSlide}`}>
             {(() => {
               const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
               const genreMap = type === 'movie' ? movieGenres : tvGenres;
