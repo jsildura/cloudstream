@@ -5730,6 +5730,22 @@ select.filter-dropdown {
   background: rgba(239, 68, 68, 0.2);
 }
 
+/* Episode Navigation Buttons (Prev/Next) */
+.watch-nav-btn {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.watch-nav-btn:hover {
+  background: rgba(99, 179, 237, 0.25) !important;
+  border-color: rgba(99, 179, 237, 0.5);
+  transform: scale(1.12);
+}
+
+.watch-nav-btn:active {
+  background: rgba(99, 179, 237, 0.35) !important;
+}
+
 /* Subtle pulse animation for Server/Channels button */
 .watch-fullscreen .watch-control-bar-btn.server-pulse,
 .iptv-watch-fullscreen .watch-control-bar-btn.server-pulse,

@@ -455,6 +455,55 @@ const Watch = () => {
     await fetchEpisodes(seasonNumber);
   };
 
+  // Navigate to previous episode (with cross-season support)
+  const handlePrevEpisode = async () => {
+    if (currentEpisode > 1) {
+      setCurrentEpisode(currentEpisode - 1);
+    } else if (seasons.length > 0) {
+      // Find previous season
+      const currentSeasonIndex = seasons.findIndex(s => s.season_number === currentSeason);
+      if (currentSeasonIndex > 0) {
+        const prevSeason = seasons[currentSeasonIndex - 1];
+        setCurrentSeason(prevSeason.season_number);
+        try {
+          const res = await fetch(`/api/tv/${id}/season/${prevSeason.season_number}`);
+          const data = await res.json();
+          const prevEpisodes = data.episodes || [];
+          setEpisodes(prevEpisodes);
+          setCurrentEpisode(prevEpisodes.length);
+        } catch (error) {
+          console.error('Failed to load previous season:', error);
+        }
+      }
+    }
+  };
+
+  // Navigate to next episode (with cross-season support)
+  const handleNextEpisode = async () => {
+    if (currentEpisode < episodes.length) {
+      setCurrentEpisode(currentEpisode + 1);
+    } else if (seasons.length > 0) {
+      // Find next season
+      const currentSeasonIndex = seasons.findIndex(s => s.season_number === currentSeason);
+      if (currentSeasonIndex < seasons.length - 1) {
+        const nextSeason = seasons[currentSeasonIndex + 1];
+        setCurrentSeason(nextSeason.season_number);
+        await fetchEpisodes(nextSeason.season_number);
+        setCurrentEpisode(1);
+      }
+    }
+  };
+
+  // Derived: can navigate prev/next?
+  const canGoPrev = type === 'tv' && (
+    currentEpisode > 1 ||
+    seasons.findIndex(s => s.season_number === currentSeason) > 0
+  );
+  const canGoNext = type === 'tv' && (
+    currentEpisode < episodes.length ||
+    seasons.findIndex(s => s.season_number === currentSeason) < seasons.length - 1
+  );
+
   const getVideoUrl = () => {
     return servers[currentServer].getUrl(currentSeason, currentEpisode);
   };
@@ -790,6 +839,40 @@ const Watch = () => {
                 </svg>
               </button>
               <span className="watch-control-bar-label">S{currentSeason} E{currentEpisode}</span>
+            </div>
+          )}
+
+          {/* Previous Episode - TV Shows Only */}
+          {type === 'tv' && canGoPrev && (
+            <div className="watch-control-bar-item">
+              <button
+                className="watch-control-bar-btn watch-nav-btn"
+                onClick={handlePrevEpisode}
+                title="Previous Episode"
+                aria-label="Previous Episode"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+              </button>
+              <span className="watch-control-bar-label">Prev</span>
+            </div>
+          )}
+
+          {/* Next Episode - TV Shows Only */}
+          {type === 'tv' && canGoNext && (
+            <div className="watch-control-bar-item">
+              <button
+                className="watch-control-bar-btn watch-nav-btn"
+                onClick={handleNextEpisode}
+                title="Next Episode"
+                aria-label="Next Episode"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
+              </button>
+              <span className="watch-control-bar-label">Next</span>
             </div>
           )}
 
