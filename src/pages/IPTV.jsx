@@ -1362,7 +1362,7 @@ const IPTV = () => {
           onMouseMove={handleMouseMove}
         >
           {[
-            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 95 },
+            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 210 },
             { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
             { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg', channelId: 'star-movies' },
             { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 64 },
