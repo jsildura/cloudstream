@@ -30,7 +30,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
       return;
     }
 
-    const slideDuration = 20000;
+    const slideDuration = 7000;
     const progressInterval = 50;
     let progressTimer;
     let slideTimer;
@@ -620,6 +620,18 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             </svg>
             Watch Now
           </button>
+        </div>
+
+        {/* Carousel Indicators - Mapple.uk style pills */}
+        <div className="banner-indicators">
+          {movies.map((_, index) => (
+            <button
+              key={index}
+              className={`banner-indicator${index === currentSlide ? ' active' : ''}`}
+              onClick={() => goToSlide(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
       </div>
     </div>

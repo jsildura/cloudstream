@@ -1134,12 +1134,7 @@ const IPTV = () => {
         ];
 
         // Excluded Channels
-        const excludedIds = [
-          104, 221, 9, 204, 163, 76, 194, 42, 188, 189,
-          46, 198, 218, 219, 220, 10, 202, 217, 68, 222,
-          147, 183, 51, 203, 0, 166, 236, 78, 100, 199,
-          211, 155, 170, 60, 187, 148, 61, 223, 233, 231,
-          169, 171, 182, 172, 181, 191, 186, 178, 180, 196, 62, 149, 2, 165, 177, 26, 193, 136, 190, 234, 112, 34, 69];
+        const excludedIds = [0];
         const filteredParsed = parsed.filter(ch => !excludedIds.includes(ch.id));
 
         const allChannels = [...manualChannels, ...filteredParsed];
@@ -1367,18 +1362,18 @@ const IPTV = () => {
           onMouseMove={handleMouseMove}
         >
           {[
-            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 156 },
+            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 95 },
             { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
             { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg', channelId: 'star-movies' },
-            { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 63 },
+            { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 64 },
             { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg', channelId: 'cinema-one' },
-            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 79 },
-            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 102 },
-            { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 80 },
+            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 80 },
+            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 103 },
+            { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 81 },
             { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
-            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 70 },
-            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 58 },
-            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 96 },
+            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 71 },
+            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 59 },
+            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 97 },
           ].map(item => {
             const channel = channels.find(c => c.id === item.channelId);
             return (
