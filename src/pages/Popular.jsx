@@ -91,7 +91,20 @@ const Popular = () => {
       } else {
         setLoading(true);
       }
-      const url = buildUrl('/movie/popular', { ...filters, page });
+      // Use /discover/movie when any filter is active, otherwise use the default /movie/popular list
+      const hasActiveFilters = filters.with_genres || filters.year || filters['vote_average.gte'] || (filters.sort_by && filters.sort_by !== 'popularity.desc');
+      const endpoint = hasActiveFilters ? '/discover/movie' : '/movie/popular';
+      const params = { ...filters, page };
+      // When using discover endpoint, default to popular ordering
+      if (hasActiveFilters && !params.sort_by) {
+        params.sort_by = 'popularity.desc';
+      }
+      // Convert year to primary_release_year for discover endpoint
+      if (hasActiveFilters && params.year) {
+        params.primary_release_year = params.year;
+        delete params.year;
+      }
+      const url = buildUrl(endpoint, params);
       console.log('Fetching popular movies from:', url);
 
       const res = await fetch(url);
@@ -191,6 +204,10 @@ const Popular = () => {
 
     if (newFilters.rating) {
       apiFilters['vote_average.gte'] = parseFloat(newFilters.rating);
+    }
+
+    if (newFilters.sort_by) {
+      apiFilters.sort_by = newFilters.sort_by;
     }
 
     setFilters(apiFilters);

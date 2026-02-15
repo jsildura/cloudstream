@@ -480,8 +480,8 @@ input,
   .grid-container {
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr;
-    grid-template-columns: repeat(4, 1fr) !important;
+    -ms-grid-columns: 1fr 15px 1fr 15px 1fr;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 15px;
     padding: 10px 5px;
   }
@@ -506,8 +506,8 @@ input,
   .grid-container {
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr 15px 1fr;
-    grid-template-columns: repeat(4, 1fr) !important;
+    -ms-grid-columns: 1fr 15px 1fr 15px 1fr;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 15px;
     padding: 10px 5px;
   }

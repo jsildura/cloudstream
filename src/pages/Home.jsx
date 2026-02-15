@@ -16,6 +16,7 @@ import LazyLoadSection from '../components/LazyLoadSection';
 import TopTenRow from '../components/TopTenRow';
 import PopularOnStreamflix from '../components/PopularOnStreamflix';
 import NativeAd from '../components/NativeAd';
+import SpreadTheWordModal from '../components/SpreadTheWordModal';
 import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 import './Home.css';
@@ -315,6 +316,9 @@ const Home = () => {
           onItemClick={handleItemClick}
         />
       )}
+
+      {/* Spread the Word Modal - shows once every 3 days */}
+      <SpreadTheWordModal />
     </div>
   );
 };

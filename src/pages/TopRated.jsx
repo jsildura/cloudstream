@@ -92,7 +92,24 @@ const TopRated = () => {
                 setLoading(true);
             }
 
-            const url = buildUrl('/movie/top_rated', { ...filters, page });
+            // Use /discover/movie when any filter is active, otherwise use the default /movie/top_rated list
+            const hasActiveFilters = filters.with_genres || filters.year || filters['vote_average.gte'] || (filters.sort_by && filters.sort_by !== 'vote_average.desc');
+            const endpoint = hasActiveFilters ? '/discover/movie' : '/movie/top_rated';
+            const params = { ...filters, page };
+            // When using discover endpoint, default to top-rated ordering
+            if (hasActiveFilters && !params.sort_by) {
+                params.sort_by = 'vote_average.desc';
+                params['vote_count.gte'] = 200;
+            }
+            if (params.sort_by === 'vote_average.desc' && !params['vote_count.gte']) {
+                params['vote_count.gte'] = 200;
+            }
+            // Convert year to primary_release_year for discover endpoint
+            if (hasActiveFilters && params.year) {
+                params.primary_release_year = params.year;
+                delete params.year;
+            }
+            const url = buildUrl(endpoint, params);
             console.log('Fetching top rated movies from:', url);
 
             const res = await fetch(url);
@@ -194,6 +211,10 @@ const TopRated = () => {
 
         if (newFilters.rating) {
             apiFilters['vote_average.gte'] = parseFloat(newFilters.rating);
+        }
+
+        if (newFilters.sort_by) {
+            apiFilters.sort_by = newFilters.sort_by;
         }
 
         setFilters(apiFilters);

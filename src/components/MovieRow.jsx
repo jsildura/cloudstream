@@ -11,6 +11,25 @@ const MovieRow = memo(({ title, items, onItemClick, headerAction, maxItems }) =>
   }, [onItemClick]);
 
   if (displayItems.length === 0) {
+    // If there's a headerAction (e.g. Filters button), still render the header so users can adjust filters
+    if (headerAction) {
+      return (
+        <div className="row">
+          <div className="row-header">
+            <h2>{title}</h2>
+            {headerAction}
+          </div>
+          <div style={{
+            textAlign: 'center',
+            padding: '3rem 1rem',
+            color: 'rgba(255, 255, 255, 0.5)',
+            fontSize: '1rem'
+          }}>
+            No results found. Try adjusting your filters.
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 

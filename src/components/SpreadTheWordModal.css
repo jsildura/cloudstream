@@ -1,0 +1,328 @@
+/* ========================================
+   SPREAD THE WORD MODAL
+   ======================================== */
+
+/* Overlay */
+.stw-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 2500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: stw-fade-in 0.3s ease;
+}
+
+@keyframes stw-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Container */
+.stw-modal {
+    background: #1f1f23;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 420px;
+    padding: 32px 28px 28px;
+    position: relative;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    animation: stw-slide-up 0.35s ease;
+}
+
+@keyframes stw-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Close Button */
+.stw-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.stw-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Header Section */
+.stw-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+/* Icon */
+.stw-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #0ee9d4, #3b25eb);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.3);
+}
+
+.stw-icon-wrapper svg {
+    width: 32px;
+    height: 32px;
+    color: #f3f4f6;
+}
+
+.stw-share-icon {
+    width: 36px;
+    height: 36px;
+    background-color: #f0f1f3;
+    -webkit-mask-image: url('/icons/share-friends.svg');
+    mask-image: url('/icons/share-friends.svg');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+
+/* Title */
+.stw-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px;
+    letter-spacing: -0.3px;
+}
+
+/* Subtitle */
+.stw-subtitle {
+    font-size: 0.88rem;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.55;
+    margin: 0;
+    max-width: 320px;
+}
+
+/* Copy Link Section */
+.stw-copy-section {
+    display: flex;
+    align-items: center;
+    background: #252424;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stw-link-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.88rem;
+    padding: 12px 14px;
+    outline: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-width: 0;
+}
+
+.stw-copy-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    padding: 10px 12px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.stw-copy-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.stw-copy-btn svg {
+    width: 18px;
+    height: 18px;
+    color: #f3f4f6;
+}
+
+.stw-copy-btn.copied {
+    color: #22c55e;
+}
+
+.stw-copy-btn.copied svg {
+    color: #22c55e;
+}
+
+/* Social Buttons Grid */
+.stw-socials {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.stw-social-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 12px;
+    background: #252424;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    color: #f3f4f6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    flex: 1;
+    max-width: 80px;
+}
+
+.stw-social-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.stw-social-btn svg {
+    width: 26px;
+    height: 26px;
+    color: #f3f4f6;
+}
+
+.stw-social-label {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .stw-modal {
+        max-width: 380px;
+        padding: 28px 22px 22px;
+    }
+
+    .stw-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+    }
+
+    .stw-icon-wrapper svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .stw-title {
+        font-size: 1.2rem;
+    }
+
+    .stw-subtitle {
+        font-size: 0.82rem;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .stw-overlay {
+        padding: 16px;
+        align-items: flex-end;
+    }
+
+    .stw-modal {
+        max-width: 100%;
+        border-radius: 20px 20px 0 0;
+        padding: 28px 20px 24px;
+        animation: stw-slide-up-mobile 0.35s ease;
+    }
+
+    @keyframes stw-slide-up-mobile {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stw-icon-wrapper {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+    }
+
+    .stw-icon-wrapper svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .stw-title {
+        font-size: 1.15rem;
+    }
+
+    .stw-subtitle {
+        font-size: 0.8rem;
+    }
+
+    .stw-social-btn {
+        padding: 12px 8px;
+        border-radius: 12px;
+    }
+
+    .stw-social-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .stw-social-label {
+        font-size: 0.62rem;
+    }
+}
