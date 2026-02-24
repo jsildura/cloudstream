@@ -141,6 +141,11 @@ const AudioPlayer = ({ onLyricsOpen }) => {
 
         const handleEnded = () => {
             if (hasNext) {
+                // Keep Media Session in 'playing' state during track transition
+                // so mobile OS doesn't close the audio session when screen is off
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.playbackState = 'playing';
+                }
                 next();
             } else {
                 pause();
@@ -150,7 +155,20 @@ const AudioPlayer = ({ onLyricsOpen }) => {
         const handleCanPlay = () => {
             setLoading(false);
             if (isPlaying) {
-                audio.play().catch(console.error);
+                // Retry logic for mobile background playback.
+                // When screen is off, audio.play() may throw NotAllowedError
+                // on the first attempt but succeed on retry if the media
+                // session is still registered with the OS.
+                const attemptPlay = (retries = 3) => {
+                    audio.play().catch(err => {
+                        if (retries > 0 && err.name === 'NotAllowedError') {
+                            setTimeout(() => attemptPlay(retries - 1), 250);
+                        } else {
+                            console.error('Playback failed:', err);
+                        }
+                    });
+                };
+                attemptPlay();
             }
         };
 
@@ -301,6 +319,21 @@ const AudioPlayer = ({ onLyricsOpen }) => {
             // Some browsers don't fully support position state
         }
     }, [currentTime, duration]);
+
+    // Visibility change recovery - resume playback when user returns to app
+    // Safety net for when background play was blocked by the mobile browser
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible' && isPlaying && audioRef.current) {
+                const audio = audioRef.current;
+                if (audio.paused && audio.src) {
+                    audio.play().catch(console.error);
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [isPlaying]);
 
     // Progress bar interaction
     const handleProgressClick = useCallback((e) => {
@@ -544,7 +577,7 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                 <div className="audio-player__queue">
                     <div className="audio-player__queue-header">
                         <div className="audio-player__queue-title">
-                            <h3>Playback Queue</h3>
+                            <h3>Queue</h3>
                             <span className="audio-player__queue-count">{queue.length}</span>
                         </div>
                         <div className="audio-player__queue-actions">

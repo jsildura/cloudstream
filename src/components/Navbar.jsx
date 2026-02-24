@@ -429,6 +429,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                     </div>
                   </Link>
 
+                  {/* Temporarily disabled - Live Sports
                   <Link to="/sports" className="mega-dropdown-card" onClick={() => setTvDropdownOpen(false)}>
                     <div className="mega-dropdown-card-icon">
                       <img src="/icons/sports.svg" alt="Live Sports" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
@@ -438,6 +439,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                       <p>Stream global sports, matches, and tournaments in real-time. Your front-row seat to every game, anywhere in the world.</p>
                     </div>
                   </Link>
+                  */}
 
                 </div>
               </div>
@@ -648,10 +650,12 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                   </svg>
                   <span>Live TV</span>
                 </Link>
+                {/* Temporarily disabled - Live Sports
                 <Link to="/sports" className="bottom-sheet-submenu-item" onClick={closeMenu}>
                   <img src="/icons/sports.svg" alt="Live Sports" width="16" height="16" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
                   <span>Live Sports</span>
                 </Link>
+                */}
               </div>
             </div>
 

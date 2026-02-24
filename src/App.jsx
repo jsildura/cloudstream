@@ -203,7 +203,7 @@ function App() {
                 <Route path="/studio/:id" element={<StudioPage />} />
                 <Route path="/iptv" element={<IPTV />} />
                 <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
-                <Route path="/sports" element={<Sports />} />
+                {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
                 <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
                 {/* Music routes - nested under MusicApp layout */}
                 <Route path="/music" element={<MusicApp />}>

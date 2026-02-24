@@ -2,7 +2,7 @@
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: #000;
+    background: #0a0a0f;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -26,6 +26,11 @@
     z-index: 0;
     pointer-events: none;
     opacity: 1;
+}
+
+/* Override WebGL canvas filter for richer color blend in fullscreen */
+.fullscreen-player__bg .dynamic-background-canvas {
+    filter: blur(80px) saturate(2.2) brightness(0.55);
 }
 
 /* Content Layout */

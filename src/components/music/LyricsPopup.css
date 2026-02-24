@@ -210,14 +210,14 @@ body.lyrics-open nav.navbar {
 /* Container padding */
 .am-lyrics-fullscreen::part(container) {
     padding: 2rem 0;
-    padding-top: 15vh;
+    padding-top: 80vh;
     padding-bottom: 40vh;
     box-sizing: border-box;
 }
 
 /* Individual lyric lines */
 .am-lyrics-fullscreen::part(line) {
-    scroll-margin-block-start: 35vh;
+    scroll-margin-block-start: 80vh;
     scroll-margin-block-end: 30vh;
     padding: 0.5rem 0;
     transition: color 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
@@ -372,7 +372,7 @@ body.lyrics-open nav.navbar {
     }
 
     .am-lyrics-fullscreen::part(container) {
-        padding-top: 10vh;
+        padding-top: 80vh;
         padding-bottom: 35vh;
     }
 }

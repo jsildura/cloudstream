@@ -559,7 +559,8 @@
         left: 1rem;
         right: 1rem;
         width: auto;
-        bottom: 140px;
+        bottom: 130px;
+        max-height: 50vh;
     }
 }
 
