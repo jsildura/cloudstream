@@ -96,6 +96,10 @@
         gap: 32px;
         padding-bottom: 40px;
     }
+
+    .collections-carousel-slide {
+        width: 26vw;
+    }
 }
 
 /* 4K Android TV (3840x2160) - 4x scaled */
@@ -113,5 +117,9 @@
     .collections-carousel {
         gap: 64px;
         padding-bottom: 80px;
+    }
+
+    .collections-carousel-slide {
+        width: 26vw;
     }
 }

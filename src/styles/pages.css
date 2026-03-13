@@ -1621,6 +1621,40 @@
   background: transparent;
 }
 
+/* TV 1080p Scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .page-title-section {
+    padding: 60px 4% 30px;
+  }
+
+  .page-title-section h1 {
+    font-size: 3rem !important;
+    margin: 0 0 20px !important;
+  }
+
+  .page-title-section p {
+    font-size: 1.5rem !important;
+    line-height: 1.6 !important;
+  }
+}
+
+/* TV 4K Scaling */
+@media (min-width: 3840px) {
+  .page-title-section {
+    padding: 140px 4% 70px;
+  }
+
+  .page-title-section h1 {
+    font-size: 7rem !important;
+    margin: 0 0 45px !important;
+  }
+
+  .page-title-section p {
+    font-size: 3.5rem !important;
+    line-height: 1.6 !important;
+  }
+}
+
 .row {
   margin-bottom: 40px;
 }
@@ -5892,29 +5926,68 @@ select.filter-dropdown {
   }
 }
 
-/* Large screens / TV */
-@media (min-width: 3800px) {
+/* TV 1080p Scaling (1920px - 2559px) */
+@media (min-width: 1920px) and (max-width: 2559px) {
   .watch-control-bar {
-    width: 18rem;
-    gap: 4rem;
-    padding: 4rem 0;
+    width: 110px;
+    gap: 32px;
+    padding: 32px 0;
   }
 
   .watch-control-bar-btn {
-    width: 12rem;
-    height: 12rem;
+    width: 72px;
+    height: 72px;
   }
 
   .watch-control-bar-btn svg {
-    width: 6rem;
-    height: 6rem;
+    width: 36px;
+    height: 36px;
   }
 
   .watch-control-bar-label {
-    font-size: 2.5rem;
-    margin-top: 1rem;
+    font-size: 16px;
+    margin-top: 8px;
+  }
+
+  /* Accessibility Focus outlines for TV navigation */
+  .watch-control-bar-btn:focus-visible {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+    background: rgba(229, 9, 20, 0.2);
   }
 }
+
+/* 4K / Large screens / TV */
+@media (min-width: 3840px) {
+  .watch-control-bar {
+    width: 220px;
+    gap: 64px;
+    padding: 64px 0;
+  }
+
+  .watch-control-bar-btn {
+    width: 144px;
+    height: 144px;
+  }
+
+  .watch-control-bar-btn svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .watch-control-bar-label {
+    font-size: 32px;
+    margin-top: 16px;
+  }
+
+  /* Accessibility Focus outlines for 4K TV navigation */
+  .watch-control-bar-btn:focus-visible {
+    outline: 8px solid #e50914;
+    outline-offset: 8px;
+    background: rgba(229, 9, 20, 0.2);
+  }
+}
+
 
 .watch-fullscreen:fullscreen {
   cursor: none;
@@ -6757,6 +6830,140 @@ select.filter-dropdown {
   color: #fbbf24;
 }
 
+/* TV 1080p Scaling for Watch Episode Drawer */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .watch-episode-drawer {
+    max-width: 900px;
+    border-radius: 24px 24px 0 0;
+  }
+  
+  .watch-episode-drawer-header {
+    padding: 0 24px 24px 24px;
+  }
+  
+  .watch-episode-drawer-title {
+    gap: 16px;
+  }
+  
+  .watch-episode-drawer-title h2 {
+    font-size: 32px;
+  }
+  
+  .watch-episode-count {
+    font-size: 18px;
+    padding: 6px 16px;
+    border-radius: 20px;
+  }
+  
+  .watch-episode-drawer-close {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .watch-episode-drawer-season {
+    padding: 16px 28px;
+  }
+  
+  .watch-episode-season-select {
+    font-size: 18px;
+    padding: 14px 20px;
+    border-radius: 12px;
+  }
+  
+  .watch-episode-search-wrapper {
+    gap: 16px;
+    padding: 18px 28px;
+  }
+  
+  .watch-episode-search-wrapper svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .watch-episode-search {
+    font-size: 18px;
+  }
+  
+  .watch-episode-list {
+    padding: 16px;
+  }
+  
+  .watch-episode-item {
+    gap: 18px;
+    padding: 18px;
+    border-radius: 16px;
+  }
+  
+  .watch-episode-thumbnail {
+    width: 180px;
+    height: 101px;
+    border-radius: 12px;
+  }
+  
+  .watch-episode-play-overlay svg {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .watch-episode-content {
+    gap: 8px;
+  }
+  
+  .watch-episode-badges {
+    gap: 12px;
+  }
+  
+  .watch-episode-number {
+    font-size: 16px;
+    padding: 4px 12px;
+    border-radius: 6px;
+  }
+  
+  .watch-episode-playing {
+    font-size: 16px;
+    padding: 4px 12px;
+    border-radius: 6px;
+  }
+  
+  .watch-episode-title {
+    font-size: 20px;
+  }
+  
+  .watch-episode-overview {
+    font-size: 16px;
+    margin-top: 4px;
+  }
+  
+  .watch-episode-meta {
+    gap: 8px;
+  }
+  
+  .watch-episode-rating,
+  .watch-episode-duration {
+    font-size: 16px;
+    gap: 6px;
+  }
+  
+  .watch-episode-rating svg,
+  .watch-episode-duration svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  /* TV Remote / D-pad Accessibility Focus */
+  .watch-episode-drawer-close:focus-visible,
+  .watch-episode-season-select:focus-visible,
+  .watch-episode-search:focus-visible,
+  .watch-episode-item:focus-visible {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+  }
+  
+  .watch-episode-item:focus-visible {
+    background: rgba(229, 9, 20, 0.15);
+  }
+}
+
 /* Mobile Responsive */
 @media (max-width: 600px) {
   .watch-episode-drawer-overlay {
@@ -7001,6 +7208,28 @@ select.filter-dropdown {
   }
 }
 
+/* TV 1080p Scaling for Server Hint */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .watch-lazy-server-hint {
+    gap: 14px;
+    margin-top: 20px;
+    padding: 16px 28px;
+    border-radius: 36px;
+    border-width: 2px;
+    font-size: 22px;
+  }
+  
+  .watch-lazy-server-hint svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  
+  .watch-lazy-server-hint .highlight {
+    padding: 4px 12px;
+    border-radius: 6px;
+  }
+}
+
 /*--------------------*/
 /* Media Queries Here*/
 /*--------------------*/
@@ -7241,10 +7470,140 @@ select.filter-dropdown {
     height: 40px;
   }
 
+  /* Banner Meta Row - 2x scaled for 1080p */
+  .banner-meta-row {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .imdb-badge {
+    font-size: 1.3rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 6px;
+    letter-spacing: 1px;
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-match,
+  .meta-runtime {
+    font-size: 1.8rem;
+  }
+
+  .meta-separator {
+    font-size: 1.5rem;
+  }
+
+  /* Genre Tags - 2x scaled for 1080p */
+  .banner-genre-tags {
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .genre-tag {
+    font-size: 1.7rem;
+  }
+
+  .genre-separator {
+    font-size: 1.5rem;
+  }
+
+  /* Bottom controls - 2x scaled for 1080p */
+  .banner-bottom-controls {
+    bottom: 150px;
+    right: 60px;
+    gap: 1.5rem;
+  }
+
+  .banner-mute-btn {
+    width: 80px;
+    height: 80px;
+    border-width: 2px;
+  }
+
+  .banner-mute-btn:focus-visible {
+    outline: 4px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-mute-btn svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .banner-age-badge {
+    font-size: 1.7rem;
+    padding: 0.7rem 1.5rem;
+    border-radius: 32px;
+    border-width: 2px;
+    letter-spacing: 1px;
+  }
+
+  /* Carousel Indicators - 2x scaled for 1080p */
+  .banner-indicators {
+    bottom: 4rem;
+    gap: 1rem;
+  }
+
+  .banner-indicator {
+    height: 12px;
+    width: 12px;
+  }
+
+  .banner-indicator:focus-visible {
+    outline: 4px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 4px;
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .banner-indicator.active {
+    width: 64px;
+  }
+
   /* Button icons */
   .btn-icon {
     font-size: 1.7rem;
     /* 0.85rem × 2 */
+  }
+
+  /* Banner Actions Row - 2x scaled for 1080p */
+  .banner-actions-row {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .banner-action-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .banner-action-icon:focus-visible {
+    outline: 4px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 4px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-action-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .banner-watch-btn {
+    padding: 1.2rem 2.5rem;
+    font-size: 1.8rem;
+    border-radius: 50px;
+  }
+
+  .banner-watch-btn:focus-visible {
+    outline: 4px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 6px;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-watch-btn svg {
+    width: 28px;
+    height: 28px;
   }
 }
 
@@ -7392,5 +7751,277 @@ select.filter-dropdown {
   .banner-slide {
     min-height: 700px;
     /* Scaled for 4K */
+  }
+
+  /* Banner Meta Row - 4x scaled for 4K */
+  .banner-meta-row {
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .imdb-badge {
+    font-size: 2.6rem;
+    padding: 0.6rem 1.6rem;
+    border-radius: 12px;
+    letter-spacing: 2px;
+  }
+
+  .meta-rating,
+  .meta-item,
+  .meta-match,
+  .meta-runtime {
+    font-size: 3.6rem;
+  }
+
+  .meta-separator {
+    font-size: 3rem;
+  }
+
+  /* Genre Tags - 4x scaled for 4K */
+  .banner-genre-tags {
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .genre-tag {
+    font-size: 3.4rem;
+  }
+
+  .genre-separator {
+    font-size: 3rem;
+  }
+
+  /* Bottom controls - 4x scaled for 4K */
+  .banner-bottom-controls {
+    bottom: 300px;
+    right: 120px;
+    gap: 3rem;
+  }
+
+  .banner-mute-btn {
+    width: 160px;
+    height: 160px;
+    border-width: 4px;
+  }
+
+  .banner-mute-btn:focus-visible {
+    outline: 8px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 8px;
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
+  }
+
+  .banner-mute-btn svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .banner-age-badge {
+    font-size: 3.4rem;
+    padding: 1.4rem 3rem;
+    border-radius: 64px;
+    border-width: 4px;
+    letter-spacing: 2px;
+  }
+
+  /* Carousel Indicators - 4x scaled for 4K */
+  .banner-indicators {
+    bottom: 8rem;
+    gap: 2rem;
+  }
+
+  .banner-indicator {
+    height: 24px;
+    width: 24px;
+  }
+
+  .banner-indicator:focus-visible {
+    outline: 8px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 8px;
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .banner-indicator.active {
+    width: 128px;
+  }
+
+  /* Banner Actions Row - 4x scaled for 4K */
+  .banner-actions-row {
+    gap: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .banner-action-icon {
+    width: 160px;
+    height: 160px;
+  }
+
+  .banner-action-icon:focus-visible {
+    outline: 8px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 8px;
+  }
+
+  .banner-action-icon svg {
+    width: 72px;
+    height: 72px;
+  }
+
+  .banner-watch-btn {
+    padding: 2.4rem 5rem;
+    font-size: 3.6rem;
+    border-radius: 100px;
+  }
+
+  .banner-watch-btn:focus-visible {
+    outline: 8px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 12px;
+  }
+
+  .banner-watch-btn svg {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* 4K Scaled Server Hint */
+@media (min-width: 3840px) {
+  .watch-lazy-server-hint {
+    gap: 28px;
+    margin-top: 40px;
+    padding: 32px 56px;
+    border-radius: 72px;
+    border-width: 4px;
+    font-size: 44px;
+  }
+  
+  .watch-lazy-server-hint svg {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  .watch-lazy-server-hint .highlight {
+    padding: 8px 24px;
+    border-radius: 12px;
+  }
+
+  /* 4K Watch Episode Drawer */
+  .watch-episode-drawer {
+    max-width: 2400px;
+    border-radius: 64px 64px 0 0;
+  }
+  
+  .watch-episode-drawer-header {
+    padding: 0 64px 64px 64px;
+  }
+  
+  .watch-episode-drawer-title {
+    gap: 40px;
+  }
+  
+  .watch-episode-drawer-title h2 {
+    font-size: 80px;
+  }
+  
+  .watch-episode-count {
+    font-size: 48px;
+    padding: 16px 40px;
+    border-radius: 48px;
+  }
+  
+  .watch-episode-drawer-close {
+    width: 144px;
+    height: 144px;
+  }
+  
+  .watch-episode-drawer-season {
+    padding: 48px 80px;
+  }
+  
+  .watch-episode-season-select {
+    font-size: 56px;
+    padding: 40px 56px;
+    border-radius: 32px;
+  }
+  
+  .watch-episode-search-wrapper {
+    gap: 40px;
+    padding: 48px 80px;
+  }
+  
+  .watch-episode-search-wrapper svg {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .watch-episode-search {
+    font-size: 56px;
+  }
+  
+  .watch-episode-list {
+    padding: 32px;
+  }
+  
+  .watch-episode-item {
+    gap: 48px;
+    padding: 48px;
+    border-radius: 48px;
+  }
+  
+  .watch-episode-thumbnail {
+    width: 480px;
+    height: 272px;
+    border-radius: 32px;
+  }
+  
+  .watch-episode-play-overlay svg {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .watch-episode-content {
+    gap: 16px;
+  }
+  
+  .watch-episode-badges {
+    gap: 32px;
+  }
+  
+  .watch-episode-number,
+  .watch-episode-playing {
+    font-size: 44px;
+    padding: 12px 32px;
+    border-radius: 16px;
+  }
+  
+  .watch-episode-title {
+    font-size: 56px;
+  }
+  
+  .watch-episode-overview {
+    font-size: 48px;
+    margin-top: 16px;
+  }
+  
+  .watch-episode-meta {
+    gap: 16px;
+  }
+  
+  .watch-episode-rating,
+  .watch-episode-duration {
+    font-size: 48px;
+    gap: 16px;
+  }
+  
+  .watch-episode-rating svg,
+  .watch-episode-duration svg {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .watch-episode-drawer-close:focus-visible,
+  .watch-episode-season-select:focus-visible,
+  .watch-episode-search:focus-visible,
+  .watch-episode-item:focus-visible {
+    outline: 8px solid #e50914;
+    outline-offset: 8px;
   }
 }

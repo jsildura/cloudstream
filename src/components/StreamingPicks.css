@@ -154,6 +154,13 @@
     border-bottom-color: var(--accent-color, #e50914);
 }
 
+.streaming-media-btn:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: -2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px 4px 0 0;
+}
+
 .streaming-media-btn svg {
     width: 18px;
     height: 18px;
@@ -436,12 +443,13 @@
     color: #fff;
     border: none;
     cursor: pointer;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
     z-index: 10;
 }
 
 .streaming-carousel-btn:hover {
     background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%) scale(1.1);
 }
 
 .streaming-carousel-btn:disabled {
@@ -637,6 +645,15 @@
         border-radius: 32px;
     }
 
+    .streaming-play-btn {
+        width: 192px;
+        height: 192px;
+    }
+
+    .streaming-play-btn svg {
+        width: 80px;
+        height: 80px;
+    }
 
     .streaming-carousel-btn {
         height: 128px;
@@ -669,6 +686,26 @@
 
     .streaming-card-skeleton {
         border-radius: 32px;
+    }
+
+    /* Media Filters - 4x scaling */
+    .streaming-media-btn {
+        gap: 24px;
+        padding: 32px 64px;
+        font-size: 3.5rem;
+        height: 160px;
+        border-bottom-width: 8px;
+    }
+
+    .streaming-media-btn:focus-visible {
+        outline-width: 8px;
+        outline-offset: -8px;
+        border-radius: 16px 16px 0 0;
+    }
+
+    .streaming-media-btn svg {
+        width: 72px;
+        height: 72px;
     }
 
     /* Genre Buttons - 4x scaling */
@@ -744,6 +781,26 @@
     .crunchyroll-section-title,
     .peacock-section-title {
         font-size: 3rem;
+    }
+
+    /* Media Filters - 2x scaling */
+    .streaming-media-btn {
+        gap: 12px;
+        padding: 16px 32px;
+        font-size: 1.75rem;
+        height: 80px;
+        border-bottom-width: 4px;
+    }
+
+    .streaming-media-btn:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: -4px;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .streaming-media-btn svg {
+        width: 36px;
+        height: 36px;
     }
 
     /* Genre Buttons - 2x scaling */
@@ -831,5 +888,22 @@
 
     .streaming-card-skeleton {
         border-radius: 16px;
+    }
+}
+
+/* 4K: 3840px+ */
+@media (min-width: 3840px) {
+    .streaming-card-rating {
+        top: 32px;
+        right: 32px;
+        gap: 16px;
+        padding: 12px 24px;
+        border-radius: 32px;
+        font-size: 3.2rem;
+    }
+
+    .streaming-card-rating svg {
+        width: 48px;
+        height: 48px;
     }
 }

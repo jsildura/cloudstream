@@ -84,3 +84,17 @@
 .music-app-background.is-active {
     opacity: 1 !important;
 }
+
+/* 4K Large screen adjustments */
+@media (min-width: 3840px) {
+    .music-app__content {
+        max-width: 3840px;
+    }
+    
+    .music-app__main {
+        padding-top: 8rem;
+        padding-bottom: 240px;
+        border-radius: 40px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+}

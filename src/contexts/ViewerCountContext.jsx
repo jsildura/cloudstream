@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import useTVDetect from '../hooks/useTVDetect';
 
 const ViewerCountContext = createContext();
 
@@ -25,6 +26,7 @@ export function ViewerCountProvider({ children }) {
     const [count, setCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const isTVMode = useTVDetect();
 
     // Use ref to store UID so it's stable across renders
     const uidRef = useRef(null);
@@ -73,13 +75,14 @@ export function ViewerCountProvider({ children }) {
         sendHeartbeat();
 
         // Set up interval - this should continue running as long as the provider is mounted
-        const intervalId = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
+        const currentInterval = isTVMode ? HEARTBEAT_INTERVAL * 3 : HEARTBEAT_INTERVAL;
+        const intervalId = setInterval(sendHeartbeat, currentInterval);
 
         return () => {
             isMountedRef.current = false;
             clearInterval(intervalId);
         };
-    }, []); // Empty dependency array - only run once on mount
+    }, [isTVMode]); // Re-run if TV mode detects changes
 
     return (
         <ViewerCountContext.Provider value={{ count, isLoading, error }}>

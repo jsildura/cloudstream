@@ -296,3 +296,229 @@
         gap: 1rem;
     }
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .music-artist {
+        padding: 40px 80px;
+        gap: 64px;
+    }
+
+    /* Back Button */
+    .music-artist__back {
+        font-size: 1.25rem;
+        padding: 12px 16px;
+        gap: 12px;
+        margin-left: -16px;
+    }
+
+    .music-artist__back svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Header */
+    .music-artist__header {
+        gap: 48px;
+    }
+
+    .music-artist__image {
+        width: 320px;
+        height: 320px;
+    }
+
+    /* Info */
+    .music-artist__info {
+        gap: 12px;
+        padding-bottom: 12px;
+    }
+
+    .music-artist__type {
+        font-size: 1.1rem;
+    }
+
+    .music-artist__name {
+        font-size: 4rem;
+    }
+
+    .music-artist__genre {
+        font-size: 1.25rem;
+    }
+
+    /* Actions */
+    .music-artist__actions {
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    .music-artist__btn {
+        padding: 12px 24px;
+        gap: 12px;
+        font-size: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .music-artist__btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Sections */
+    .music-artist__section {
+        gap: 24px;
+    }
+
+    .music-artist__section-title {
+        font-size: 2rem;
+    }
+
+    /* Albums Grid */
+    .music-artist__albums-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 32px;
+    }
+
+    .music-artist__album-card {
+        gap: 16px;
+    }
+
+    .music-artist__album-cover {
+        border-radius: 12px;
+    }
+
+    .music-artist__album-info {
+        gap: 8px;
+    }
+
+    .music-artist__album-title {
+        font-size: 1.25rem;
+    }
+
+    .music-artist__album-year {
+        font-size: 1.1rem;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .music-artist__back:focus-visible,
+    .music-artist__btn:focus-visible,
+    .music-artist__album-card:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+    
+    .music-artist__back:focus-visible,
+    .music-artist__btn:focus-visible {
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 4K Large screen adjustments */
+@media (min-width: 3840px) {
+    .music-artist {
+        padding: 80px 160px;
+        gap: 128px;
+        max-width: 3840px;
+    }
+
+    /* Back Button */
+    .music-artist__back {
+        font-size: 2.4rem;
+        padding: 24px 32px;
+        gap: 24px;
+        margin-left: -32px;
+    }
+
+    .music-artist__back svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Header */
+    .music-artist__header {
+        gap: 96px;
+    }
+
+    .music-artist__image {
+        width: 500px;
+        height: 500px;
+    }
+
+    /* Info */
+    .music-artist__info {
+        gap: 24px;
+        padding-bottom: 24px;
+    }
+
+    .music-artist__type {
+        font-size: 2.2rem;
+    }
+
+    .music-artist__name {
+        font-size: 8rem;
+    }
+
+    .music-artist__genre {
+        font-size: 2.4rem;
+    }
+
+    /* Actions */
+    .music-artist__actions {
+        gap: 32px;
+        margin-top: 48px;
+    }
+
+    .music-artist__btn {
+        padding: 24px 48px;
+        gap: 24px;
+        font-size: 2.4rem;
+        border-radius: 24px;
+    }
+
+    .music-artist__btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Sections */
+    .music-artist__section {
+        gap: 48px;
+    }
+
+    .music-artist__section-title {
+        font-size: 4rem;
+    }
+
+    /* Albums Grid */
+    .music-artist__albums-grid {
+        grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+        gap: 64px;
+    }
+
+    .music-artist__album-card {
+        gap: 32px;
+    }
+
+    .music-artist__album-cover {
+        border-radius: 24px;
+    }
+
+    .music-artist__album-info {
+        gap: 16px;
+    }
+
+    .music-artist__album-title {
+        font-size: 2.4rem;
+    }
+
+    .music-artist__album-year {
+        font-size: 2.2rem;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .music-artist__back:focus-visible,
+    .music-artist__btn:focus-visible,
+    .music-artist__album-card:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+    }
+}

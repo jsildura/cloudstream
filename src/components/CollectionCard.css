@@ -11,6 +11,12 @@
   transform: scale(1.02);
 }
 
+.collection-card:focus-visible {
+  outline: 2px solid #e50914;
+  outline-offset: 2px;
+  transform: scale(1.02);
+}
+
 .collection-card-background {
   position: absolute;
   inset: 0;
@@ -152,6 +158,12 @@
     height: 32px;
     /* 16px × 2 */
   }
+
+  /* TV Remote / D-pad Accessibility Focus */
+  .collection-card:focus-visible {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+  }
 }
 
 /* 4K Android TV (3840x2160) - 4x scaled from 720p */
@@ -205,5 +217,11 @@
     /* 16px × 4 */
     height: 64px;
     /* 16px × 4 */
+  }
+
+  /* TV Remote / D-pad Accessibility Focus */
+  .collection-card:focus-visible {
+    outline: 8px solid #e50914;
+    outline-offset: 8px;
   }
 }

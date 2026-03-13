@@ -241,7 +241,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
 
 
   return (
-    <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
+    <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`} data-nav-section="navbar">
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <img

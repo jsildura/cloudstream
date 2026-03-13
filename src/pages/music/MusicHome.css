@@ -137,3 +137,60 @@
         margin-top: 0;
     }
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .music-home__hero-content {
+        max-width: 80rem;
+    }
+
+    .music-home__title {
+        font-size: 6rem;
+    }
+
+    .music-home__version {
+        font-size: 1.2rem;
+    }
+
+    .music-home__slogan {
+        font-size: 1.8rem;
+        max-width: 50rem;
+    }
+}
+
+/* 4K Large screen adjustments */
+@media (min-width: 3840px) {
+    .music-home {
+        gap: 5rem;
+        padding: 4% 4%;
+        max-width: 3840px;
+    }
+
+    .music-home__hero-content {
+        max-width: 160rem;
+    }
+
+    .music-home__title {
+        font-size: 12rem;
+    }
+
+    .music-home__title-wrapper {
+        gap: 1.5rem;
+    }
+
+    .music-home__version {
+        font-size: 2.4rem;
+    }
+
+    .music-home__slogan {
+        font-size: 3.6rem;
+        max-width: 100rem;
+    }
+
+    .music-home__input {
+        padding: 2rem 3rem;
+        font-size: 2rem;
+        border-radius: 24px;
+        border-width: 2px;
+    }
+}

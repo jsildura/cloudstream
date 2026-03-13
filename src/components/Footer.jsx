@@ -7,7 +7,7 @@ const Footer = () => {
   const { count, isLoading } = useViewerCount();
 
   return (
-    <footer className="footer">
+    <footer className="footer" data-nav-section="footer">
       <div className="footer-container">
         {/* Live Viewer Counter */}
         <div className="footer-viewer-count">

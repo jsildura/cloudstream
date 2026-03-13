@@ -69,3 +69,50 @@
         height: 44px;
     }
 }
+
+/* TV 1080p Scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .scroll-to-top-btn {
+        bottom: 110px;
+        right: 32px;
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+    }
+
+    .scroll-to-top-btn svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    /* Focus state for D-pad navigation */
+    .scroll-to-top-btn:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* 4K TV Scaling (3840px and up) */
+@media (min-width: 3840px) {
+    .scroll-to-top-btn {
+        bottom: 312px;
+        right: 80px;
+        width: 192px;
+        height: 192px;
+        border-radius: 32px;
+        border-width: 4px;
+    }
+
+    .scroll-to-top-btn svg {
+        width: 88px;
+        height: 88px;
+    }
+
+    /* Focus state for D-pad navigation */
+    .scroll-to-top-btn:focus-visible {
+        outline: 8px solid #e50914;
+        outline-offset: 8px;
+        background: rgba(255, 255, 255, 0.2);
+    }
+}

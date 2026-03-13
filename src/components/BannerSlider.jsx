@@ -5,6 +5,7 @@ import useSwipe from '../hooks/useSwipe';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { getPosterAlt } from '../utils/altTextUtils';
+import useTVDetect from '../hooks/useTVDetect';
 
 const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchLogo, fetchVideos, fetchContentRating, fetchMovieDetails, fetchTVDetails, fetchSeasonEpisodes, movieGenres, tvGenres } = useTMDB();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const { showSuccess } = useToast();
+  const isTVMode = useTVDetect();
 
   // Auto-advance slides with progress tracking (pause when trailer is playing)
   useEffect(() => {
@@ -30,8 +32,8 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
       return;
     }
 
-    const slideDuration = 7000;
-    const progressInterval = 50;
+    const slideDuration = isTVMode ? 14000 : 7000;
+    const progressInterval = isTVMode ? 200 : 50;
     let progressTimer;
     let slideTimer;
 
@@ -55,7 +57,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
       clearInterval(progressTimer);
       clearTimeout(slideTimer);
     };
-  }, [currentSlide, movies.length, isTrailerPlaying]);
+  }, [currentSlide, movies.length, isTrailerPlaying, isTVMode]);
 
   // Fetch logos for all banner movies
   useEffect(() => {

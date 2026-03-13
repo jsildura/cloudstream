@@ -409,6 +409,164 @@ body.lyrics-open nav.navbar {
     }
 }
 
+/* ========================================
+   TV / Large Screen Adjustments
+   ======================================== */
+@media (min-width: 1920px) {
+    .lyrics-fullscreen__header {
+        padding: 40px 64px;
+        gap: 24px;
+        max-width: 1600px;
+    }
+
+    .lyrics-fullscreen__close-btn {
+        width: 64px;
+        height: 64px;
+        border-radius: 32px;
+    }
+
+    .lyrics-fullscreen__close-btn svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .lyrics-fullscreen__track-card {
+        padding: 12px;
+        padding-right: 24px;
+        gap: 16px;
+        border-radius: 16px;
+    }
+
+    .lyrics-fullscreen__album-art {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+    }
+
+    .lyrics-fullscreen__track-info {
+        gap: 4px;
+    }
+
+    .lyrics-fullscreen__track-title {
+        font-size: 1.5rem;
+    }
+
+    .lyrics-fullscreen__track-artist {
+        font-size: 1.25rem;
+    }
+
+    .lyrics-fullscreen__more-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .lyrics-fullscreen__more-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Target the web component's font size too */
+    .am-lyrics-fullscreen {
+        font-size: clamp(2.5rem, 4vw, 4.5rem);
+    }
+    
+    .lyrics-fullscreen__content {
+        max-width: 1600px;
+        padding: 0 64px;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .lyrics-fullscreen__close-btn:focus-visible,
+    .lyrics-fullscreen__more-btn:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+
+    .lyrics-fullscreen__track-card:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 6px;
+    }
+}
+
+/* ========================================
+   4K Large Screen Adjustments
+   ======================================== */
+@media (min-width: 3840px) {
+    .lyrics-fullscreen__header {
+        padding: 80px 128px;
+        gap: 48px;
+        max-width: 3200px;
+    }
+
+    .lyrics-fullscreen__close-btn {
+        width: 128px;
+        height: 128px;
+        border-radius: 64px;
+    }
+
+    .lyrics-fullscreen__close-btn svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .lyrics-fullscreen__track-card {
+        padding: 24px;
+        padding-right: 48px;
+        gap: 32px;
+        border-radius: 32px;
+    }
+
+    .lyrics-fullscreen__album-art {
+        width: 160px;
+        height: 160px;
+        border-radius: 24px;
+    }
+
+    .lyrics-fullscreen__track-info {
+        gap: 8px;
+    }
+
+    .lyrics-fullscreen__track-title {
+        font-size: 3rem;
+    }
+
+    .lyrics-fullscreen__track-artist {
+        font-size: 2.5rem;
+    }
+
+    .lyrics-fullscreen__more-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .lyrics-fullscreen__more-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Target the web component's font size too */
+    .am-lyrics-fullscreen {
+        font-size: clamp(5rem, 8vw, 9rem);
+    }
+    
+    .lyrics-fullscreen__content {
+        max-width: 3200px;
+        padding: 0 128px;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .lyrics-fullscreen__close-btn:focus-visible,
+    .lyrics-fullscreen__more-btn:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+    }
+
+    .lyrics-fullscreen__track-card:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 12px;
+    }
+}
+
 .lyrics-header {
     display: none;
 }

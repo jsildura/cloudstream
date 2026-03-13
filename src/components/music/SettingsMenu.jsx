@@ -98,7 +98,7 @@ const SettingsButton = () => {
             </button>
 
             {showSettingsMenu && ReactDOM.createPortal(
-                <div className="music-settings-overlay" onClick={() => setShowSettingsMenu(false)}>
+                <div className="music-settings-overlay" onClick={() => setShowSettingsMenu(false)} data-nav-trap>
                     <div className="music-settings-menu" onClick={e => e.stopPropagation()}>
                         <div className="music-settings-menu__grid">
                             {/* Streaming & Downloads Section */}

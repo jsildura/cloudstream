@@ -656,3 +656,279 @@
 .audio-player__btn--secondary:hover {
     border-color: var(--bloom-accent, rgba(59, 130, 246, 0.7));
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .audio-player {
+        height: auto;
+        min-height: 140px;
+        grid-template-columns: 400px 1fr 400px;
+        padding: 24px 40px;
+    }
+
+    .audio-player__track {
+        gap: 24px;
+    }
+
+    .audio-player__cover {
+        width: 88px;
+        height: 88px;
+        border-radius: 12px;
+    }
+
+    .audio-player__cover-fullscreen-btn svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .audio-player__info {
+        gap: 8px;
+    }
+
+    .audio-player__title {
+        font-size: 1.4rem;
+    }
+
+    .audio-player__artist {
+        font-size: 1.1rem;
+    }
+
+    /* Controls */
+    .audio-player__controls {
+        gap: 20px;
+    }
+
+    .audio-player__buttons {
+        gap: 32px;
+    }
+
+    .audio-player__btn--primary {
+        width: 68px;
+        height: 68px;
+    }
+
+    .audio-player__btn--primary svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .audio-player__btn--secondary {
+        width: 56px;
+        height: 56px;
+    }
+
+    .audio-player__btn--secondary svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Progress Bar */
+    .audio-player__progress-container {
+        gap: 16px;
+        max-width: 900px;
+    }
+
+    .audio-player__time {
+        font-size: 1.1rem;
+        min-width: 60px;
+    }
+
+    .audio-player__progress {
+        height: 10px;
+        border-radius: 5px;
+    }
+
+    .audio-player__progress-fill {
+        border-radius: 5px;
+    }
+
+    .audio-player__progress-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Actions */
+    .audio-player__actions {
+        gap: 16px;
+    }
+
+    .audio-player__quality {
+        padding: 6px 12px;
+        font-size: 1rem;
+        border-radius: 6px;
+    }
+
+    .audio-player__volume {
+        gap: 12px;
+    }
+
+    .audio-player__volume-slider {
+        width: 140px;
+        height: 8px;
+        border-radius: 4px;
+    }
+
+    .audio-player__volume-slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
+
+    .audio-player__volume-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .audio-player__cover-fullscreen-btn:focus-visible,
+    .audio-player__btn:focus-visible,
+    .audio-player__progress:focus-visible,
+    .audio-player__volume-slider:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+}
+
+/* 4K Large screens adjustments */
+@media (min-width: 3840px) {
+    .audio-player {
+        height: auto;
+        min-height: 280px;
+        grid-template-columns: 800px 1fr 800px;
+        padding: 3rem 6rem;
+    }
+
+    .audio-player__track { gap: 3.5rem; }
+    .audio-player__cover {
+        width: 200px;
+        height: 200px;
+        border-radius: 24px;
+    }
+    .audio-player__cover-fullscreen-btn svg {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .audio-player__info { gap: 1rem; }
+    .audio-player__title { font-size: 3rem; }
+    .audio-player__artist { font-size: 2.4rem; }
+
+    /* Controls */
+    .audio-player__controls { gap: 2.5rem; }
+    .audio-player__buttons { gap: 4rem; }
+    .audio-player__btn--primary {
+        width: 140px;
+        height: 140px;
+    }
+    .audio-player__btn--primary svg {
+        width: 72px;
+        height: 72px;
+    }
+    .audio-player__btn--secondary {
+        width: 100px;
+        height: 100px;
+    }
+    .audio-player__btn--secondary svg {
+        width: 56px;
+        height: 56px;
+    }
+
+    /* Progress Bar */
+    .audio-player__progress-container {
+        gap: 2.5rem;
+        max-width: 1600px;
+    }
+    .audio-player__time {
+        font-size: 2.2rem;
+        min-width: 120px;
+    }
+    .audio-player__progress {
+        height: 20px;
+        border-radius: 10px;
+    }
+    .audio-player__progress-fill {
+        border-radius: 10px;
+    }
+    .audio-player__progress-thumb {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Actions */
+    .audio-player__actions { gap: 2.5rem; }
+    .audio-player__quality {
+        padding: 0.75rem 1.5rem;
+        font-size: 2.2rem;
+        border-radius: 12px;
+    }
+    .audio-player__volume { gap: 2rem; }
+    .audio-player__volume-slider {
+        width: 260px;
+        height: 16px;
+        border-radius: 8px;
+    }
+    .audio-player__volume-slider::-webkit-slider-thumb {
+        width: 40px;
+        height: 40px;
+    }
+    .audio-player__volume-slider::-moz-range-thumb {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Focus States */
+    .audio-player__cover-fullscreen-btn:focus-visible,
+    .audio-player__btn:focus-visible,
+    .audio-player__progress:focus-visible,
+    .audio-player__volume-slider:focus-visible {
+        outline-width: 8px;
+        outline-offset: 8px;
+    }
+
+    /* Queue Panel */
+    .audio-player__queue {
+        bottom: 300px;
+        right: 4rem;
+        width: 1200px;
+        border-radius: 32px;
+    }
+    .audio-player__queue-header {
+        height: 120px;
+        padding: 0 3rem;
+    }
+    .audio-player__queue-title { gap: 2rem; }
+    .audio-player__queue-header h3 { font-size: 3rem; }
+    .audio-player__queue-count {
+        padding: 0.5rem 1.5rem;
+        font-size: 2.2rem;
+    }
+    .audio-player__queue-actions { gap: 2rem; }
+    .audio-player__queue-action-btn {
+        height: 80px;
+        padding: 0 2rem;
+        gap: 1.5rem;
+        font-size: 2.2rem;
+        border-radius: 16px;
+    }
+    .audio-player__queue-close-btn {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        margin-left: 1.5rem;
+    }
+    .audio-player__queue-item {
+        gap: 2.5rem;
+        padding: 2rem 3rem;
+        height: 140px;
+    }
+    .audio-player__queue-item-index {
+        width: 80px;
+        font-size: 2.4rem;
+    }
+    .audio-player__queue-item-title { font-size: 2.6rem; }
+    .audio-player__queue-item-artist { font-size: 2.2rem; }
+    .audio-player__queue-remove-btn {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+    }
+}

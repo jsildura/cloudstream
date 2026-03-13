@@ -620,14 +620,119 @@
    TV / LARGE SCREEN STYLES
    ======================================== */
 
-@media (min-width: 1920px) {
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .iptv-header {
+    margin-bottom: 3rem;
+  }
+
   .iptv-header h1 {
-    font-size: 3rem;
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .iptv-subtitle {
+    font-size: 1.5rem;
+  }
+
+  .iptv-description {
+    font-size: 1.4rem;
+    max-width: 1000px;
+    margin-top: 2rem;
   }
 
   .iptv-grid {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 2rem;
+  }
+
+  .iptv-filters {
+    max-width: 1200px;
+    gap: 2rem;
+  }
+
+  .iptv-search-container {
+    max-width: 700px;
+  }
+
+  .iptv-custom-select-container {
+    min-width: 350px;
+  }
+
+  .iptv-search-input,
+  .iptv-custom-select-trigger {
+    padding: 20px 24px 20px 64px;
+    font-size: 1.6rem;
+    border-radius: 16px;
+    height: 80px;
+  }
+
+  /* Reset padding for the select trigger to avoid pushing text too far right */
+  .iptv-custom-select-trigger {
+    padding-left: 28px;
+  }
+
+  .iptv-search-icon,
+  .iptv-select-arrow {
+    width: 32px;
+    height: 32px;
+  }
+
+  .iptv-search-icon {
+    left: 24px;
+  }
+
+  .iptv-custom-options {
+    max-height: 500px;
+  }
+
+  .iptv-custom-option {
+    padding: 20px 28px;
+    font-size: 1.5rem;
+  }
+
+  .check-mark {
+    font-size: 1.8rem;
+  }
+
+  .iptv-channel-card {
+    padding: 2rem 1.5rem;
+    border-radius: 16px;
+  }
+
+  .iptv-channel-logo-container {
+    width: 140px;
+    height: 140px;
+    margin-bottom: 1.5rem;
+  }
+
+  .iptv-channel-name {
+    font-size: 1.4rem;
+  }
+
+  .iptv-channel-logo-fallback {
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+  }
+
+  .iptv-channel-logo-fallback svg {
+    width: 56px;
+    height: 56px;
+  }
+
+  .iptv-favorite-btn {
+    top: 12px;
+    left: 12px;
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Focus states for D-pad */
+  .iptv-search-input:focus-visible,
+  .iptv-custom-select-trigger:focus-visible,
+  .iptv-channel-card:focus-visible {
+    outline: 4px solid var(--netflix-red);
+    outline-offset: 2px;
   }
 
   .iptv-channel-logo-container {
@@ -639,14 +744,18 @@
     font-size: 1.1rem;
   }
 
+  .iptv-top10-header {
+    font-size: 2rem;
+  }
+
   .iptv-top10-rank {
-    font-size: 6rem;
-    margin-right: -24px;
+    font-size: 8rem;
+    margin-right: -32px;
   }
 
   .iptv-top10-logo-container {
-    width: 120px;
-    height: 120px;
+    width: 140px;
+    height: 140px;
   }
 }
 
@@ -655,58 +764,177 @@
     padding: 200px 4% 120px;
   }
 
+  .iptv-header {
+    margin-bottom: 6rem;
+  }
+
   .iptv-header h1 {
-    font-size: 5rem;
+    font-size: 7rem;
+    margin-bottom: 1.5rem;
   }
 
   .iptv-subtitle {
-    font-size: 2rem;
+    font-size: 3rem;
+  }
+
+  .iptv-description {
+    font-size: 3rem;
+    max-width: 2400px;
+    margin-top: 4rem;
+    line-height: 1.6;
+  }
+
+  .iptv-filters {
+    max-width: 2400px;
+    gap: 4rem;
+  }
+
+  .iptv-search-container {
+    max-width: 1400px;
+  }
+
+  .iptv-custom-select-container {
+    min-width: 700px;
   }
 
   .iptv-search-input,
   .iptv-custom-select-trigger {
-    padding: 28px 32px 28px 72px;
-    font-size: 2rem;
-    border-radius: 16px;
+    padding: 32px 40px 32px 100px;
+    font-size: 3.5rem;
+    border-radius: 24px;
+    height: 120px;
+  }
+
+  .iptv-custom-select-trigger {
+    padding-left: 48px;
+  }
+
+  .iptv-search-icon,
+  .iptv-select-arrow {
+    width: 64px;
+    height: 64px;
   }
 
   .iptv-search-icon {
-    left: 24px;
-    width: 32px;
-    height: 32px;
+    left: 40px;
+  }
+
+  .iptv-custom-options {
+    max-height: 1000px;
+    border-bottom-left-radius: 24px;
+    border-bottom-right-radius: 24px;
+    border-width: 2px;
+  }
+
+  .iptv-custom-option {
+    padding: 32px 48px;
+    font-size: 3rem;
+  }
+
+  .check-mark {
+    font-size: 3.5rem;
+  }
+
+  .iptv-search-input:focus-visible,
+  .iptv-custom-select-trigger:focus-visible,
+  .iptv-channel-card:focus-visible {
+    outline-width: 8px;
+    outline-offset: 4px;
   }
 
   .iptv-grid {
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 3rem;
+    grid-template-columns: repeat(auto-fill, minmax(640px, 1fr));
+    gap: 5rem;
+    max-width: 3200px;
   }
 
   .iptv-channel-card {
-    padding: 3rem 2rem;
-    border-radius: 24px;
+    padding: 5rem 3.5rem;
+    border-radius: 40px;
+  }
+
+  .iptv-channel-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 24px 96px rgba(0, 0, 0, 0.4);
   }
 
   .iptv-channel-logo-container {
-    width: 160px;
-    height: 160px;
-    margin-bottom: 2rem;
+    width: 280px;
+    height: 280px;
+    margin-bottom: 3.5rem;
+  }
+
+  .iptv-channel-logo {
+    border-radius: 28px;
+  }
+
+  .iptv-channel-logo-fallback {
+    width: 210px;
+    height: 210px;
+    border-radius: 28px;
+  }
+
+  .iptv-channel-logo-fallback svg {
+    width: 110px;
+    height: 110px;
   }
 
   .iptv-channel-name {
-    font-size: 1.8rem;
+    font-size: 3.2rem;
+  }
+
+  .iptv-favorite-btn {
+    top: 20px;
+    left: 20px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .iptv-favorite-btn svg {
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.9));
+  }
+
+  .iptv-mark-live-btn {
+    top: 24px;
+    right: 24px;
+    width: 80px;
+    height: 80px;
+    font-size: 40px;
+  }
+
+  .iptv-top10-section {
+    max-width: 3200px;
+    margin-bottom: 6rem;
   }
 
   .iptv-top10-header {
-    font-size: 2.5rem;
+    font-size: 5rem;
+    margin-bottom: 3rem;
+    padding-left: 24px;
+  }
+
+  .iptv-top10-list {
+    gap: 24px;
+    padding: 24px 120px 24px 0;
+  }
+
+  .iptv-top10-item {
+    padding-right: 24px;
+  }
+
+  .iptv-top10-item:focus-visible {
+    outline-width: 6px;
+    outline-offset: 8px;
+    border-radius: 20px;
   }
 
   .iptv-top10-rank {
-    font-size: 10rem;
-    margin-right: -40px;
+    font-size: 15rem;
+    margin-right: -60px;
   }
 
   .iptv-top10-logo-container {
-    width: 180px;
-    height: 180px;
+    width: 320px;
+    height: 320px;
   }
 }

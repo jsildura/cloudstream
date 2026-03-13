@@ -153,7 +153,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
     });
 
     return (
-        <div className="trending-section">
+        <div className="trending-section" data-nav-section="trending-anime">
             {/* Header */}
             <div className="trending-section-header">
                 <div className="trending-section-header-left">

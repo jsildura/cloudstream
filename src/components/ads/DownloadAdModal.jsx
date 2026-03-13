@@ -106,7 +106,7 @@ const DownloadAdModal = () => {
         'Unknown Artist';
 
     return (
-        <div className="download-ad-modal-overlay" onClick={(isReadyToSave || isError) ? handleContinue : undefined}>
+        <div className="download-ad-modal-overlay" onClick={(isReadyToSave || isError) ? handleContinue : undefined} data-nav-trap>
             <div className="download-ad-modal" onClick={e => e.stopPropagation()}>
                 {/* Close button - only show when ready to save or error */}
                 {(isReadyToSave || isError) && (

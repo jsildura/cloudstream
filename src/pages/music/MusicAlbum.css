@@ -311,3 +311,189 @@
         padding: 1rem 3.5rem;
     }
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .music-album {
+        padding: 40px 80px;
+        gap: 64px;
+    }
+
+    /* Back Button */
+    .music-album__back {
+        font-size: 1.25rem;
+        padding: 12px 16px;
+        gap: 12px;
+        margin-left: -16px;
+    }
+
+    .music-album__back svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* Header */
+    .music-album__header {
+        gap: 48px;
+    }
+
+    .music-album__cover {
+        width: 400px;
+        height: 400px;
+        border-radius: 16px;
+    }
+
+    /* Info */
+    .music-album__info {
+        gap: 12px;
+        padding-bottom: 12px;
+    }
+
+    .music-album__type {
+        font-size: 1.1rem;
+    }
+
+    .music-album__title {
+        font-size: 4rem;
+    }
+
+    .music-album__meta {
+        font-size: 1.25rem;
+        gap: 12px;
+    }
+
+    .music-album__quality {
+        font-size: 1rem;
+        padding: 6px 12px;
+        border-radius: 6px;
+        margin-top: 12px;
+    }
+
+    /* Actions */
+    .music-album__actions {
+        gap: 16px;
+        margin-top: 24px;
+    }
+
+    .music-album__btn {
+        padding: 12px 24px;
+        gap: 12px;
+        font-size: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .music-album__btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .music-album__tracks {
+        margin-top: 24px;
+    }
+
+    .music-album__copyright {
+        font-size: 1rem;
+        padding: 48px 0;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .music-album__back:focus-visible,
+    .music-album__btn:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* 4K Large screen adjustments */
+@media (min-width: 3840px) {
+    .music-album {
+        padding: 80px 160px;
+        gap: 128px;
+        max-width: 3840px;
+    }
+
+    /* Back Button */
+    .music-album__back {
+        font-size: 2.4rem;
+        padding: 24px 32px;
+        gap: 24px;
+        margin-left: -32px;
+    }
+
+    .music-album__back svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Header */
+    .music-album__header {
+        gap: 96px;
+    }
+
+    .music-album__cover {
+        width: 600px;
+        height: 600px;
+        border-radius: 32px;
+    }
+
+    /* Info */
+    .music-album__info {
+        gap: 24px;
+        padding-bottom: 24px;
+    }
+
+    .music-album__type {
+        font-size: 2.2rem;
+    }
+
+    .music-album__title {
+        font-size: 8rem;
+    }
+
+    .music-album__meta {
+        font-size: 2.4rem;
+        gap: 24px;
+    }
+
+    .music-album__quality {
+        font-size: 1.8rem;
+        padding: 12px 24px;
+        border-radius: 12px;
+        margin-top: 24px;
+    }
+
+    /* Actions */
+    .music-album__actions {
+        gap: 32px;
+        margin-top: 48px;
+    }
+
+    .music-album__btn {
+        padding: 24px 48px;
+        gap: 24px;
+        font-size: 2.4rem;
+        border-radius: 24px;
+    }
+
+    .music-album__btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .music-album__tracks {
+        margin-top: 48px;
+    }
+
+    .music-album__copyright {
+        font-size: 2rem;
+        padding: 96px 0;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .music-album__back:focus-visible,
+    .music-album__btn:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+    }
+}

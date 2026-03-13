@@ -258,3 +258,201 @@
         transform: scale(0.7);
     }
 }
+
+/* ========================================
+   TV / Large Screen Adjustments
+   ======================================== */
+@media (min-width: 1920px) {
+    .download-ad-modal {
+        max-width: 500px;
+        padding: 32px;
+        border-radius: 24px;
+        border-width: 2px;
+    }
+
+    .download-ad-modal__close {
+        top: 24px;
+        right: 24px;
+        width: 48px;
+        height: 48px;
+    }
+
+    .download-ad-modal__close svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .download-ad-modal__header {
+        margin-bottom: 24px;
+        gap: 16px;
+    }
+
+    .download-ad-modal__icon svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .download-ad-modal__title {
+        font-size: 1.75rem;
+    }
+
+    .download-ad-modal__track {
+        padding: 20px;
+        margin-bottom: 24px;
+        border-radius: 12px;
+        gap: 8px;
+    }
+
+    .download-ad-modal__track-title {
+        font-size: 1.25rem;
+    }
+
+    .download-ad-modal__track-artist {
+        font-size: 1.125rem;
+    }
+
+    .download-ad-modal__progress-container {
+        height: 8px;
+        border-radius: 4px;
+        margin-bottom: 16px;
+    }
+
+    .download-ad-modal__progress-bar {
+        border-radius: 4px;
+    }
+
+    .download-ad-modal__progress-text {
+        font-size: 1rem;
+        margin-bottom: 24px;
+    }
+
+    .download-ad-modal__ad-container {
+        transform: scale(1.1);
+        margin-bottom: 24px;
+        gap: 8px;
+    }
+
+    .download-ad-modal__ad-label {
+        font-size: 0.875rem;
+    }
+
+    .download-ad-modal__footer {
+        margin-top: 16px;
+    }
+
+    .download-ad-modal__btn {
+        padding: 16px 48px;
+        font-size: 1.25rem;
+        border-radius: 12px;
+    }
+
+    .download-ad-modal__countdown {
+        font-size: 1.125rem;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .download-ad-modal__close:focus-visible,
+    .download-ad-modal__btn:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+}
+
+/* ========================================
+   4K Large Screen Adjustments
+   ======================================== */
+@media (min-width: 3840px) {
+    .download-ad-modal {
+        max-width: 1000px;
+        padding: 64px;
+        border-radius: 48px;
+        border-width: 4px;
+    }
+
+    .download-ad-modal__close {
+        top: 48px;
+        right: 48px;
+        width: 96px;
+        height: 96px;
+    }
+
+    .download-ad-modal__close svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .download-ad-modal__header {
+        margin-bottom: 48px;
+        gap: 32px;
+    }
+
+    .download-ad-modal__icon svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .download-ad-modal__title {
+        font-size: 3.5rem;
+    }
+
+    .download-ad-modal__track {
+        padding: 40px;
+        margin-bottom: 48px;
+        border-radius: 24px;
+        gap: 16px;
+    }
+
+    .download-ad-modal__track-title {
+        font-size: 2.5rem;
+    }
+
+    .download-ad-modal__track-artist {
+        font-size: 2.25rem;
+    }
+
+    .download-ad-modal__progress-container {
+        height: 16px;
+        border-radius: 8px;
+        margin-bottom: 32px;
+    }
+
+    .download-ad-modal__progress-bar {
+        border-radius: 8px;
+    }
+
+    .download-ad-modal__progress-text {
+        font-size: 2rem;
+        margin-bottom: 48px;
+    }
+
+    .download-ad-modal__ad-container {
+        transform: scale(2.2);
+        margin-bottom: 380px; /* Accounts for transform: scale overlapping document flow */
+        gap: 16px;
+    }
+
+    .download-ad-modal__ad-label {
+        font-size: 1.75rem;
+    }
+
+    .download-ad-modal__footer {
+        margin-top: 32px;
+    }
+
+    .download-ad-modal__btn {
+        padding: 32px 96px;
+        font-size: 2.5rem;
+        border-radius: 24px;
+    }
+
+    .download-ad-modal__countdown {
+        font-size: 2.25rem;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .download-ad-modal__close:focus-visible,
+    .download-ad-modal__btn:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+    }
+}

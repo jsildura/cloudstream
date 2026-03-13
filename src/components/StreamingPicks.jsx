@@ -251,7 +251,7 @@ const StreamingPicks = memo(({ provider = 'netflix' }) => {
     });
 
     return (
-        <div className={config.className}>
+        <div className={config.className} data-nav-section={`streaming-${provider}`}>
             {/* Header */}
             <div className={`${config.className}-header`} style={{ '--accent-color': config.accentColor }}>
                 <div className={`${config.className}-header-left`}>

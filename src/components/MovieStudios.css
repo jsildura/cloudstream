@@ -589,76 +589,114 @@
     }
 }
 
-/* 1080p: 1920px+ */
-@media (min-width: 1920px) {
+/* 1080p: 1920px - 2559px - Consistent with Popular/Top10 */
+@media (min-width: 1920px) and (max-width: 2559px) {
     .movie-studios-section {
-        padding: 40px 0;
+        padding: 48px 0;
+        margin-bottom: 40px;
     }
 
     .movie-studios-header {
-        margin-bottom: 24px;
+        margin-bottom: 32px;
     }
 
     .movie-studios-title {
-        font-size: 2rem;
-        margin-bottom: 8px;
+        font-size: 3rem;
+        margin-bottom: 12px;
     }
 
     .movie-studios-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.8rem;
     }
 
     .movie-studios-grid {
-        gap: 14px;
+        gap: 24px;
+        padding: 8px 0 20px 0;
     }
 
     .studio-pill {
-        height: 48px;
-        padding: 0 20px;
+        height: 80px;
+        padding: 0 32px;
+        border-radius: 999px;
+    }
+
+    .studio-pill:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 4px;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
     }
 
     .studio-pill-logo {
-        max-height: 28px;
-        max-width: 120px;
+        max-height: 48px;
+        max-width: 180px;
     }
 
     .studio-pill-name {
-        font-size: 0.95rem;
+        font-size: 1.4rem;
     }
 
     .studio-toggle-icon {
-        width: 20px;
-        height: 20px;
+        width: 32px;
+        height: 32px;
     }
 
     /* Studio Movies 1080p */
     .studio-movies-section {
-        margin-top: 28px;
+        margin-top: 40px;
+    }
+
+    .studio-movies-header {
+        margin-bottom: 24px;
+    }
+
+    .studio-movies-header-left {
+        gap: 24px;
+    }
+
+    .studio-movies-header-accent {
+        height: 40px;
+        width: 8px;
     }
 
     .studio-movies-title {
-        font-size: 1.4rem;
+        font-size: 3rem;
+    }
+
+    .studio-movies-controls {
+        gap: 24px;
     }
 
     .studio-movies-grid {
-        gap: 20px;
+        gap: 24px;
+        padding: 8px 0 20px 0;
     }
 
     .studio-movie-card {
-        width: 360px;
+        width: 480px;
+    }
+
+    .studio-movie-card:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 6px;
+        border-radius: 18px;
+        box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
     }
 
     .studio-movie-backdrop {
-        border-radius: 16px;
+        border-radius: 18px;
     }
 
     .studio-movie-rank {
-        font-size: 5rem;
+        font-size: 7rem;
+        bottom: 12px;
+        left: 14px;
+        -webkit-text-stroke: 3px rgba(255, 255, 255, 0.3);
+        text-stroke: 3px rgba(255, 255, 255, 0.3);
     }
 
     .studio-movie-card-skeleton {
-        width: 360px;
-        border-radius: 16px;
+        width: 480px;
+        border-radius: 18px;
     }
 
     .studio-movies-view-all {
@@ -673,82 +711,160 @@
         width: 36px;
         height: 36px;
     }
+
+    .studio-movie-rating {
+        top: 16px;
+        right: 16px;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 1.6rem;
+    }
+
+    .studio-movie-rating svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .studio-movie-logo-overlay {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .studio-movie-logo-overlay img {
+        max-height: 80px;
+    }
+
+    .studio-movie-title-overlay {
+        bottom: 20px;
+        right: 20px;
+        font-size: 1.6rem;
+    }
+
+    .studio-movie-hover-overlay {
+        border-radius: 18px;
+    }
+
+    .studio-movie-play-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .studio-movie-play-btn svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .studio-movie-no-backdrop {
+        padding: 32px;
+    }
+
+    .studio-movie-no-backdrop span {
+        font-size: 1.6rem;
+    }
 }
 
 /* 4K: 3840px+ */
 @media (min-width: 3840px) {
     .movie-studios-section {
-        padding: 80px 0;
+        padding: 96px 0;
+        margin-bottom: 80px;
     }
 
     .movie-studios-header {
-        margin-bottom: 48px;
+        margin-bottom: 64px;
     }
 
     .movie-studios-title {
-        font-size: 4rem;
-        margin-bottom: 16px;
+        font-size: 6rem;
+        margin-bottom: 24px;
     }
 
     .movie-studios-subtitle {
-        font-size: 2rem;
+        font-size: 3.6rem;
     }
 
     .movie-studios-grid {
-        gap: 28px;
+        gap: 40px;
+        padding: 16px 0 40px 0;
     }
 
     .studio-pill {
-        height: 96px;
-        padding: 0 40px;
-        border-radius: 999px;
-        border-width: 2px;
+        height: 200px;
+        padding: 0 64px;
+        border-width: 4px;
+        border-radius: 4000px;
+        gap: 32px;
+    }
+
+    .studio-pill:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 8px;
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
     }
 
     .studio-pill-logo {
-        max-height: 56px;
-        max-width: 240px;
+        max-height: 140px;
+        max-width: 500px;
     }
 
     .studio-pill-name {
-        font-size: 1.8rem;
+        font-size: 3.2rem;
     }
 
     .studio-toggle-icon {
-        width: 40px;
-        height: 40px;
+        width: 64px;
+        height: 64px;
     }
 
     /* Studio Movies 4K */
     .studio-movies-section {
-        margin-top: 56px;
+        margin-top: 80px;
+    }
+
+    .studio-movies-header {
+        margin-bottom: 56px;
+    }
+
+    .studio-movies-header-left {
+        gap: 48px;
+    }
+
+    .studio-movies-header-accent {
+        height: 96px;
+        width: 16px;
+        border-radius: 200px;
     }
 
     .studio-movies-title {
-        font-size: 2.5rem;
+        font-size: 4.4rem;
     }
 
-    .studio-movies-grid {
-        gap: 40px;
+    .studio-movies-controls {
+        gap: 64px;
+    }
+    
+    .streaming-media-btn {
+        gap: 24px;
+        padding: 32px 64px;
+        font-size: 3.5rem;
+        height: 160px;
+        border-bottom-width: 8px;
     }
 
-    .studio-movie-card {
-        width: 720px;
+    .streaming-media-btn:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: -8px;
+        border-radius: 16px 16px 0 0;
     }
 
-    .studio-movie-backdrop {
-        border-radius: 24px;
+    .streaming-media-btn svg {
+        width: 72px;
+        height: 72px;
     }
-
-    .studio-movie-rank {
-        font-size: 10rem;
-        bottom: 16px;
-        left: 24px;
-    }
-
-    .studio-movie-card-skeleton {
-        width: 720px;
-        border-radius: 24px;
+    
+    .media-label {
+        font-size: 3.5rem;
     }
 
     .studio-movies-view-all {
@@ -764,16 +880,109 @@
         height: 72px;
     }
 
-    .studio-movies-header-left {
-        gap: 48px;
+    .studio-movies-grid {
+        gap: 64px;
+        padding: 16px 0 40px 0;
     }
 
-    .studio-movies-header-accent {
-        height: 96px;
-        width: 16px;
+    .studio-movie-card {
+        width: 1520px;
+    }
+
+    .studio-movie-card:focus-visible {
+        outline: 16px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 16px;
+        border-radius: 48px;
+        box-shadow: 0 0 60px rgba(229, 9, 20, 0.4);
+    }
+
+    .studio-movie-backdrop {
+        border-radius: 48px;
+    }
+
+    .studio-movie-rating {
+        top: 32px;
+        right: 32px;
+        gap: 16px;
+        padding: 12px 24px;
+        border-radius: 32px;
+        font-size: 3.2rem;
+    }
+
+    .studio-movie-rating svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .studio-movie-hover-overlay {
+        border-radius: 48px;
+    }
+
+    .studio-movie-play-btn {
+        width: 192px;
+        height: 192px;
+        box-shadow: 0 16px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    .studio-movie-play-btn svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .studio-movie-play-btn:hover {
+        box-shadow: 0 0 80px rgba(220, 38, 38, 0.5);
+        transform: scale(1.1) !important;
+    }
+
+    .studio-movie-rank {
+        font-size: 20rem;
+        bottom: 32px;
+        left: 32px;
+        -webkit-text-stroke: 8px rgba(255, 255, 255, 0.3);
+        text-stroke: 8px rgba(255, 255, 255, 0.3);
+    }
+
+    .studio-movie-logo-overlay {
+        bottom: 48px;
+        right: 48px;
+    }
+
+    .studio-movie-logo-overlay img {
+        max-height: 240px;
     }
 
     .studio-movie-title-overlay {
-        font-size: 2rem;
+        bottom: 48px;
+        right: 48px;
+        font-size: 4.4rem;
+        text-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.9);
+    }
+
+    .studio-movies-loading {
+        padding: 16px 0;
+    }
+
+    .studio-movies-skeleton {
+        gap: 64px;
+    }
+
+    .studio-movie-card-skeleton {
+        width: 1120px;
+        border-radius: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+    }
+    
+    .studio-movie-no-backdrop {
+        padding: 64px;
+    }
+
+    .studio-movie-no-backdrop span {
+        font-size: 3.6rem;
+    }
+    
+    .studio-movies-empty {
+        padding: 96px 0;
+        font-size: 3.6rem;
     }
 }

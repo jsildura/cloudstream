@@ -93,7 +93,7 @@ function App() {
   const location = useLocation();
 
   // Enable TV remote / D-pad arrow key navigation
-  useTVNavigation();
+  useTVNavigation({ resetOnPathChange: location.pathname });
 
   // Signal that React app is mounted and ready - hides the HTML splash screen
   useEffect(() => {

@@ -1670,6 +1670,249 @@
     margin-top: 10px;
 }
 
+/* === TV 1080p RESPONSIVENESS (1920px - 2559px) === */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    /* Main Wrapper Positioning */
+    .gc-wrapper {
+        bottom: 30px !important;
+        right: 30px !important;
+    }
+
+    /* Floating Action Button */
+    .gc-fab {
+        width: 72px;
+        height: 72px;
+        border-radius: 12px;
+    }
+
+    .gc-fab svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .gc-fab::before {
+        top: -18px;
+        left: -18px;
+        width: 108px;
+        height: 108px;
+    }
+
+    .gc-badge {
+        font-size: 14px;
+        padding: 6px 10px;
+        border-radius: 14px;
+        min-width: 28px;
+        top: -8px;
+        right: -8px;
+    }
+
+    /* Accessibility Focus for D-pad */
+    .gc-fab:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Open Chat Panel */
+    .gc-panel {
+        width: 500px;
+        height: 800px;
+        border-radius: 32px;
+    }
+
+    .gc-header {
+        height: 90px;
+        padding: 20px 24px;
+    }
+
+    .gc-header-avatar {
+        width: 60px;
+        height: 60px;
+    }
+
+    .gc-header-name {
+        font-size: 1.4rem;
+    }
+
+    .gc-header-status {
+        font-size: 1rem;
+    }
+
+    .gc-close-btn {
+        font-size: 2rem;
+    }
+
+    /* Setup View & Setup Input */
+    .gc-avatar-circle {
+        width: 160px;
+        height: 160px;
+    }
+
+    .gc-avatar-circle svg {
+        width: 60px;
+        height: 60px;
+    }
+
+    .gc-upload-hint {
+        font-size: 1.2rem;
+    }
+
+    .gc-input-group input {
+        padding: 24px;
+        font-size: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .gc-join-btn {
+        padding: 24px;
+        font-size: 1.4rem;
+        border-radius: 20px;
+    }
+
+    /* Accessibility Focus on inputs and buttons */
+    .gc-input-group input:focus-visible,
+    .gc-join-btn:focus-visible,
+    .gc-close-btn:focus-visible,
+    .gc-avatar-circle:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+    }
+}
+
+/* === 4K TV RESPONSIVENESS (3840px and up) === */
+@media (min-width: 3840px) {
+    /* Main Wrapper Positioning */
+    .gc-wrapper {
+        bottom: 80px !important;
+        right: 80px !important;
+    }
+
+    /* Floating Action Button */
+    .gc-fab {
+        width: 192px;
+        height: 192px;
+        border-radius: 32px;
+        margin-top: 40px;
+        border-width: 4px;
+    }
+
+    .gc-fab svg {
+        width: 88px;
+        height: 88px;
+    }
+
+    .gc-fab::before {
+        top: -48px;
+        left: -48px;
+        width: 288px;
+        height: 288px;
+    }
+
+    .gc-badge {
+        font-size: 40px;
+        padding: 16px 32px;
+        border-radius: 40px;
+        min-width: 80px;
+        top: -20px;
+        right: -20px;
+        border-width: 8px;
+    }
+
+    /* Accessibility Focus for D-pad */
+    .gc-fab:focus-visible {
+        outline: 8px solid #e50914;
+        outline-offset: 8px;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Open Chat Panel */
+    .gc-panel {
+        width: 1520px;
+        height: 2400px;
+        border-radius: 96px;
+        border-width: 4px;
+    }
+
+    .gc-header {
+        height: 260px;
+        padding: 48px 64px;
+        border-bottom-width: 4px;
+    }
+
+    .gc-header-avatar {
+        width: 168px;
+        height: 168px;
+        border-width: 8px;
+    }
+
+    .gc-header-name {
+        font-size: 4rem;
+    }
+
+    .gc-header-status {
+        font-size: 44px;
+    }
+
+    .gc-header-actions .gc-icon-btn img,
+    .gc-header-actions .gc-close-btn img {
+        width: 96px !important;
+        height: 96px !important;
+    }
+
+    .gc-close-btn {
+        padding: 32px;
+    }
+
+    /* Setup View & Setup Input */
+    .gc-setup-content {
+        max-width: 1280px;
+    }
+
+    .gc-avatar-circle {
+        width: 440px;
+        height: 440px;
+        margin-bottom: 100px;
+        border-width: 8px;
+    }
+
+    .gc-avatar-circle svg {
+        width: 160px;
+        height: 160px;
+    }
+
+    .gc-upload-hint {
+        font-size: 3.5rem;
+    }
+
+    .gc-input-group {
+        margin-bottom: 60px;
+    }
+
+    .gc-input-group input {
+        padding: 64px;
+        font-size: 4.4rem;
+        border-radius: 64px;
+        border-width: 4px;
+    }
+
+    .gc-join-btn {
+        padding: 64px;
+        font-size: 4rem;
+        border-radius: 64px;
+        /* Match standard 2x text scale + padding */
+    }
+
+    /* Accessibility Focus on inputs and buttons */
+    .gc-input-group input:focus-visible,
+    .gc-join-btn:focus-visible,
+    .gc-icon-btn:focus-visible,
+    .gc-close-btn:focus-visible,
+    .gc-avatar-circle:focus-visible {
+        outline: 8px solid #e50914;
+        outline-offset: 8px;
+    }
+}
+
 /* === MOBILE RESPONSIVENESS === */
 @media (max-width: 480px) {
     .gc-wrapper {

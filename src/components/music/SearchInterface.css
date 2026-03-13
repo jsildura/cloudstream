@@ -479,3 +479,231 @@
         height: 100px;
     }
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .search-interface {
+        gap: 24px;
+    }
+
+    .search-interface__input-wrapper {
+        gap: 24px;
+    }
+
+    .search-interface__input-container {
+        padding: 24px 32px;
+        border-radius: 24px;
+        gap: 24px;
+        border-width: 2px;
+    }
+
+    .search-interface__input-icon {
+        width: 48px;
+        height: 48px;
+    }
+
+    .search-interface__input {
+        font-size: 1.8rem;
+    }
+
+    .search-interface__input-container:focus-within {
+        border-color: rgba(229, 9, 20, 0.8);
+        box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.2);
+    }
+
+    .search-interface__clear-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
+
+    .search-interface__clear-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Tabs */
+    .search-interface__tabs {
+        gap: 16px;
+        padding: 8px;
+        border-radius: 20px;
+    }
+
+    .search-interface__tab {
+        padding: 20px 32px;
+        font-size: 1.4rem;
+        gap: 16px;
+        border-radius: 16px;
+    }
+
+    .search-interface__tab svg {
+        width: 32px;
+        height: 32px;
+    }
+
+    .search-interface__tab-count {
+        padding: 4px 12px;
+        font-size: 1.1rem;
+        border-radius: 16px;
+    }
+
+    .search-interface__tab:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+
+    /* Grid */
+    .search-interface__grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 32px;
+    }
+
+    .search-interface__grid--artists {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+
+    /* Cards */
+    .album-card, .playlist-card, .artist-card {
+        gap: 16px;
+    }
+
+    .album-card__cover, .playlist-card__cover {
+        border-radius: 16px;
+    }
+    
+    .artist-card__image {
+        width: 220px;
+        height: 220px;
+    }
+
+    .album-card__title, .playlist-card__title, .artist-card__name {
+        font-size: 1.4rem;
+    }
+
+    .album-card__artist, .playlist-card__creator, .artist-card__type {
+        font-size: 1.1rem;
+    }
+
+    .album-card__year, .playlist-card__tracks {
+        font-size: 1rem;
+    }
+
+    .album-card:focus-visible, 
+    .playlist-card:focus-visible, 
+    .artist-card:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 8px;
+        border-radius: 16px;
+    }
+}
+
+/* 4K Large screens adjustments */
+@media (min-width: 3840px) {
+    .search-interface { gap: 6rem; }
+    .search-interface__input-wrapper { gap: 3rem; }
+    
+    .search-interface__input-container { 
+        padding: 3rem 4rem; 
+        border-radius: 40px; 
+        gap: 3rem; 
+        border-width: 3px; 
+    }
+    
+    .search-interface__input-icon { 
+        width: 80px; 
+        height: 80px; 
+    }
+    
+    .search-interface__input { 
+        font-size: 3.5rem; 
+    }
+    
+    .search-interface__input-container:focus-within {
+        box-shadow: 0 0 0 12px rgba(229, 9, 20, 0.2);
+    }
+    
+    .search-interface__clear-btn {
+        width: 100px;
+        height: 100px;
+        border-radius: 24px;
+    }
+    
+    .search-interface__clear-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Tabs */
+    .search-interface__tabs {
+        gap: 2rem;
+        padding: 1rem;
+        border-radius: 32px;
+    }
+    
+    .search-interface__tab {
+        padding: 2.5rem 4rem;
+        font-size: 3rem;
+        gap: 2rem;
+        border-radius: 24px;
+    }
+    
+    .search-interface__tab svg {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .search-interface__tab-count {
+        padding: 0.5rem 1.5rem;
+        font-size: 2.2rem;
+        border-radius: 32px;
+    }
+    
+    .search-interface__tab:focus-visible {
+        outline-width: 8px;
+        outline-offset: 8px;
+    }
+
+    /* Grid */
+    .search-interface__grid {
+        grid-template-columns: repeat(auto-fill, minmax(560px, 1fr));
+        gap: 5rem;
+    }
+    
+    .search-interface__grid--artists {
+        grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+    }
+
+    /* Cards */
+    .album-card, .playlist-card, .artist-card {
+        gap: 2rem;
+    }
+    
+    .album-card__cover, .playlist-card__cover {
+        border-radius: 32px;
+    }
+    
+    .artist-card__image {
+        width: 480px;
+        height: 480px;
+    }
+    
+    .album-card__title, .playlist-card__title, .artist-card__name {
+        font-size: 3rem;
+    }
+    
+    .album-card__artist, .playlist-card__creator, .artist-card__type {
+        font-size: 2.4rem;
+    }
+    
+    .album-card__year, .playlist-card__tracks {
+        font-size: 2.2rem;
+    }
+    
+    .album-card:focus-visible, 
+    .playlist-card:focus-visible, 
+    .artist-card:focus-visible {
+        outline-width: 8px;
+        outline-offset: 16px;
+        border-radius: 32px;
+    }
+}

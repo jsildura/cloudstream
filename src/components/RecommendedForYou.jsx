@@ -199,7 +199,7 @@ const RecommendedForYou = memo(({ onItemClick }) => {
         : 'Recommended For You';
 
     return (
-        <div className="trending-section" aria-live="polite" aria-busy={loading}>
+        <div className="trending-section" aria-live="polite" aria-busy={loading} data-nav-section="recommended">
             <div className="trending-section-header">
                 <div className="trending-section-header-left">
                     <div className="trending-section-header-accent"></div>

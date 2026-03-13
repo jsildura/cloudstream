@@ -580,6 +580,41 @@
         margin-bottom: 32px;
     }
 
+    .mylist-custom-select {
+        min-width: 200px;
+    }
+
+    .mylist-custom-select-trigger {
+        padding: 12px 20px;
+        font-size: 1.6rem;
+        border-radius: 12px;
+    }
+
+    .mylist-custom-select-trigger:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+    }
+
+    .mylist-select-arrow {
+        width: 32px;
+        height: 32px;
+        margin-left: 20px;
+    }
+
+    .mylist-custom-select-options {
+        border-radius: 12px;
+    }
+
+    .mylist-custom-option {
+        padding: 16px 24px;
+        font-size: 1.6rem;
+    }
+    
+    .mylist-check-icon {
+        width: 24px;
+        height: 24px;
+    }
+
     .mylist-empty {
         padding: 160px 48px;
     }
@@ -600,7 +635,7 @@
     }
 
     .mylist-grid {
-        grid-template-columns: repeat(8, 1fr);
+        grid-template-columns: repeat(5, 1fr);
         gap: 32px;
     }
 
@@ -640,12 +675,20 @@
     }
 
     .mylist-remove-btn svg {
-        width: 40px;
-        height: 40px;
+        width: 40px !important;
+        height: 40px !important;
     }
 
+    .mylist-remove-btn:focus-visible {
+        outline: 4px solid #fff;
+        outline-offset: 4px;
+        background: #e50914;
+        transform: scale(1.1);
+    }
+
+    .mylist-card:focus-visible,
     .mylist-card:focus {
-        outline-width: 4px;
+        outline: 4px solid #e50914;
         outline-offset: 8px;
         border-radius: 16px;
     }
@@ -684,6 +727,45 @@
         margin-bottom: 64px;
     }
 
+    .mylist-custom-select {
+        min-width: 400px;
+    }
+
+    .mylist-custom-select-trigger {
+        padding: 24px 40px;
+        font-size: 3.2rem;
+        border-radius: 24px;
+        border-width: 4px;
+    }
+
+    .mylist-custom-select-trigger:focus-visible {
+        outline: 8px solid #e50914;
+        outline-offset: 8px;
+    }
+
+    .mylist-select-arrow {
+        width: 64px;
+        height: 64px;
+        margin-left: 40px;
+        stroke-width: 2px;
+    }
+
+    .mylist-custom-select-options {
+        border-radius: 24px;
+        border-width: 4px;
+        top: calc(100% + 16px);
+    }
+
+    .mylist-custom-option {
+        padding: 32px 48px;
+        font-size: 3.2rem;
+    }
+
+    .mylist-check-icon {
+        width: 48px;
+        height: 48px;
+    }
+
     .mylist-empty svg {
         width: 256px;
         height: 256px;
@@ -699,8 +781,8 @@
     }
 
     .mylist-grid {
-        grid-template-columns: repeat(10, 1fr);
-        gap: 60px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 64px;
     }
 
     .mylist-card-image-container {

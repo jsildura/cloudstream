@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import { getPosterAlt } from '../utils/altTextUtils';
+import useTVDetect from '../hooks/useTVDetect';
 import './TopTenRow.css';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
@@ -10,6 +11,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const carouselRef = useRef(null);
     const cardRefs = useRef([]);
     const touchEndTimeoutRef = useRef(null);
+    const isTVMode = useTVDetect();
 
     // Core state
     const [focusedCardIndex, setFocusedCardIndex] = useState(0);
@@ -139,7 +141,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     }, []);
 
     const momentumLoop = useCallback(() => {
-        if (!carouselRef.current) return;
+        if (!carouselRef.current || isTVMode) return;
         carouselRef.current.scrollLeft -= velX.current;
         velX.current *= 0.95;
         if (Math.abs(velX.current) > 0.5) {
@@ -247,7 +249,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const { isPaused, isKeyboardNav } = interactionState;
 
     return (
-        <div className="top-ten-section">
+        <div className="top-ten-section" data-nav-section="top-ten">
             <h2 className="top-ten-title">Top 10 in {countryName}</h2>
             <p className="top-ten-subtitle">What {countryName} is Watching</p>
 

@@ -93,7 +93,7 @@ const ContinueWatching = ({ onItemClick }) => {
     };
 
     return (
-        <div className="continue-watching-section">
+        <div className="continue-watching-section" data-nav-section="continue-watching">
             <div className="continue-watching-header">
                 <h2 className="continue-watching-title">Continue Watching</h2>
                 <button
@@ -162,7 +162,7 @@ const ContinueWatching = ({ onItemClick }) => {
 
             {/* Custom Confirm Dialog */}
             {showConfirmDialog && (
-                <div className="confirm-dialog-overlay" onClick={handleCancelClear}>
+                <div className="confirm-dialog-overlay" onClick={handleCancelClear} data-nav-trap>
                     <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
                         <div className="confirm-dialog-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

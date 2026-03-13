@@ -183,6 +183,105 @@
     }
 }
 
+/* 1080p View - 2x scaled from base */
+@media (min-width: 1920px) {
+    .collection-hero {
+        min-height: 50vh;
+    }
+
+    .collection-hero-content {
+        max-width: 2800px;
+        /* 1400px × 2 */
+        padding: 160px 80px 80px;
+        /* 80px × 2, 40px × 2 */
+    }
+
+    .back-button {
+        gap: 16px;
+        /* 8px × 2 */
+        padding: 20px 40px;
+        /* 10px × 2, 20px × 2 */
+        border-radius: 16px;
+        /* 8px × 2 */
+        font-size: 2rem;
+        /* 1rem × 2 */
+        margin-bottom: 48px;
+        /* 24px × 2 */
+    }
+
+    .back-button svg {
+        width: 40px;
+        /* 20px × 2 */
+        height: 40px;
+        /* 20px × 2 */
+    }
+
+    .collection-title {
+        font-size: 6rem;
+        /* 3rem × 2 */
+        margin-bottom: 32px;
+        /* 16px × 2 */
+    }
+
+    .collection-description {
+        font-size: 2.25rem;
+        /* 1.125rem × 2 */
+        max-width: 1600px;
+        /* 800px × 2 */
+        margin-bottom: 24px;
+        /* 12px × 2 */
+    }
+
+    .collection-movie-count {
+        font-size: 2rem;
+        /* 1rem × 2 */
+    }
+
+    .collection-movies-container {
+        max-width: 2800px;
+        /* 1400px × 2 */
+        padding: 80px;
+        /* 40px × 2 */
+    }
+
+    .collection-movies-heading {
+        font-size: 3rem;
+        /* 1.5rem × 2 */
+        margin-bottom: 48px;
+        /* 24px × 2 */
+    }
+
+    .collection-movies-grid {
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        /* 180px × 2 */
+        gap: 48px;
+        /* 24px × 2 */
+    }
+
+    .collection-loading .loading-spinner {
+        width: 100px;
+        /* 50px × 2 */
+        height: 100px;
+        /* 50px × 2 */
+        border-width: 6px;
+        /* 3px × 2 */
+        margin-bottom: 32px;
+        /* 16px × 2 */
+    }
+
+    .collection-error h2 {
+        font-size: 4rem;
+        /* 2rem × 2 */
+        margin-bottom: 32px;
+        /* 16px × 2 */
+    }
+
+    .collection-error p {
+        margin-bottom: 48px;
+        /* 24px × 2 */
+    }
+}
+
 /* 4K Android TV (3840x2160) - 3x scaled from 720p */
 @media (min-width: 3840px) {
     .collection-hero {

@@ -449,3 +449,119 @@
         display: none;
     }
 }
+
+/* ========================================
+   4K Large Screen Adjustments
+   ======================================== */
+@media (min-width: 3840px) {
+    .fullscreen-player__center-container {
+        padding-bottom: 96px;
+        padding-top: 6vh; /* Top margins are proportional to viewport */
+    }
+
+    .fullscreen-player__art-wrapper {
+        border-radius: 32px;
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    }
+    
+    .fullscreen-player__art {
+        border-radius: 32px;
+    }
+
+    .fullscreen-player__metadata {
+        margin-bottom: 24px;
+    }
+
+    .fullscreen-player__title {
+        font-size: 3rem;
+    }
+
+    .fullscreen-player__artist {
+        font-size: 2.25rem;
+    }
+
+    .fullscreen-player__progress-section {
+        gap: 24px;
+        margin-bottom: 64px;
+    }
+
+    .fullscreen-player__progress-bar {
+        height: 12px;
+        border-radius: 6px;
+    }
+
+    .fullscreen-player__progress-bar:hover {
+        height: 16px;
+    }
+
+    .fullscreen-player__progress-fill {
+        border-radius: 6px;
+    }
+
+    .fullscreen-player__progress-thumb {
+        width: 24px;
+        height: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .fullscreen-player__time-labels {
+        font-size: 1.75rem;
+        margin-top: -4px;
+    }
+
+    .fullscreen-player__controls-row {
+        margin-bottom: 48px;
+    }
+    
+    .fullscreen-player__playback-group {
+        gap: 128px;
+    }
+
+    .fullscreen-player__play-btn svg {
+        width: 128px;
+        height: 128px;
+    }
+
+    .fullscreen-player__skip-btn svg {
+        width: 96px;
+        height: 96px;
+    }
+
+    .fullscreen-player__more-btn svg,
+    .fullscreen-player__lyrics-btn svg {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .fullscreen-player__control-btn {
+        padding: 16px; 
+    }
+
+    /* Side-by-side Layout (Lyrics) on 4K */
+    .fullscreen-player__content.with-lyrics {
+        gap: 8vw;
+    }
+
+    .fullscreen-player__content.with-lyrics .fullscreen-player__center-container {
+        max-width: 1200px;
+    }
+
+    .fullscreen-player__lyrics-pane {
+        max-width: 2000px;
+        border-radius: 32px;
+    }
+
+    /* Target the web component's font size inside the 4K rule if present, though LyricsPopup handles most */
+    .fullscreen-player__lyrics-content .am-lyrics-fullscreen {
+        font-size: clamp(3rem, 4vw, 5rem);
+        line-height: 1.5;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .fullscreen-player__progress-bar:focus-visible,
+    .fullscreen-player__control-btn:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+        border-radius: 12px;
+    }
+}

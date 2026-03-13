@@ -399,3 +399,181 @@
         padding: 12px 16px 20px;
     }
 }
+
+/* TV 1080p Scaling (1920px - 2559px) */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .filter-panel {
+        width: 500px;
+        border-left-width: 2px;
+    }
+
+    .filter-panel-header {
+        padding: 24px 28px 20px;
+    }
+
+    .filter-panel-header h2 {
+        font-size: 24px;
+    }
+
+    .filter-panel-close {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+    }
+
+    .filter-panel-close svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .filter-panel-description {
+        padding: 0 28px;
+        margin-top: 12px;
+        font-size: 18px;
+    }
+
+    .filter-panel-content {
+        padding: 24px 28px;
+    }
+
+    .filter-section {
+        margin-bottom: 28px;
+    }
+
+    .filter-section-title {
+        font-size: 16px;
+        margin-bottom: 12px;
+    }
+
+    .filter-genre-chips {
+        gap: 10px;
+    }
+
+    .filter-genre-chip {
+        padding: 8px 16px;
+        font-size: 18px;
+        border-radius: 20px;
+    }
+
+    .filter-select {
+        padding: 14px 18px;
+        font-size: 18px;
+        border-radius: 10px;
+        background-position: right 14px center;
+        padding-right: 42px;
+    }
+
+    .filter-panel-footer {
+        padding: 20px 28px 28px;
+        gap: 16px;
+    }
+
+    .filter-btn-clear,
+    .filter-btn-save {
+        padding: 16px 24px;
+        font-size: 18px;
+        border-radius: 10px;
+    }
+
+    /* Accessibility Focus outlines for TV navigation */
+    .filter-panel-close:focus-visible,
+    .filter-genre-chip:focus-visible,
+    .filter-select:focus-visible,
+    .filter-btn-clear:focus-visible,
+    .filter-btn-save:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+    }
+}
+
+/* 4K Android TV (3840x2160) - 4x scaled */
+@media (min-width: 3840px) {
+    .filter-panel {
+        width: 1280px;
+        border-left-width: 4px;
+    }
+
+    .filter-panel-header {
+        padding: 64px 64px 48px;
+    }
+
+    .filter-panel-header h2 {
+        font-size: 64px;
+    }
+
+    .filter-panel-close {
+        width: 112px;
+        height: 112px;
+        border-radius: 24px;
+    }
+
+    .filter-panel-close svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .filter-panel-description {
+        padding: 0 64px;
+        margin-top: 32px;
+        font-size: 48px;
+    }
+
+    .filter-panel-content {
+        padding: 48px 64px;
+    }
+
+    .filter-section {
+        margin-bottom: 64px;
+    }
+
+    .filter-section-title {
+        font-size: 44px;
+        margin-bottom: 32px;
+        letter-spacing: 2px;
+    }
+
+    .filter-genre-chips {
+        gap: 24px;
+    }
+
+    .filter-genre-chip {
+        padding: 20px 40px;
+        font-size: 48px;
+        border-radius: 56px;
+        border-width: 4px;
+    }
+
+    .filter-select {
+        padding: 32px 40px;
+        font-size: 52px;
+        border-radius: 24px;
+        border-width: 4px;
+        background-position: right 32px center;
+        padding-right: 112px;
+        background-size: 56px 56px;
+    }
+
+    .filter-panel-footer {
+        padding: 48px 64px 64px;
+        gap: 40px;
+        border-top-width: 4px;
+    }
+
+    .filter-btn-clear,
+    .filter-btn-save {
+        padding: 40px 64px;
+        font-size: 52px;
+        border-radius: 24px;
+        border-width: 4px;
+    }
+
+    /* Accessibility Focus outlines for TV navigation */
+    .filter-panel-close:focus-visible,
+    .filter-genre-chip:focus-visible,
+    .filter-select:focus-visible,
+    .filter-btn-clear:focus-visible,
+    .filter-btn-save:focus-visible {
+        outline: 8px solid #e50914;
+        outline-offset: 8px;
+    }
+}

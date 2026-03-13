@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
+import useTVDetect from '../hooks/useTVDetect';
 import Modal from './Modal';
 import './MovieStudios.css';
 
@@ -52,6 +53,19 @@ const MovieStudios = () => {
     const velX = useRef(0);
     const animationFrameId = useRef(null);
     const lastMouseMoveTime = useRef(0);
+
+    // Grid states
+    const isTVMode = useTVDetect();
+    const movieCardRefs = useRef([]);
+    const touchEndTimeoutRef = useRef(null);
+    
+    // Core state for movies grid navigation
+    const [focusedMovieIndex, setFocusedMovieIndex] = useState(0);
+    const [moviesInteractionState, setMoviesInteractionState] = useState({
+        isPaused: false,
+        isKeyboardNav: false,
+        isTouching: false
+    });
 
     // Fetch movies when studio is selected
     useEffect(() => {
@@ -137,15 +151,15 @@ const MovieStudios = () => {
         setImageErrors(prev => ({ ...prev, [studioId]: true }));
     };
 
-    const cancelMomentum = () => {
+    const cancelMomentum = useCallback(() => {
         if (animationFrameId.current) {
             cancelAnimationFrame(animationFrameId.current);
             animationFrameId.current = null;
         }
-    };
+    }, []);
 
-    const momentumLoop = () => {
-        if (!gridRef.current) return;
+    const momentumLoop = useCallback(() => {
+        if (!gridRef.current || isTVMode) return;
 
         // Apply velocity
         gridRef.current.scrollLeft -= velX.current;
@@ -158,7 +172,7 @@ const MovieStudios = () => {
         } else {
             animationFrameId.current = null;
         }
-    };
+    }, [isTVMode]);
 
     const handleMouseDown = (e) => {
         setIsDown(true);
@@ -249,9 +263,63 @@ const MovieStudios = () => {
         }
     };
 
+    const handleMoviesMouseEnter = useCallback(() => {
+        setMoviesInteractionState(prev => ({ ...prev, isPaused: true, isKeyboardNav: false }));
+    }, []);
+
+    const handleMoviesTouchStart = useCallback(() => {
+        if (touchEndTimeoutRef.current) {
+            clearTimeout(touchEndTimeoutRef.current);
+            touchEndTimeoutRef.current = null;
+        }
+        setMoviesInteractionState(prev => ({ ...prev, isTouching: true, isPaused: true, isKeyboardNav: false }));
+    }, []);
+
+    const handleMoviesTouchEnd = useCallback(() => {
+        touchEndTimeoutRef.current = setTimeout(() => {
+            setMoviesInteractionState(prev => ({ ...prev, isTouching: false, isPaused: false }));
+            touchEndTimeoutRef.current = null;
+        }, 500);
+    }, []);
+
+    const handleMovieCardFocus = useCallback((index) => {
+        setMoviesInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+        setFocusedMovieIndex(index);
+        movieCardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, []);
+
+    const handleMovieKeyDown = useCallback((e, index) => {
+        const itemsLength = studioMovies?.length || 0;
+        switch (e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                if (index > 0) {
+                    setMoviesInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+                    setFocusedMovieIndex(index - 1);
+                    movieCardRefs.current[index - 1]?.focus();
+                }
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                if (index < itemsLength - 1) {
+                    setMoviesInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+                    setFocusedMovieIndex(index + 1);
+                    movieCardRefs.current[index + 1]?.focus();
+                }
+                break;
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (studioMovies?.[index]) handleMovieClick(studioMovies[index]);
+                break;
+            default:
+                break;
+        }
+    }, [studioMovies]);
+
     return (
         <>
-            <section className="movie-studios-section">
+            <section className="movie-studios-section" data-nav-section="studios">
                 <div className="movie-studios-header">
                     <h2 className="movie-studios-title">Studios</h2>
                     <p className="movie-studios-subtitle">Find shows and movies from your favorite studios</p>
@@ -360,24 +428,29 @@ const MovieStudios = () => {
                             <div
                                 className="studio-movies-grid"
                                 ref={moviesGridRef}
-                                onMouseDown={handleMoviesMouseDown}
+                                onMouseEnter={handleMoviesMouseEnter}
                                 onMouseLeave={handleMoviesMouseLeave}
+                                onMouseDown={handleMoviesMouseDown}
                                 onMouseUp={handleMoviesMouseUp}
                                 onMouseMove={handleMoviesMouseMove}
+                                onTouchStart={handleMoviesTouchStart}
+                                oTouchEnd={handleMoviesTouchEnd}
                             >
-                                {studioMovies.map((movie, index) => (
-                                    <div
-                                        key={movie.id}
-                                        className="studio-movie-card"
-                                        onClick={() => !moviesIsDragging && handleMovieClick(movie)}
-                                        role="button"
-                                        tabIndex={0}
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                                handleMovieClick(movie);
-                                            }
-                                        }}
-                                    >
+                                {studioMovies.map((movie, index) => {
+                                    const { isPaused, isKeyboardNav } = moviesInteractionState;
+                                    const isFocused = (isKeyboardNav || !isPaused) && focusedMovieIndex === index;
+
+                                    return (
+                                        <div
+                                            key={movie.id}
+                                            ref={el => movieCardRefs.current[index] = el}
+                                            className={`studio-movie-card${isFocused ? ' focused' : ''}`}
+                                            onClick={() => !moviesIsDragging && handleMovieClick(movie)}
+                                            role="button"
+                                            tabIndex={0}
+                                            onKeyDown={(e) => handleMovieKeyDown(e, index)}
+                                            onFocus={() => handleMovieCardFocus(index)}
+                                        >
                                         <div className="studio-movie-backdrop">
                                             {movie.backdrop_path ? (
                                                 <img
@@ -433,9 +506,10 @@ const MovieStudios = () => {
                                                     })()}
                                                 </div>
                                             )}
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
                             <div className="studio-movies-empty">

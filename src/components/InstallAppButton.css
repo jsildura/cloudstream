@@ -61,31 +61,45 @@
     }
 }
 
-@media (min-width: 1920px) {
+@media (min-width: 1920px) and (max-width: 2559px) {
     .install-app-btn {
-        padding: 12px 22px;
-        font-size: 1rem;
-        gap: 8px;
+        padding: 8px 18px;
+        font-size: 1.35rem;
+        gap: 10px;
+        border-radius: 30px;
+        border-width: 2px;
+    }
+
+    .install-app-btn:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 4px;
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
     }
 
     .install-app-btn .install-icon {
-        width: 18px;
-        height: 18px;
+        width: 28px;
+        height: 28px;
     }
 }
 
 @media (min-width: 3840px) {
     .install-app-btn {
-        padding: 24px 44px;
-        font-size: 2rem;
-        gap: 16px;
-        border-radius: 12px;
-        border-width: 2px;
+        padding: 24px 48px;
+        font-size: 3.4rem;
+        gap: 24px;
+        border-radius: 80px;
+        border-width: 4px;
+    }
+
+    .install-app-btn:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 8px;
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
     }
 
     .install-app-btn .install-icon {
-        width: 36px;
-        height: 36px;
+        width: 72px;
+        height: 72px;
     }
 }
 

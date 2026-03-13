@@ -1095,7 +1095,7 @@ const Watch = () => {
 
         {/* Password Modal */}
         {passwordModalOpen && (
-          <div className="watch-password-overlay" onClick={handlePasswordCancel}>
+          <div className="watch-password-overlay" onClick={handlePasswordCancel} data-nav-trap>
             <div className="watch-password-modal" onClick={(e) => e.stopPropagation()}>
               <div className="watch-password-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1136,7 +1136,7 @@ const Watch = () => {
 
         {/* Episode Drawer Modal */}
         {episodeDrawerOpen && type === 'tv' && (
-          <div className="watch-episode-drawer-overlay" onClick={() => { setEpisodeDrawerOpen(false); setEpisodeSearchQuery(''); }}>
+          <div className="watch-episode-drawer-overlay" onClick={() => { setEpisodeDrawerOpen(false); setEpisodeSearchQuery(''); }} data-nav-trap>
             <div
               className="watch-episode-drawer"
               onClick={(e) => e.stopPropagation()}

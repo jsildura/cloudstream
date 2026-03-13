@@ -642,3 +642,312 @@
         width: 100%;
     }
 }
+
+/* TV / Large screen adjustments */
+@media (min-width: 1920px) {
+    .track-list__header {
+        padding: 12px 16px;
+        font-size: 1rem;
+        gap: 16px;
+    }
+
+    /* Grid Templates Scaling */
+    .track-list__header,
+    .track-list-item,
+    .track-list-item-skeleton {
+        grid-template-columns: 60px 80px minmax(0, 1fr) auto 100px 140px;
+    }
+
+    .track-list--has-album .track-list__header,
+    .track-list--has-album .track-list-item,
+    .track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 60px 80px minmax(0, 1fr) minmax(250px, 1.5fr) 100px 140px;
+    }
+
+    .track-list--no-album .track-list__header,
+    .track-list--no-album .track-list-item,
+    .track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 60px 80px minmax(0, 1fr) 100px 140px;
+    }
+
+    .track-list--no-cover .track-list__header,
+    .track-list--no-cover .track-list-item,
+    .track-list--no-cover .track-list-item-skeleton {
+        grid-template-columns: 60px minmax(0, 1fr) auto 100px 140px;
+    }
+
+    .track-list--no-cover.track-list--has-album .track-list__header,
+    .track-list--no-cover.track-list--has-album .track-list-item,
+    .track-list--no-cover.track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 60px minmax(0, 1fr) minmax(250px, 1.5fr) 100px 140px;
+    }
+
+    .track-list--no-cover.track-list--no-album .track-list__header,
+    .track-list--no-cover.track-list--no-album .track-list-item,
+    .track-list--no-cover.track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 60px minmax(0, 1fr) 100px 140px;
+    }
+
+    .track-list--no-index.track-list--has-album .track-list__header,
+    .track-list--no-index.track-list--has-album .track-list-item,
+    .track-list--no-index.track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 80px minmax(0, 1fr) minmax(250px, 1.5fr) 100px 140px;
+    }
+
+    .track-list--no-index.track-list--no-album .track-list__header,
+    .track-list--no-index.track-list--no-album .track-list-item,
+    .track-list--no-index.track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 80px minmax(0, 1fr) 100px 140px;
+    }
+
+    /* Track Item */
+    .track-list-item {
+        gap: 16px;
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .track-list-item:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .track-list-item__index {
+        width: 60px;
+        height: 60px;
+    }
+
+    .track-list-item__number {
+        font-size: 1.2rem;
+    }
+
+    .track-list-item__play-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .track-list-item__play-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .track-list-item__cover {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+    }
+
+    .track-list-item__info {
+        gap: 8px;
+    }
+
+    .track-list-item__title {
+        gap: 12px;
+    }
+
+    .track-list-item__title-text {
+        font-size: 1.3rem;
+    }
+
+    .track-list-item__version {
+        font-size: 1.1rem;
+    }
+
+    .track-list-item__explicit {
+        width: 24px;
+        height: 24px;
+        font-size: 0.9rem;
+        border-radius: 6px;
+    }
+
+    .track-list-item__quality {
+        padding: 4px 8px;
+        font-size: 0.9rem;
+        border-radius: 6px;
+    }
+
+    .track-list-item__artist,
+    .track-list-item__album {
+        font-size: 1.2rem;
+    }
+
+    .track-list-item__duration {
+        font-size: 1.2rem;
+        gap: 8px;
+    }
+
+    .track-list-item__duration svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .track-list-item__actions {
+        gap: 8px;
+    }
+
+    .track-list-item__action-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
+
+    .track-list-item__action-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* 4K Large screen adjustments */
+@media (min-width: 3840px) {
+    .track-list__header {
+        padding: 24px 32px;
+        font-size: 2.2rem;
+        gap: 32px;
+    }
+
+    /* Grid Templates Scaling */
+    .track-list__header,
+    .track-list-item,
+    .track-list-item-skeleton {
+        grid-template-columns: 120px 160px minmax(0, 1fr) auto 200px 280px;
+    }
+
+    .track-list--has-album .track-list__header,
+    .track-list--has-album .track-list-item,
+    .track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 120px 160px minmax(0, 1fr) minmax(500px, 1.5fr) 200px 280px;
+    }
+
+    .track-list--no-album .track-list__header,
+    .track-list--no-album .track-list-item,
+    .track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 120px 160px minmax(0, 1fr) 200px 280px;
+    }
+
+    .track-list--no-cover .track-list__header,
+    .track-list--no-cover .track-list-item,
+    .track-list--no-cover .track-list-item-skeleton {
+        grid-template-columns: 120px minmax(0, 1fr) auto 200px 280px;
+    }
+
+    .track-list--no-cover.track-list--has-album .track-list__header,
+    .track-list--no-cover.track-list--has-album .track-list-item,
+    .track-list--no-cover.track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 120px minmax(0, 1fr) minmax(500px, 1.5fr) 200px 280px;
+    }
+
+    .track-list--no-cover.track-list--no-album .track-list__header,
+    .track-list--no-cover.track-list--no-album .track-list-item,
+    .track-list--no-cover.track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 120px minmax(0, 1fr) 200px 280px;
+    }
+
+    .track-list--no-index.track-list--has-album .track-list__header,
+    .track-list--no-index.track-list--has-album .track-list-item,
+    .track-list--no-index.track-list--has-album .track-list-item-skeleton {
+        grid-template-columns: 160px minmax(0, 1fr) minmax(500px, 1.5fr) 200px 280px;
+    }
+
+    .track-list--no-index.track-list--no-album .track-list__header,
+    .track-list--no-index.track-list--no-album .track-list-item,
+    .track-list--no-index.track-list--no-album .track-list-item-skeleton {
+        grid-template-columns: 160px minmax(0, 1fr) 200px 280px;
+    }
+
+    /* Track Item */
+    .track-list-item {
+        gap: 32px;
+        padding: 32px;
+        border-radius: 24px;
+    }
+
+    .track-list-item:focus-visible {
+        outline-width: 8px;
+        outline-offset: 8px;
+    }
+
+    .track-list-item__index {
+        width: 120px;
+        height: 120px;
+    }
+
+    .track-list-item__number {
+        font-size: 2.4rem;
+    }
+
+    .track-list-item__play-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .track-list-item__play-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .track-list-item__cover {
+        width: 160px;
+        height: 160px;
+        border-radius: 24px;
+    }
+
+    .track-list-item__info {
+        gap: 16px;
+    }
+
+    .track-list-item__title {
+        gap: 24px;
+    }
+
+    .track-list-item__title-text {
+        font-size: 2.6rem;
+    }
+
+    .track-list-item__version {
+        font-size: 2.2rem;
+    }
+
+    .track-list-item__explicit {
+        width: 48px;
+        height: 48px;
+        font-size: 1.8rem;
+        border-radius: 12px;
+    }
+
+    .track-list-item__quality {
+        padding: 8px 16px;
+        font-size: 1.8rem;
+        border-radius: 12px;
+    }
+
+    .track-list-item__artist,
+    .track-list-item__album {
+        font-size: 2.4rem;
+    }
+
+    .track-list-item__duration {
+        font-size: 2.4rem;
+        gap: 16px;
+    }
+
+    .track-list-item__duration svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .track-list-item__actions {
+        gap: 16px;
+    }
+
+    .track-list-item__action-btn {
+        width: 96px;
+        height: 96px;
+        border-radius: 24px;
+    }
+
+    .track-list-item__action-btn svg {
+        width: 48px;
+        height: 48px;
+    }
+}

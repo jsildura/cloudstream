@@ -342,78 +342,214 @@
     }
 }
 
-/* 1080p: 1920px+ */
-@media (min-width: 1920px) {
+/* 1080p: 1920px - 2559px - Consistent with trending section scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
     .popular-streamflix-section {
-        padding: 40px 0;
+        padding: 48px 0;
+        margin-bottom: 40px;
     }
 
     .popular-streamflix-title {
-        font-size: 2rem;
-        margin-bottom: 24px;
+        font-size: 3rem;
+        margin-bottom: 12px;
+    }
+
+    .popular-streamflix-subtitle {
+        font-size: 1.8rem;
+        margin: 0 0 32px 0;
     }
 
     .popular-streamflix-grid {
-        gap: 20px;
+        gap: 24px;
+        padding: 8px 0 20px 0;
     }
 
     .popular-streamflix-card {
-        width: 360px;
+        width: 480px;
+    }
+
+    .popular-streamflix-card:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 6px;
+        border-radius: 18px;
+        box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
     }
 
     .popular-streamflix-backdrop {
-        border-radius: 16px;
+        border-radius: 18px;
     }
 
     .popular-streamflix-rank {
-        font-size: 5rem;
+        font-size: 7rem;
+        bottom: 12px;
+        left: 14px;
+        -webkit-text-stroke: 3px rgba(255, 255, 255, 0.3);
+        text-stroke: 3px rgba(255, 255, 255, 0.3);
     }
 
-    .popular-streamflix-card-skeleton {
-        width: 360px;
+    .popular-streamflix-rating {
+        top: 16px;
+        right: 16px;
+        gap: 8px;
+        padding: 6px 12px;
         border-radius: 16px;
+        font-size: 1.6rem;
+    }
+
+    .popular-streamflix-rating svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Logo & Title Overlays */
+    .popular-streamflix-logo-overlay {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .popular-streamflix-logo-overlay img {
+        max-height: 80px;
+    }
+
+    .popular-streamflix-title-overlay {
+        bottom: 20px;
+        right: 20px;
+        font-size: 1.6rem;
+    }
+
+    /* No Backdrop Fallback */
+    .popular-streamflix-no-backdrop {
+        padding: 32px;
+    }
+
+    .popular-streamflix-no-backdrop span {
+        font-size: 1.6rem;
+    }
+
+    /* Hover Overlay */
+    .popular-streamflix-hover-overlay {
+        border-radius: 18px;
+    }
+
+    .popular-streamflix-play-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .popular-streamflix-play-btn svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Skeleton */
+    .popular-streamflix-card-skeleton {
+        width: 480px;
+        border-radius: 18px;
     }
 }
 
 /* 4K: 3840px+ */
 @media (min-width: 3840px) {
     .popular-streamflix-section {
-        padding: 80px 0;
+        padding: 96px 0;
+        margin-bottom: 80px;
     }
 
     .popular-streamflix-title {
-        font-size: 4rem;
-        margin-bottom: 48px;
+        font-size: 6rem;
+        margin-bottom: 24px;
+    }
+
+    .popular-streamflix-subtitle {
+        font-size: 3.6rem;
+        margin: 0 0 64px 0;
     }
 
     .popular-streamflix-grid {
-        gap: 40px;
+        gap: 64px;
+        padding: 16px 0 40px 0;
     }
 
     .popular-streamflix-card {
-        width: 720px;
+        width: 1520px;
+    }
+
+    .popular-streamflix-card:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 16px;
+        border-radius: 48px;
     }
 
     .popular-streamflix-backdrop {
-        border-radius: 24px;
+        border-radius: 48px;
     }
 
     .popular-streamflix-rank {
-        font-size: 10rem;
-        bottom: 16px;
-        left: 24px;
+        font-size: 20rem;
+        bottom: 32px;
+        left: 32px;
+        -webkit-text-stroke: 8px rgba(255, 255, 255, 0.3);
+        text-stroke: 8px rgba(255, 255, 255, 0.3);
     }
 
-    .popular-streamflix-card-skeleton {
-        width: 720px;
-        border-radius: 24px;
+    .popular-streamflix-rating {
+        top: 32px;
+        right: 32px;
+        gap: 16px;
+        padding: 12px 24px;
+        border-radius: 32px;
+        font-size: 3.2rem;
+    }
+
+    .popular-streamflix-rating svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Logo & Title Overlays */
+    .popular-streamflix-logo-overlay {
+        bottom: 48px;
+        right: 48px;
     }
 
     .popular-streamflix-logo-overlay img {
-        max-height: 120px;
+        max-height: 240px;
     }
 
     .popular-streamflix-title-overlay {
-        font-size: 2rem;
+        bottom: 48px;
+        right: 48px;
+        font-size: 4.4rem;
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
+    }
+
+    /* No Backdrop Fallback */
+    .popular-streamflix-no-backdrop {
+        padding: 64px;
+    }
+
+    .popular-streamflix-no-backdrop span {
+        font-size: 3.6rem;
+    }
+
+    /* Hover Overlay */
+    .popular-streamflix-hover-overlay {
+        border-radius: 48px;
+    }
+
+    .popular-streamflix-play-btn {
+        width: 192px;
+        height: 192px;
+    }
+
+    .popular-streamflix-play-btn svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    /* Skeleton */
+    .popular-streamflix-card-skeleton {
+        width: 1520px;
+        border-radius: 48px;
     }
 }

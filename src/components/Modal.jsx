@@ -402,7 +402,7 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
   return createPortal(
     <>
       <SchemaMarkup schema={contentSchema} />
-      <div className="modal-overlay" onClick={handleBackdropClick}>
+      <div className="modal-overlay" onClick={handleBackdropClick} data-nav-trap>
         <div
           ref={modalContentRef}
           className={`modal-content-new${isClosing ? ' closing' : ''}`}

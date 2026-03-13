@@ -6,6 +6,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import usePopularTracking from '../hooks/usePopularTracking';
 import { useTMDB } from '../hooks/useTMDB';
+import useTVDetect from '../hooks/useTVDetect';
 import './PopularOnStreamflix.css';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
@@ -18,6 +19,19 @@ const PopularOnStreamflix = ({ onItemClick }) => {
 
     // Refs
     const carouselRef = useRef(null);
+    const cardRefs = useRef([]);
+    const touchEndTimeoutRef = useRef(null);
+    const isTVMode = useTVDetect();
+
+    // Core state
+    const [focusedCardIndex, setFocusedCardIndex] = useState(0);
+    const [interactionState, setInteractionState] = useState({
+        isPaused: false,
+        isKeyboardNav: false,
+        isTouching: false
+    });
+
+    const displayContent = enrichedContent.length > 0 ? enrichedContent : popularContent;
 
     // Drag state for mouse swipe
     const [isDragging, setIsDragging] = useState(false);
@@ -90,11 +104,17 @@ const PopularOnStreamflix = ({ onItemClick }) => {
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
-            }
+            if (touchEndTimeoutRef.current) clearTimeout(touchEndTimeoutRef.current);
+            if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
         };
     }, []);
+
+    // Validate focusedCardIndex
+    useEffect(() => {
+        if (displayContent && focusedCardIndex >= displayContent.length) {
+            setFocusedCardIndex(Math.max(0, displayContent.length - 1));
+        }
+    }, [displayContent, focusedCardIndex]);
 
     // Cancel momentum
     const cancelMomentum = useCallback(() => {
@@ -106,7 +126,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
 
     // Momentum loop
     const momentumLoop = useCallback(() => {
-        if (!carouselRef.current) return;
+        if (!carouselRef.current || isTVMode) return;
         carouselRef.current.scrollLeft -= velX.current;
         velX.current *= 0.95;
         if (Math.abs(velX.current) > 0.5) {
@@ -114,7 +134,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
         } else {
             animationFrameId.current = null;
         }
-    }, []);
+    }, [isTVMode]);
 
     // Mouse handlers
     const handleMouseDown = useCallback((e) => {
@@ -135,6 +155,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
             cancelMomentum();
             animationFrameId.current = requestAnimationFrame(momentumLoop);
         }
+        setInteractionState(prev => ({ ...prev, isPaused: false, isKeyboardNav: false }));
     }, [cancelMomentum, momentumLoop]);
 
     const handleMouseUp = useCallback(() => {
@@ -158,6 +179,31 @@ const PopularOnStreamflix = ({ onItemClick }) => {
             setIsDragging(true);
         }
     }, [isDown, startX, scrollLeft]);
+
+    const handleMouseEnter = useCallback(() => {
+        setInteractionState(prev => ({ ...prev, isPaused: true, isKeyboardNav: false }));
+    }, []);
+
+    const handleTouchStart = useCallback(() => {
+        if (touchEndTimeoutRef.current) {
+            clearTimeout(touchEndTimeoutRef.current);
+            touchEndTimeoutRef.current = null;
+        }
+        setInteractionState(prev => ({ ...prev, isTouching: true, isPaused: true, isKeyboardNav: false }));
+    }, []);
+
+    const handleTouchEnd = useCallback(() => {
+        touchEndTimeoutRef.current = setTimeout(() => {
+            setInteractionState(prev => ({ ...prev, isTouching: false, isPaused: false }));
+            touchEndTimeoutRef.current = null;
+        }, 500);
+    }, []);
+
+    const handleCardFocus = useCallback((index) => {
+        setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+        setFocusedCardIndex(index);
+        cardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, []);
 
     // Handle item click with full details fetch
     const handleItemClick = useCallback(async (item) => {
@@ -197,8 +243,34 @@ const PopularOnStreamflix = ({ onItemClick }) => {
         }
     }, [isDragging, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating, onItemClick]);
 
-    // Use enriched content if available, otherwise fall back to original
-    const displayContent = enrichedContent.length > 0 ? enrichedContent : popularContent;
+    const handleKeyDown = useCallback((e, index) => {
+        const itemsLength = displayContent?.length || 0;
+        switch (e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                if (index > 0) {
+                    setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+                    setFocusedCardIndex(index - 1);
+                    cardRefs.current[index - 1]?.focus();
+                }
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                if (index < itemsLength - 1) {
+                    setInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
+                    setFocusedCardIndex(index + 1);
+                    cardRefs.current[index + 1]?.focus();
+                }
+                break;
+            case 'Enter':
+            case ' ':
+                e.preventDefault();
+                if (displayContent?.[index]) handleItemClick(displayContent[index]);
+                break;
+            default:
+                break;
+        }
+    }, [displayContent, handleItemClick]);
 
     // Don't render if no popular content and not loading
     if (!loading && displayContent.length === 0) {
@@ -217,10 +289,13 @@ const PopularOnStreamflix = ({ onItemClick }) => {
             <div
                 className={`popular-streamflix-grid${isDragging ? ' dragging' : ''}`}
                 ref={carouselRef}
-                onMouseDown={handleMouseDown}
+                onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
+                onMouseDown={handleMouseDown}
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
             >
                 {loading ? (
                     // Skeleton loading
@@ -239,14 +314,20 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                             ? `${LOGO_URL}${item.logo_path}`
                             : null;
 
+                        const { isPaused, isKeyboardNav } = interactionState;
+                        const isFocused = (isKeyboardNav || !isPaused) && focusedCardIndex === index;
+
                         return (
                             <div
-                                key={item.key}
-                                className="popular-streamflix-card"
+                                key={item.key || item.id}
+                                ref={el => cardRefs.current[index] = el}
+                                className={`popular-streamflix-card${isFocused ? ' focused' : ''}`}
                                 onClick={() => handleItemClick(item)}
                                 role="button"
                                 tabIndex={0}
-                                aria-label={`#${index + 1} ${item.title}`}
+                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                onFocus={() => handleCardFocus(index)}
+                                aria-label={`#${index + 1} ${item.title || item.name}`}
                             >
                                 <div className="popular-streamflix-backdrop">
                                     {backdropSrc ? (

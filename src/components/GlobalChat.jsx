@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import useTVDetect from '../hooks/useTVDetect';
 import './GlobalChat.css';
 
 // Firebase configuration for StreamFlix Chat
@@ -21,6 +22,7 @@ const ADMIN_AVATAR = "/logo/streamflix.png";
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec";
 
 function GlobalChat() {
+    const isTVMode = useTVDetect();
     // State
     const [showFab, setShowFab] = useState(false); // Delay FAB until loading screen finishes
     const [isOpen, setIsOpen] = useState(false);
@@ -164,14 +166,16 @@ function GlobalChat() {
 
     // Delay FAB visibility until loading screen is gone (4s + 0.5s fade)
     useEffect(() => {
+        if (isTVMode) return;
         const timer = setTimeout(() => {
             setShowFab(true);
         }, 4500);
         return () => clearTimeout(timer);
-    }, []);
+    }, [isTVMode]);
 
     // Initialize Firebase
     useEffect(() => {
+        if (isTVMode) return;
         if (typeof window.firebase === 'undefined') {
             console.warn('Firebase SDK not loaded');
             return;

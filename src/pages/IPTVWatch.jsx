@@ -1776,7 +1776,7 @@ const IPTVWatch = () => {
 
             {/* Channel Strip Overlay */}
             {showChannelStrip && channels.length > 0 && (
-                <div className="channel-strip-overlay" role="dialog" aria-label="Channel selector">
+                <div className="channel-strip-overlay" role="dialog" aria-label="Channel selector" data-nav-trap>
                     <div className="channel-strip-header">All Channels ({channels.length})</div>
                     <div
                         className="channel-strip-list"

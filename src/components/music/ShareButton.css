@@ -83,3 +83,83 @@
     background: rgba(255, 255, 255, 0.08);
     margin: 0.375rem 0;
 }
+
+/* ========================================
+   TV / Large Screen Adjustments
+   ======================================== */
+@media (min-width: 1920px) {
+    .share-button__trigger {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
+    
+    .share-button__trigger svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    .share-button__menu {
+        min-width: 240px;
+        padding: 8px;
+        top: calc(100% + 12px);
+    }
+    
+    .share-button__item {
+        padding: 12px 16px;
+        gap: 12px;
+        font-size: 1.125rem;
+    }
+    
+    .share-button__item svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .share-button__trigger:focus-visible,
+    .share-button__item:focus-visible {
+        outline: 4px solid var(--netflix-red);
+        outline-offset: 4px;
+    }
+}
+
+/* ========================================
+   4K Large Screen Adjustments
+   ======================================== */
+@media (min-width: 3840px) {
+    .share-button__trigger {
+        width: 96px;
+        height: 96px;
+        border-radius: 24px;
+    }
+    
+    .share-button__trigger svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .share-button__menu {
+        min-width: 480px;
+        padding: 16px;
+        top: calc(100% + 24px);
+    }
+    
+    .share-button__item {
+        padding: 24px 32px;
+        gap: 24px;
+        font-size: 2.4rem;
+    }
+    
+    .share-button__item svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Focus States for D-pad Navigation */
+    .share-button__trigger:focus-visible,
+    .share-button__item:focus-visible {
+        outline: 8px solid var(--netflix-red);
+        outline-offset: 8px;
+    }
+}

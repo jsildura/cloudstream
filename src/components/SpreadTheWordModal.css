@@ -326,3 +326,191 @@
         font-size: 0.62rem;
     }
 }
+
+/* TV 1080p */
+@media (min-width: 1920px) and (max-width: 3839px) {
+    .stw-modal {
+        max-width: 840px;
+        padding: 64px 56px 56px;
+        border-radius: 40px;
+    }
+
+    .stw-close-btn {
+        top: 28px;
+        right: 28px;
+        width: 64px;
+        height: 64px;
+        font-size: 2.2rem;
+    }
+
+    .stw-close-btn svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .stw-header {
+        margin-bottom: 48px;
+    }
+
+    .stw-icon-wrapper {
+        width: 128px;
+        height: 128px;
+        border-radius: 32px;
+        margin-bottom: 36px;
+    }
+
+    .stw-icon-wrapper svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .stw-share-icon {
+        width: 72px;
+        height: 72px;
+    }
+
+    .stw-title {
+        font-size: 2.7rem;
+        margin: 0 0 16px;
+    }
+
+    .stw-subtitle {
+        font-size: 1.76rem;
+        max-width: 640px;
+    }
+
+    .stw-copy-section {
+        padding: 8px;
+        margin-bottom: 40px;
+        border-radius: 24px;
+    }
+
+    .stw-link-input {
+        font-size: 1.76rem;
+        padding: 24px 28px;
+    }
+
+    .stw-copy-btn {
+        padding: 20px 24px;
+        border-radius: 16px;
+    }
+
+    .stw-copy-btn svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .stw-socials {
+        gap: 16px;
+    }
+
+    .stw-social-btn {
+        gap: 12px;
+        padding: 28px 24px;
+        border-radius: 28px;
+        max-width: 160px;
+    }
+
+    .stw-social-btn svg {
+        width: 52px;
+        height: 52px;
+    }
+
+    .stw-social-label {
+        font-size: 1.36rem;
+    }
+}
+
+/* TV 4K */
+@media (min-width: 3840px) {
+    .stw-modal {
+        max-width: 1680px;
+        padding: 128px 112px 112px;
+        border-radius: 80px;
+    }
+
+    .stw-close-btn {
+        top: 56px;
+        right: 56px;
+        width: 128px;
+        height: 128px;
+        font-size: 4.4rem;
+    }
+
+    .stw-close-btn svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .stw-header {
+        margin-bottom: 96px;
+    }
+
+    .stw-icon-wrapper {
+        width: 256px;
+        height: 256px;
+        border-radius: 64px;
+        margin-bottom: 72px;
+    }
+
+    .stw-icon-wrapper svg {
+        width: 128px;
+        height: 128px;
+    }
+
+    .stw-share-icon {
+        width: 144px;
+        height: 144px;
+    }
+
+    .stw-title {
+        font-size: 5.4rem;
+        margin: 0 0 32px;
+    }
+
+    .stw-subtitle {
+        font-size: 3.52rem;
+        max-width: 1280px;
+    }
+
+    .stw-copy-section {
+        padding: 16px;
+        margin-bottom: 80px;
+        border-radius: 48px;
+    }
+
+    .stw-link-input {
+        font-size: 3.52rem;
+        padding: 48px 56px;
+    }
+
+    .stw-copy-btn {
+        padding: 40px 48px;
+        border-radius: 32px;
+    }
+
+    .stw-copy-btn svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .stw-socials {
+        gap: 32px;
+    }
+
+    .stw-social-btn {
+        gap: 24px;
+        padding: 56px 48px;
+        border-radius: 56px;
+        max-width: 320px;
+    }
+
+    .stw-social-btn svg {
+        width: 104px;
+        height: 104px;
+    }
+
+    .stw-social-label {
+        font-size: 2.72rem;
+    }
+}

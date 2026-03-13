@@ -61,7 +61,6 @@
 }
 
 .search-modal-input-wrapper:focus-within {
-    border-color: rgba(229, 9, 20, 0.9);
     box-shadow:
         0 0 40px rgba(229, 9, 20, 0.25),
         inset 0 1px 1px rgba(255, 255, 255, 0.08);
@@ -81,6 +80,14 @@
     font-size: 14px;
     font-weight: 400;
     letter-spacing: 0.2px;
+}
+
+.search-modal-input:focus,
+.search-modal-input:active,
+.search-modal-input:focus-visible {
+    outline: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 .search-modal-input::placeholder {
@@ -442,5 +449,292 @@
     .search-modal-trending-title,
     .search-modal-result-title {
         font-size: 13px;
+    }
+}
+
+/* 1080p TV Responsive */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .search-modal-overlay {
+        padding-top: 15vh;
+    }
+
+    .search-modal-container {
+        max-width: 800px;
+        padding: 0 24px;
+    }
+
+    .search-modal-input-wrapper {
+        border-width: 3px;
+        border-radius: 16px;
+        padding: 16px 24px;
+        gap: 16px;
+        box-shadow:
+            0 0 45px rgba(229, 9, 20, 0.15),
+            inset 0 1px 2px rgba(255, 255, 255, 0.05);
+    }
+
+    .search-modal-input-wrapper:focus-within {
+        box-shadow:
+            0 0 60px rgba(229, 9, 20, 0.25),
+            inset 0 1px 2px rgba(255, 255, 255, 0.08);
+    }
+
+    .search-modal-input-icon {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
+    .search-modal-input {
+        font-size: 24px;
+    }
+
+    .search-modal-esc-hint {
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 16px;
+        min-width: 48px;
+    }
+
+    .search-modal-content {
+        margin-top: 16px;
+        border-radius: 16px;
+        padding: 24px 28px;
+    }
+
+    .search-modal-content::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .search-modal-content::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+    }
+
+    .search-modal-section {
+        margin-bottom: 20px;
+    }
+
+    .search-modal-section-header {
+        gap: 10px;
+        font-size: 16px;
+        letter-spacing: 1.5px;
+        margin-bottom: 14px;
+    }
+
+    .search-modal-section-header img,
+    .search-modal-section-header svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .search-modal-quick-links {
+        gap: 12px;
+    }
+
+    .search-modal-quick-link {
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        font-size: 18px;
+    }
+
+    .search-modal-trending-list,
+    .search-modal-results-list {
+        gap: 10px;
+    }
+
+    .search-modal-trending-item,
+    .search-modal-result-item {
+        gap: 18px;
+        padding: 12px 10px;
+        border-radius: 10px;
+    }
+
+    .search-modal-trending-item.focused,
+    .search-modal-result-item.focused {
+        border-left-width: 4px;
+        padding-left: 8px;
+        outline: 2px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 2px;
+    }
+
+    .search-modal-trending-rank,
+    .search-modal-result-rank {
+        width: 32px;
+        font-size: 22px;
+    }
+
+    .search-modal-trending-poster,
+    .search-modal-result-poster {
+        width: 60px;
+        height: 90px;
+        border-radius: 6px;
+    }
+
+    .search-modal-trending-title,
+    .search-modal-result-title {
+        font-size: 20px;
+    }
+
+    .search-modal-trending-year,
+    .search-modal-result-year {
+        font-size: 18px;
+        margin-left: 10px;
+    }
+
+    .search-modal-trending-type,
+    .search-modal-result-type {
+        font-size: 16px;
+        letter-spacing: 0.8px;
+    }
+
+    .search-modal-loading,
+    .search-modal-no-results {
+        padding: 36px 24px;
+        font-size: 20px;
+    }
+}
+
+/* 4K TV Responsive (3840px and up) */
+@media (min-width: 3840px) {
+    .search-modal-overlay {
+        padding-top: 20vh;
+    }
+
+    .search-modal-container {
+        max-width: 2080px;
+        padding: 0 64px;
+    }
+
+    .search-modal-input-wrapper {
+        border-width: 8px;
+        border-radius: 40px;
+        padding: 40px 56px;
+        gap: 40px;
+        box-shadow:
+            0 0 120px rgba(229, 9, 20, 0.15),
+            inset 0 4px 4px rgba(255, 255, 255, 0.05);
+    }
+
+    .search-modal-input-wrapper:focus-within {
+        box-shadow:
+            0 0 160px rgba(229, 9, 20, 0.25),
+            inset 0 4px 4px rgba(255, 255, 255, 0.08);
+    }
+
+    .search-modal-input-icon {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .search-modal-input {
+        font-size: 56px;
+    }
+
+    .search-modal-esc-hint {
+        padding: 16px 32px;
+        border-radius: 24px;
+        border-width: 4px;
+        font-size: 44px;
+        min-width: 128px;
+    }
+
+    .search-modal-content {
+        margin-top: 40px;
+        border-width: 4px;
+        border-radius: 40px;
+        padding: 56px 64px;
+    }
+
+    .search-modal-content::-webkit-scrollbar {
+        width: 24px;
+    }
+
+    .search-modal-content::-webkit-scrollbar-thumb {
+        border-radius: 12px;
+    }
+
+    .search-modal-section {
+        margin-bottom: 48px;
+    }
+
+    .search-modal-section-header {
+        gap: 24px;
+        font-size: 40px;
+        letter-spacing: 4.8px;
+        margin-bottom: 32px;
+    }
+
+    .search-modal-section-header img,
+    .search-modal-section-header svg {
+        width: 64px !important;
+        height: 64px !important;
+    }
+
+    .search-modal-quick-links {
+        gap: 32px;
+    }
+
+    .search-modal-quick-link {
+        gap: 20px;
+        padding: 24px 40px;
+        border-width: 4px;
+        border-radius: 24px;
+        font-size: 48px;
+    }
+
+    .search-modal-trending-list,
+    .search-modal-results-list {
+        gap: 24px;
+    }
+
+    .search-modal-trending-item,
+    .search-modal-result-item {
+        gap: 48px;
+        padding: 32px 24px;
+        border-radius: 24px;
+    }
+
+    .search-modal-trending-item.focused,
+    .search-modal-result-item.focused {
+        border-left-width: 8px;
+        padding-left: 16px;
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 8px;
+    }
+
+    .search-modal-trending-rank,
+    .search-modal-result-rank {
+        width: 80px;
+        font-size: 56px;
+    }
+
+    .search-modal-trending-poster,
+    .search-modal-result-poster {
+        width: 144px;
+        height: 216px;
+        border-radius: 16px;
+    }
+
+    .search-modal-trending-title,
+    .search-modal-result-title {
+        font-size: 52px;
+    }
+
+    .search-modal-trending-year,
+    .search-modal-result-year {
+        font-size: 48px;
+        margin-left: 24px;
+    }
+
+    .search-modal-trending-type,
+    .search-modal-result-type {
+        font-size: 44px;
+        letter-spacing: 2px;
+    }
+
+    .search-modal-loading,
+    .search-modal-no-results {
+        padding: 96px 64px;
+        font-size: 52px;
     }
 }
