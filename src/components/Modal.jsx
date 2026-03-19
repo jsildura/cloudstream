@@ -5,6 +5,7 @@ import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import SchemaMarkup from './SchemaMarkup';
+import ReviewSection from './ReviewSection';
 import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
 import { getBackdropAlt, getPosterAlt, getLogoAlt } from '../utils/altTextUtils';
 
@@ -569,6 +570,9 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
                   </div>
                 </div>
               </div>
+
+              {/* Ratings & Reviews Section */}
+              <ReviewSection contentId={item.id} type={item.type || item.media_type || 'movie'} />
 
               {/* Collection Section */}
               {collection.length > 0 && (
