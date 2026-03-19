@@ -22,6 +22,7 @@ const CollectionCard = ({ collection }) => {
             className="collection-card"
             onClick={handleClick}
             onKeyDown={handleKeyDown}
+            onFocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })}
             tabIndex={0}
             role="button"
             aria-label={`View ${collection.name} collection`}

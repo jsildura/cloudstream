@@ -1,4 +1,4 @@
-/* TrendingSection - Styles for the unified trending content section */
+/* TrendingSection - Landscape backdrop cards matching TopTenRow style */
 
 /* Base Section Styling */
 .trending-section {
@@ -87,79 +87,87 @@
     }
 }
 
-/* Carousel */
+/* Carousel - Horizontal scroll (matches TopTenRow) */
 .trending-carousel {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 4px 0 10px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
+}
+
+.trending-carousel::-webkit-scrollbar {
+    display: none;
+}
+
+.trending-carousel.dragging {
+    cursor: grabbing;
+}
+
+.trending-carousel.dragging .trending-card {
+    pointer-events: none;
+}
+
+/* Card Styling (Landscape - matches TopTenRow) */
+.trending-card {
+    flex: 0 0 auto;
+    width: 380px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    position: relative;
+}
+
+.trending-card:hover {
+    transform: scale(1.03);
+    z-index: 10;
+}
+
+.trending-card:focus {
+    outline: none;
+}
+
+.trending-card:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
+/* Backdrop Container */
+.trending-card-backdrop {
     position: relative;
     width: 100%;
-}
-
-.trending-carousel-viewport {
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
     overflow: hidden;
+    background: rgba(30, 30, 30, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.trending-carousel-track {
-    display: flex;
-    margin-left: -8px;
-    transition: transform 0.33s cubic-bezier(0.25, 0.1, 0.25, 1);
+.trending-card-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top right,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.5) 35%,
+            rgba(0, 0, 0, 0.15) 60%,
+            rgba(0, 0, 0, 0) 80%);
+    pointer-events: none;
+    z-index: 1;
 }
 
-@media (min-width: 768px) {
-    .trending-carousel-track {
-        margin-left: -16px;
-    }
+.trending-card-backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.trending-carousel-slide {
-    min-width: 0;
-    flex-shrink: 0;
-    flex-grow: 0;
-    padding-left: 8px;
-    /* Mobile: 3 poster cards per view */
-    flex-basis: 33.333333%;
-}
-
-@media (min-width: 640px) {
-    .trending-carousel-slide {
-        /* Small tablet: 4 items per view */
-        flex-basis: 25%;
-    }
-}
-
-@media (min-width: 768px) {
-    .trending-carousel-slide {
-        /* Tablet: 4 items per view */
-        flex-basis: 25%;
-        padding-left: 16px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .trending-carousel-slide {
-        /* Desktop: 5 items per view */
-        flex-basis: 20%;
-    }
-}
-
-@media (min-width: 1280px) {
-    .trending-carousel-slide {
-        /* Desktop XL: 6 items per view */
-        flex-basis: 16.666667%;
-    }
-}
-
-/* Card */
-.trending-card {
-    position: relative;
-    aspect-ratio: 2 / 3;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.trending-card:hover .trending-card-image {
-    transform: scale(1.05);
-}
-
+/* Hover Overlay - Redflix Style */
 .trending-hover-overlay {
     position: absolute;
     inset: 0;
@@ -181,7 +189,6 @@
     height: 48px;
     border-radius: 50%;
     background-color: #b91c1c;
-    /* Redflix red */
     color: white;
     border: none;
     display: flex;
@@ -205,34 +212,7 @@
     box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
 }
 
-.trending-card:focus {
-    outline-offset: 2px;
-}
-
-.trending-card-gradient {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
-    z-index: 10;
-}
-
-.trending-card-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.trending-card-title {
-    color: #fff;
-    font-size: 0.875rem;
-    font-weight: 500;
-    margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
+/* Rating Badge */
 .trending-card-rating {
     position: absolute;
     top: 8px;
@@ -251,7 +231,483 @@
     z-index: 20;
 }
 
-/* Navigation buttons */
+/* Logo Overlay - Right Side */
+.trending-logo-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 45%;
+    max-height: 50%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.trending-logo-overlay img {
+    max-width: 100%;
+    max-height: 60px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* Title Overlay Fallback (when no logo) */
+.trending-title-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 60%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: flex-end;
+    text-align: right;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-style: italic;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+}
+
+.trending-title-overlay span {
+    display: inline;
+}
+
+/* Skeleton Loading State */
+.trending-skeleton-container {
+    overflow: hidden;
+}
+
+.trending-skeleton-track {
+    display: flex;
+    gap: 16px;
+}
+
+.trending-skeleton-slide {
+    flex: 0 0 auto;
+    width: 380px;
+}
+
+.trending-card-skeleton {
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    background: linear-gradient(110deg,
+            rgba(35, 35, 40, 0.95) 0%,
+            rgba(35, 35, 40, 0.95) 40%,
+            rgba(55, 55, 65, 0.95) 50%,
+            rgba(35, 35, 40, 0.95) 60%,
+            rgba(35, 35, 40, 0.95) 100%);
+    background-size: 200% 100%;
+    animation: trending-shimmer 1.5s infinite ease-in-out;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes trending-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Mobile optimization (< 640px) */
+@media (max-width: 639px) {
+    .trending-section-header {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .trending-section-title {
+        font-size: 1.2rem !important;
+    }
+
+    .trending-media-btn {
+        padding: 4px 8px;
+        height: 28px;
+    }
+
+    .trending-media-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+}
+
+/* Mobile: max-width 767px */
+@media (max-width: 767px) {
+    .trending-carousel {
+        gap: 12px;
+    }
+
+    .trending-card {
+        width: 200px;
+    }
+
+    .trending-logo-overlay img {
+        max-height: 40px;
+    }
+
+    .trending-title-overlay {
+        font-size: 0.85rem;
+    }
+
+    .trending-skeleton-slide {
+        width: 200px;
+    }
+
+    .trending-card-skeleton {
+        border-radius: 8px;
+    }
+}
+
+/* Tablet: 768px to 1023px */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .trending-card {
+        width: 280px;
+    }
+
+    .trending-skeleton-slide {
+        width: 280px;
+    }
+}
+
+/* 1080p Display (1920px - 2559px) - 2x scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .trending-section {
+        padding: 48px 0;
+        margin-bottom: 40px;
+    }
+
+    .trending-section-header {
+        margin-bottom: 32px;
+    }
+
+    .trending-section-title {
+        font-size: 3rem;
+    }
+
+    /* Subtitle - 2x scaling */
+    .trending-section-subtitle {
+        font-size: 1.8rem;
+    }
+
+    /* Media Buttons - 2x scaling */
+    .trending-media-btn {
+        gap: 12px;
+        padding: 16px 32px;
+        font-size: 1.75rem;
+        height: 80px;
+        border-bottom-width: 4px;
+    }
+
+    .trending-media-btn svg {
+        width: 36px;
+        height: 36px;
+    }
+
+    .trending-carousel {
+        gap: 24px;
+        padding: 8px 0 20px 0;
+    }
+
+    .trending-card {
+        width: 480px;
+    }
+
+    .trending-card:focus-visible {
+        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 6px;
+        border-radius: 18px;
+        box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+    }
+
+    .trending-card-backdrop {
+        border-radius: 18px;
+    }
+
+    .trending-card-rating {
+        top: 16px;
+        right: 16px;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 1.6rem;
+    }
+
+    .trending-card-rating svg {
+        width: 24px;
+        height: 24px;
+    }
+
+    /* Logo & Title Overlays */
+    .trending-logo-overlay {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .trending-logo-overlay img {
+        max-height: 80px;
+    }
+
+    .trending-title-overlay {
+        bottom: 20px;
+        right: 20px;
+        font-size: 1.6rem;
+    }
+
+    /* Hover Overlay */
+    .trending-hover-overlay {
+        border-radius: 18px;
+    }
+
+    .trending-play-btn {
+        width: 96px;
+        height: 96px;
+    }
+
+    .trending-play-btn svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* Focus-visible for D-pad navigation on 1080p TV */
+    .trending-media-btn:focus-visible {
+        outline: 4px solid #e50914;
+        outline-offset: 4px;
+    }
+
+    /* Skeleton for 1080p */
+    .trending-skeleton-slide {
+        width: 480px;
+    }
+
+    .trending-card-skeleton {
+        border-radius: 18px;
+    }
+}
+
+/* 4K Android TV (3840x2160) - 4x scaled from 720p */
+@media (min-width: 3840px) {
+    .trending-section {
+        padding: 96px 0;
+        margin-bottom: 80px;
+    }
+
+    .trending-section-header {
+        margin-bottom: 64px;
+    }
+
+    .trending-section-header-left {
+        gap: 0;
+    }
+
+    .trending-section-title {
+        font-size: 6rem;
+        margin: 0 0 16px 0;
+    }
+
+    /* Subtitle - 4x scaling */
+    .trending-section-subtitle {
+        font-size: 3.6rem;
+    }
+
+    /* Media Buttons - 4x scaling */
+    .trending-media-btn {
+        gap: 24px;
+        padding: 32px 64px;
+        font-size: 3.5rem;
+        height: 160px;
+        border-bottom-width: 8px;
+    }
+
+    .trending-media-btn svg {
+        width: 72px;
+        height: 72px;
+    }
+
+    .trending-carousel {
+        gap: 64px;
+        padding: 16px 0 40px 0;
+    }
+
+    .trending-card {
+        width: 1520px;
+    }
+
+    .trending-card:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 16px;
+        border-radius: 48px;
+    }
+
+    .trending-card-backdrop {
+        border-radius: 48px;
+    }
+
+    .trending-card-rating {
+        top: 32px;
+        right: 32px;
+        gap: 16px;
+        padding: 12px 24px;
+        border-radius: 32px;
+        font-size: 3.2rem;
+    }
+
+    .trending-card-rating svg {
+        width: 48px;
+        height: 48px;
+    }
+
+    .trending-logo-overlay {
+        bottom: 48px;
+        right: 48px;
+    }
+
+    .trending-logo-overlay img {
+        max-height: 240px;
+    }
+
+    .trending-title-overlay {
+        bottom: 48px;
+        right: 48px;
+        font-size: 4.4rem;
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
+    }
+
+    .trending-play-btn {
+        width: 192px;
+        height: 192px;
+    }
+
+    .trending-play-btn svg {
+        width: 96px;
+        height: 96px;
+    }
+
+    /* Skeleton for 4K */
+    .trending-skeleton-slide {
+        width: 1520px;
+    }
+
+    .trending-card-skeleton {
+        border-radius: 48px;
+    }
+}
+
+/* ==============================================
+   LEGACY SLIDE-BASED CAROUSEL CLASSES
+   Used by TrendingAnimeSection & RecommendedForYou
+   ============================================== */
+
+.trending-carousel-viewport {
+    overflow: hidden;
+}
+
+.trending-carousel-track {
+    display: flex;
+    margin-left: -8px;
+    transition: transform 0.33s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (min-width: 768px) {
+    .trending-carousel-track {
+        margin-left: -16px;
+    }
+}
+
+.trending-carousel-slide {
+    min-width: 0;
+    flex-shrink: 0;
+    flex-grow: 0;
+    padding-left: 8px;
+    flex-basis: 33.333333%;
+}
+
+@media (min-width: 640px) {
+    .trending-carousel-slide {
+        flex-basis: 25%;
+    }
+}
+
+@media (min-width: 768px) {
+    .trending-carousel-slide {
+        flex-basis: 25%;
+        padding-left: 16px;
+    }
+}
+
+@media (min-width: 1024px) {
+    .trending-carousel-slide {
+        flex-basis: 20%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .trending-carousel-slide {
+        flex-basis: 16.666667%;
+    }
+}
+
+/* Legacy card styles (poster-based) for Anime & Recommended */
+.trending-carousel-slide .trending-card {
+    aspect-ratio: 2 / 3;
+    border-radius: 8px;
+    overflow: hidden;
+    width: auto;
+}
+
+.trending-carousel-slide .trending-card:hover {
+    transform: scale(1.05);
+}
+
+.trending-card-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent, transparent);
+    z-index: 10;
+}
+
+.trending-card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.trending-carousel-slide .trending-card:hover .trending-card-image {
+    transform: scale(1.05);
+}
+
+.trending-card-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8px 10px;
+    z-index: 20;
+}
+
+.trending-card-title {
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Navigation buttons (legacy) */
 .trending-carousel-btn {
     display: inline-flex;
     align-items: center;
@@ -299,133 +755,8 @@
     right: 8px;
 }
 
-/* Skeleton Loading State */
-.trending-skeleton-container {
-    overflow: hidden;
-}
-
-.trending-skeleton-track {
-    display: flex;
-    margin-left: -8px;
-}
-
-@media (min-width: 768px) {
-    .trending-skeleton-track {
-        margin-left: -16px;
-    }
-}
-
-.trending-skeleton-slide {
-    min-width: 0;
-    flex-shrink: 0;
-    flex-grow: 0;
-    padding-left: 8px;
-    flex-basis: 33.333333%;
-}
-
-@media (min-width: 640px) {
-    .trending-skeleton-slide {
-        flex-basis: 25%;
-    }
-}
-
-@media (min-width: 768px) {
-    .trending-skeleton-slide {
-        flex-basis: 25%;
-        padding-left: 16px;
-    }
-}
-
-@media (min-width: 1024px) {
-    .trending-skeleton-slide {
-        flex-basis: 20%;
-    }
-}
-
-@media (min-width: 1280px) {
-    .trending-skeleton-slide {
-        flex-basis: 16.666667%;
-    }
-}
-
-.trending-card-skeleton {
-    aspect-ratio: 2 / 3;
-    border-radius: 8px;
-    background: linear-gradient(110deg,
-            rgba(35, 35, 40, 0.95) 0%,
-            rgba(35, 35, 40, 0.95) 40%,
-            rgba(55, 55, 65, 0.95) 50%,
-            rgba(35, 35, 40, 0.95) 60%,
-            rgba(35, 35, 40, 0.95) 100%);
-    background-size: 200% 100%;
-    animation: trending-shimmer 1.5s infinite ease-in-out;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-@keyframes trending-shimmer {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-/* Mobile optimization (< 640px) */
-@media (max-width: 639px) {
-    .trending-section-header {
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    .trending-section-title {
-        font-size: 1.2rem !important;
-    }
-
-    .trending-media-btn {
-        padding: 4px 8px;
-        height: 28px;
-    }
-
-    .trending-media-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-}
-
-/* 1080p Display (1920px - 2559px) - 2x scaling */
+/* Legacy responsive scaling for slide-based carousel */
 @media (min-width: 1920px) and (max-width: 2559px) {
-    .trending-section {
-        padding: 48px 0;
-        margin-bottom: 40px;
-    }
-
-    .trending-section-header {
-        margin-bottom: 32px;
-    }
-
-
-
-    .trending-section-title {
-        font-size: 3rem;
-    }
-
-    /* Media Buttons - 2x scaling */
-    .trending-media-btn {
-        gap: 12px;
-        padding: 16px 32px;
-        font-size: 1.75rem;
-        height: 80px;
-        border-bottom-width: 4px;
-    }
-
-    .trending-media-btn svg {
-        width: 36px;
-        height: 36px;
-    }
-
     .trending-carousel-track {
         margin-left: -32px;
     }
@@ -434,7 +765,7 @@
         padding-left: 32px;
     }
 
-    .trending-card {
+    .trending-carousel-slide .trending-card {
         border-radius: 16px;
     }
 
@@ -462,60 +793,8 @@
         right: 16px;
     }
 
-    /* Skeleton for 1080p */
-    .trending-skeleton-track {
-        margin-left: -32px;
-    }
-
-    .trending-skeleton-slide {
-        padding-left: 32px;
-    }
-
-    .trending-card-skeleton {
-        border-radius: 16px;
-    }
-
-    /* Subtitle - 2x scaling */
-    .trending-section-subtitle {
-        font-size: 1.8rem;
-    }
-
-    /* Card Rating Badge - 2x scaling */
-    .trending-card-rating {
-        top: 16px;
-        right: 16px;
-        gap: 8px;
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 1.6rem;
-    }
-
-    .trending-card-rating svg {
-        width: 24px;
-        height: 24px;
-    }
-
-    /* Card Info (bottom title area) - 2x scaling */
     .trending-card-info {
         padding: 12px 16px;
-    }
-
-    /* Play Button in Hover Overlay - 2x scaling */
-    .trending-play-btn {
-        width: 96px;
-        height: 96px;
-    }
-
-    .trending-play-btn svg {
-        width: 40px;
-        height: 40px;
-    }
-
-    /* Focus-visible for D-pad navigation on 1080p TV */
-    .trending-card:focus-visible {
-        outline: 4px solid #e50914;
-        outline-offset: 6px;
-        box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
     }
 
     .trending-carousel-btn:focus-visible {
@@ -523,57 +802,9 @@
         outline-offset: 4px;
         background: rgba(255, 255, 255, 0.3);
     }
-
-    .trending-media-btn:focus-visible {
-        outline: 4px solid #e50914;
-        outline-offset: 4px;
-    }
 }
 
-/* 4K Android TV (3840x2160) - 4x scaled from 720p */
 @media (min-width: 3840px) {
-    .trending-section {
-        padding: 96px 0;
-        margin-bottom: 80px;
-    }
-
-    .trending-section-header {
-        margin-bottom: 64px;
-    }
-
-    .trending-section-header-left {
-        gap: 0;
-    }
-
-    .trending-section-header-accent {
-        height: 96px;
-        width: 16px;
-    }
-
-    .trending-section-title {
-        font-size: 6rem;
-        margin: 0 0 16px 0;
-    }
-
-    /* Subtitle - 4x scaling */
-    .trending-section-subtitle {
-        font-size: 3.6rem;
-    }
-
-    /* Media Buttons - 4x scaling */
-    .trending-media-btn {
-        gap: 24px;
-        padding: 32px 64px;
-        font-size: 3.5rem;
-        height: 160px;
-        border-bottom-width: 8px;
-    }
-
-    .trending-media-btn svg {
-        width: 72px;
-        height: 72px;
-    }
-
     .trending-carousel-track {
         margin-left: -64px;
     }
@@ -582,22 +813,12 @@
         padding-left: 64px;
     }
 
-    .trending-card {
+    .trending-carousel-slide .trending-card {
         border-radius: 32px;
     }
 
     .trending-card-title {
         font-size: 3.5rem;
-    }
-
-    .trending-play-btn {
-        width: 192px;
-        height: 192px;
-    }
-
-    .trending-play-btn svg {
-        width: 80px;
-        height: 80px;
     }
 
     .trending-carousel-btn {
@@ -618,33 +839,5 @@
 
     .trending-carousel-next {
         right: 32px;
-    }
-
-    /* Card Rating Badge - 4x scaling */
-    .trending-card-rating {
-        top: 32px;
-        right: 32px;
-        gap: 16px;
-        padding: 12px 24px;
-        border-radius: 32px;
-        font-size: 3.2rem;
-    }
-
-    .trending-card-rating svg {
-        width: 48px;
-        height: 48px;
-    }
-
-    /* Skeleton for 4K */
-    .trending-skeleton-track {
-        margin-left: -64px;
-    }
-
-    .trending-skeleton-slide {
-        padding-left: 64px;
-    }
-
-    .trending-card-skeleton {
-        border-radius: 32px;
     }
 }

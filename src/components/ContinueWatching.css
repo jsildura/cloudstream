@@ -52,93 +52,112 @@
     color: #fff;
 }
 
-.continue-watching-row {
+/* ===== Carousel Container (matches .top-ten-carousel) ===== */
+
+.continue-watching-carousel {
     display: flex;
     gap: 16px;
     overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 16px;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    overflow-y: visible;
+    padding: 4px 0 10px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    cursor: grab;
+    user-select: none;
 }
 
-.continue-watching-row::-webkit-scrollbar {
-    height: 8px;
+.continue-watching-carousel::-webkit-scrollbar {
+    display: none;
 }
 
-.continue-watching-row::-webkit-scrollbar-track {
-    background: transparent;
+.continue-watching-carousel.dragging {
+    cursor: grabbing;
 }
 
-.continue-watching-row::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+.continue-watching-carousel.dragging .continue-watching-card {
+    pointer-events: none;
 }
 
-.continue-watching-row::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.5);
-}
+/* ===== Card (matches .top-ten-card) ===== */
 
 .continue-watching-card {
     flex: 0 0 auto;
-    width: 180px;
+    width: 380px;
     cursor: pointer;
-    transition: transform 0.3s ease;
+    transition: transform 0.2s ease;
+    position: relative;
 }
 
 .continue-watching-card:hover {
-    transform: translateY(-8px);
+    transform: scale(1.03);
+    z-index: 10;
+}
+
+.continue-watching-card:focus {
+    outline: none;
 }
 
 .continue-watching-card:focus-visible {
-    outline: 2px solid var(--netflix-red);
+    outline: 2px solid rgba(255, 255, 255, 0.5);
     outline-offset: 4px;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
-.continue-watching-card-image-container {
+/* ===== Backdrop Container (matches .top-ten-backdrop) ===== */
+
+.continue-watching-backdrop {
     position: relative;
-    border-radius: 8px;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
     overflow: hidden;
-    aspect-ratio: 2/3;
-    background: linear-gradient(135deg, #2f2f2f, #404040);
+    background: rgba(30, 30, 30, 0.8);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.continue-watching-card-image {
+.continue-watching-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top right,
+            rgba(0, 0, 0, 0.85) 0%,
+            rgba(0, 0, 0, 0.5) 35%,
+            rgba(0, 0, 0, 0.15) 60%,
+            rgba(0, 0, 0, 0) 80%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.continue-watching-backdrop img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.3s ease, filter 0.3s ease;
-    filter: brightness(0.9);
 }
 
-.continue-watching-card:hover .continue-watching-card-image {
-    transform: scale(1.05);
-    filter: brightness(1.1);
-}
+/* ===== Hover Overlay (matches .top-ten-hover-overlay) ===== */
 
-.continue-watching-overlay {
+.continue-watching-hover-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7));
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.4) 100%);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    padding: 12px;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
 }
 
-.continue-watching-card:hover .continue-watching-overlay {
+.continue-watching-card:hover .continue-watching-hover-overlay {
     opacity: 1;
 }
 
+/* ===== Remove Button ===== */
+
 .continue-watching-remove-btn {
-    align-self: flex-end;
     background: rgba(0, 0, 0, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
@@ -159,20 +178,40 @@
     transform: scale(1.1);
 }
 
-.continue-watching-resume-badge {
-    align-self: center;
+/* ===== Play Button (matches .top-ten-play-btn) ===== */
+
+.continue-watching-play-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #b91c1c;
+    color: white;
+    border: none;
     display: flex;
     align-items: center;
-    gap: 6px;
-    background: rgba(229, 9, 20, 0.95);
-    padding: 8px 14px;
-    border-radius: 20px;
-    color: #fff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(229, 9, 20, 0.4);
-    backdrop-filter: blur(8px);
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+.continue-watching-card:hover .continue-watching-play-btn {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.continue-watching-play-btn:hover {
+    transform: translate(-50%, -50%) scale(1.1) !important;
+    background-color: #dc2626;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+}
+
+/* ===== Type Badge ===== */
 
 .continue-watching-type-badge {
     position: absolute;
@@ -186,59 +225,98 @@
     font-weight: 600;
     text-transform: uppercase;
     backdrop-filter: blur(4px);
+    z-index: 5;
 }
 
-.continue-watching-card-info {
-    padding: 12px 0 0;
-}
+/* ===== Episode Badge (matches .trending-card-rating) ===== */
 
-.continue-watching-card-title {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #fff;
-    margin: 0 0 6px 0;
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.continue-watching-card-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.continue-watching-episode {
-    color: var(--netflix-red);
-    font-weight: 600;
-}
-
-.continue-watching-time {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* Custom Confirm Dialog */
-.confirm-dialog-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
+.continue-watching-episode-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    animation: fadeIn 0.2s ease;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
+    padding: 3px 6px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 20;
 }
+
+/* ===== Timestamp Badge ===== */
+
+.continue-watching-time-badge {
+    position: absolute;
+    bottom: 12px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: rgba(255, 255, 255, 0.8);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+    z-index: 5;
+}
+
+/* ===== Logo Overlay (matches .top-ten-logo-overlay) ===== */
+
+.continue-watching-logo-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 45%;
+    max-height: 50%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+.continue-watching-logo-overlay img {
+    max-width: 100%;
+    max-height: 60px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.6));
+}
+
+/* ===== Title Overlay Fallback (matches .top-ten-title-overlay) ===== */
+
+.continue-watching-title-overlay {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    max-width: 60%;
+    z-index: 3;
+    pointer-events: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: flex-end;
+    text-align: right;
+}
+
+.continue-watching-title-overlay span {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-style: italic;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+    line-height: 1.2;
+    letter-spacing: 0.05em;
+    display: inline;
+}
+
+/* ===== Custom Confirm Dialog ===== */
 
 @keyframes fadeIn {
     from {
@@ -260,6 +338,21 @@
         opacity: 1;
         transform: translateY(0) scale(1);
     }
+}
+
+.confirm-dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.2s ease;
 }
 
 .confirm-dialog {
@@ -334,8 +427,12 @@
     transform: scale(1.02);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
+/* =============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================= */
+
+/* Mobile: max-width 767px (matches top-ten) */
+@media (max-width: 767px) {
     .continue-watching-section {
         margin: 30px 0 20px;
     }
@@ -344,8 +441,20 @@
         font-size: 1.2rem;
     }
 
+    .continue-watching-carousel {
+        gap: 12px;
+    }
+
     .continue-watching-card {
-        width: 140px;
+        width: 200px;
+    }
+
+    .continue-watching-logo-overlay img {
+        max-height: 40px;
+    }
+
+    .continue-watching-title-overlay span {
+        font-size: 0.85rem;
     }
 
     .clear-history-btn {
@@ -354,8 +463,15 @@
     }
 }
 
-/* 1080p Scaling - Consistent with trending card sizing */
-@media (min-width: 1920px) and (max-width: 3839px) {
+/* Tablet: 768px to 1023px (matches top-ten) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .continue-watching-card {
+        width: 280px;
+    }
+}
+
+/* 1080p: 1920px - 2559px (matches top-ten) */
+@media (min-width: 1920px) and (max-width: 2559px) {
     .continue-watching-section {
         margin: 60px 0 60px;
     }
@@ -374,38 +490,29 @@
         border-radius: 10px;
     }
 
-    .continue-watching-row {
+    .continue-watching-carousel {
         gap: 24px;
-        padding-bottom: 24px;
+        padding: 8px 0 20px 0;
     }
 
     .continue-watching-card {
-        width: 280px;
-        /* Sized to match trending-card slot (~288px at 1080p) */
-    }
-
-    .continue-watching-card:hover {
-        transform: translateY(-10px);
+        width: 480px;
     }
 
     .continue-watching-card:focus-visible {
-        outline: 4px solid var(--netflix-red);
+        outline: 4px solid rgba(255, 255, 255, 0.5);
         outline-offset: 6px;
+        border-radius: 18px;
         box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
     }
 
-    .continue-watching-card-image-container {
-        border-radius: 14px;
-    }
-
-    .continue-watching-overlay {
-        padding: 18px;
+    .continue-watching-backdrop {
+        border-radius: 18px;
     }
 
     .continue-watching-remove-btn {
         width: 48px;
         height: 48px;
-        border-radius: 50%;
     }
 
     .continue-watching-remove-btn svg {
@@ -413,16 +520,14 @@
         height: 24px;
     }
 
-    .continue-watching-resume-badge {
-        padding: 12px 22px;
-        border-radius: 32px;
-        font-size: 1.4rem;
-        gap: 10px;
+    .continue-watching-play-btn {
+        width: 96px;
+        height: 96px;
     }
 
-    .continue-watching-resume-badge svg {
-        width: 26px;
-        height: 26px;
+    .continue-watching-play-btn svg {
+        width: 40px;
+        height: 40px;
     }
 
     .continue-watching-type-badge {
@@ -433,22 +538,43 @@
         font-size: 1.1rem;
     }
 
-    .continue-watching-card-info {
-        padding: 16px 0 0;
+    .continue-watching-episode-badge {
+        top: 16px;
+        right: 16px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 1.1rem;
     }
 
-    .continue-watching-card-title {
-        font-size: 1.5rem;
-        margin: 0 0 8px 0;
+    .continue-watching-time-badge {
+        bottom: 20px;
+        left: 12px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 1rem;
     }
 
-    .continue-watching-card-meta {
-        gap: 6px;
-        font-size: 1.3rem;
+    .continue-watching-logo-overlay {
+        bottom: 20px;
+        right: 20px;
     }
 
-    .continue-watching-time {
-        font-size: 1.2rem;
+    .continue-watching-logo-overlay img {
+        max-height: 80px;
+    }
+
+    .continue-watching-title-overlay {
+        bottom: 20px;
+        right: 20px;
+    }
+
+    .continue-watching-title-overlay span {
+        font-size: 1.6rem;
+    }
+
+    .continue-watching-hover-overlay {
+        border-radius: 18px;
+        padding: 16px;
     }
 
     /* Confirm Dialog 1080p */
@@ -495,175 +621,151 @@
     }
 }
 
-/* 4K Scaling - 4x */
+/* 4K: 3840px+ (matches top-ten) */
 @media (min-width: 3840px) {
     .continue-watching-section {
         margin: 160px 0 160px;
-        /* 40px × 4, 40px × 4 */
     }
 
     .continue-watching-header {
         margin-bottom: 80px;
-        /* 20px × 4 */
     }
 
     .continue-watching-title {
         font-size: 5.6rem;
-        /* 1.4rem × 4 */
     }
 
     .clear-history-btn {
         font-size: 3.4rem;
-        /* 0.85rem × 4 */
         padding: 32px 64px;
-        /* 8px × 4, 16px × 4 */
         border-radius: 24px;
-        /* 6px × 4 */
         border-width: 4px;
     }
 
-    .continue-watching-row {
+    .continue-watching-carousel {
         gap: 64px;
-        /* 16px × 4 */
-        padding-bottom: 64px;
-    }
-
-    .continue-watching-row::-webkit-scrollbar {
-        height: 32px;
-        /* 8px × 4 */
+        padding: 16px 0 40px 0;
     }
 
     .continue-watching-card {
-        width: 720px;
-        /* 180px × 4 */
+        width: 1520px;
     }
 
-    .continue-watching-card-image-container {
-        border-radius: 32px;
-        /* 8px × 4 */
+    .continue-watching-card:focus-visible {
+        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline-offset: 16px;
+        border-radius: 48px;
     }
 
-    .continue-watching-overlay {
-        padding: 48px;
-        /* 12px × 4 */
+    .continue-watching-backdrop {
+        border-radius: 48px;
     }
 
     .continue-watching-remove-btn {
         width: 128px;
-        /* 32px × 4 */
         height: 128px;
         border-width: 4px;
     }
 
     .continue-watching-remove-btn svg {
         width: 64px;
-        /* 16px × 4 */
         height: 64px;
     }
 
-    .continue-watching-resume-badge {
-        padding: 32px 56px;
-        /* 8px × 4, 14px × 4 */
-        border-radius: 80px;
-        /* 20px × 4 */
-        font-size: 3.4rem;
-        /* 0.85rem × 4 */
-        gap: 24px;
-        /* 6px × 4 */
+    .continue-watching-play-btn {
+        width: 192px;
+        height: 192px;
     }
 
-    .continue-watching-resume-badge svg {
-        width: 64px;
-        /* 16px × 4 */
-        height: 64px;
+    .continue-watching-play-btn svg {
+        width: 96px;
+        height: 96px;
     }
 
     .continue-watching-type-badge {
         top: 32px;
-        /* 8px × 4 */
         left: 32px;
         padding: 16px 32px;
-        /* 4px × 4, 8px × 4 */
         border-radius: 16px;
-        /* 4px × 4 */
         font-size: 2.8rem;
-        /* 0.7rem × 4 */
     }
 
-    .continue-watching-card-info {
-        padding: 48px 0 0;
-        /* 12px × 4 */
+    .continue-watching-episode-badge {
+        top: 32px;
+        right: 32px;
+        padding: 12px 24px;
+        border-radius: 16px;
+        font-size: 2.8rem;
     }
 
-    .continue-watching-card-title {
-        font-size: 3.6rem;
-        /* 0.9rem × 4 */
-        margin: 0 0 24px 0;
-        /* 6px × 4 */
+    .continue-watching-time-badge {
+        bottom: 48px;
+        left: 32px;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 2.2rem;
     }
 
-    .continue-watching-card-meta {
-        gap: 16px;
-        /* 4px × 4 */
-        font-size: 3.2rem;
-        /* 0.8rem × 4 */
+    .continue-watching-logo-overlay {
+        bottom: 48px;
+        right: 48px;
     }
 
-    .continue-watching-time {
-        font-size: 3rem;
-        /* 0.75rem × 4 */
+    .continue-watching-logo-overlay img {
+        max-height: 240px;
+    }
+
+    .continue-watching-title-overlay {
+        bottom: 48px;
+        right: 48px;
+    }
+
+    .continue-watching-title-overlay span {
+        font-size: 4.4rem;
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
+    }
+
+    .continue-watching-hover-overlay {
+        border-radius: 48px;
+        padding: 32px;
     }
 
     /* Confirm Dialog 4K */
     .confirm-dialog {
         max-width: 1600px;
-        /* 400px × 4 */
         padding: 128px;
-        /* 32px × 4 */
         border-radius: 64px;
-        /* 16px × 4 */
         border-width: 4px;
     }
 
     .confirm-dialog-icon {
         margin-bottom: 64px;
-        /* 16px × 4 */
     }
 
     .confirm-dialog-icon svg {
         width: 192px;
-        /* 48px × 4 */
         height: 192px;
     }
 
     .confirm-dialog-title {
         font-size: 5.6rem;
-        /* 1.4rem × 4 */
         margin-bottom: 48px;
-        /* 12px × 4 */
     }
 
     .confirm-dialog-message {
         font-size: 3.8rem;
-        /* 0.95rem × 4 */
         margin-bottom: 96px;
-        /* 24px × 4 */
     }
 
     .confirm-dialog-buttons {
         gap: 48px;
-        /* 12px × 4 */
     }
 
     .confirm-dialog-btn {
         padding: 48px 112px;
-        /* 12px × 4, 28px × 4 */
         font-size: 3.8rem;
-        /* 0.95rem × 4 */
         border-radius: 32px;
-        /* 8px × 4 */
         min-width: 480px;
-        /* 120px × 4 */
     }
 
     .confirm-dialog-btn:focus-visible {

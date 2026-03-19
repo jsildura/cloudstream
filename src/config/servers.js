@@ -16,6 +16,16 @@
 export const serverConfig = [
     {
         name: 'Server 1',
+        description: 'Best Server',
+        baseUrl: 'https://primesrc.me/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'primesrc',
+    },
+    {
+        name: 'Server 2',
         description: 'Main Server, Fast Streaming.',
         baseUrl: 'https://vidsrc.cc/v2/embed/',
         suffix: '?autoPlay=true',
@@ -25,7 +35,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 2',
+        name: 'Server 3',
         description: '2nd Reliable Server Backup',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en',
@@ -35,7 +45,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 3',
+        name: 'Server 4',
         description: 'A Good Server Backup with 4K Ultra HD Content.',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
@@ -45,7 +55,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 4',
+        name: 'Server 5',
         description: 'Reliable Server with Vast Collections',
         baseUrl: 'https://vidsrc.xyz/embed/',
         suffix: '',
@@ -55,7 +65,7 @@ export const serverConfig = [
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 5',
+        name: 'Server 6',
         description: 'Fast Streaming Server.',
         baseUrl: 'https://screenfetch.xyz/embed/',
         suffix: '',
@@ -65,7 +75,7 @@ export const serverConfig = [
         pattern: 'primesrc',
     },
     {
-        name: 'Server 6',
+        name: 'Server 7',
         description: 'Fast & Reliable Server, Minimal Ads',
         baseUrl: 'https://vidsync.xyz/embed/',
         suffix: '',
@@ -75,7 +85,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 7',
+        name: 'Server 8',
         description: 'Premium Server, Supports Adaptive Bitrate Switching.',
         baseUrl: 'https://vidlink.pro/',
         suffix: '',
@@ -85,7 +95,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 8',
+        name: 'Server 9',
         description: 'Subtitle Support. Up to 4k Quality.',
         baseUrl: 'https://mapple.uk/watch/',
         suffix: '',
@@ -98,7 +108,7 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
     },
     {
-        name: 'Server 9',
+        name: 'Server 10',
         description: 'Lightning Fast. Multiple Mirrors.',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
@@ -108,7 +118,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 10',
+        name: 'Server 11',
         description: 'Huge Catalog. Fast Streaming.',
         baseUrl: 'https://vixsrc.to/',
         suffix: '',
@@ -118,7 +128,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 11',
+        name: 'Server 12',
         description: '4K Movies with Multi-Language Subtitles, (Movie Only).',
         baseUrl: 'https://fmovies4u.com/embed/movie/',
         suffix: '',
@@ -128,7 +138,7 @@ export const serverConfig = [
         pattern: 'movie-only', // Updated format: /embed/movie/{id}
     },
     {
-        name: 'Server 12',
+        name: 'Server 13',
         description: 'Fast Streaming. (Movie Only).',
         baseUrl: 'https://www.vidking.net/embed/movie/',
         suffix: '',
@@ -138,7 +148,7 @@ export const serverConfig = [
         pattern: 'movie-only',
     },
     {
-        name: 'Server 13',
+        name: 'Server 14',
         description: 'Fast Streaming. also (Movie Only)',
         baseUrl: 'https://vidsrc.wtf/api/3/movie/',
         suffix: '',
@@ -148,7 +158,7 @@ export const serverConfig = [
         pattern: 'query-id', // Movie-only
     },
     {
-        name: 'Server 14',
+        name: 'Server 15',
         description: 'Multi-Source Backup Servers. Subtitle Support.',
         baseUrl: 'https://player.vidzee.wtf/embed/',
         suffix: '',
@@ -161,7 +171,7 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTM=', // Base64 encoded
     },
     {
-        name: 'Server 15',
+        name: 'Server 16',
         description: 'Multi-Source. Customizable Subtitles. Up to 1080p.',
         baseUrl: 'https://player.videasy.net/',
         suffix: '',
@@ -174,7 +184,7 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTQ=', // Base64 encoded
     },
     {
-        name: 'Server 16',
+        name: 'Server 17',
         description: 'Reliable Server',
         baseUrl: 'https://www.zxcstream.xyz/embed/',
         suffix: '?autoPlay=true',
@@ -184,7 +194,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 17',
+        name: 'Server 18',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
