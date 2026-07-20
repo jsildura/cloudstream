@@ -16,7 +16,7 @@
 export const serverConfig = [
     {
         name: 'Server 1',
-        description: 'Best Server',
+        description: 'Best Server but with ads',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
         isRecommended: true,
@@ -36,7 +36,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 3',
-        description: '2nd Reliable Server Backup',
+        description: 'Reliable Server Backup',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en',
         isRecommended: true,

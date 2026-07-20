@@ -308,7 +308,7 @@ const IPTV = () => {
             name: 'GMA 7',
             logo: 'https://ottepg8.comclark.com:8443/iptvepg/images/markurl/mark_1723126306082.png',
             category: 'Pinoy',
-            url: 'https://gsattv.akamaized.net/live/media0/gma7/Widevine/gma7.mpd'
+            url: 'https://rise2the.top/aldous/1784562799/l6VBhyK_nFN6FjlJI7CTYw/live/136.239.173.2:6610/001/2/ch00000090990000001093/index.m3u8?JITPDRMType=NO&IASHttpSessionId=OTT119754120260720095331205463&AuthInfo=v87HD9rEhwHiAdYyrP20TsXah2%2FZLFNNIdWrVrXDMAoLvT86fM74ocVChyFS93HUsyK4TH4mOENKJ45mwOyS0g%3D%3D&virtualDomain=001.live_hls.zte.com'
           },
           {
             id: 'red-bull',
@@ -927,7 +927,7 @@ const IPTV = () => {
             name: 'Star Movies HD',
             category: 'Movies',
             logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg',
-            url: 'http://103.175.242.10:8080/starmovies/index.m3u8'
+            url: 'https://rise2the.top/aldous/1784565929/s3-vxkcg4yj-h-HOjrJ8AQ/hls/starmovies/stream.m3u8'
           },
           {
             id: 'barely-legal',
@@ -995,6 +995,13 @@ const IPTV = () => {
             licenseKey: '136a75130b82cdf89cb5f05d739b663f:0ef360ff75bb11b7f0982a86b86d39ae'
           },
           {
+            id: 'cinemax',
+            name: 'Cinemax',
+            category: 'Movies',
+            logo: 'https://logodix.com/logo/2138572.png',
+            url: 'https://rise2the.top/aldous/1784566144/69d6DMDCbm_lJ3v-BtUH6g/live/161.49.17.2:6610/001/2/ch00000090990000001108/index.m3u8?AuthInfo=v87HD9rEhwHiAdYyrP20TsXah2%2FZLFNNIdWrVrXDMAoD7Jkv0l3sE1jz6821dGRWsyK4TH4mOENKJ45mwOyS0g%3D%3D&virtualDomain=001.live_hls.zte.com&JITPDRMType=NO&'
+          },
+          {
             id: 'cinemax-east',
             name: 'Cinemax HD East',
             category: 'Movies',
@@ -1025,6 +1032,14 @@ const IPTV = () => {
             logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c5/MoreMax_Logo.svg',
             url: 'https://ottb.live.cf.ww.aiv-cdn.net/iad-nitro/live/clients/dash/enc/yfo5p7nmtt/out/v1/fdce98358ffb47c9b6314feb9cfeda3f/cenc.mpd',
             licenseKey: '81a74ef0cf71e28d5d9bc55d5fd7921a:884e89f90a9f5cbaaa5c2a451e1d8f86'
+          },
+          {
+            id: 'hbo',
+            name: 'HBO',
+            category: 'Movies',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg',
+            url: 'https://rise2the.top/aldous/1784565446/GkdSZgcR16GBWe34kQW3kA/s/cg_hbohd/default/index.mpd',
+            licenseKey: 'd7f3c8215a944e068b176c9d2a5f3048:93c0a798243d6443864d1a7ff3e42c05'
           },
           {
             id: 'hbo-east',
@@ -1129,7 +1144,39 @@ const IPTV = () => {
             logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6c/TUDN_Logo.svg',
             url: 'https://zap-live1-ott.izzigo.tv/11/out/u/dash/TUDN-HD/default.mpd',
             licenseKey: '2722647f77b44824c432a3c4555830a2:1734befb82f4b438bd84195f6c212e7b'
-          }
+          },
+          {
+            id: 'kapamilya-channel',
+            name: 'Kapamilya Channel',
+            category: 'entertainment',
+            logo:'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png',
+            url: 'https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-kapcha-dash-abscbnono/manifest.mpd',
+            licenseKey: '292dee4236d04054910e9706ee22626b:b7c5d3220f6eb6e042a2bcb367b5c09b'
+          },
+          {
+            id: 'one-sports',
+            name: 'One Sports',
+            category: 'Sports',
+            logo:'https://iyadtv.pages.dev/images/one-sports.svg',
+            url: 'https://rise2the.top/aldous/1784565639/LM_6N6dHI6mVZPyvTegklQ/s/cg_onesports_hd/default/index.mpd',
+            licenseKey: '69f5a2318d744c609b125e3a7d8f2046:182523c0bae912e17e916dd4283280e9'
+          },
+          {
+            id: 'cnn',
+            name: 'CNN',
+            category: 'News',
+            logo:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
+            url: 'https://rise2the.top/aldous/1784566326/RF5zxZb1rfcNz0wG5hD2yw/s/cg_cnnhd/default/index.mpd',
+            licenseKey: '1d9f6b828c454a17b2395e7d3f90a621:c5776d83cbf50c9354f27b1c830e1996'
+          },
+          {
+            id: 'nickelodeon',
+            name: 'Nickelodeon',
+            category: 'Kids',
+            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png',
+            url: 'https://rise2the.top/aldous/1784566889/rycj2jtPSf2D1vgaHJneWg/s/dr_nickelodeon/default/index.mpd',
+            licenseKey: '81f3e6924c754a08b9215d7e9c3f6048:094cd48e9729cb8bcb0e03e848fc8751'
+          },
 
         ];
 
@@ -1362,18 +1409,18 @@ const IPTV = () => {
           onMouseMove={handleMouseMove}
         >
           {[
-            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 209 },
+            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 'kapamilya-channel' },
             { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
             { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg', channelId: 'star-movies' },
-            { rank: 4, name: 'One Sports', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/One_Sports_logo.svg/1200px-One_Sports_logo.svg.png', channelId: 64 },
+            { rank: 4, name: 'One Sports', logo: 'https://iyadtv.pages.dev/images/one-sports.svg', channelId: 'one-sports' },
             { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg', channelId: 'cinema-one' },
-            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 80 },
-            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 103 },
-            { rank: 8, name: 'CNN International', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 81 },
+            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 'hbo' },
+            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 'cinemax' },
+            { rank: 8, name: 'CNN', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 'cnn' },
             { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
-            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 71 },
-            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 59 },
-            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 97 },
+            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 'nickelodeon' },
+            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 81 },
+            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 100 },
           ].map(item => {
             const channel = channels.find(c => c.id === item.channelId);
             return (
