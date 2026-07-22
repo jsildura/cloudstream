@@ -3,7 +3,7 @@ import useTVDetect from '../hooks/useTVDetect';
 
 const ViewerCountContext = createContext();
 
-const HEARTBEAT_INTERVAL = 20000; // 20 seconds
+const HEARTBEAT_INTERVAL = 60000; // 60 seconds (reduced from 20s to stay within KV free tier: 1,000 writes/day)
 const STORAGE_KEY = 'streamflix_visitor_uid';
 
 function getOrCreateUid() {

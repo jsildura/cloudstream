@@ -1,10 +1,16 @@
 /**
  * /api/visit - Live Viewer Counter Endpoint
  * 
- * Uses Cloudflare KV to track active visitors with a heartbeat pattern.
- * Each visitor sends a periodic ping (every 20s from client).
- * Keys expire after 60 seconds, so only active users are counted.
+ * Uses a SINGLE Cloudflare KV key to track all active visitors.
+ * This minimizes KV writes (1 write per heartbeat instead of 1 write + 1 list).
+ * 
+ * Free tier KV limits: 1,000 writes/day, 100,000 reads/day.
+ * With 60s heartbeat interval, a single user uses ~1,440 reads + ~1,440 writes/day.
+ * With this single-key approach + 120s heartbeat, one user uses ~720 writes/day.
  */
+
+const VISITORS_KEY = 'active_visitors';
+const VISITOR_TTL_MS = 180000; // 3 minutes — visitor considered gone after this
 
 function getCorsHeaders() {
     return {
@@ -48,22 +54,38 @@ export async function onRequest(context) {
         // Check if KV binding exists
         if (!KV) {
             console.error('VISITOR_STATS KV namespace not bound');
-            // Return 0 count when KV is not configured (dev mode fallback)
             return new Response(JSON.stringify({ count: 0 }), {
                 status: 200,
                 headers: getCorsHeaders()
             });
         }
 
-        const visitorKey = `visitor:${uid}`;
-        const now = Date.now().toString();
+        const now = Date.now();
 
-        // Write/update this visitor's key with 60-second TTL
-        await KV.put(visitorKey, now, { expirationTtl: 60 });
+        // Read the single visitors blob (1 KV read)
+        const rawData = await KV.get(VISITORS_KEY);
+        let visitors = {};
+        try {
+            visitors = rawData ? JSON.parse(rawData) : {};
+        } catch {
+            visitors = {};
+        }
 
-        // Count all active visitors by listing keys with the prefix
-        const listResult = await KV.list({ prefix: 'visitor:' });
-        const count = listResult.keys.length;
+        // Update this visitor's last-seen timestamp
+        visitors[uid] = now;
+
+        // Prune expired visitors (older than VISITOR_TTL_MS)
+        const activeVisitors = {};
+        for (const [id, lastSeen] of Object.entries(visitors)) {
+            if (now - lastSeen < VISITOR_TTL_MS) {
+                activeVisitors[id] = lastSeen;
+            }
+        }
+
+        // Write back the pruned blob (1 KV write)
+        await KV.put(VISITORS_KEY, JSON.stringify(activeVisitors));
+
+        const count = Object.keys(activeVisitors).length;
 
         return new Response(JSON.stringify({ count }), {
             status: 200,
