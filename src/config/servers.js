@@ -16,37 +16,17 @@
 export const serverConfig = [
     {
         name: 'Server 1',
-        description: 'Best Server but with ads',
-        baseUrl: 'https://primesrc.me/embed/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'primesrc',
-    },
-    {
-        name: 'Server 2',
-        description: 'Main Server, Fast Streaming.',
-        baseUrl: 'https://vidsrc.cc/v2/embed/',
-        suffix: '?autoPlay=true',
-        isRecommended: true,
-        sandboxSupport: true,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 3',
-        description: 'Reliable Server Backup',
+        description: 'Main Server',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en',
         isRecommended: true,
-        sandboxSupport: true,
+        sandboxSupport: false,
         hasAds: false,
         pattern: 'default',
     },
     {
-        name: 'Server 4',
-        description: 'A Good Server Backup with 4K Ultra HD Content.',
+        name: 'Server 2',
+        description: 'Reliable Server',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
         isRecommended: true,
@@ -55,28 +35,48 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 5',
-        description: 'Reliable Server with Vast Collections',
-        baseUrl: 'https://vidsrc.xyz/embed/',
+        name: 'Server 3',
+        description: 'Reliable Server',
+        baseUrl: 'https://anyembed.xyz/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: true,
+        hasAds: false,
+        pattern: 'anyembed',
+    },
+    {
+        name: 'Server 4',
+        description: 'Reliable Server',
+        baseUrl: 'https://vaplayer.ru/embed/',
         suffix: '',
         isRecommended: true,
         sandboxSupport: false,
         hasAds: false,
-        pattern: 'vidsrc-xyz',
+        pattern: 'default',
+    },
+    {
+        name: 'Server 5',
+        description: 'Reliable Server',
+        baseUrl: 'https://www.vidking.net/embed/',
+        suffix: '?autoPlay=true',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'default',
     },
     {
         name: 'Server 6',
-        description: 'Fast Streaming Server.',
-        baseUrl: 'https://screenfetch.xyz/embed/',
+        description: 'Reliable Server',
+        baseUrl: 'https://web.nxsha.app/embed/',
         suffix: '',
         isRecommended: true,
-        sandboxSupport: false,
-        hasAds: false,
-        pattern: 'primesrc',
+        sandboxSupport: true,
+        hasAds: true,
+        pattern: 'default',
     },
     {
         name: 'Server 7',
-        description: 'Fast & Reliable Server, Minimal Ads',
+        description: 'Reliable Server',
         baseUrl: 'https://vidsync.xyz/embed/',
         suffix: '',
         isRecommended: true,
@@ -86,17 +86,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 8',
-        description: 'Premium Server, Supports Adaptive Bitrate Switching.',
-        baseUrl: 'https://vidlink.pro/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 9',
-        description: 'Subtitle Support. Up to 4k Quality.',
+        description: 'Reliable Server',
         baseUrl: 'https://mapple.uk/watch/',
         suffix: '',
         isRecommended: true,
@@ -108,19 +98,29 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
     },
     {
+        name: 'Server 9',
+        description: 'Backup Server',
+        baseUrl: 'https://vidsrc-embed.ru/embed/',
+        suffix: '',
+        isRecommended: false,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'vidsrc-xyz',
+    },
+    {
         name: 'Server 10',
-        description: 'Lightning Fast. Multiple Mirrors.',
-        baseUrl: 'https://vidfast.pro/',
-        suffix: '?autoplay=true&autoNext=true',
+        description: 'Backup Server',
+        baseUrl: 'https://primesrc.me/embed/',
+        suffix: '',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
-        pattern: 'default',
+        pattern: 'primesrc',
     },
     {
         name: 'Server 11',
-        description: 'Huge Catalog. Fast Streaming.',
-        baseUrl: 'https://vixsrc.to/',
+        description: 'Backup Server',
+        baseUrl: 'https://vidlink.pro/',
         suffix: '',
         isRecommended: false,
         sandboxSupport: false,
@@ -129,50 +129,28 @@ export const serverConfig = [
     },
     {
         name: 'Server 12',
-        description: '4K Movies with Multi-Language Subtitles, (Movie Only).',
-        baseUrl: 'https://fmovies4u.com/embed/movie/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: false,
-        pattern: 'movie-only', // Updated format: /embed/movie/{id}
-    },
-    {
-        name: 'Server 13',
-        description: 'Fast Streaming. (Movie Only).',
-        baseUrl: 'https://www.vidking.net/embed/movie/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: true,
-        hasAds: false,
-        pattern: 'movie-only',
-    },
-    {
-        name: 'Server 14',
-        description: 'Fast Streaming. also (Movie Only)',
-        baseUrl: 'https://vidsrc.wtf/api/3/movie/',
-        suffix: '',
+        description: 'Backup Server',
+        baseUrl: 'https://vidfast.pro/',
+        suffix: '?autoplay=true&autoNext=true',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
-        pattern: 'query-id', // Movie-only
+        pattern: 'default',
     },
     {
-        name: 'Server 15',
-        description: 'Multi-Source Backup Servers. Subtitle Support.',
-        baseUrl: 'https://player.vidzee.wtf/embed/',
+        name: 'Server 13',
+        description: 'Backup Server',
+        baseUrl: 'https://vixsrc.to/',
         suffix: '',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
         pattern: 'default',
-        // To disable password protection, remove 'locked' and 'password' properties
-        locked: false,
-        password: 'c3RyZWFtZmxpeEBfMTM=', // Base64 encoded
     },
+
     {
-        name: 'Server 16',
-        description: 'Multi-Source. Customizable Subtitles. Up to 1080p.',
+        name: 'Server 14',
+        description: 'Backup Server',
         baseUrl: 'https://player.videasy.net/',
         suffix: '',
         isRecommended: false,
@@ -184,25 +162,35 @@ export const serverConfig = [
         password: 'c3RyZWFtZmxpeEBfMTQ=', // Base64 encoded
     },
     {
-        name: 'Server 17',
-        description: 'Reliable Server',
+        name: 'Server 15',
+        description: 'Backup Server',
         baseUrl: 'https://www.zxcstream.xyz/embed/',
         suffix: '?autoPlay=true',
         isRecommended: false,
-        sandboxSupport: true,
+        sandboxSupport: false,
         hasAds: false,
         pattern: 'default',
     },
     {
-        name: 'Server 18',
+        name: 'Server 16',
         description: 'Backup Server',
-        baseUrl: 'https://vidsrc-embed.ru/embed/',
+        baseUrl: 'https://vidfast.vc/',
         suffix: '',
         isRecommended: false,
         sandboxSupport: false,
-        hasAds: false,
-        pattern: 'vidsrc-xyz',
+        hasAds: true,
+        pattern: 'default',
     },
+    {
+        name: 'Server 17',
+        description: 'Backup Server',
+        baseUrl: 'https://vidnest.fun/',
+        suffix: '',
+        isRecommended: false,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    }
 ];
 
 /**
@@ -238,6 +226,13 @@ export function buildServerUrl(server, type, id, season, episode) {
                 return `${baseUrl}${type}?tmdb=${id}&season=${season}&episode=${episode}`;
             }
             return `${baseUrl}${type}?tmdb=${id}`;
+
+        case 'anyembed':
+            // e.g., tmdb-movie-{id} or tmdb-tv-{id}-{season}-{episode}
+            if (type === 'tv') {
+                return `${baseUrl}tmdb-tv-${id}-${season}-${episode}${suffix}`;
+            }
+            return `${baseUrl}tmdb-movie-${id}${suffix}`;
 
         case 'vidsrc-xyz':
             // movie/{id} or tv?tmdb={id}&season=&episode=

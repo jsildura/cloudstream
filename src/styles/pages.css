@@ -6405,7 +6405,7 @@ select.filter-dropdown {
 
 .watch-server-ads-badge {
   color: #f87171;
-  font-size: 11px;
+  font-size: 22px;
   font-weight: 400;
 }
 
@@ -6836,120 +6836,120 @@ select.filter-dropdown {
     max-width: 900px;
     border-radius: 24px 24px 0 0;
   }
-  
+
   .watch-episode-drawer-header {
     padding: 0 24px 24px 24px;
   }
-  
+
   .watch-episode-drawer-title {
     gap: 16px;
   }
-  
+
   .watch-episode-drawer-title h2 {
     font-size: 32px;
   }
-  
+
   .watch-episode-count {
     font-size: 18px;
     padding: 6px 16px;
     border-radius: 20px;
   }
-  
+
   .watch-episode-drawer-close {
     width: 48px;
     height: 48px;
   }
-  
+
   .watch-episode-drawer-season {
     padding: 16px 28px;
   }
-  
+
   .watch-episode-season-select {
     font-size: 18px;
     padding: 14px 20px;
     border-radius: 12px;
   }
-  
+
   .watch-episode-search-wrapper {
     gap: 16px;
     padding: 18px 28px;
   }
-  
+
   .watch-episode-search-wrapper svg {
     width: 24px;
     height: 24px;
   }
-  
+
   .watch-episode-search {
     font-size: 18px;
   }
-  
+
   .watch-episode-list {
     padding: 16px;
   }
-  
+
   .watch-episode-item {
     gap: 18px;
     padding: 18px;
     border-radius: 16px;
   }
-  
+
   .watch-episode-thumbnail {
     width: 180px;
     height: 101px;
     border-radius: 12px;
   }
-  
+
   .watch-episode-play-overlay svg {
     width: 32px;
     height: 32px;
   }
-  
+
   .watch-episode-content {
     gap: 8px;
   }
-  
+
   .watch-episode-badges {
     gap: 12px;
   }
-  
+
   .watch-episode-number {
     font-size: 16px;
     padding: 4px 12px;
     border-radius: 6px;
   }
-  
+
   .watch-episode-playing {
     font-size: 16px;
     padding: 4px 12px;
     border-radius: 6px;
   }
-  
+
   .watch-episode-title {
     font-size: 20px;
   }
-  
+
   .watch-episode-overview {
     font-size: 16px;
     margin-top: 4px;
   }
-  
+
   .watch-episode-meta {
     gap: 8px;
   }
-  
+
   .watch-episode-rating,
   .watch-episode-duration {
     font-size: 16px;
     gap: 6px;
   }
-  
+
   .watch-episode-rating svg,
   .watch-episode-duration svg {
     width: 16px;
     height: 16px;
   }
-  
+
   /* TV Remote / D-pad Accessibility Focus */
   .watch-episode-drawer-close:focus-visible,
   .watch-episode-season-select:focus-visible,
@@ -6958,7 +6958,7 @@ select.filter-dropdown {
     outline: 4px solid #e50914;
     outline-offset: 4px;
   }
-  
+
   .watch-episode-item:focus-visible {
     background: rgba(229, 9, 20, 0.15);
   }
@@ -7218,12 +7218,12 @@ select.filter-dropdown {
     border-width: 2px;
     font-size: 22px;
   }
-  
+
   .watch-lazy-server-hint svg {
     width: 24px !important;
     height: 24px !important;
   }
-  
+
   .watch-lazy-server-hint .highlight {
     padding: 4px 12px;
     border-radius: 6px;
@@ -7235,6 +7235,10 @@ select.filter-dropdown {
 /*--------------------*/
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .watch-server-ads-badge {
+    font-size: 11px;
+  }
+
   .watch-overlay-btn {
     padding: 8px 14px;
     font-size: 13px;
@@ -7360,6 +7364,10 @@ select.filter-dropdown {
 
 /* Tablet/Desktop (769px - 1919px) - Tooltip positioning centered below badge */
 @media (min-width: 769px) and (max-width: 1919px) {
+  .watch-server-ads-badge {
+    font-size: 11px;
+  }
+
   .watch-playback-warning-tooltip {
     top: calc(100% + 10px);
     left: 50%;
@@ -7892,12 +7900,12 @@ select.filter-dropdown {
     border-width: 4px;
     font-size: 44px;
   }
-  
+
   .watch-lazy-server-hint svg {
     width: 48px !important;
     height: 48px !important;
   }
-  
+
   .watch-lazy-server-hint .highlight {
     padding: 8px 24px;
     border-radius: 12px;
@@ -7908,115 +7916,115 @@ select.filter-dropdown {
     max-width: 2400px;
     border-radius: 64px 64px 0 0;
   }
-  
+
   .watch-episode-drawer-header {
     padding: 0 64px 64px 64px;
   }
-  
+
   .watch-episode-drawer-title {
     gap: 40px;
   }
-  
+
   .watch-episode-drawer-title h2 {
     font-size: 80px;
   }
-  
+
   .watch-episode-count {
     font-size: 48px;
     padding: 16px 40px;
     border-radius: 48px;
   }
-  
+
   .watch-episode-drawer-close {
     width: 144px;
     height: 144px;
   }
-  
+
   .watch-episode-drawer-season {
     padding: 48px 80px;
   }
-  
+
   .watch-episode-season-select {
     font-size: 56px;
     padding: 40px 56px;
     border-radius: 32px;
   }
-  
+
   .watch-episode-search-wrapper {
     gap: 40px;
     padding: 48px 80px;
   }
-  
+
   .watch-episode-search-wrapper svg {
     width: 64px;
     height: 64px;
   }
-  
+
   .watch-episode-search {
     font-size: 56px;
   }
-  
+
   .watch-episode-list {
     padding: 32px;
   }
-  
+
   .watch-episode-item {
     gap: 48px;
     padding: 48px;
     border-radius: 48px;
   }
-  
+
   .watch-episode-thumbnail {
     width: 480px;
     height: 272px;
     border-radius: 32px;
   }
-  
+
   .watch-episode-play-overlay svg {
     width: 80px;
     height: 80px;
   }
-  
+
   .watch-episode-content {
     gap: 16px;
   }
-  
+
   .watch-episode-badges {
     gap: 32px;
   }
-  
+
   .watch-episode-number,
   .watch-episode-playing {
     font-size: 44px;
     padding: 12px 32px;
     border-radius: 16px;
   }
-  
+
   .watch-episode-title {
     font-size: 56px;
   }
-  
+
   .watch-episode-overview {
     font-size: 48px;
     margin-top: 16px;
   }
-  
+
   .watch-episode-meta {
     gap: 16px;
   }
-  
+
   .watch-episode-rating,
   .watch-episode-duration {
     font-size: 48px;
     gap: 16px;
   }
-  
+
   .watch-episode-rating svg,
   .watch-episode-duration svg {
     width: 48px;
     height: 48px;
   }
-  
+
   .watch-episode-drawer-close:focus-visible,
   .watch-episode-season-select:focus-visible,
   .watch-episode-search:focus-visible,
