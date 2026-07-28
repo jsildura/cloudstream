@@ -146,7 +146,7 @@ const LyricsPopup = ({ isOpen, onClose }) => {
     };
 
     return (
-        <div className="lyrics-fullscreen" style={backgroundStyle}>
+        <div className="lyrics-fullscreen" style={backgroundStyle} data-nav-trap>
             {/* Gradient Background */}
             {/* Gradient Background */}
             <DynamicBackgroundWebGL coverUrl={metadata?.albumArt} className="lyrics-fullscreen__bg" />

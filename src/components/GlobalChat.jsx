@@ -1607,7 +1607,7 @@ function GlobalChat() {
 
                         {/* Avatar Picker Modal */}
                         {showAvatarPicker && (
-                            <div className="gc-avatar-picker-overlay" onClick={() => setShowAvatarPicker(false)}>
+                            <div className="gc-avatar-picker-overlay" onClick={() => setShowAvatarPicker(false)} data-nav-trap>
                                 <div className="gc-avatar-picker" onClick={e => e.stopPropagation()}>
                                     <div className="gc-avatar-picker-header">
                                         <h3>Choose Avatar Style</h3>
@@ -1926,7 +1926,7 @@ function GlobalChat() {
             {/* Admin Settings Modal */}
             {
                 showAdminSettings && userDataRef.current.isAdmin && (
-                    <div className="gc-admin-settings-overlay" onClick={() => setShowAdminSettings(false)}>
+                    <div className="gc-admin-settings-overlay" onClick={() => setShowAdminSettings(false)} data-nav-trap>
                         <div className="gc-admin-settings" onClick={e => e.stopPropagation()}>
                             <div className="gc-admin-settings-header">
                                 <h3>Admin Settings</h3>
@@ -2121,6 +2121,7 @@ function GlobalChat() {
                     <div
                         className="gc-reports-overlay"
                         onClick={() => setShowReports(false)}
+                        data-nav-trap
                     >
                         <div
                             className="gc-reports-panel"

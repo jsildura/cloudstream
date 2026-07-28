@@ -409,7 +409,7 @@ const SportsWatch = () => {
 
             {/* Sources Drawer Modal */}
             {drawerOpen && (
-                <div className="sports-drawer-overlay" onClick={() => setDrawerOpen(false)}>
+                <div className="sports-drawer-overlay" onClick={() => setDrawerOpen(false)} data-nav-trap>
                     <div
                         className="sports-drawer"
                         onClick={(e) => e.stopPropagation()}

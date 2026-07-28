@@ -105,11 +105,16 @@ const InstallAppButton = () => {
         }
     }, [isDragging, handleDragMove, handleDragEnd]);
 
-    // Button always shows - removed early return check
-
     const handleClick = async () => {
         await promptInstall();
     };
+
+    // Hide the button once the app is installed or running in standalone mode,
+    // and when there's nothing installable to offer. All hooks above have already
+    // run, so this early return is safe under the Rules of Hooks.
+    if (isInstalled || !isInstallable) {
+        return null;
+    }
 
     // Platform-specific instructions
     const instructions = {
@@ -159,7 +164,7 @@ const InstallAppButton = () => {
 
     // Modal rendered via Portal to document body
     const modal = showManualInstructions ? createPortal(
-        <div className="install-drawer-overlay" onClick={dismissInstructions}>
+        <div className="install-drawer-overlay" onClick={dismissInstructions} data-nav-trap>
             <div
                 ref={drawerRef}
                 className={`install-drawer ${isClosing ? 'closing' : ''}`}

@@ -94,6 +94,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;500;600;700&display=swap"
     rel="stylesheet">
 
@@ -110,7 +111,8 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-  <link rel="manifest" href="/config/manifest.json">
+  <!-- Manifest link is injected automatically by vite-plugin-pwa at build time.
+       The static file at /config/manifest.json is kept for backwards-compatible external references. -->
   <meta name="msapplication-TileColor" content="#000000">
   <meta name="msapplication-TileImage" content="/icons/ms-icon-144x144.png">
   <meta name="theme-color" content="#141414" />
@@ -275,8 +277,18 @@
       }
     }
   </style>
-  <!-- Adsterra Popunder -->
-  <script async src="https://pl28314971.effectivegatecpm.com/e0/e4/eb/e0e4eb2ac0c806edf748f372d994a9e1.js"></script>
+  <!-- Adsterra Popunder — gated: skip on TV/console browsers (popunders can't open on TV) -->
+  <script>
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isTV = /TV|Smart-?TV|GoogleTV|AppleTV|BRAVIA|NetCast|Roku|Viera|NETTV|Tizen|Web[- ]?OS|HbbTV|CrKey|AFT[A-Z]|Android.*TV|SHIELD Android TV|Xbox|PlayStation|Nintendo/i.test(ua);
+      if (isTV) return;
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://pl28314971.effectivegatecpm.com/e0/e4/eb/e0e4eb2ac0c806edf748f372d994a9e1.js';
+      document.head.appendChild(s);
+    })();
+  </script>
 
   <!-- Popads Popunder Temporarily Disabled -->
   <!-- <script type="text/javascript" data-cfasync="false">
@@ -340,20 +352,7 @@
     // Fallback: hide after 6 seconds if React never signals (safety net)
     setTimeout(hideSplashScreen, 6000);
   </script>
-  <script>
-    // Register Service Worker for PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((registration) => {
-            console.log('SW registered:', registration.scope);
-          })
-          .catch((error) => {
-            console.log('SW registration failed:', error);
-          });
-      });
-    }
-  </script>
+  <!-- Service Worker registration is handled by vite-plugin-pwa (see src/components/UpdatePrompt.jsx). -->
   <script type="module" src="/src/main.jsx"></script>
   <!-- Adsterra Social Bar Temporarily Disabled -->
   <!-- <script async src="https://pl28314926.effectivegatecpm.com/13/4a/83/134a83b9c91d4f925e47c4aa8ab2176a.js"></script> -->

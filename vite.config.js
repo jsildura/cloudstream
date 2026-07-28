@@ -57,11 +57,91 @@ export default defineConfig(({ mode }) => {
       react(),
       corsProxyPlugin(),
       VitePWA({
-        // ... (rest of the file)
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
+        injectRegister: null,
+        includeAssets: ['icon/favicon.ico', 'offline.html'],
+        manifest: {
+          name: 'STREAMFLIX',
+          short_name: 'streamflix',
+          id: '/',
+          start_url: '/',
+          display: 'standalone',
+          display_override: ['window-controls-overlay', 'standalone'],
+          categories: ['entertainment', 'video'],
+          description: 'Web application for Movie and TV Shows streaming.',
+          lang: 'en',
+          dir: 'auto',
+          theme_color: '#e50914',
+          background_color: '#000',
+          orientation: 'any',
+          icons: [
+            { src: '/logo/streamflix_(512x512).png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+            { src: '/logo/streamflix_(512x512).png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: '/icons/android-icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+            { src: '/icons/apple-icon-180x180.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
+            { src: '/icons/favicon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any' },
+            { src: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png', purpose: 'any' },
+            { src: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png', purpose: 'any' }
+          ],
+          screenshots: [
+            { src: '/img/landingpage.webp', sizes: '1600x805', type: 'image/webp', form_factor: 'wide', description: 'A screenshot of the home page - web' },
+            { src: '/img/landingpage-mobile.webp', sizes: '390x760', type: 'image/webp', form_factor: 'narrow', description: 'A screenshot of the home page - mobile' }
+          ],
+          related_applications: [],
+          prefer_related_applications: false,
+          shortcuts: [
+            { name: 'Home Page', url: '/home', description: 'Home page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
+            { name: 'Movie Page', url: '/movies', description: 'Movie page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
+            { name: 'TV Shows Page', url: '/tv-shows', description: 'TV Shows page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
+            { name: 'Popular Page', url: '/popular', description: 'Popular page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] }
+          ]
+        },
         workbox: {
-          globPatterns: [
-            '**/*.{js,jsx,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2,ttf,eot,xml,txt}']
+          globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
+          maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api\//, /\.[^/]+$/],
+          cleanupOutdatedCaches: true,
+          clientsClaim: true,
+          runtimeCaching: [
+            {
+              urlPattern: ({ url }) => url.hostname === 'image.tmdb.org',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'tmdb-images',
+                expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            },
+            {
+              urlPattern: ({ url }) => url.hostname === 'api.themoviedb.org',
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'tmdb-api',
+                networkTimeoutSeconds: 5,
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            },
+            {
+              urlPattern: ({ url }) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts',
+                expiration: { maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
+            },
+            {
+              // Never cache streaming media manifests/segments or the local API proxy.
+              urlPattern: ({ url, request }) =>
+                /\.(m3u8|mpd|ts|m4s)(\?|$)/.test(url.pathname) ||
+                url.pathname.startsWith('/api/') ||
+                request.destination === 'video' ||
+                request.destination === 'audio',
+              handler: 'NetworkOnly'
+            }
+          ]
         }
       }),
       Sitemap({

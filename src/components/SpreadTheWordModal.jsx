@@ -30,7 +30,7 @@ const SpreadTheWordModal = () => {
         }
     }, []);
 
-    const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://andoks.cc';
+    const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.streamflix.stream';
 
     const handleCopy = useCallback(async () => {
         try {
@@ -56,7 +56,7 @@ const SpreadTheWordModal = () => {
     const encodedUrl = encodeURIComponent(shareUrl);
 
     return (
-        <div className="stw-overlay" onClick={handleClose}>
+        <div className="stw-overlay" onClick={handleClose} data-nav-trap>
             <div className="stw-modal" onClick={(e) => e.stopPropagation()}>
                 {/* Close Button */}
                 <button className="stw-close-btn" onClick={handleClose} aria-label="Close">

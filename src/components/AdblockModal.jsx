@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { isTVUserAgent } from '../utils/platform';
 import './AdblockModal.css';
 
 const AdblockModal = () => {
@@ -7,6 +8,8 @@ const AdblockModal = () => {
 
     const [adblockDetected, setAdblockDetected] = useState(false);
     const [checkComplete, setCheckComplete] = useState(false);
+    const [dismissed, setDismissed] = useState(false);
+    const isTV = isTVUserAgent();
 
     useEffect(() => {
         const detectAdblock = async () => {
@@ -89,8 +92,20 @@ const AdblockModal = () => {
     if (!checkComplete) return null;
     if (!adblockDetected) return null;
 
+    // TV browsers often have built-in ad blocking the user can't disable —
+    // show a dismissable banner instead of blocking the entire app
+    if (isTV || dismissed) {
+        if (dismissed) return null;
+        return (
+            <div className="adblock-banner" role="alert">
+                <p>Ads are blocked — some features may be limited.</p>
+                <button className="adblock-banner-dismiss" onClick={() => setDismissed(true)} aria-label="Dismiss">✕</button>
+            </div>
+        );
+    }
+
     return (
-        <div className="adblock-overlay">
+        <div className="adblock-overlay" data-nav-trap>
             <div className="adblock-modal">
                 <div className="adblock-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

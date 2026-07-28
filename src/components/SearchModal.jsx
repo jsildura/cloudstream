@@ -134,7 +134,7 @@ const SearchModal = ({ searchResults, onSearch, onClose, onItemClick, isSearchin
   };
 
   return (
-    <div className="search-modal-overlay" onClick={handleBackdropClick}>
+    <div className="search-modal-overlay" onClick={handleBackdropClick} data-nav-trap>
       <div className="search-modal-container">
         {/* Search Input Bar */}
         <div className="search-modal-input-wrapper">

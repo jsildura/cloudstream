@@ -1306,6 +1306,26 @@ const IPTVWatch = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [showChannelStrip, channels, focusedIndex, toggleChannelStrip, navigateChannel, resetChannelStripTimer]);
 
+    // TV remote media keys (Play/Pause, Next/Prev channel) - dispatched by useTVRemoteKeys
+    useEffect(() => {
+        const togglePlay = () => {
+            const v = videoRef.current;
+            if (!v) return;
+            if (v.paused) v.play().catch(() => {}); else v.pause();
+        };
+        const nextCh = () => navigateChannel(1);
+        const prevCh = () => navigateChannel(-1);
+
+        document.addEventListener('tv:playpause', togglePlay);
+        document.addEventListener('tv:next', nextCh);
+        document.addEventListener('tv:prev', prevCh);
+        return () => {
+            document.removeEventListener('tv:playpause', togglePlay);
+            document.removeEventListener('tv:next', nextCh);
+            document.removeEventListener('tv:prev', prevCh);
+        };
+    }, [navigateChannel]);
+
     // 1. Key Harvester Listener - receives keys from the extension's hook.js via postMessage
     useEffect(() => {
         const handleMessage = (event) => {

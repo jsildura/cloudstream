@@ -132,3 +132,45 @@
         font-size: 13px;
     }
 }
+
+/* Dismissable banner variant for TV browsers */
+.adblock-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 12px 24px;
+    background: rgba(30, 30, 30, 0.95);
+    border-top: 1px solid rgba(229, 9, 20, 0.4);
+    color: #ccc;
+    font-size: 14px;
+}
+
+.adblock-banner p {
+    margin: 0;
+}
+
+.adblock-banner-dismiss {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 16px;
+    padding: 4px 12px;
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.adblock-banner-dismiss:focus-visible {
+    outline: 3px solid #e50914;
+    outline-offset: 2px;
+}

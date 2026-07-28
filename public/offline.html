@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're offline — STREAMFLIX</title>
+  <link rel="icon" type="image/png" sizes="96x96" href="/icons/favicon-96x96.png" />
+  <meta name="theme-color" content="#e50914" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .logo {
+      color: #e50914;
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 28px;
+    }
+    .icon {
+      width: 72px;
+      height: 72px;
+      margin-bottom: 20px;
+      opacity: 0.85;
+    }
+    h1 { font-size: 22px; margin-bottom: 10px; }
+    p { color: #b3b3b3; font-size: 15px; max-width: 420px; line-height: 1.5; margin-bottom: 26px; }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    a.btn, button.btn {
+      display: inline-block;
+      background: #e50914;
+      color: #fff;
+      text-decoration: none;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 22px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    a.btn.secondary, button.btn.secondary {
+      background: transparent;
+      border: 1px solid #444;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="logo">STREAMFLIX</div>
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#e50914" stroke-width="1.6"
+      stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+      <path d="M1 1l22 22" />
+      <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" />
+      <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" />
+      <path d="M10.71 5.05A16 16 0 0 1 22.58 9" />
+      <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" />
+      <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+      <line x1="12" y1="20" x2="12.01" y2="20" />
+    </svg>
+    <h1>You're offline</h1>
+    <p>We can't reach the internet right now. Anything you've already viewed may still be
+       available from your device's cache.</p>
+    <div class="actions">
+      <button class="btn" onclick="window.location.reload()">Try again</button>
+      <a class="btn secondary" href="/my-list">Go to My List</a>
+    </div>
+  </div>
+
+  <script>
+    // When connectivity returns, automatically reload back into the app.
+    window.addEventListener('online', function () {
+      window.location.reload();
+    });
+  </script>
+</body>
+
+</html>

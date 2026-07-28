@@ -864,3 +864,33 @@ body.mobile-menu-open .scroll-to-top-btn {
   pointer-events: none !important;
   transition: opacity 0.2s ease, visibility 0.2s ease;
 }
+
+/* ========================================
+   TV REMOTE INPUT ADAPTATION
+   Prevent sticky :hover states on devices with no pointer hover
+   (Android TV remotes, Fire TV, game controllers)
+   ======================================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Kill hover transforms that stick after focus moves on */
+  .movie-card:hover,
+  .collection-card:hover,
+  [class*="-card"]:hover {
+    transform: none !important;
+  }
+
+  /* Ensure strong focus rings even on 720p TVs that might not
+     hit the 1280px media-query tier (rare but possible) */
+  *:focus-visible {
+    outline: 3px solid #e50914 !important;
+    outline-offset: 2px !important;
+  }
+
+  .movie-card:focus-visible,
+  .collection-card:focus-visible,
+  [class*="-card"]:focus-visible {
+    outline: 3px solid #e50914 !important;
+    outline-offset: 3px !important;
+    box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.35) !important;
+  }
+}

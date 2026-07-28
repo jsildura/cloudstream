@@ -10,8 +10,11 @@ import ScrollToTopButton from './components/ScrollToTopButton';
 import AdblockModal from './components/AdblockModal';
 import BotProtection from './components/BotProtection';
 import Toast from './components/Toast';
-import GlobalChat from './components/GlobalChat';
 import PageLoader from './components/PageLoader';
+import UpdatePrompt from './components/UpdatePrompt';
+
+// Deferred — pulls in Firebase, only needed after first paint
+const GlobalChat = lazy(() => import('./components/GlobalChat'));
 
 // Context providers - always loaded
 import { ToastProvider } from './contexts/ToastContext';
@@ -20,6 +23,7 @@ import { ViewerCountProvider } from './contexts/ViewerCountContext';
 // Hooks - always loaded
 import { useTMDB } from './hooks/useTMDB';
 import useTVNavigation from './hooks/useTVNavigation';
+import useTVRemoteKeys from './hooks/useTVRemoteKeys';
 
 // =============================================
 // LAZY-LOADED PAGE COMPONENTS
@@ -94,6 +98,8 @@ function App() {
 
   // Enable TV remote / D-pad arrow key navigation
   useTVNavigation({ resetOnPathChange: location.pathname });
+  // Map hardware Back button and media transport keys
+  useTVRemoteKeys();
 
   // Signal that React app is mounted and ready - hides the HTML splash screen
   useEffect(() => {
@@ -154,6 +160,7 @@ function App() {
           <BotProtection />
           <AdblockModal />
           <ScrollToTop />
+          <UpdatePrompt />
           {/* Hide ScrollToTopButton on music pages */}
           {!location.pathname.startsWith('/music') && <ScrollToTopButton />}
           <Toast />
@@ -235,7 +242,9 @@ function App() {
             !location.pathname.startsWith('/music') &&
             !location.pathname.includes('/iptv/watch') &&
             !location.pathname.includes('/sports/watch') && (
-              <GlobalChat />
+              <Suspense fallback={null}>
+                <GlobalChat />
+              </Suspense>
             )}
         </div>
       </ViewerCountProvider>

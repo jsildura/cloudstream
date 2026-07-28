@@ -1,25 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { isTVUserAgent } from '../utils/platform';
 import './BotProtection.css';
 
-// Device detection - skip devtools detection on mobile/TV
-// This function runs once at module load to detect mobile browsers via User Agent
 const isMobileOrTV = () => {
     const ua = navigator.userAgent;
-    // Comprehensive mobile pattern - if UA matches, definitely mobile
-    // This check uses User Agent which is available immediately and reliably
     const mobilePatterns = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|mobile|CriOS|FxiOS/i;
-    const tvPatterns = /TV|Smart-TV|SmartTV|GoogleTV|AppleTV|BRAVIA|NetCast|Roku|Viera|NETTV|Xbox|PlayStation|Nintendo|Tizen|WebOS/i;
 
-    // If user agent matches mobile/TV patterns, skip detection regardless of anything else
-    if (mobilePatterns.test(ua) || tvPatterns.test(ua)) {
+    if (mobilePatterns.test(ua) || isTVUserAgent()) {
         return true;
     }
 
-    // Additional check: touch-capable devices with mobile-like characteristics
-    // This runs only if UA check didn't match (e.g., for tablets or unusual devices)
     if (typeof window !== 'undefined') {
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        // On touch devices, be more conservative - skip devtools detection
         if (isTouchDevice) {
             return true;
         }
@@ -208,7 +200,7 @@ const BotProtection = () => {
     if (!accessDenied) return null;
 
     return (
-        <div className="bot-protection-overlay">
+        <div className="bot-protection-overlay" data-nav-trap>
             <div className="bot-protection-modal">
                 <div className="bot-protection-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

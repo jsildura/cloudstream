@@ -696,7 +696,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
         </div>
 
         {/* Backdrop Overlay */}
-        {isMenuOpen && <div className="bottom-sheet-overlay" onClick={closeMenu}></div>}
+        {isMenuOpen && <div className="bottom-sheet-overlay" onClick={closeMenu} data-nav-trap></div>}
 
       </div>
 

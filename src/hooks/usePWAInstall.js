@@ -122,9 +122,12 @@ const usePWAInstall = () => {
         window.addEventListener('beforeinstallprompt', trackingHandler);
 
         const fallbackTimer = setTimeout(() => {
-            // Show button for all platforms if not installed and native prompt wasn't received
-            if (!isAlreadyInstalled && !nativePromptReceived) {
-                // Enable install button (will show manual instructions when clicked)
+            // iOS Safari has no `beforeinstallprompt` event, so it's the only platform
+            // that legitimately needs the manual "Add to Home Screen" instructions button.
+            // On desktop/Android, if no native prompt arrived the browser either already
+            // installed the app or doesn't support installation — showing fake instructions
+            // there is misleading, so we leave the button hidden.
+            if (detectedPlatform === 'ios' && !isAlreadyInstalled && !nativePromptReceived) {
                 setIsInstallable(true);
             }
         }, 3000); // Wait 3 seconds for native prompt

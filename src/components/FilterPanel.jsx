@@ -193,7 +193,7 @@ const FilterPanel = ({
             <div className="filter-panel-backdrop" onClick={onClose} aria-hidden="true" />
 
             {/* Panel */}
-            <div className="filter-panel" ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="filter-panel-title">
+            <div className="filter-panel" ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="filter-panel-title" data-nav-trap>
                 {/* Header */}
                 <div className="filter-panel-header">
                     <h2 id="filter-panel-title">Filters</h2>

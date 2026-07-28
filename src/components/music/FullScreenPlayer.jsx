@@ -185,12 +185,27 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
         return () => clearTimeout(timer);
     }, []);
 
+    // TV remote media keys → music transport
+    useEffect(() => {
+        const onPlayPause = () => togglePlay();
+        const onNext = () => hasNext && next();
+        const onPrev = () => hasPrevious && previous();
+        document.addEventListener('tv:playpause', onPlayPause);
+        document.addEventListener('tv:next', onNext);
+        document.addEventListener('tv:prev', onPrev);
+        return () => {
+            document.removeEventListener('tv:playpause', onPlayPause);
+            document.removeEventListener('tv:next', onNext);
+            document.removeEventListener('tv:prev', onPrev);
+        };
+    }, [togglePlay, next, previous, hasNext, hasPrevious]);
+
     // ... (rest of component) ...
 
     return (
         <>
             {ReactDOM.createPortal(
-                <div className="fullscreen-player" ref={containerRef}>
+                <div className="fullscreen-player" ref={containerRef} data-nav-trap>
                     {showBackground && (
                         <DynamicBackgroundWebGL className="fullscreen-player__bg" coverUrl={coverUrl} />
                     )}
