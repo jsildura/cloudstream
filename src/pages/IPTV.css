@@ -478,6 +478,18 @@
   white-space: nowrap;
 }
 
+/* EPG - Currently Airing Programme */
+.iptv-channel-epg {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(76, 175, 80, 0.9);
+  margin: 4px 0 0;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Offline Channel Styles */
 .iptv-channel-card.iptv-channel-offline {
   opacity: 0.5;
@@ -937,4 +949,50 @@
     width: 320px;
     height: 320px;
   }
+}
+
+/* ========================================
+   SCANNER UI
+   ======================================== */
+.iptv-scanner-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.iptv-scanner-status {
+  font-size: 0.95rem;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.iptv-scanner-active {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #e50914; /* Netflix red to indicate active checking */
+}
+
+.iptv-scanner-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(229, 9, 20, 0.3);
+  border-radius: 50%;
+  border-top-color: #e50914;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.iptv-scanner-idle {
+  opacity: 0.8;
 }

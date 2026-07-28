@@ -1,10 +1,24 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './IPTV.css';
 
 const M3U_URL = 'https://raw.githubusercontent.com/ryansnetcafe/ott-playlist/refs/heads/main/ryansnetcafe.m3u';
+const EPG_URLS = [
+  'https://raw.githubusercontent.com/djdoolky76/Mediaquest-EPG/main/cignal_epg.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_PH1.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_PH2.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_ID1.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_MY1.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_HK1.xml.gz',
+  'https://epgshare01.online/epgshare01/epg_ripper_US1.xml.gz',
+];
 const OFFLINE_CHANNELS_KEY = 'iptv_offline_channels';
 const FAVORITES_KEY = 'iptv_favorites';
+
+const OFFLINE_SCAN_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
+const ONLINE_SCAN_INTERVAL = 48 * 60 * 60 * 1000; // 48 hours
+const LAST_OFFLINE_SCAN_KEY = 'iptv_last_offline_scan_time';
+const LAST_ONLINE_SCAN_KEY = 'iptv_last_online_scan_time';
 
 /**
  * Parse M3U playlist into channel objects
@@ -36,11 +50,13 @@ const parseM3U = (content) => {
         // Store EXTINF info for the next URL line
         const logoMatch = line.match(/tvg-logo="([^"]*)"/);
         const groupMatch = line.match(/group-title="([^"]*)"/);
+        const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
         const nameMatch = line.match(/,(.+)$/);
         pendingExtinf = {
           name: nameMatch ? nameMatch[1].trim() : null,
           logo: logoMatch ? logoMatch[1] : null,
           category: groupMatch ? groupMatch[1] : 'Entertainment',
+          tvgId: tvgIdMatch ? tvgIdMatch[1] : null,
           skip: false
         };
       }
@@ -86,6 +102,7 @@ const parseM3U = (content) => {
         name: channelName,
         logo: channelLogo,
         category: pendingExtinf?.category || 'Entertainment',
+        tvgId: pendingExtinf?.tvgId || null,
         url: line,
         licenseType: pendingLicenseKey ? 'clearkey' : null, // Assume clearkey if key present
         licenseKey: pendingLicenseKey,
@@ -156,10 +173,44 @@ const IPTV = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [epgData, setEpgData] = useState({});
+  const [epgNameMap, setEpgNameMap] = useState({});
+
+  // Helper: look up EPG for a channel by tvgId first, then by name
+  const getEpgForChannel = (ch) => {
+    if (ch.tvgId && epgData[ch.tvgId]) return epgData[ch.tvgId];
+    // Fallback: match channel name against EPG display names
+    const normalized = ch.name
+      .toLowerCase()
+      .replace(/\s*(hd|sd|fhd|uhd|\(hd\)|\(sd\))\s*/gi, ' ')
+      .replace(/[^a-z0-9]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const epgChannelId = epgNameMap[normalized];
+    if (epgChannelId && epgData[epgChannelId]) return epgData[epgChannelId];
+    return null;
+  };
 
   const [categoryFilter, setCategoryFilter] = useState('All');
   const [offlineChannels, setOfflineChannels] = useState(() => loadOfflineChannels());
   const [favorites, setFavorites] = useState(() => loadFavorites());
+
+  // Scanner state
+  const [scanProgress, setScanProgress] = useState(null); // { scanning: boolean, scanned: number, total: number, type: 'offline'|'online' }
+  const [lastOfflineScanTime, setLastOfflineScanTime] = useState(() => {
+    const time = localStorage.getItem(LAST_OFFLINE_SCAN_KEY);
+    return time ? parseInt(time, 10) : null;
+  });
+  const [lastOnlineScanTime, setLastOnlineScanTime] = useState(() => {
+    const time = localStorage.getItem(LAST_ONLINE_SCAN_KEY);
+    return time ? parseInt(time, 10) : null;
+  });
+
+  // Refs to track scan timestamps without triggering re-renders
+  const lastOfflineScanRef = useRef(lastOfflineScanTime);
+  const lastOnlineScanRef = useRef(lastOnlineScanTime);
+  const workerRef = useRef(null);
+  const scanInProgressRef = useRef(false);
 
   // Check if returning from a failed channel
   useEffect(() => {
@@ -179,10 +230,13 @@ const IPTV = () => {
     const fetchPlaylist = async () => {
       try {
         setLoading(true);
-        const response = await fetch(M3U_URL);
-        if (!response.ok) throw new Error('Failed to fetch playlist');
-        const text = await response.text();
-        const parsed = parseM3U(text);
+        let parsed = [];
+        if (M3U_URL) {
+          const response = await fetch(M3U_URL);
+          if (!response.ok) throw new Error('Failed to fetch playlist');
+          const text = await response.text();
+          parsed = parseM3U(text);
+        }
 
         // Add manual/test channels (Mapple)
         const manualChannels = [
@@ -1149,7 +1203,7 @@ const IPTV = () => {
             id: 'kapamilya-channel',
             name: 'Kapamilya Channel',
             category: 'entertainment',
-            logo:'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png',
+            logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png',
             url: 'https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01006-abs-cbn-kapcha-dash-abscbnono/manifest.mpd',
             licenseKey: '292dee4236d04054910e9706ee22626b:b7c5d3220f6eb6e042a2bcb367b5c09b'
           },
@@ -1157,7 +1211,7 @@ const IPTV = () => {
             id: 'one-sports',
             name: 'One Sports',
             category: 'Sports',
-            logo:'https://iyadtv.pages.dev/images/one-sports.svg',
+            logo: 'https://iyadtv.pages.dev/images/one-sports.svg',
             url: 'https://rise2the.top/aldous/1784565639/LM_6N6dHI6mVZPyvTegklQ/s/cg_onesports_hd/default/index.mpd',
             licenseKey: '69f5a2318d744c609b125e3a7d8f2046:182523c0bae912e17e916dd4283280e9'
           },
@@ -1165,7 +1219,7 @@ const IPTV = () => {
             id: 'cnn',
             name: 'CNN',
             category: 'News',
-            logo:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
             url: 'https://rise2the.top/aldous/1784566326/RF5zxZb1rfcNz0wG5hD2yw/s/cg_cnnhd/default/index.mpd',
             licenseKey: '1d9f6b828c454a17b2395e7d3f90a621:c5776d83cbf50c9354f27b1c830e1996'
           },
@@ -1173,7 +1227,7 @@ const IPTV = () => {
             id: 'nickelodeon',
             name: 'Nickelodeon',
             category: 'Kids',
-            logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png',
+            logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png',
             url: 'https://rise2the.top/aldous/1784566889/rycj2jtPSf2D1vgaHJneWg/s/dr_nickelodeon/default/index.mpd',
             licenseKey: '81f3e6924c754a08b9215d7e9c3f6048:094cd48e9729cb8bcb0e03e848fc8751'
           },
@@ -1196,6 +1250,151 @@ const IPTV = () => {
     };
 
     fetchPlaylist();
+  }, []);
+
+  // EPG: Fetch and parse EPG data in a WebWorker
+  useEffect(() => {
+    const worker = new Worker(
+      new URL('../workers/epgParser.js', import.meta.url),
+      { type: 'module' }
+    );
+
+    worker.onmessage = (event) => {
+      const { type, data, nameMap, error: workerError } = event.data;
+      if (type === 'EPG_READY') {
+        console.log(`[IPTV] EPG loaded: ${Object.keys(data).length} currently-airing programmes, ${Object.keys(nameMap).length} channel names`);
+        setEpgData(data);
+        setEpgNameMap(nameMap);
+      } else if (type === 'EPG_ERROR') {
+        console.warn('[IPTV] EPG load failed (non-blocking):', workerError);
+      }
+    };
+
+    worker.postMessage({ type: 'PARSE_EPG', urls: EPG_URLS });
+
+    return () => worker.terminate();
+  }, []);
+
+  // --- Channel Scanner Logic ---
+  
+  const runScan = useCallback((scanType) => {
+    if (!channels || channels.length === 0 || scanInProgressRef.current) return;
+
+    const currentOffline = loadOfflineChannels();
+    const channelsToScan = scanType === 'offline' 
+      ? channels.filter(c => currentOffline.includes(c.id))
+      : scanType === 'online'
+        ? channels.filter(c => !currentOffline.includes(c.id))
+        : channels; // 'all'
+
+    if (channelsToScan.length === 0) return;
+
+    scanInProgressRef.current = true;
+    setScanProgress({ scanning: true, scanned: 0, total: channelsToScan.length, type: scanType });
+
+    if (workerRef.current) {
+      workerRef.current.terminate();
+    }
+
+    const worker = new Worker(
+      new URL('../workers/channelScanner.js', import.meta.url),
+      { type: 'module' }
+    );
+    workerRef.current = worker;
+
+    worker.onmessage = (event) => {
+      const { type, scanned, total, online, offline, scanType: workerScanType } = event.data;
+      
+      if (type === 'SCAN_PROGRESS') {
+        setScanProgress(prev => prev ? { ...prev, scanned, total } : null);
+      } else if (type === 'SCAN_COMPLETE') {
+        const now = Date.now();
+        scanInProgressRef.current = false;
+        setScanProgress(null);
+        
+        // Update timestamps via refs + state + localStorage
+        if (workerScanType === 'offline' || workerScanType === 'all') {
+          lastOfflineScanRef.current = now;
+          setLastOfflineScanTime(now);
+          localStorage.setItem(LAST_OFFLINE_SCAN_KEY, now.toString());
+        }
+        if (workerScanType === 'online' || workerScanType === 'all') {
+          lastOnlineScanRef.current = now;
+          setLastOnlineScanTime(now);
+          localStorage.setItem(LAST_ONLINE_SCAN_KEY, now.toString());
+        }
+
+        // Merge offline channel results
+        setOfflineChannels(prev => {
+          let newOffline = [...prev];
+          
+          // Add channels that failed during scan
+          offline.forEach(id => {
+            if (!newOffline.includes(id)) newOffline.push(id);
+          });
+          
+          // Remove channels that succeeded during scan
+          online.forEach(id => {
+            newOffline = newOffline.filter(offlineId => offlineId !== id);
+          });
+          
+          saveOfflineChannels(newOffline);
+          return newOffline;
+        });
+
+        worker.terminate();
+        workerRef.current = null;
+      }
+    };
+
+    worker.postMessage({ type: 'SCAN', channels: channelsToScan, scanType });
+  }, [channels]);
+
+  // Orchestrate auto-scans — runs once when channels are loaded
+  useEffect(() => {
+    if (channels.length === 0) return;
+
+    // Initial scan check on mount
+    const now = Date.now();
+    let scanToRun = null;
+
+    const lastOffline = lastOfflineScanRef.current;
+    const lastOnline = lastOnlineScanRef.current;
+
+    if (!lastOffline || now - lastOffline > OFFLINE_SCAN_INTERVAL) {
+      scanToRun = 'offline';
+    }
+    
+    if (!lastOnline || now - lastOnline > ONLINE_SCAN_INTERVAL) {
+      scanToRun = scanToRun === 'offline' ? 'all' : 'online';
+    }
+
+    if (scanToRun) {
+      runScan(scanToRun);
+    }
+
+    // Set up stable intervals for ongoing auto-scans
+    const offlineIntervalId = setInterval(() => {
+      runScan('offline');
+    }, OFFLINE_SCAN_INTERVAL);
+
+    const onlineIntervalId = setInterval(() => {
+      runScan('online');
+    }, ONLINE_SCAN_INTERVAL);
+
+    return () => {
+      clearInterval(offlineIntervalId);
+      clearInterval(onlineIntervalId);
+    };
+  }, [channels.length, runScan]); // Only re-run when channel count changes, not on timestamp updates
+  
+  // Cleanup worker on unmount
+  useEffect(() => {
+    return () => {
+      if (workerRef.current) {
+        workerRef.current.terminate();
+      }
+    };
   }, []);
 
   // Filter channels by search and status
@@ -1228,9 +1427,51 @@ const IPTV = () => {
     return channels.filter(c => (c.category || 'Entertainment') === cat && !offlineChannels.includes(c.id)).length;
   };
 
+  // Automated Recommended Channels
+  const recommendedChannels = useMemo(() => {
+    const priorityList = [
+      { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png' },
+      { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png' },
+      { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg' },
+      { rank: 4, name: 'One Sports', logo: 'https://iyadtv.pages.dev/images/one-sports.svg' },
+      { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg' },
+      { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg' },
+      { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png' },
+      { rank: 8, name: 'CNN', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg' },
+      { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png' },
+      { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png' },
+      { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png' },
+      { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png' },
+    ];
+
+    const onlineChannels = channels.filter(c => !offlineChannels.includes(c.id));
+
+    return priorityList.map((def) => {
+      // Find an online channel that matches the recommended name
+      const matchedChannel = onlineChannels.find(c => 
+        c.name && c.name.toLowerCase().replace(/[^a-z0-9]/g, '') === def.name.toLowerCase().replace(/[^a-z0-9]/g, '')
+      );
+      
+      if (matchedChannel) {
+        return { ...def, channelObj: matchedChannel };
+      }
+      return null;
+    }).filter(Boolean); // Remove items where no working channel was found
+  }, [channels, offlineChannels]);
+
   // Count live and offline
   const liveCount = channels.length - offlineChannels.length;
   const offlineCount = offlineChannels.length;
+
+  const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Never';
+    const diff = Math.floor((Date.now() - timestamp) / 60000); // minutes
+    if (diff < 1) return 'Just now';
+    if (diff < 60) return `${diff}m ago`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
 
   const handleChannelClick = (channel) => {
     const channelIndex = filteredChannels.findIndex(c => c.id === channel.id);
@@ -1395,54 +1636,59 @@ const IPTV = () => {
         <p className="iptv-description">
           Your destination for live TV. Enjoy news, sports, and entertainment on demand with a fresh, diverse lineup of channels at your fingertips.
         </p>
+
+        {/* Scanner Controls */}
+        <div className="iptv-scanner-controls">
+          <div className="iptv-scanner-status">
+            {scanProgress?.scanning ? (
+              <span className="iptv-scanner-active">
+                <div className="iptv-scanner-spinner"></div>
+                Scanning {scanProgress.type === 'offline' ? 'offline ' : scanProgress.type === 'online' ? 'online ' : ''}channels: {scanProgress.scanned}/{scanProgress.total}...
+              </span>
+            ) : (
+              <span className="iptv-scanner-idle">
+                Last Scanned: Offline ({formatTimeAgo(lastOfflineScanTime)}) | Online ({formatTimeAgo(lastOnlineScanTime)})
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Top 10 Live TV Channels */}
-      <section className="iptv-top10-section">
-        <div className="iptv-top10-header">Recommended Channels</div>
-        <div
-          className="iptv-top10-list"
-          ref={gridRef}
-          onMouseDown={handleMouseDown}
-          onMouseLeave={handleMouseLeave}
-          onMouseUp={handleMouseUp}
-          onMouseMove={handleMouseMove}
-        >
-          {[
-            { rank: 1, name: 'Kapamilya Channel', logo: 'https://static.wikia.nocookie.net/abscbn/images/7/74/Kapamilya_Channel_3D_Logo.png', channelId: 'kapamilya-channel' },
-            { rank: 2, name: 'GMA7', logo: 'https://static.wikia.nocookie.net/logopedia/images/a/aa/GMA_Network_2024_logo.png', channelId: 'gma7' },
-            { rank: 3, name: 'Star Movies', logo: 'https://upload.wikimedia.org/wikipedia/ms/3/37/STAR_Movies_HD_logo.jpg', channelId: 'star-movies' },
-            { rank: 4, name: 'One Sports', logo: 'https://iyadtv.pages.dev/images/one-sports.svg', channelId: 'one-sports' },
-            { rank: 5, name: 'Cinema One', logo: 'https://upload.wikimedia.org/wikipedia/en/6/6d/Cinema_One_2013_logo.svg', channelId: 'cinema-one' },
-            { rank: 6, name: 'HBO', logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg', channelId: 'hbo' },
-            { rank: 7, name: 'Cinemax', logo: 'https://logodix.com/logo/2138572.png', channelId: 'cinemax' },
-            { rank: 8, name: 'CNN', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg', channelId: 'cnn' },
-            { rank: 9, name: 'AMC+', logo: 'https://shop.amc.com/cdn/shop/products/AMCP-LOGO-100011-FR-RO_1500x.png', channelId: 'amc-plus' },
-            { rank: 10, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', channelId: 'nickelodeon' },
-            { rank: 11, name: 'Animal Planet', logo: 'https://wildaid.org/wp-content/uploads/2021/08/animal-planet-logo-white.png', channelId: 81 },
-            { rank: 12, name: 'Warner TV', logo: 'https://upload.wikimedia.org/wikipedia/commons/5/5e/Warner2018LA.png', channelId: 100 },
-          ].map(item => {
-            const channel = channels.find(c => c.id === item.channelId);
-            return (
-              <div
-                key={item.rank}
-                className="iptv-top10-item"
-                onClick={() => !isDragging && channel && handleChannelClick(channel)}
-                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && channel && handleChannelClick(channel)}
-                role="button"
-                tabIndex={0}
-                aria-label={`Rank ${item.rank}: ${item.name}`}
-                style={{ cursor: channel ? 'pointer' : 'default' }}
-              >
-                <span className="iptv-top10-rank">{item.rank}</span>
-                <div className="iptv-top10-logo-container">
-                  <img src={item.logo} alt={item.name} className="iptv-top10-logo" loading="lazy" draggable="false" />
+      {recommendedChannels.length > 0 && (
+        <section className="iptv-top10-section">
+          <div className="iptv-top10-header">Recommended Channels</div>
+          <div
+            className="iptv-top10-list"
+            ref={gridRef}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+          >
+            {recommendedChannels.map((item, index) => {
+              const channel = item.channelObj;
+              return (
+                <div
+                  key={channel.id}
+                  className="iptv-top10-item"
+                  onClick={() => !isDragging && handleChannelClick(channel)}
+                  onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && handleChannelClick(channel)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Rank ${index + 1}: ${item.name}`}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span className="iptv-top10-rank">{index + 1}</span>
+                  <div className="iptv-top10-logo-container">
+                    <img src={item.logo} alt={item.name} className="iptv-top10-logo" loading="lazy" draggable="false" />
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Favorites Section */}
       {(() => {
@@ -1656,6 +1902,9 @@ const IPTV = () => {
               </div>
               <div className="iptv-channel-info">
                 <h3 className="iptv-channel-name">{channel.name}</h3>
+                {(() => { const epg = getEpgForChannel(channel); return epg ? (
+                  <p className="iptv-channel-epg">▶ {epg.title}</p>
+                ) : null; })()}
               </div>
             </div>
           );

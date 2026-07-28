@@ -109,12 +109,30 @@
 }
 
 .iptv-watch-channel-name {
-    max-width: 150px;
+    max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     flex-shrink: 1;
     min-width: 0;
+}
+
+.iptv-watch-badge-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.iptv-watch-epg-title {
+    font-size: 11px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
 }
 
 .iptv-watch-badge-btn {
@@ -615,6 +633,26 @@
     color: rgba(255, 255, 255, 0.85);
     text-align: center;
     max-width: 80px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Channel Strip Info (name + EPG) */
+.channel-strip-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: 90px;
+}
+
+.channel-strip-epg {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.55);
+    text-align: center;
+    max-width: 90px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

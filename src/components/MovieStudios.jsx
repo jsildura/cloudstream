@@ -15,7 +15,7 @@ const STUDIOS = [
     { id: 521, name: 'DreamWorks', logo: '/logo/dreamworks.png', accentColor: '#1963ae' },
     { id: 41077, name: 'A24', logo: '/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png', accentColor: '#FFFFFF' },
     { id: 3172, name: 'Blumhouse', logo: '/kDedjRZwO8uyFhuHamomOhN6fzG.png', accentColor: '#b0ff26' },
-    { id: 174, name: 'Warner Bros', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Warner_Bros._2023_%28horizontal%29.svg/2560px-Warner_Bros._2023_%28horizontal%29.svg.png', accentColor: '#0045B3' },
+    { id: 174, name: 'Warner Bros', logo: '/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png', accentColor: '#0045B3' },
     { id: 33, name: 'Universal', logo: '/8lvHyhjr8oUKOOy2dKXoALWKdp0.png', accentColor: '#939598' },
     { id: 1632, name: 'Lionsgate', logo: '/logo/lionsgate.png', accentColor: '#E0A922' },
     { id: 25, name: '20th Century', logo: '/qZCc1lty5FzX30aOCVRBLzaVmcp.png', accentColor: '#D4AA00' },

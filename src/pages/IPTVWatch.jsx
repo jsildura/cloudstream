@@ -5,6 +5,9 @@ import './IPTVWatch.css';
 
 const OFFLINE_CHANNELS_KEY = 'iptv_offline_channels';
 const M3U_URL = 'https://raw.githubusercontent.com/ryansnetcafe/ott-playlist/refs/heads/main/ryansnetcafe.m3u';
+const EPG_URLS = [
+    'https://raw.githubusercontent.com/djdoolky76/Mediaquest-EPG/main/cignal_epg.xml.gz',
+];
 
 /**
  * Parse M3U playlist into channel objects (duplicated from IPTV.jsx for direct URL loading)
@@ -29,11 +32,13 @@ const parseM3U = (content) => {
             } else {
                 const logoMatch = line.match(/tvg-logo="([^"]*)"/);
                 const groupMatch = line.match(/group-title="([^"]*)"/);
+                const tvgIdMatch = line.match(/tvg-id="([^"]*)"/);
                 const nameMatch = line.match(/,(.+)$/);
                 pendingExtinf = {
                     name: nameMatch ? nameMatch[1].trim() : null,
                     logo: logoMatch ? logoMatch[1] : null,
                     category: groupMatch ? groupMatch[1] : 'Entertainment',
+                    tvgId: tvgIdMatch ? tvgIdMatch[1] : null,
                     skip: false
                 };
             }
@@ -71,6 +76,7 @@ const parseM3U = (content) => {
                 name: channelName,
                 logo: channelLogo,
                 category: pendingExtinf?.category || 'Entertainment',
+                tvgId: pendingExtinf?.tvgId || null,
                 url: line,
                 licenseType: pendingLicenseKey ? 'clearkey' : null,
                 licenseKey: pendingLicenseKey,
@@ -102,7 +108,7 @@ const getManualChannels = () => [
         id: 'nickelodeon',
         name: 'Nickelodeon',
         category: 'Kids',
-        logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png',
         url: 'https://rise2the.top/aldous/1784566889/rycj2jtPSf2D1vgaHJneWg/s/dr_nickelodeon/default/index.mpd',
         licenseKey: '81f3e6924c754a08b9215d7e9c3f6048:094cd48e9729cb8bcb0e03e848fc8751'
     },
@@ -295,7 +301,7 @@ const getManualChannels = () => [
         id: 'cnn',
         name: 'CNN',
         category: 'News',
-        logo:'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/CNN.svg',
         url: 'https://rise2the.top/aldous/1784566326/RF5zxZb1rfcNz0wG5hD2yw/s/cg_cnnhd/default/index.mpd',
         licenseKey: '1d9f6b828c454a17b2395e7d3f90a621:c5776d83cbf50c9354f27b1c830e1996'
     },
@@ -937,13 +943,13 @@ const getManualChannels = () => [
         licenseKey: '81a74ef0cf71e28d5d9bc55d5fd7921a:884e89f90a9f5cbaaa5c2a451e1d8f86'
     },
     {
-            id: 'hbo',
-            name: 'HBO',
-            category: 'Movies',
-            logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg',
-            url: 'https://rise2the.top/aldous/1784565446/GkdSZgcR16GBWe34kQW3kA/s/cg_hbohd/default/index.mpd',
-            licenseKey: 'd7f3c8215a944e068b176c9d2a5f3048:93c0a798243d6443864d1a7ff3e42c05'
-          },
+        id: 'hbo',
+        name: 'HBO',
+        category: 'Movies',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/d/de/HBO_logo.svg',
+        url: 'https://rise2the.top/aldous/1784565446/GkdSZgcR16GBWe34kQW3kA/s/cg_hbohd/default/index.mpd',
+        licenseKey: 'd7f3c8215a944e068b176c9d2a5f3048:93c0a798243d6443864d1a7ff3e42c05'
+    },
     {
         id: 'hbo-east',
         name: 'HBO East',
@@ -1060,7 +1066,7 @@ const getManualChannels = () => [
         id: 'one-sports',
         name: 'One Sports',
         category: 'Sports',
-        logo:'https://iyadtv.pages.dev/images/one-sports.svg',
+        logo: 'https://iyadtv.pages.dev/images/one-sports.svg',
         url: 'https://rise2the.top/aldous/1784565639/LM_6N6dHI6mVZPyvTegklQ/s/cg_onesports_hd/default/index.mpd',
         licenseKey: '69f5a2318d744c609b125e3a7d8f2046:182523c0bae912e17e916dd4283280e9'
     }
@@ -1101,6 +1107,49 @@ const IPTVWatch = () => {
     const keyRef = useRef(null);
     const [latestKey, setLatestKey] = useState(null);
 
+    // EPG state
+    const [epgData, setEpgData] = useState({});
+    const [epgNameMap, setEpgNameMap] = useState({});
+
+    // Helper: look up EPG for a channel by tvgId first, then by name
+    const getEpgForChannel = useCallback((ch) => {
+        if (!ch) return null;
+        if (ch.tvgId && epgData[ch.tvgId]) return epgData[ch.tvgId];
+        // Fallback: match channel name against EPG display names
+        const normalized = ch.name
+            .toLowerCase()
+            .replace(/\s*(hd|sd|fhd|uhd|\(hd\)|\(sd\))\s*/gi, ' ')
+            .replace(/[^a-z0-9]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const epgChannelId = epgNameMap[normalized];
+        if (epgChannelId && epgData[epgChannelId]) return epgData[epgChannelId];
+        return null;
+    }, [epgData, epgNameMap]);
+
+    // EPG: Fetch and parse EPG data in a WebWorker
+    useEffect(() => {
+        const worker = new Worker(
+            new URL('../workers/epgParser.js', import.meta.url),
+            { type: 'module' }
+        );
+
+        worker.onmessage = (event) => {
+            const { type, data, nameMap, error: workerError } = event.data;
+            if (type === 'EPG_READY') {
+                console.log(`[IPTVWatch] EPG loaded: ${Object.keys(data).length} currently-airing programmes, ${Object.keys(nameMap).length} channel names`);
+                setEpgData(data);
+                setEpgNameMap(nameMap);
+            } else if (type === 'EPG_ERROR') {
+                console.warn('[IPTVWatch] EPG load failed (non-blocking):', workerError);
+            }
+        };
+
+        worker.postMessage({ type: 'PARSE_EPG', urls: EPG_URLS });
+
+        return () => worker.terminate();
+    }, []);
+
     // Fetch channel data if not provided via navigation state (direct URL load)
     useEffect(() => {
         if (channel) return; // Already have channel from navigation state
@@ -1124,10 +1173,13 @@ const IPTVWatch = () => {
                 }
 
                 // Fetch M3U playlist and parse
-                const response = await fetch(M3U_URL);
-                if (!response.ok) throw new Error('Failed to fetch playlist');
-                const text = await response.text();
-                const parsed = parseM3U(text);
+                let parsed = [];
+                if (M3U_URL) {
+                    const response = await fetch(M3U_URL);
+                    if (!response.ok) throw new Error('Failed to fetch playlist');
+                    const text = await response.text();
+                    parsed = parseM3U(text);
+                }
 
                 // Combine with manual channels (filter out excluded IDs: 5, 6, 78)
                 const excludedIds = [0];
@@ -1534,6 +1586,27 @@ const IPTVWatch = () => {
 
                 player.configure(config);
 
+                // GZ Decompression Response Filter
+                // Auto-detects gzip magic bytes (1F 8B) in responses and decompresses
+                // them using DecompressionStream. This allows .gz stream URLs to play.
+                player.getNetworkingEngine().registerResponseFilter(async (type, response) => {
+                    if (response.data && response.data.byteLength >= 2) {
+                        const header = new Uint8Array(response.data, 0, 2);
+                        if (header[0] === 0x1F && header[1] === 0x8B) {
+                            try {
+                                const ds = new DecompressionStream('gzip');
+                                const blob = new Blob([response.data]);
+                                const decompressedStream = blob.stream().pipeThrough(ds);
+                                const decompressedBlob = await new Response(decompressedStream).blob();
+                                response.data = await decompressedBlob.arrayBuffer();
+                                console.log('[IPTVWatch] Decompressed gzip response:', response.data.byteLength, 'bytes');
+                            } catch (gzErr) {
+                                console.warn('[IPTVWatch] Gzip decompression failed, using raw response:', gzErr);
+                            }
+                        }
+                    }
+                });
+
                 // Add error listener - only show UI for critical errors
                 player.addEventListener('error', (event) => {
                     const shakaError = event.detail;
@@ -1734,7 +1807,14 @@ const IPTVWatch = () => {
             {/* Live Badge - Top Center (info only, buttons moved to vertical bar) */}
             <div className={`iptv-watch-live-badge${!controlsVisible && playerLoaded ? ' controls-hidden' : ''}`}>
                 <span className="iptv-live-indicator">LIVE</span>
-                <span className="iptv-watch-channel-name">{channel?.name || 'Channel'}</span>
+                <div className="iptv-watch-badge-info">
+                    <span className="iptv-watch-channel-name">{channel?.name || 'Channel'}</span>
+                    {(() => {
+                        const epg = getEpgForChannel(channel); return epg ? (
+                            <span className="iptv-watch-epg-title">▶ {epg.title}</span>
+                        ) : null;
+                    })()}
+                </div>
             </div>
 
             {/* Vertical Control Bar */}
@@ -1849,7 +1929,14 @@ const IPTVWatch = () => {
                                         <span>{ch.name.charAt(0)}</span>
                                     )}
                                 </div>
-                                <span className="channel-strip-name">{ch.name}</span>
+                                <div className="channel-strip-info">
+                                    <span className="channel-strip-name">{ch.name}</span>
+                                    {(() => {
+                                        const epg = getEpgForChannel(ch); return epg ? (
+                                            <span className="channel-strip-epg">▶ {epg.title}</span>
+                                        ) : null;
+                                    })()}
+                                </div>
                             </button>
                         ))}
                     </div>
