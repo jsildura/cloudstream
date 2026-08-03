@@ -300,13 +300,34 @@
     </div>
   </div>
   <script>
+    // ─── Popunder-window detection ────────────────────────────────────────────
+    // Adsterra's "tab-under" popunder technique works by calling window.open()
+    // with the current site URL so the original page stays as the foreground
+    // window and the ad opens behind it. That new window has the same-origin
+    // URL as its document.referrer, which never happens on a normal first visit.
+    //
+    // When we detect this, we skip the 2-second splash entirely so the site
+    // feels instant and doesn't look like it "reloaded".
+    var _isPopunderWindow = (function () {
+      try {
+        return !!document.referrer &&
+          new URL(document.referrer).hostname === location.hostname;
+      } catch (e) { return false; }
+    })();
+
     // Splash screen logic - shows for minimum 2 seconds, then hides when React is ready
     const splashStartTime = Date.now();
-    const MIN_SPLASH_TIME = 2000; // 2 seconds minimum splash
+    // Popunder-opened windows get 0ms minimum so the splash never visibly shows
+    const MIN_SPLASH_TIME = _isPopunderWindow ? 0 : 2000;
 
     function hideSplashScreen() {
       const loadingScreen = document.querySelector('.loading-screen');
       if (loadingScreen && !loadingScreen.classList.contains('hidden')) {
+        // Skip fade animation for popunder windows — instant removal looks better
+        // than a 0.8s fade on a page that feels like it should already be loaded
+        if (_isPopunderWindow) {
+          loadingScreen.style.transition = 'none';
+        }
         loadingScreen.classList.add('hidden');
 
         // Remove element after transition ends
@@ -321,7 +342,7 @@
           if (document.body.contains(loadingScreen)) {
             loadingScreen.remove();
           }
-        }, 1000); // 0.8s transition + buffer
+        }, _isPopunderWindow ? 50 : 1000); // instant removal for popunder windows
       }
     }
 
@@ -334,6 +355,12 @@
         // Wait for remaining time so loading bar can finish
         setTimeout(hideSplashScreen, MIN_SPLASH_TIME - elapsed);
       }
+    }
+
+    // For popunder windows, hide the splash as soon as possible without waiting
+    // for the 'app-ready' event — React will still render normally underneath
+    if (_isPopunderWindow) {
+      hideSplashScreen();
     }
 
     // Listen for React app ready event

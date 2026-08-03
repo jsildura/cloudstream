@@ -1,5 +1,5 @@
 .tv-discover-filterbar {
-  position: sticky;
+  position: static;
   top: 68px;
   /* ← navbar is exactly 68px tall */
   z-index: 100;

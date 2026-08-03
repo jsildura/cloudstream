@@ -546,13 +546,19 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center 40%;
-  background-repeat: no-repeat;
-  mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 90%, transparent 100%);
-  transition: transform 0.8s ease;
+  height: 120%;
+}
+
+.banner-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+      transparent 30%,
+      rgba(17, 17, 17, 0.2) 45%,
+      rgba(17, 17, 17, 0.55) 65%,
+      rgba(17, 17, 17, 0.85) 82%,
+      #111 100%);
 }
 
 /* Backdrop image styling (used instead of background-image for LCP optimization) */

@@ -157,7 +157,8 @@
 .bottom-sheet-link.active .bottom-sheet-item-header {
   background: rgba(255, 255, 255, 0.08);
   border-left: 3px solid #e50914;
-  padding-left: 21px; /* 24px − 3px border */
+  padding-left: 21px;
+  /* 24px − 3px border */
 }
 
 .bottom-sheet-link.active .bottom-sheet-item-label {
@@ -552,12 +553,12 @@
     padding: 16px 20px;
     gap: 10px;
   }
-  
+
   .nav-link-dropdown .dropdown-arrow {
     width: 20px !important;
     height: 20px !important;
   }
-  
+
   .nav-mega-dropdown {
     top: 96px;
     left: 180px;
@@ -565,43 +566,43 @@
     padding: 32px;
     border-radius: 18px;
   }
-  
+
   .mega-dropdown-header {
     padding-bottom: 24px;
     margin-bottom: 24px;
   }
-  
+
   .mega-dropdown-header-title-row {
     gap: 12px;
     margin-bottom: 10px;
   }
-  
+
   .mega-dropdown-icon {
     width: 24px;
     height: 24px;
   }
-  
+
   .mega-dropdown-header-text h3,
   .mega-dropdown-header-title-row h3 {
     font-size: 24px;
   }
-  
+
   .mega-dropdown-header-text p,
   .mega-dropdown-header-desc {
     font-size: 20px;
   }
-  
+
   .mega-dropdown-grid {
     gap: 8px;
     margin-bottom: 24px;
   }
-  
+
   .mega-dropdown-card {
     gap: 18px;
     padding: 18px;
     border-radius: 12px;
   }
-  
+
   /* Accessiblity Focus outline for TV d-pad navigation */
   .mega-dropdown-card:focus-visible,
   .mega-dropdown-platform:focus-visible {
@@ -609,64 +610,64 @@
     outline-offset: 2px;
     background: rgba(255, 255, 255, 0.12);
   }
-  
+
   .mega-dropdown-card-icon {
     font-size: 22px;
     width: 24px;
     min-height: 26px;
   }
-  
+
   .mega-dropdown-card-title {
     font-size: 22px;
     margin-bottom: 6px;
     gap: 12px;
   }
-  
+
   .mega-dropdown-card-content p {
     font-size: 18px;
   }
-  
+
   .mega-dropdown-badge {
     font-size: 14px;
     padding: 4px 10px;
     border-radius: 6px;
   }
-  
+
   .nav-badge-new {
     font-size: 0.9rem;
     padding: 4px 8px;
     border-radius: 6px;
     top: -12px;
   }
-  
+
   .mega-dropdown-platforms {
     gap: 8px;
     padding-top: 24px;
   }
-  
+
   .mega-dropdown-platform {
     gap: 18px;
     padding: 18px;
     border-radius: 12px;
   }
-  
+
   .platform-icon {
     width: 38px;
     height: 38px;
     border-radius: 6px;
     font-size: 22px;
   }
-  
+
   .platform-logo {
     width: 22px;
     height: 22px;
   }
-  
+
   .platform-name {
     font-size: 20px;
     margin-bottom: 4px;
   }
-  
+
   .platform-info p {
     font-size: 16px;
   }
@@ -918,7 +919,7 @@
     height: 80px;
     border-radius: 12px;
   }
-  
+
   .navbar-search-btn svg {
     width: 40px;
     height: 40px;
@@ -932,7 +933,7 @@
     height: 160px;
     border-radius: 24px;
   }
-  
+
   .navbar-search-btn svg {
     width: 80px;
     height: 80px;
@@ -2191,8 +2192,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
 }
 
 /* YouTube Trailer Video - Slight scale to hide YouTube UI */
@@ -2705,16 +2706,16 @@
     width: 65%;
     max-width: 1400px;
   }
-  
+
   .modal-drawer-bar {
     height: 60px;
   }
-  
+
   .modal-drawer-handle {
     width: 60px;
     height: 8px;
   }
-  
+
   .modal-close-new {
     width: 52px;
     height: 52px;
@@ -2722,51 +2723,51 @@
     top: 20px;
     right: 24px;
   }
-  
+
   .modal-backdrop-container {
     min-height: 480px;
   }
-  
+
   .modal-title-overlay {
     font-size: 3rem;
   }
-  
+
   .modal-body-new {
     padding: 36px 60px 60px;
     gap: 36px;
   }
-  
+
   .modal-main-layout {
     gap: 60px;
   }
-  
+
   .modal-actions-row {
     gap: 18px;
     margin-bottom: 24px;
   }
-  
+
   .modal-btn-play {
     padding: 1rem 2rem;
     font-size: 1.4rem;
     border-radius: 10px;
     gap: 12px;
   }
-  
+
   .modal-btn-icon {
     font-size: 1.3rem;
   }
-  
+
   .modal-btn-icon-only {
     width: 64px;
     height: 64px;
     border-radius: 12px;
   }
-  
+
   .modal-btn-icon-only svg {
     width: 32px;
     height: 32px;
   }
-  
+
   /* Accessiblity Focus outlines for TV d-pad navigation */
   .modal-btn-play:focus-visible,
   .modal-btn-icon-only:focus-visible,
@@ -2774,52 +2775,52 @@
     outline: 4px solid #e50914;
     outline-offset: 4px;
   }
-  
+
   .modal-meta-row {
     font-size: 1.4rem;
     gap: 16px;
     margin-bottom: 12px;
   }
-  
+
   .content-rating-badge {
     font-size: 1.4rem;
   }
-  
+
   .modal-description-new {
     font-size: 1.5rem;
     line-height: 1.6;
   }
-  
+
   .modal-right-col {
     gap: 28px;
   }
-  
+
   .modal-info-item {
     font-size: 1.35rem;
   }
-  
+
   .modal-section {
     margin-top: 48px;
   }
-  
+
   .modal-section-title {
     font-size: 1.8rem;
     margin-bottom: 24px;
   }
-  
+
   .modal-recommendations-scroll {
     gap: 30px;
     padding-bottom: 20px;
   }
-  
+
   .modal-recommendations-scroll::-webkit-scrollbar {
     height: 10px;
   }
-  
+
   .modal-recommendation-item {
     width: 180px;
   }
-  
+
   .modal-recommendation-title {
     font-size: 1.2rem;
   }
@@ -2834,7 +2835,7 @@
     font-size: 1.8rem !important;
     border-width: 2px !important;
   }
-  
+
   .select-filter-btn svg {
     width: 32px !important;
     height: 32px !important;
@@ -2853,7 +2854,7 @@
     width: 72px;
     height: 72px;
   }
-  
+
   .play-hover-btn::after {
     width: 32px;
     height: 32px;
@@ -2876,7 +2877,7 @@
     width: 144px;
     height: 144px;
   }
-  
+
   .play-hover-btn::after {
     width: 64px;
     height: 64px;
@@ -3050,14 +3051,14 @@
     margin-bottom: 2rem;
     gap: 3rem;
   }
-  
+
   .footer-legal-link {
     font-size: 1.6rem;
     padding: 8px 16px;
     border-radius: 8px;
     transition: all 0.3s ease;
   }
-  
+
   /* Accessiblity Focus outline for TV d-pad navigation */
   .footer-legal-link:focus-visible {
     outline: 3px solid rgba(255, 255, 255, 0.8);
@@ -3074,14 +3075,14 @@
     margin-bottom: 4rem;
     gap: 6rem;
   }
-  
+
   .footer-legal-link {
     font-size: 3.2rem;
     padding: 16px 32px;
     border-radius: 16px;
     transition: all 0.3s ease;
   }
-  
+
   /* Accessiblity Focus outline for TV d-pad navigation */
   .footer-legal-link:focus-visible {
     outline: 6px solid rgba(255, 255, 255, 0.8);
@@ -3138,13 +3139,13 @@
     gap: 14px;
     margin-bottom: 2.5rem;
   }
-  
+
   .viewer-dot {
     width: 14px;
     height: 14px;
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.6);
   }
-  
+
   .viewer-text {
     font-size: 1.5rem;
   }
@@ -3156,13 +3157,13 @@
     gap: 28px;
     margin-bottom: 5rem;
   }
-  
+
   .viewer-dot {
     width: 28px;
     height: 28px;
     box-shadow: 0 0 28px rgba(34, 197, 94, 0.6);
   }
-  
+
   .viewer-text {
     font-size: 3rem;
   }
@@ -6278,21 +6279,22 @@
     width: 484px;
     border-radius: 16px;
   }
-  
+
   .modal-recommendation-item.clickable:focus-visible {
     outline: 8px solid #e50914;
     outline-offset: 8px;
   }
-  
+
   .modal-recommendation-overlay {
     padding: 96px 32px 32px;
   }
-  
+
   .modal-recommendation-title {
     font-size: 3rem;
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
   }
 }
+
 .media-type-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -6421,4 +6423,3 @@
     height: 72px;
   }
 }
-
