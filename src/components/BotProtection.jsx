@@ -84,7 +84,8 @@ const BotProtection = () => {
             if (window.outerWidth === 0 && window.outerHeight === 0) tests.push('zero-dimensions');
             if (window.screen.width === 0 || window.screen.height === 0) tests.push('zero-screen');
             if ('_Selenium_IDE_Recorder' in window) tests.push('selenium-ide');
-            if (navigator.connection && navigator.connection.rtt === 0) tests.push('zero-rtt');
+            // NOTE: zero-rtt check removed — Adsterra Anti-Adblock SYNC probes navigator.connection
+            // during its adblock detection, temporarily zeroing rtt and causing false positives.
 
             // WebGL software renderer detection
             try {
@@ -116,7 +117,11 @@ const BotProtection = () => {
             return null;
         };
 
-        // Run headless detection immediately
+        // Run headless detection with a delay so that third-party ad scripts
+        // (e.g. Adsterra Anti-Adblock JS SYNC) have time to finish their own
+        // browser-property patching before we inspect the environment.
+        // Without the delay, Adsterra's aggressive prototype manipulation of
+        // window.chrome / Function.prototype.toString causes false positives.
         const runHeadlessDetection = () => {
             if (detectedRef.current) return;
 
@@ -131,7 +136,10 @@ const BotProtection = () => {
             }
         };
 
-        runHeadlessDetection();
+        // Delay by 1500 ms — gives Adsterra Anti-Adblock SYNC script enough time
+        // to complete its adblock probing and restore patched browser properties
+        // before we run our own headless/automation checks.
+        const headlessTimer = setTimeout(runHeadlessDetection, 1500);
 
         // Initialize disable-devtool library dynamically (only once)
         const initDisableDevtool = async () => {
@@ -193,8 +201,9 @@ const BotProtection = () => {
             initDisableDevtool();
         }
 
-        // No cleanup needed - disable-devtool manages its own lifecycle
-        return () => { };
+        return () => {
+            clearTimeout(headlessTimer);
+        };
     }, []);
 
     if (!accessDenied) return null;
