@@ -1,0 +1,61 @@
+/* Grid that wraps the shared .trending-card into rows. Card visuals come from
+   TrendingSection.css; this file only owns layout + infinite-scroll chrome. */
+.movie-discover-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 4px 0 24px;
+}
+
+/* .trending-card is `flex: 0 0 auto; width: 380px` for the carousel — inside
+   the grid it must fill its cell instead, at every breakpoint. */
+.movie-discover-grid .trending-card {
+  width: 100%;
+  flex: initial;
+}
+
+/* Skeleton tiles reuse the card's shimmer, sized by the grid cell. */
+.movie-discover-grid .trending-card-skeleton {
+  width: 100%;
+}
+
+/* Responsive breakpoints. These override the width rules TrendingSection.css
+   sets at the same widths, so they need the same specificity. */
+@media (max-width: 1023px) {
+  .movie-discover-grid { grid-template-columns: repeat(3, 1fr); }
+  .movie-discover-grid .trending-card { width: 100%; }
+}
+@media (max-width: 767px) {
+  .movie-discover-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .movie-discover-grid .trending-card { width: 100%; }
+}
+
+/* Sentinel (invisible trigger for IntersectionObserver) */
+.movie-discover-sentinel { height: 1px; }
+
+/* Loading more indicator */
+.movie-discover-loading-more {
+  display: flex; justify-content: center; align-items: center;
+  padding: 24px; gap: 10px;
+  color: rgba(255,255,255,0.5); font-size: 0.875rem;
+}
+
+/* 1080p TV scaling */
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .movie-discover-grid { gap: 32px; grid-template-columns: repeat(5, 1fr); }
+  .movie-discover-grid .trending-card { width: 100%; }
+  .movie-discover-loading-more { padding: 48px; font-size: 1.5rem; }
+}
+
+/* 1440p / ultrawide */
+@media (min-width: 2560px) and (max-width: 3839px) {
+  .movie-discover-grid { gap: 40px; grid-template-columns: repeat(5, 1fr); }
+  .movie-discover-grid .trending-card { width: 100%; }
+}
+
+/* 4K scaling */
+@media (min-width: 3840px) {
+  .movie-discover-grid { gap: 64px; grid-template-columns: repeat(6, 1fr); }
+  .movie-discover-grid .trending-card { width: 100%; }
+  .movie-discover-loading-more { padding: 80px; font-size: 2rem; }
+}

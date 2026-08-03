@@ -1,56 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { MOVIE_GENRES, TV_GENRES } from '../constants/genres';
 import './FilterPanel.css';
-
-// Genre lists for movies and TV
-const MOVIE_GENRES = [
-    { id: 28, name: 'Action' },
-    { id: 12, name: 'Adventure' },
-    { id: 16, name: 'Animation' },
-    { id: 35, name: 'Comedy' },
-    { id: 80, name: 'Crime' },
-    { id: 99, name: 'Documentary' },
-    { id: 18, name: 'Drama' },
-    { id: 10751, name: 'Family' },
-    { id: 14, name: 'Fantasy' },
-    { id: 36, name: 'History' },
-    { id: 27, name: 'Horror' },
-    { id: 10402, name: 'Music' },
-    { id: 9648, name: 'Mystery' },
-    { id: 10749, name: 'Romance' },
-    { id: 878, name: 'Sci-Fi' },
-    { id: 53, name: 'Thriller' },
-    { id: 10752, name: 'War' },
-    { id: 37, name: 'Western' }
-];
-
-const TV_GENRES = [
-    { id: 10759, name: 'Action & Adventure' },
-    { id: 16, name: 'Animation' },
-    { id: 35, name: 'Comedy' },
-    { id: 80, name: 'Crime' },
-    { id: 99, name: 'Documentary' },
-    { id: 18, name: 'Drama' },
-    { id: 10751, name: 'Family' },
-    { id: 10762, name: 'Kids' },
-    { id: 9648, name: 'Mystery' },
-    { id: 10763, name: 'News' },
-    { id: 10764, name: 'Reality' },
-    { id: 10765, name: 'Sci-Fi & Fantasy' },
-    { id: 10766, name: 'Soap' },
-    { id: 10767, name: 'Talk' },
-    { id: 10768, name: 'War & Politics' },
-    { id: 37, name: 'Western' }
-];
-
-// Streaming providers
-const PROVIDERS = [
-    { id: 8, name: 'Netflix', logo: '/provider/netflix.png' },
-    { id: 337, name: 'Disney Plus', logo: '/provider/disney_plus.png' },
-    { id: 9, name: 'Prime Video', logo: '/provider/prime_video.png' },
-    { id: 350, name: 'Apple TV+', logo: '/provider/apple_tv_plus.png' },
-    { id: 384, name: 'HBO Max', logo: '/provider/hbo_max.png' },
-    { id: 158, name: 'Viu', logo: '/provider/viu.png' }
-];
 
 // Ratings
 const RATINGS = [
@@ -62,13 +12,28 @@ const RATINGS = [
     { value: '5', name: '5+ Average' }
 ];
 
-// Sort options
-const SORT_OPTIONS = [
+// Sort options. TV uses `first_air_date` — `primary_release_date` is a movie-only
+// field and TMDB silently ignores it on /discover/tv.
+const MOVIE_SORT_OPTIONS = [
     { value: 'primary_release_date.desc', name: 'Most Recent' },
     { value: 'primary_release_date.asc', name: 'Least Recent' },
     { value: 'vote_average.desc', name: 'Highest Rating' },
     { value: 'vote_average.asc', name: 'Lowest Rating' }
 ];
+
+const TV_SORT_OPTIONS = [
+    { value: 'first_air_date.desc', name: 'Most Recent' },
+    { value: 'first_air_date.asc', name: 'Least Recent' },
+    { value: 'vote_average.desc', name: 'Highest Rating' },
+    { value: 'vote_average.asc', name: 'Lowest Rating' }
+];
+
+const CURRENT_YEAR = new Date().getFullYear();
+
+// What "no filter" means. Pages that want a different baseline pass `defaults`;
+// Clear returns to whatever that baseline is, so the panel and its caller always
+// agree on which values count as unfiltered.
+const BASE_DEFAULTS = { year: '', rating: '', sort_by: 'popularity.desc' };
 
 const FilterPanel = ({
     isOpen,
@@ -76,37 +41,54 @@ const FilterPanel = ({
     filters = {},
     onApply,
     mediaType = 'movie', // 'movie', 'tv', or 'both'
-    showProviders = false
+    // Optional ordered category list (see TV_BAR_CATEGORIES). When supplied it
+    // replaces the plain genre chips, letting the panel mirror the discover bar
+    // exactly — keyword-backed categories included. Selections come back split
+    // into `genres` and `keywords` on the onApply payload.
+    categories = null,
+    // Baseline values for year/rating/sort. A non-empty year or rating here also
+    // drops the matching "Any …" option, because with a real baseline "Any" is
+    // no longer the default — it would be a filter change disguised as a reset.
+    defaults = BASE_DEFAULTS
 }) => {
     const panelRef = useRef(null);
+    // Callers build the `filters` prop inline, so it is a new object on every
+    // parent render. Keeping it in a ref lets the reset effect depend on `isOpen`
+    // alone — otherwise an unrelated parent re-render wipes pending edits.
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+    const defaultsRef = useRef(defaults);
+    defaultsRef.current = defaults;
 
-    // Pending filters (not applied until Save Changes)
+    // Pending filters (not applied until Save Changes). The open-effect below
+    // re-seeds this on every open; this initial value only covers the first
+    // render, when the panel is not visible yet.
     const [pendingFilters, setPendingFilters] = useState({
         genres: [],
-        year: '',
-        rating: '',
-        providers: [],
-        sort_by: 'popularity.desc',
+        keywords: [],
+        ...defaults,
         ...filters
     });
 
-    // Provider search
-    const [providerSearch, setProviderSearch] = useState('');
-    const [isProviderDropdownOpen, setIsProviderDropdownOpen] = useState(false);
-
-    // Reset pending filters when panel opens
+    // Seed the pending filters from the applied ones each time the panel opens.
     useEffect(() => {
         if (isOpen) {
+            const applied = filtersRef.current || {};
+            const base = defaultsRef.current || BASE_DEFAULTS;
             setPendingFilters({
-                genres: filters.genres || [],
-                year: filters.year || '',
-                rating: filters.rating || '',
-                providers: filters.providers || [],
-                sort_by: filters.sort_by || 'popularity.desc',
-                ...filters
+                // Anything the caller tracks that this panel does not render is
+                // spread first so Save hands it straight back untouched.
+                ...applied,
+                genres: applied.genres || [],
+                keywords: applied.keywords || [],
+                // `||`, not `??`: callers build these from query params and pass
+                // '' for "not set", which has to fall through to the baseline.
+                year: applied.year || base.year || '',
+                rating: applied.rating || base.rating || '',
+                sort_by: applied.sort_by || base.sort_by || 'popularity.desc'
             });
         }
-    }, [isOpen, filters]);
+    }, [isOpen]);
 
     // Close on escape key
     useEffect(() => {
@@ -144,6 +126,29 @@ const FilterPanel = ({
         return merged.sort((a, b) => a.name.localeCompare(b.name));
     };
 
+    const getSortOptions = () => (mediaType === 'tv' ? TV_SORT_OPTIONS : MOVIE_SORT_OPTIONS);
+
+    // Which pending list a category writes to. Keyword categories are kept apart
+    // from genres because they go out on a different TMDB param.
+    const listKeyFor = (category) =>
+        category.param === 'with_keywords' ? 'keywords' : 'genres';
+
+    const isCategorySelected = (category) =>
+        (pendingFilters[listKeyFor(category)] || []).includes(category.id);
+
+    const toggleCategory = (category) => {
+        const listKey = listKeyFor(category);
+        setPendingFilters(prev => {
+            const list = prev[listKey] || [];
+            return {
+                ...prev,
+                [listKey]: list.includes(category.id)
+                    ? list.filter(id => id !== category.id)
+                    : [...list, category.id]
+            };
+        });
+    };
+
     const toggleGenre = (genreId) => {
         setPendingFilters(prev => {
             const genres = prev.genres || [];
@@ -155,24 +160,12 @@ const FilterPanel = ({
         });
     };
 
-    const toggleProvider = (providerId) => {
-        setPendingFilters(prev => {
-            const providers = prev.providers || [];
-            if (providers.includes(providerId)) {
-                return { ...prev, providers: providers.filter(id => id !== providerId) };
-            } else {
-                return { ...prev, providers: [...providers, providerId] };
-            }
-        });
-    };
-
     const handleClear = () => {
         setPendingFilters({
             genres: [],
-            year: '',
-            rating: '',
-            providers: [],
-            sort_by: 'popularity.desc'
+            keywords: [],
+            ...BASE_DEFAULTS,
+            ...defaults
         });
     };
 
@@ -180,10 +173,6 @@ const FilterPanel = ({
         onApply(pendingFilters);
         onClose();
     };
-
-    const filteredProviders = PROVIDERS.filter(p =>
-        p.name.toLowerCase().includes(providerSearch.toLowerCase())
-    );
 
     if (!isOpen) return null;
 
@@ -211,35 +200,51 @@ const FilterPanel = ({
 
                 {/* Scrollable Content */}
                 <div className="filter-panel-content">
-                    {/* Genres Section */}
+                    {/* Categories / Genres Section. `categories` mirrors the
+                        discover bar one-for-one so every pill there is also
+                        deselectable here; without it we fall back to genres. */}
                     <div className="filter-section">
-                        <h3 className="filter-section-title">Genres</h3>
-                        <div className="filter-genre-chips" role="group" aria-label="Genre filters">
-                            {getGenres().map(genre => (
-                                <button
-                                    key={genre.id}
-                                    className={`filter-genre-chip ${pendingFilters.genres?.includes(genre.id) ? 'selected' : ''}`}
-                                    onClick={() => toggleGenre(genre.id)}
-                                    aria-pressed={pendingFilters.genres?.includes(genre.id)}
-                                    aria-label={`Filter by ${genre.name}`}
-                                >
-                                    {genre.name}
-                                </button>
-                            ))}
+                        <h3 className="filter-section-title">{categories ? 'Categories' : 'Genres'}</h3>
+                        <div className="filter-genre-chips" role="group" aria-label={categories ? 'Category filters' : 'Genre filters'}>
+                            {categories
+                                ? categories.map(category => (
+                                    <button
+                                        key={category.key}
+                                        className={`filter-genre-chip ${isCategorySelected(category) ? 'selected' : ''}`}
+                                        onClick={() => toggleCategory(category)}
+                                        aria-pressed={isCategorySelected(category)}
+                                        aria-label={`Filter by ${category.name}`}
+                                    >
+                                        {category.name}
+                                    </button>
+                                ))
+                                : getGenres().map(genre => (
+                                    <button
+                                        key={genre.id}
+                                        className={`filter-genre-chip ${pendingFilters.genres?.includes(genre.id) ? 'selected' : ''}`}
+                                        onClick={() => toggleGenre(genre.id)}
+                                        aria-pressed={pendingFilters.genres?.includes(genre.id)}
+                                        aria-label={`Filter by ${genre.name}`}
+                                    >
+                                        {genre.name}
+                                    </button>
+                                ))}
                         </div>
                     </div>
 
                     {/* Year Section */}
                     <div className="filter-section">
-                        <h3 className="filter-section-title">Release Year</h3>
+                        <h3 className="filter-section-title">{mediaType === 'tv' ? 'First Air Year' : 'Release Year'}</h3>
                         <select
                             className="filter-select"
                             value={pendingFilters.year || ''}
                             onChange={(e) => setPendingFilters(prev => ({ ...prev, year: e.target.value }))}
                         >
-                            <option value="">Any year</option>
-                            {Array.from({ length: new Date().getFullYear() - 1950 + 1 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                                <option key={year} value={year}>{year}</option>
+                            {!defaults.year && <option value="">Any year</option>}
+                            {Array.from({ length: CURRENT_YEAR - 1950 + 1 }, (_, i) => CURRENT_YEAR - i).map(year => (
+                                <option key={year} value={year}>
+                                    {year === CURRENT_YEAR ? `${year} (Latest Year)` : year}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -252,7 +257,7 @@ const FilterPanel = ({
                             value={pendingFilters.rating || ''}
                             onChange={(e) => setPendingFilters(prev => ({ ...prev, rating: e.target.value }))}
                         >
-                            {RATINGS.map(r => (
+                            {RATINGS.filter(r => r.value || !defaults.rating).map(r => (
                                 <option key={r.value} value={r.value}>{r.name}</option>
                             ))}
                         </select>
@@ -266,8 +271,8 @@ const FilterPanel = ({
                             value={pendingFilters.sort_by || ''}
                             onChange={(e) => setPendingFilters(prev => ({ ...prev, sort_by: e.target.value }))}
                         >
-                            <option value="">Default</option>
-                            {SORT_OPTIONS.map(s => (
+                            <option value="popularity.desc">Most Popular</option>
+                            {getSortOptions().map(s => (
                                 <option key={s.value} value={s.value}>{s.name}</option>
                             ))}
                         </select>

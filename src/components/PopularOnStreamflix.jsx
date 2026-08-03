@@ -7,11 +7,14 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import usePopularTracking from '../hooks/usePopularTracking';
 import { useTMDB } from '../hooks/useTMDB';
 import useTVDetect from '../hooks/useTVDetect';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './PopularOnStreamflix.css';
+import CarouselControls from './CarouselControls';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
     const { popularContent, loading } = usePopularTracking();
     const { BACKDROP_URL, LOGO_URL, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating } = useTMDB();
+    const { getPreviewProps, closeNow } = useHoverPreview();
 
     // State for enriched data (with logos)
     const [enrichedContent, setEnrichedContent] = useState([]);
@@ -208,6 +211,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
     // Handle item click with full details fetch
     const handleItemClick = useCallback(async (item) => {
         if (isDragging) return;
+        closeNow(); // dismiss the hover preview before the modal opens
 
         try {
             // Fetch full details from TMDB
@@ -241,7 +245,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 type: item.type
             });
         }
-    }, [isDragging, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating, onItemClick]);
+    }, [isDragging, closeNow, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating, onItemClick]);
 
     const handleKeyDown = useCallback((e, index) => {
         const itemsLength = displayContent?.length || 0;
@@ -286,17 +290,18 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 Our Most-Watched This Week
             </p>
 
-            <div
-                className={`popular-streamflix-grid${isDragging ? ' dragging' : ''}`}
-                ref={carouselRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-            >
+            <div className="carousel-container">
+                <div
+                    className={`popular-streamflix-grid${isDragging ? ' dragging' : ''}`}
+                    ref={carouselRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseMove={handleMouseMove}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                 {loading ? (
                     // Skeleton loading
                     [...Array(10)].map((_, i) => (
@@ -323,6 +328,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                 ref={el => cardRefs.current[index] = el}
                                 className={`popular-streamflix-card${isFocused ? ' focused' : ''}`}
                                 onClick={() => handleItemClick(item)}
+                                {...getPreviewProps(item, item.type, isDragging, handleItemClick)}
                                 role="button"
                                 tabIndex={0}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
@@ -389,6 +395,8 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                         );
                     })
                 )}
+                </div>
+                <CarouselControls carouselRef={carouselRef} />
             </div>
         </div>
     );

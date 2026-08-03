@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import InstallAppButton from './InstallAppButton';
 import SearchModal from './SearchModal';
 
@@ -8,6 +8,7 @@ const MAX_RECENT_SEARCHES = 5;
 const MAX_TRENDING = 10;
 
 const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -15,14 +16,8 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState([]);
   const [trendingSearches, setTrendingSearches] = useState([]);
-  const [moviesDropdownOpen, setMoviesDropdownOpen] = useState(false);
-  const [tvShowsDropdownOpen, setTvShowsDropdownOpen] = useState(false);
   const [tvDropdownOpen, setTvDropdownOpen] = useState(false);
-  const [moviesMenuOpen, setMoviesMenuOpen] = useState(false);
-  const [tvShowsMenuOpen, setTvShowsMenuOpen] = useState(false);
   const [tvMenuOpen, setTvMenuOpen] = useState(false);
-  const [platformsMenuOpen, setPlatformsMenuOpen] = useState(false);
-  const [trendingMenuOpen, setTrendingMenuOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const debounceTimerRef = useRef(null);
 
@@ -223,11 +218,8 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
       document.body.classList.remove('mobile-menu-open');
       setDragY(0);
       setIsDragging(false);
-      // Reset all submenus when closing
-      setMoviesMenuOpen(false);
-      setTvShowsMenuOpen(false);
+      // Reset the one remaining submenu (TV / live content) when closing
       setTvMenuOpen(false);
-      setTrendingMenuOpen(false);
     }
     // Cleanup on unmount
     return () => {
@@ -252,144 +244,10 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
         </Link>
 
         <div className="navbar-links">
-          <Link to="/" className="nav-link">Home</Link>
-          {/* TV Shows Dropdown */}
-          <div
-            className="nav-dropdown-wrapper"
-            onMouseEnter={() => setTvShowsDropdownOpen(true)}
-            onMouseLeave={() => setTvShowsDropdownOpen(false)}
-          >
-            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
-              Shows
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
+          <NavLink to="/" end className="nav-link">Home</NavLink>
+          <NavLink to="/tv-shows" className="nav-link">Shows</NavLink>
 
-            {tvShowsDropdownOpen && (
-              <div className="nav-mega-dropdown">
-                {/* Header */}
-                <div className="mega-dropdown-header">
-                  <div className="mega-dropdown-header-title-row">
-                    <img src="/icons/shows.svg" alt="Shows" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                    <h3>Shows</h3>
-                  </div>
-                  <p className="mega-dropdown-header-desc">Discover captivating TV series from around the world. From binge-worthy dramas to hilarious comedies, find your next obsession.</p>
-                </div>
-
-                {/* Categories Grid */}
-                <div className="mega-dropdown-grid">
-                  <Link to="/tv-shows" className="mega-dropdown-card mega-dropdown-card-featured" onClick={() => setTvShowsDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Discover</div>
-                      <p>Browse our extensive collection of TV series across all genres.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/trending-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><img src="/icons/trend.svg" alt="Trending" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} /></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Trending Now</div>
-                      <p>See what TV shows everyone is talking about right now.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/top-rated-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Top Rated</div>
-                      <p>Explore the highest-rated TV series of all time.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/anime-series" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg stroke="currentColor" fill="currentColor" strokeWidth="0" role="img" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M2.933 13.467a10.55 10.55 0 1 1 21.067-.8V12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12h.8a10.617 10.617 0 0 1-9.867-10.533zM19.2 14a3.85 3.85 0 0 1-1.333-7.467A7.89 7.89 0 0 0 14 5.6a8.4 8.4 0 1 0 8.4 8.4 6.492 6.492 0 0 0-.133-1.6A3.415 3.415 0 0 1 19.2 14z"></path></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Anime Series</div>
-                      <p>Dive into the world of Japanese animated series.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/popular-tv" className="mega-dropdown-card" onClick={() => setTvShowsDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Popular</div>
-                      <p>Discover the most popular TV shows worldwide.</p>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Movies Dropdown */}
-          <div
-            className="nav-dropdown-wrapper"
-            onMouseEnter={() => setMoviesDropdownOpen(true)}
-            onMouseLeave={() => setMoviesDropdownOpen(false)}
-          >
-            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
-              Movies
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
-
-            {moviesDropdownOpen && (
-              <div className="nav-mega-dropdown">
-                {/* Header */}
-                <div className="mega-dropdown-header">
-                  <div className="mega-dropdown-header-title-row">
-                    <img src="/logo/movie-outline.svg" alt="Movies" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1)' }} />
-                    <h3>Movies</h3>
-                  </div>
-                  <p className="mega-dropdown-header-desc">Explore a world of movies with our extensive film library. From iconic classics to today’s biggest hits, discover your next must-watch anytime.</p>
-                </div>
-                <div className="mega-dropdown-grid">
-                  <Link to="/discover" className="mega-dropdown-card mega-dropdown-card-featured" onClick={() => setMoviesDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Discover</div>
-                      <p>Find fresh discoveries and exciting new titles in cinema today.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/trending" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><img src="/icons/trend.svg" alt="Trending" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} /></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Trending Now</div>
-                      <p>Dive into the world of trending movies that have captured hearts.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/top-rated" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Top Rated</div>
-                      <p>Explore the pinnacle of cinematic excellence with top-rated films.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/anime-movies" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg stroke="currentColor" fill="currentColor" strokeWidth="0" role="img" viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M2.933 13.467a10.55 10.55 0 1 1 21.067-.8V12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12h.8a10.617 10.617 0 0 1-9.867-10.533zM19.2 14a3.85 3.85 0 0 1-1.333-7.467A7.89 7.89 0 0 0 14 5.6a8.4 8.4 0 1 0 8.4 8.4 6.492 6.492 0 0 0-.133-1.6A3.415 3.415 0 0 1 19.2 14z"></path></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Anime Movies</div>
-                      <p>Embark on an epic journey with our handpicked anime movies.</p>
-                    </div>
-                  </Link>
-
-                  <Link to="/popular" className="mega-dropdown-card" onClick={() => setMoviesDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Popular</div>
-                      <p>Discover what everyone is watching right now.</p>
-                    </div>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
+          <NavLink to="/discover" className="nav-link">Movies</NavLink>
 
           {/* TV Dropdown */}
           <div
@@ -397,7 +255,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             onMouseEnter={() => setTvDropdownOpen(true)}
             onMouseLeave={() => setTvDropdownOpen(false)}
           >
-            <span className="nav-link nav-link-dropdown" style={{ cursor: 'pointer' }}>
+            <span className={`nav-link nav-link-dropdown ${location.pathname.startsWith('/iptv') ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
               TV
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
                 <polyline points="6 9 12 15 18 9"></polyline>
@@ -446,16 +304,16 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             )}
           </div>
 
-          <Link to="/music" className="nav-link">
+          <NavLink to="/music" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18V5l12-2v13" />
               <circle cx="6" cy="18" r="3" />
               <circle cx="18" cy="16" r="3" />
             </svg>
             Music
-          </Link>
+          </NavLink>
 
-          <Link to="/my-list" className="nav-link">
+          <NavLink to="/my-list" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
@@ -463,7 +321,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               <rect x="3" y="14" width="7" height="7" />
             </svg>
             Watchlist
-          </Link>
+          </NavLink>
 
         </div>
 
@@ -529,12 +387,22 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
 
           {/* Menu Items */}
           <div className="bottom-sheet-content">
-            {/* Movies Section */}
-            <div className="bottom-sheet-item">
-              <div
-                className={`bottom-sheet-item-header ${moviesMenuOpen ? 'open' : ''}`}
-                onClick={() => setMoviesMenuOpen(!moviesMenuOpen)}
-              >
+            {/* Home - Non-expandable */}
+            <NavLink to="/" end className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
+              <div className="bottom-sheet-item-header">
+                <div className="bottom-sheet-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                  </svg>
+                </div>
+                <span className="bottom-sheet-item-label">Home</span>
+              </div>
+            </NavLink>
+
+            {/* Movies - Non-expandable */}
+            <NavLink to="/discover" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
+              <div className="bottom-sheet-item-header">
                 <div className="bottom-sheet-item-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
@@ -548,90 +416,23 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                   </svg>
                 </div>
                 <span className="bottom-sheet-item-label">Movies</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="bottom-sheet-chevron">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
               </div>
-              <div className={`bottom-sheet-submenu ${moviesMenuOpen ? 'open' : ''}`}>
-                <Link to="/discover" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-                  </svg>
-                  <span>Discover</span>
-                </Link>
-                <Link to="/trending" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <img src="/icons/trend.svg" alt="Trending" width="16" height="16" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                  <span>Trending Now</span>
-                </Link>
-                <Link to="/top-rated" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span>Top Rated</span>
-                </Link>
-                <Link to="/anime-movies" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" role="img" viewBox="0 0 24 24" className="mr-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M2.933 13.467a10.55 10.55 0 1 1 21.067-.8V12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12h.8a10.617 10.617 0 0 1-9.867-10.533zM19.2 14a3.85 3.85 0 0 1-1.333-7.467A7.89 7.89 0 0 0 14 5.6a8.4 8.4 0 1 0 8.4 8.4 6.492 6.492 0 0 0-.133-1.6A3.415 3.415 0 0 1 19.2 14z"></path></svg>
-                  <span>Anime Movies</span>
-                </Link>
-                <Link to="/popular" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                  </svg>
-                  <span>Popular</span>
-                </Link>
-              </div>
-            </div>
+            </NavLink>
 
-            {/* Shows Section */}
-            <div className="bottom-sheet-item">
-              <div
-                className={`bottom-sheet-item-header ${tvShowsMenuOpen ? 'open' : ''}`}
-                onClick={() => setTvShowsMenuOpen(!tvShowsMenuOpen)}
-              >
+            {/* Shows - Non-expandable */}
+            <NavLink to="/tv-shows" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
+              <div className="bottom-sheet-item-header">
                 <div className="bottom-sheet-item-icon">
                   <img src="/icons/shows.svg" alt="Shows" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
                 </div>
                 <span className="bottom-sheet-item-label">Shows</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="bottom-sheet-chevron">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
               </div>
-              <div className={`bottom-sheet-submenu ${tvShowsMenuOpen ? 'open' : ''}`}>
-                <Link to="/tv-shows" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-                  </svg>
-                  <span>Discover</span>
-                </Link>
-                <Link to="/trending-tv" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <img src="/icons/trend.svg" alt="Trending" width="16" height="16" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                  <span>Trending Now</span>
-                </Link>
-                <Link to="/top-rated-tv" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                  </svg>
-                  <span>Top Rated</span>
-                </Link>
-                <Link to="/anime-series" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" role="img" viewBox="0 0 24 24" className="mr-2 size-4" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M2.933 13.467a10.55 10.55 0 1 1 21.067-.8V12c0-6.627-5.373-12-12-12S0 5.373 0 12s5.373 12 12 12h.8a10.617 10.617 0 0 1-9.867-10.533zM19.2 14a3.85 3.85 0 0 1-1.333-7.467A7.89 7.89 0 0 0 14 5.6a8.4 8.4 0 1 0 8.4 8.4 6.492 6.492 0 0 0-.133-1.6A3.415 3.415 0 0 1 19.2 14z"></path></svg>
-                  <span>Anime Series</span>
-                </Link>
-                <Link to="/popular-tv" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                  </svg>
-                  <span>Popular</span>
-                </Link>
-              </div>
-            </div>
+            </NavLink>
 
             {/* TV Section */}
             <div className="bottom-sheet-item">
               <div
-                className={`bottom-sheet-item-header ${tvMenuOpen ? 'open' : ''}`}
+                className={`bottom-sheet-item-header ${tvMenuOpen ? 'open' : ''} ${location.pathname.startsWith('/iptv') ? 'active' : ''}`}
                 onClick={() => setTvMenuOpen(!tvMenuOpen)}
               >
                 <div className="bottom-sheet-item-icon">
@@ -660,7 +461,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             </div>
 
             {/* Music - Non-expandable */}
-            <Link to="/music" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
+            <NavLink to="/music" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
               <div className="bottom-sheet-item-header">
                 <div className="bottom-sheet-item-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -671,10 +472,10 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                 </div>
                 <span className="bottom-sheet-item-label">Music</span>
               </div>
-            </Link>
+            </NavLink>
 
             {/* Watchlist - Non-expandable */}
-            <Link to="/my-list" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
+            <NavLink to="/my-list" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
               <div className="bottom-sheet-item-header">
                 <div className="bottom-sheet-item-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -686,7 +487,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                 </div>
                 <span className="bottom-sheet-item-label">Watchlist</span>
               </div>
-            </Link>
+            </NavLink>
 
             {/* Install App Button */}
             <div className="bottom-sheet-install">

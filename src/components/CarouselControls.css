@@ -1,0 +1,83 @@
+.carousel-container {
+    position: relative;
+}
+
+.carousel-control-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    padding: 0;
+    /* Adjust for scrollbars if needed, though they are usually hidden */
+}
+
+.carousel-control-btn.left {
+    left: 0;
+    background: linear-gradient(to right, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.carousel-control-btn.right {
+    right: 0;
+    background: linear-gradient(to left, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.carousel-control-btn.visible {
+    visibility: visible;
+}
+
+/* Show buttons on parent container hover */
+.carousel-container:hover .carousel-control-btn.visible {
+    opacity: 1;
+}
+
+/* For keyboard accessibility, ensure they show on focus */
+.carousel-control-btn:focus-visible {
+    opacity: 1;
+    visibility: visible;
+    outline: 2px solid #e50914;
+}
+
+.control-icon-wrapper {
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.carousel-control-btn:hover .control-icon-wrapper {
+    transform: scale(1.15);
+    background: #e50914; /* Streamflix red */
+    box-shadow: 0 6px 16px rgba(229, 9, 20, 0.4);
+}
+
+.carousel-control-btn svg {
+    transition: transform 0.2s ease;
+}
+
+/* Hide on mobile devices since they use touch swipe */
+@media (max-width: 768px) {
+    .carousel-control-btn {
+        display: none;
+    }
+}

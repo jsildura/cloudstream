@@ -4,30 +4,25 @@ import { useTMDB } from '../hooks/useTMDB';
 import useTVDetect from '../hooks/useTVDetect';
 import Modal from './Modal';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
-import './MovieStudios.css';
+import './StreamingProviders.css';
 import CarouselControls from './CarouselControls';
 
 const TMDB_LOGO_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/w780';
 
-// TMDB Company IDs and logo paths for major studios
-const STUDIOS = [
-    { id: 420, name: 'Marvel Studios', logo: '/hUzeosd33nzE5MCNsZxCGEKTXaQ.png', accentColor: '#E62429' },
-    { id: 3, name: 'Pixar', logo: '/1TjvGVDMYsj6JBxOAkUHpPEwLf7.png', accentColor: '#1B9CAF' },
-    { id: 521, name: 'DreamWorks', logo: '/logo/dreamworks.png', accentColor: '#1963ae' },
-    { id: 41077, name: 'A24', logo: '/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png', accentColor: '#FFFFFF' },
-    { id: 3172, name: 'Blumhouse', logo: '/kDedjRZwO8uyFhuHamomOhN6fzG.png', accentColor: '#b0ff26' },
-    { id: 174, name: 'Warner Bros', logo: '/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png', accentColor: '#0045B3' },
-    { id: 33, name: 'Universal', logo: '/8lvHyhjr8oUKOOy2dKXoALWKdp0.png', accentColor: '#939598' },
-    { id: 1632, name: 'Lionsgate', logo: '/logo/lionsgate.png', accentColor: '#E0A922' },
-    { id: 25, name: '20th Century', logo: '/qZCc1lty5FzX30aOCVRBLzaVmcp.png', accentColor: '#D4AA00' },
-    { id: 4, name: 'Paramount', logo: '/logo/Paramount.png', accentColor: '#00609B' },
-    { id: 128064, name: 'DC Studios', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/DC_Comics_logo.png/960px-DC_Comics_logo.png', accentColor: '#0476F2' },
-    { id: 2348, name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', accentColor: '#EA6007' },
-    { id: 8356, name: 'Vivamax', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Vivamax_logo.png', accentColor: '#E4AC06' },
+// TMDB watch provider IDs + official provider logo paths
+const PROVIDERS = [
+    { id: 8, name: 'Netflix', logo: '/wwemzKWzjKYJFfCeiB57q3r4Bcm.png', accentColor: '#E50914', route: '/netflix' },
+    { id: 337, name: 'Disney+', logo: '/1edZOYAfoyZyZ3rklNSiUpXX30Q.png', accentColor: '#113CCF', route: '/disney' },
+    { id: 9, name: 'Prime Video', logo: '/w7HfLNm9CWwRmAMU58udl2L7We7.png', accentColor: '#00A8E1', route: '/prime-video' },
+    { id: 350, name: 'Apple TV+', logo: '/bngHRFi794mnMq34gfVcm9nDxN1.png', accentColor: '#000000', route: '/apple-tv' },
+    { id: '1899|118', name: 'HBO Max', logo: '/nmU0UMDJB3dRRQSTUqawzF2Od1a.png', accentColor: '#5822B4', route: '/hbo' },
+    { id: 158, name: 'Viu', logo: '/vYMTH0Cz13Dxu4DPKNtYlWF8zxL.png', accentColor: '#FFC107', route: '/viu', regions: ['HK', 'SG', 'MY', 'PH', 'IN'] },
+    { id: 283, name: 'Crunchyroll', logo: '/qqyXcZlJQKlRmAD1TCKV7mGLQlt.png', accentColor: '#F47521', route: '/crunchyroll' },
+    { id: 386, name: 'Peacock', logo: '/gIAcGTjKKr0KOHL5s4O36roJ8p7.png', accentColor: '#f3f3f3', route: '/peacock', tvNetwork: 3353 },
 ];
 
-const MovieStudios = () => {
+const StreamingProviders = () => {
     const navigate = useNavigate();
     const gridRef = useRef(null);
     const moviesGridRef = useRef(null);
@@ -35,9 +30,9 @@ const MovieStudios = () => {
     const { fetchDiscoverMovies, fetchDiscoverTV, movieGenres, fetchCredits, fetchContentRating, fetchLogo, LOGO_URL } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
-    // Selected studio state - default to Marvel Studios
-    const [selectedStudio, setSelectedStudio] = useState(STUDIOS[0]);
-    const [studioMovies, setStudioMovies] = useState([]);
+    // Selected provider state - default to Netflix
+    const [selectedProvider, setSelectedProvider] = useState(PROVIDERS[0]);
+    const [providerMovies, setProviderMovies] = useState([]);
     const [isLoadingMovies, setIsLoadingMovies] = useState(false);
     const [movieLogos, setMovieLogos] = useState({});
     const [mediaType, setMediaType] = useState('movie'); // 'movie' or 'tv'
@@ -55,13 +50,12 @@ const MovieStudios = () => {
     // Momentum state
     const velX = useRef(0);
     const animationFrameId = useRef(null);
-    const lastMouseMoveTime = useRef(0);
 
     // Grid states
     const isTVMode = useTVDetect();
     const movieCardRefs = useRef([]);
     const touchEndTimeoutRef = useRef(null);
-    
+
     // Core state for movies grid navigation
     const [focusedMovieIndex, setFocusedMovieIndex] = useState(0);
     const [moviesInteractionState, setMoviesInteractionState] = useState({
@@ -70,33 +64,57 @@ const MovieStudios = () => {
         isTouching: false
     });
 
-    // Fetch movies when studio is selected
+    // Fetch content when provider or media type changes
     useEffect(() => {
-        const fetchStudioMovies = async () => {
-            if (!selectedStudio) {
-                setStudioMovies([]);
+        const fetchProviderContent = async () => {
+            if (!selectedProvider) {
+                setProviderMovies([]);
                 return;
             }
 
             setIsLoadingMovies(true);
             try {
-                let movies = [];
-                if (mediaType === 'movie') {
-                    movies = await fetchDiscoverMovies({
-                        with_companies: selectedStudio.id,
+                const fetchDiscover = mediaType === 'movie' ? fetchDiscoverMovies : fetchDiscoverTV;
+                let results = [];
+
+                if (selectedProvider.regions) {
+                    // Asia-focused providers need a multi-region sweep
+                    for (const region of selectedProvider.regions) {
+                        const regionResults = await fetchDiscover({
+                            with_watch_providers: selectedProvider.id,
+                            watch_region: region,
+                            sort_by: 'popularity.desc',
+                            page: 1
+                        });
+                        results = [...results, ...regionResults];
+                        if (results.length >= 20) break;
+                    }
+
+                    // Deduplicate across regions
+                    const seen = new Set();
+                    results = results.filter(item => {
+                        if (seen.has(item.id)) return false;
+                        seen.add(item.id);
+                        return true;
+                    });
+                } else if (mediaType === 'tv' && selectedProvider.tvNetwork) {
+                    // Originals are more reliably found by network than by provider
+                    results = await fetchDiscover({
+                        with_networks: selectedProvider.tvNetwork,
                         sort_by: 'popularity.desc',
                         page: 1
                     });
                 } else {
-                    movies = await fetchDiscoverTV({
-                        with_companies: selectedStudio.id,
+                    results = await fetchDiscover({
+                        with_watch_providers: selectedProvider.id,
+                        watch_region: 'US',
                         sort_by: 'popularity.desc',
                         page: 1
                     });
                 }
 
-                const topMovies = movies.slice(0, 10);
-                setStudioMovies(topMovies);
+                const topMovies = results.slice(0, 10);
+                setProviderMovies(topMovies);
 
                 // Fetch logos for all items in parallel
                 const logoPromises = topMovies.map(item =>
@@ -109,22 +127,21 @@ const MovieStudios = () => {
                 });
                 setMovieLogos(logosMap);
             } catch (error) {
-                console.error('Failed to fetch studio content:', error);
-                setStudioMovies([]);
+                console.error('Failed to fetch provider content:', error);
+                setProviderMovies([]);
             } finally {
                 setIsLoadingMovies(false);
             }
         };
 
-        fetchStudioMovies();
-    }, [selectedStudio, fetchDiscoverMovies, fetchDiscoverTV, fetchLogo, mediaType]);
-
-    const handleStudioClick = (studio) => {
-        if (selectedStudio?.id === studio.id) {
-            // Toggle off if clicking the same studio
-            setSelectedStudio(null);
+        fetchProviderContent();
+    }, [selectedProvider, fetchDiscoverMovies, fetchDiscoverTV, fetchLogo, mediaType]);
+    const handleProviderClick = (provider) => {
+        if (selectedProvider?.id === provider.id) {
+            // Toggle off if clicking the same provider
+            setSelectedProvider(null);
         } else {
-            setSelectedStudio(studio);
+            setSelectedProvider(provider);
         }
     };
 
@@ -151,8 +168,8 @@ const MovieStudios = () => {
         setSelectedItem(null);
     };
 
-    const handleImageError = (studioId) => {
-        setImageErrors(prev => ({ ...prev, [studioId]: true }));
+    const handleImageError = (providerId) => {
+        setImageErrors(prev => ({ ...prev, [providerId]: true }));
     };
 
     const cancelMomentum = useCallback(() => {
@@ -228,6 +245,14 @@ const MovieStudios = () => {
         }
     };
 
+    // Clean up pending animation frames / timeouts on unmount
+    useEffect(() => {
+        return () => {
+            if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+            if (touchEndTimeoutRef.current) clearTimeout(touchEndTimeoutRef.current);
+        };
+    }, []);
+
     // Movies grid drag handlers
     const [moviesIsDown, setMoviesIsDown] = useState(false);
     const [moviesStartX, setMoviesStartX] = useState(0);
@@ -293,7 +318,7 @@ const MovieStudios = () => {
     }, []);
 
     const handleMovieKeyDown = useCallback((e, index) => {
-        const itemsLength = studioMovies?.length || 0;
+        const itemsLength = providerMovies?.length || 0;
         switch (e.key) {
             case 'ArrowLeft':
                 e.preventDefault();
@@ -314,71 +339,71 @@ const MovieStudios = () => {
             case 'Enter':
             case ' ':
                 e.preventDefault();
-                if (studioMovies?.[index]) handleMovieClick(studioMovies[index]);
+                if (providerMovies?.[index]) handleMovieClick(providerMovies[index]);
                 break;
             default:
                 break;
         }
-    }, [studioMovies]);
+    }, [providerMovies]);
 
     return (
         <>
-            <section className="movie-studios-section" data-nav-section="studios">
-                <div className="movie-studios-header">
-                    <h2 className="movie-studios-title">Studios</h2>
-                    <p className="movie-studios-subtitle">Find shows and movies from your favorite studios</p>
+            <section className="streaming-providers-section" data-nav-section="streaming-providers">
+                <div className="streaming-providers-header">
+                    <h2 className="streaming-providers-title">Streaming Providers</h2>
+                    <p className="streaming-providers-subtitle">Find shows and movies from your favorite streaming services</p>
                 </div>
                 <div
-                    className="movie-studios-grid"
+                    className="streaming-providers-grid"
                     ref={gridRef}
                     onMouseDown={handleMouseDown}
                     onMouseLeave={handleMouseLeave}
                     onMouseUp={handleMouseUp}
                     onMouseMove={handleMouseMove}
                 >
-                    {STUDIOS.map((studio) => (
+                    {PROVIDERS.map((provider) => (
                         <div
-                            key={studio.id}
-                            className={`studio-pill ${selectedStudio?.id === studio.id ? 'studio-pill-active' : ''}`}
-                            onClick={() => !isDragging && handleStudioClick(studio)}
-                            aria-label={`Browse ${studio.name} movies`}
+                            key={provider.id}
+                            className={`provider-pill ${selectedProvider?.id === provider.id ? 'provider-pill-active' : ''}`}
+                            onClick={() => !isDragging && handleProviderClick(provider)}
+                            aria-label={`Browse ${provider.name} movies`}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
-                                    handleStudioClick(studio);
+                                    handleProviderClick(provider);
                                 }
                             }}
                         >
-                            {!imageErrors[studio.id] ? (
+                            {!imageErrors[provider.id] ? (
                                 <img
-                                    src={studio.logo.startsWith('http') || studio.logo.startsWith('/logo/') ? studio.logo : `${TMDB_LOGO_URL}${studio.logo}`}
-                                    alt={studio.name}
-                                    className="studio-pill-logo"
-                                    onError={() => handleImageError(studio.id)}
+                                    src={provider.logo.startsWith('http') || provider.logo.startsWith('/logo/') ? provider.logo : `${TMDB_LOGO_URL}${provider.logo}`}
+                                    alt={provider.name}
+                                    className="provider-pill-logo"
+                                    onError={() => handleImageError(provider.id)}
                                     draggable="false"
                                 />
                             ) : (
-                                <span className="studio-pill-name">{studio.name}</span>
+                                <span className="provider-pill-name">{provider.name}</span>
                             )}
                         </div>
                     ))}
                 </div>
 
-                {/* Studio Movies Section */}
-                {selectedStudio && (
-                    <div className="studio-movies-section">
-                        <div className="studio-movies-header">
-                            <div className="studio-movies-header-left">
+                {/* Provider Content Section */}
+                {selectedProvider && (
+                    <div className="provider-movies-section">
+                        <div className="provider-movies-header">
+                            <div className="provider-movies-header-left">
                                 <div
-                                    className="studio-movies-header-accent"
+                                    className="provider-movies-header-accent"
                                     style={{ backgroundColor: '#E50914' }}
                                 />
-                                <h3 className="studio-movies-title">
-                                    Top {mediaType === 'movie' ? 'Movies' : 'TV Shows'} from {selectedStudio.name}
+                                <h3 className="provider-movies-title">
+                                    Top {mediaType === 'movie' ? 'Movies' : 'TV Shows'} from {selectedProvider.name}
                                 </h3>
                             </div>
-                            <div className="studio-movies-controls">
+                            <div className="provider-movies-controls">
                                 <div className="streaming-media-filters">
                                     <button
                                         className={`streaming-media-btn ${mediaType === 'movie' ? 'active' : ''}`}
@@ -410,8 +435,8 @@ const MovieStudios = () => {
                                     </button>
                                 </div>
                                 <button
-                                    className="studio-movies-view-all"
-                                    onClick={() => navigate(`/studio/${selectedStudio.id}`)}
+                                    className="provider-movies-view-all"
+                                    onClick={() => navigate(selectedProvider.route)}
                                 >
                                     View all
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -421,17 +446,17 @@ const MovieStudios = () => {
                             </div>
                         </div>
                         {isLoadingMovies ? (
-                            <div className="studio-movies-loading">
-                                <div className="studio-movies-skeleton">
+                            <div className="provider-movies-loading">
+                                <div className="provider-movies-skeleton">
                                     {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="studio-movie-card-skeleton" />
+                                        <div key={i} className="provider-movie-card-skeleton" />
                                     ))}
                                 </div>
                             </div>
-                        ) : studioMovies.length > 0 ? (
+                        ) : providerMovies.length > 0 ? (
                             <div className="carousel-container">
                                 <div
-                                    className="studio-movies-grid"
+                                    className="provider-movies-grid"
                                     ref={moviesGridRef}
                                     onMouseEnter={handleMoviesMouseEnter}
                                     onMouseLeave={handleMoviesMouseLeave}
@@ -441,7 +466,7 @@ const MovieStudios = () => {
                                     onTouchStart={handleMoviesTouchStart}
                                     onTouchEnd={handleMoviesTouchEnd}
                                 >
-                                {studioMovies.map((movie, index) => {
+                                {providerMovies.map((movie, index) => {
                                     const { isPaused, isKeyboardNav } = moviesInteractionState;
                                     const isFocused = (isKeyboardNav || !isPaused) && focusedMovieIndex === index;
                                     // Logos are fetched into a side map keyed by id, so fold the
@@ -458,7 +483,7 @@ const MovieStudios = () => {
                                         <div
                                             key={movie.id}
                                             ref={el => movieCardRefs.current[index] = el}
-                                            className={`studio-movie-card${isFocused ? ' focused' : ''}`}
+                                            className={`provider-movie-card${isFocused ? ' focused' : ''}`}
                                             onClick={() => !moviesIsDragging && handleMovieClick(movie)}
                                             {...getPreviewProps(previewMovie, mediaType, moviesIsDragging, handleMovieClick)}
                                             role="button"
@@ -466,61 +491,61 @@ const MovieStudios = () => {
                                             onKeyDown={(e) => handleMovieKeyDown(e, index)}
                                             onFocus={() => handleMovieCardFocus(index)}
                                         >
-                                        <div className="studio-movie-backdrop">
-                                            {movie.backdrop_path ? (
-                                                <img
-                                                    src={`${BACKDROP_URL}${movie.backdrop_path}`}
-                                                    alt={movie.name || movie.title}
-                                                    draggable="false"
-                                                />
-                                            ) : (
-                                                <div className="studio-movie-no-backdrop">
-                                                    <span>{movie.name || movie.title}</span>
-                                                </div>
-                                            )}
-                                            {movie.vote_average > 0 && (
-                                                <div className="studio-movie-rating">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#FFC107" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star">
-                                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                                                    </svg>
-                                                    <span>{movie.vote_average.toFixed(1)}</span>
-                                                </div>
-                                            )}
-                                            <div className="studio-movie-hover-overlay">
-                                                <button className="studio-movie-play-btn" tabIndex="-1">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                                        <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <div className="studio-movie-rank">{index + 1}</div>
-                                            {movieLogos[movie.id] ? (
-                                                <div className="studio-movie-logo-overlay">
+                                            <div className="provider-movie-backdrop">
+                                                {movie.backdrop_path ? (
                                                     <img
-                                                        src={`${LOGO_URL}${movieLogos[movie.id]}`}
+                                                        src={`${BACKDROP_URL}${movie.backdrop_path}`}
                                                         alt={movie.name || movie.title}
                                                         draggable="false"
                                                     />
+                                                ) : (
+                                                    <div className="provider-movie-no-backdrop">
+                                                        <span>{movie.name || movie.title}</span>
+                                                    </div>
+                                                )}
+                                                {movie.vote_average > 0 && (
+                                                    <div className="provider-movie-rating">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="#FFC107" stroke="#FFC107" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star">
+                                                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                                        </svg>
+                                                        <span>{movie.vote_average.toFixed(1)}</span>
+                                                    </div>
+                                                )}
+                                                <div className="provider-movie-hover-overlay">
+                                                    <button className="provider-movie-play-btn" tabIndex="-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                                                            <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+                                                        </svg>
+                                                    </button>
                                                 </div>
-                                            ) : (
-                                                <div className="studio-movie-title-overlay">
-                                                    {(() => {
-                                                        const title = movie.name || movie.title || '';
-                                                        const words = title.split(' ');
-                                                        if (words.length === 1) {
-                                                            return <span className="studio-movie-title-last">{words[0]}</span>;
-                                                        }
-                                                        const lastWord = words.pop();
-                                                        return (
-                                                            <>
-                                                                <span>{words.join(' ')}</span>
-                                                                <span>&nbsp;</span>
-                                                                <span className="studio-movie-title-last">{lastWord}</span>
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </div>
-                                            )}
+                                                <div className="provider-movie-rank">{index + 1}</div>
+                                                {movieLogos[movie.id] ? (
+                                                    <div className="provider-movie-logo-overlay">
+                                                        <img
+                                                            src={`${LOGO_URL}${movieLogos[movie.id]}`}
+                                                            alt={movie.name || movie.title}
+                                                            draggable="false"
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="provider-movie-title-overlay">
+                                                        {(() => {
+                                                            const title = movie.name || movie.title || '';
+                                                            const words = title.split(' ');
+                                                            if (words.length === 1) {
+                                                                return <span className="provider-movie-title-last">{words[0]}</span>;
+                                                            }
+                                                            const lastWord = words.pop();
+                                                            return (
+                                                                <>
+                                                                    <span>{words.join(' ')}</span>
+                                                                    <span>&nbsp;</span>
+                                                                    <span className="provider-movie-title-last">{lastWord}</span>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -529,8 +554,8 @@ const MovieStudios = () => {
                                 <CarouselControls carouselRef={moviesGridRef} />
                             </div>
                         ) : (
-                            <div className="studio-movies-empty">
-                                No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this studio
+                            <div className="provider-movies-empty">
+                                No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this provider
                             </div>
                         )}
                     </div>
@@ -547,4 +572,4 @@ const MovieStudios = () => {
     );
 };
 
-export default MovieStudios;
+export default StreamingProviders;

@@ -6,7 +6,9 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Modal from './Modal';
 import { useTMDB } from '../hooks/useTMDB';
 import { getPosterAlt } from '../utils/altTextUtils';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
+import CarouselControls from './CarouselControls';
 
 // Media type icons
 const MEDIA_ICONS = {
@@ -32,6 +34,7 @@ const MEDIA_ICONS = {
 
 const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
     const { movieGenres, tvGenres, fetchTrending, fetchCredits, fetchContentRating, BACKDROP_URL, LOGO_URL, POSTER_URL } = useTMDB();
+    const { getPreviewProps, closeNow } = useHoverPreview();
 
     const [content, setContent] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -190,6 +193,17 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
 
     const handleItemClick = async (item) => {
         if (isDragging) return;
+        closeNow(); // dismiss the hover preview before the modal opens
+
+        // When a parent onItemClick is provided (e.g. Home page), delegate
+        // immediately so the parent's own enrichment handles credits / rating.
+        // Doing a local await here AND in the parent doubles the round-trips.
+        if (onItemClick) {
+            onItemClick(item);
+            return;
+        }
+
+        // Internal modal path: enrich before opening since there's no parent.
         const type = mediaType;
         const genreMap = type === 'movie' ? movieGenres : tvGenres;
         const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
@@ -208,14 +222,10 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
             contentRating
         };
 
-        // Use parent's onItemClick if provided, otherwise handle internally
-        if (onItemClick) {
-            onItemClick(enrichedItem);
-        } else {
-            setSelectedItem(enrichedItem);
-            setIsModalOpen(true);
-        }
+        setSelectedItem(enrichedItem);
+        setIsModalOpen(true);
     };
+
 
     const closeModal = () => {
         setIsModalOpen(false);
@@ -273,15 +283,16 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                     </div>
                 </div>
             ) : (
-                <div
-                    className={`trending-carousel${isDragging ? ' dragging' : ''}`}
-                    ref={carouselRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                >
-                    {displayContent.map((item) => {
+                <div className="carousel-container">
+                    <div
+                        className={`trending-carousel${isDragging ? ' dragging' : ''}`}
+                        ref={carouselRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                    >
+                        {displayContent.map((item) => {
                         const itemTitle = item.title || item.name;
                         const backdropSrc = item.backdrop_path
                             ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
@@ -297,6 +308,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                 key={`${mediaType}-${item.id}`}
                                 className="trending-card"
                                 onClick={() => handleItemClick(item)}
+                                {...getPreviewProps(item, mediaType, isDragging, handleItemClick)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
@@ -351,6 +363,8 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                             </div>
                         );
                     })}
+                    </div>
+                    <CarouselControls carouselRef={carouselRef} />
                 </div>
             )}
 

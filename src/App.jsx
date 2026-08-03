@@ -1,5 +1,5 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Core components - always loaded (small, needed immediately)
 import Navbar from './components/Navbar';
@@ -19,11 +19,46 @@ const GlobalChat = lazy(() => import('./components/GlobalChat'));
 // Context providers - always loaded
 import { ToastProvider } from './contexts/ToastContext';
 import { ViewerCountProvider } from './contexts/ViewerCountContext';
+import { HoverPreviewProvider } from './contexts/HoverPreviewContext';
 
 // Hooks - always loaded
 import { useTMDB } from './hooks/useTMDB';
 import useTVNavigation from './hooks/useTVNavigation';
 import useTVRemoteKeys from './hooks/useTVRemoteKeys';
+
+// ─── Audio unlock: on the very first user interaction, create a silent
+// AudioContext and resume it.  This "primes" the browser so that later
+// unmuted media playback (YouTube embed, <video>, etc.) is permitted.
+// Also pre-loads the YouTube Iframe API so it's cached before any hover
+// preview opens.
+const unlockAudio = () => {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        // Play a silent buffer to fully activate the context
+        const buf = ctx.createBuffer(1, 1, 22050);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.connect(ctx.destination);
+        src.start(0);
+        if (ctx.state === 'suspended') ctx.resume();
+    } catch { /* AudioContext not supported — ignore */ }
+
+    // Pre-load YouTube Iframe API script so it's ready when needed
+    if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        tag.async = true;
+        document.head.appendChild(tag);
+    }
+
+    // One-shot: remove all listeners after first interaction
+    ['click', 'touchstart', 'keydown'].forEach(evt =>
+        document.removeEventListener(evt, unlockAudio, { capture: true })
+    );
+};
+['click', 'touchstart', 'keydown'].forEach(evt =>
+    document.addEventListener(evt, unlockAudio, { capture: true, once: false, passive: true })
+);
 
 // =============================================
 // LAZY-LOADED PAGE COMPONENTS
@@ -36,28 +71,13 @@ const Watch = lazy(() => import('./pages/Watch'));
 const MyList = lazy(() => import('./pages/MyList'));
 
 // Movie category pages
-const TopRated = lazy(() => import('./pages/TopRated'));
-const Popular = lazy(() => import('./pages/Popular'));
 const Discover = lazy(() => import('./pages/Discover'));
-const TrendingNow = lazy(() => import('./pages/TrendingNow'));
-const AnimeMovies = lazy(() => import('./pages/AnimeMovies'));
 
 // TV category pages
 const TVShows = lazy(() => import('./pages/TVShows'));
-const TrendingTV = lazy(() => import('./pages/TrendingTV'));
-const TopRatedTV = lazy(() => import('./pages/TopRatedTV'));
-const AnimeSeries = lazy(() => import('./pages/AnimeSeries'));
-const PopularTV = lazy(() => import('./pages/PopularTV'));
 
 // Streaming service pages
-const Netflix = lazy(() => import('./pages/Netflix'));
-const Disney = lazy(() => import('./pages/Disney'));
-const PrimeVideo = lazy(() => import('./pages/PrimeVideo'));
-const AppleTV = lazy(() => import('./pages/AppleTV'));
-const HBO = lazy(() => import('./pages/HBO'));
-const Viu = lazy(() => import('./pages/Viu'));
-const Crunchyroll = lazy(() => import('./pages/Crunchyroll'));
-const Peacock = lazy(() => import('./pages/Peacock'));
+const StreamingProviderPage = lazy(() => import('./pages/StreamingProviderPage'));
 
 // Collection & Studio pages
 const CollectionDetails = lazy(() => import('./pages/CollectionDetails'));
@@ -93,7 +113,7 @@ function App() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { searchTMDB, movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
-  const navigate = useNavigate();
+
   const location = useLocation();
 
   // Enable TV remote / D-pad arrow key navigation
@@ -155,6 +175,7 @@ function App() {
   return (
     <ToastProvider>
       <ViewerCountProvider>
+        <HoverPreviewProvider>
         <div className="App">
           {/* VisitorTracker disabled */}
           <BotProtection />
@@ -182,16 +203,8 @@ function App() {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/my-list" element={<MyList />} />
-                <Route path="/top-rated" element={<TopRated />} />
                 <Route path="/tv-shows" element={<TVShows />} />
-                <Route path="/popular" element={<Popular />} />
                 <Route path="/discover" element={<Discover />} />
-                <Route path="/trending" element={<TrendingNow />} />
-                <Route path="/anime-movies" element={<AnimeMovies />} />
-                <Route path="/trending-tv" element={<TrendingTV />} />
-                <Route path="/top-rated-tv" element={<TopRatedTV />} />
-                <Route path="/anime-series" element={<AnimeSeries />} />
-                <Route path="/popular-tv" element={<PopularTV />} />
                 <Route path="/watch" element={<Watch />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/disclaimer" element={<Disclaimer />} />
@@ -199,14 +212,8 @@ function App() {
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/collection/:id" element={<CollectionDetails />} />
-                <Route path="/netflix" element={<Netflix />} />
-                <Route path="/disney" element={<Disney />} />
-                <Route path="/prime-video" element={<PrimeVideo />} />
-                <Route path="/apple-tv" element={<AppleTV />} />
-                <Route path="/hbo" element={<HBO />} />
-                <Route path="/viu" element={<Viu />} />
-                <Route path="/crunchyroll" element={<Crunchyroll />} />
-                <Route path="/peacock" element={<Peacock />} />
+                {['netflix', 'disney', 'prime-video', 'apple-tv', 'hbo', 'viu', 'crunchyroll', 'peacock']
+                  .map(path => <Route key={path} path={`/${path}`} element={<StreamingProviderPage />} />)}
                 <Route path="/studio/:id" element={<StudioPage />} />
                 <Route path="/iptv" element={<IPTV />} />
                 <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
@@ -247,6 +254,7 @@ function App() {
               </Suspense>
             )}
         </div>
+        </HoverPreviewProvider>
       </ViewerCountProvider>
     </ToastProvider>
   );

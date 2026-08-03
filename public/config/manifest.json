@@ -98,17 +98,6 @@
           "sizes": "96x96"
         }
       ]
-    },
-    {
-      "name": "Popular Page",
-      "url": "/popular",
-      "description": "Popular page for STREAMFLIX",
-      "icons": [
-        {
-          "src": "/icons/favicon-96x96.png",
-          "sizes": "96x96"
-        }
-      ]
     }
   ]
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useLocation, useSearchParams, Link } from 'react-router-dom';
 import Modal from '../components/Modal';
 import FilterPanel from '../components/FilterPanel';
 import MediaTypeToggle from '../components/MediaTypeToggle';
@@ -10,37 +10,66 @@ import { useTMDB } from '../hooks/useTMDB';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
 import { MOVIE_BAR_CATEGORIES, TV_BAR_CATEGORIES } from '../constants/genres';
-import './StudioPage.css';
+import './StreamingProviderPage.css';
 
-const STUDIO_DATA = {
-    420: { name: 'Marvel Studios', logo: 'https://image.tmdb.org/t/p/w500/hUzeosd33nzE5MCNsZxCGEKTXaQ.png', color: '#eb1a13', colorRgb: '235, 26, 19' },
-    3: { name: 'Pixar', logo: 'https://image.tmdb.org/t/p/w500/1TjvGVDMYsj6JBxOAkUHpPEwLf7.png', color: '#000000', colorRgb: '0, 0, 0' },
-    521: { name: 'DreamWorks', logo: 'https://image.tmdb.org/t/p/w500/3BPX5VGBov8SDqTV7wC1L1xShAS.png', color: '#0066cc', colorRgb: '0, 102, 204' },
-    41077: { name: 'A24', logo: 'https://image.tmdb.org/t/p/w500/1ZXsGaFPgrgS6ZZGS37AqD5uU12.png', color: '#1a1a1a', colorRgb: '26, 26, 26' },
-    3172: { name: 'Blumhouse', logo: 'https://image.tmdb.org/t/p/w500/kDedjRZwO8uyFhuHamomOhN6fzG.png', color: '#8b0000', colorRgb: '139, 0, 0' },
-    174: { name: 'Warner Bros', logo: 'https://image.tmdb.org/t/p/w500/zhD3hhtKB5qyv7ZeL4uLpNxgMVU.png', color: '#ffc233', colorRgb: '255, 194, 51' },
-    33: { name: 'Universal', logo: 'https://image.tmdb.org/t/p/w500/8lvHyhjr8oUKOOy2dKXoALWKdp0.png', color: '#00a652', colorRgb: '0, 166, 82' },
-    1632: { name: 'Lionsgate', logo: '/logo/lionsgate.png', color: '#053d56', colorRgb: '5, 61, 86' },
-    25: { name: '20th Century', logo: 'https://image.tmdb.org/t/p/w500/qZCc1lty5FzX30aOCVRBLzaVmcp.png', color: '#000000', colorRgb: '0, 0, 0' },
-    4: { name: 'Paramount', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Paramount_Pictures_Corporation_logo.svg/976px-Paramount_Pictures_Corporation_logo.svg.png', color: '#006baf', colorRgb: '0, 107, 175' },
-    128064: { name: 'DC Studios', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/DC_Comics_logo.png/960px-DC_Comics_logo.png', color: '#0877ea', colorRgb: '8, 119, 234' },
-    2348: { name: 'Nickelodeon', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Nickelodeon_2009_logo.svg/1280px-Nickelodeon_2009_logo.svg.png', color: '#fa7f23', colorRgb: '250, 127, 35' },
-    8356: { name: 'Vivamax', logo: 'https://upload.wikimedia.org/wikipedia/commons/b/bb/Vivamax_logo.png', color: '#ff8315', colorRgb: '255, 131, 21' },
+const PROVIDER_DATA = {
+  netflix: {
+    id: '8', region: 'US', color: '#e50914', colorRgb: '229, 9, 20',
+    name: 'Netflix', logo: '/provider/netflix.png',
+    subtitle: 'Popular movies and TV shows available on Netflix',
+  },
+  disney: {
+    id: '337', region: 'US', color: '#113ccf', colorRgb: '17, 60, 207',
+    name: 'Disney+', logo: '/provider/disney_plus.png',
+    subtitle: 'Popular movies and TV shows available on Disney+',
+  },
+  'prime-video': {
+    id: '9', region: 'US', color: '#00a8e1', colorRgb: '0, 168, 225',
+    name: 'Prime Video', logo: '/provider/prime_video.png',
+    subtitle: 'Popular movies and TV shows available on Prime Video',
+  },
+  'apple-tv': {
+    id: '350', region: 'US', color: '#f5f5f7', colorRgb: '245, 245, 247',
+    name: 'Apple TV+', logo: '/provider/apple_tv_plus.png',
+    subtitle: 'Popular movies and TV shows available on Apple TV',
+  },
+  hbo: {
+    id: '1899|118', region: 'US', color: '#5822b4', colorRgb: '88, 34, 180',
+    name: 'HBO Max', logo: '/provider/hbo_max.png',
+    subtitle: 'Popular movies and TV shows available on HBO Max',
+  },
+  viu: {
+    id: '158', region: 'HK', color: '#ffc107', colorRgb: '255, 193, 7',
+    name: 'Viu', logo: '/provider/viu.png',
+    subtitle: 'Popular movies and TV shows available on VIU',
+  },
+  crunchyroll: {
+    id: '283', region: 'US', color: '#f47521', colorRgb: '244, 117, 33',
+    name: 'Crunchyroll', logo: '/provider/crunchyroll_logo.png',
+    subtitle: 'Popular anime movies and TV shows available on Crunchyroll',
+  },
+  peacock: {
+    id: '386', region: 'US', color: '#f3f3f3', colorRgb: '243, 243, 243',
+    name: 'Peacock', logo: '/provider/peacock_logo.png', tvNetwork: 3353,
+    monetization: 'flatrate',
+    subtitle: 'Peacock Original series and featured movies',
+  },
 };
+const DEFAULT_PROVIDER = { region: 'US', name: 'Provider', logo: '', subtitle: 'Popular movies and TV shows', color: '#e50914', colorRgb: '229, 9, 20' };
 
 const PANEL_DEFAULTS = { year: '', rating: '', sort_by: 'popularity.desc' };
 const SHARED_SORTS = new Set(['popularity.desc', 'vote_average.desc', 'vote_average.asc']);
 
 const splitIds = (value) => value ? String(value).split(/[,|]/).filter(Boolean) : [];
 
-const StudioPage = () => {
-    const { id } = useParams();
+const StreamingProviderPage = () => {
+    const location = useLocation();
+    const providerKey = location.pathname.split('/')[1];
     const [searchParams, setSearchParams] = useSearchParams();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
     const { closeNow } = useHoverPreview();
 
-    const studioId = parseInt(id);
-    const studioInfo = STUDIO_DATA[studioId] || { name: 'Studio', logo: '', color: '#e50914', colorRgb: '229, 9, 20' };
+    const provider = PROVIDER_DATA[providerKey] || DEFAULT_PROVIDER;
 
     const [activeMediaType, setActiveMediaType] = useState('movie');
     const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
@@ -51,16 +80,34 @@ const StudioPage = () => {
     const [tvCount, setTvCount] = useState(null);
     const [isProbing, setIsProbing] = useState(true);
 
+    const providerExtraParams = useMemo(() => ({
+        movie: {
+            with_watch_providers: provider.id,
+            watch_region: provider.region,
+            ...(provider.monetization ? { with_watch_monetization_types: provider.monetization } : {}),
+        },
+        tv: provider.tvNetwork
+            ? { with_networks: provider.tvNetwork }
+            : { with_watch_providers: provider.id, watch_region: provider.region },
+    }), [provider]);
+
     useEffect(() => {
         let isMounted = true;
         const probeCounts = async () => {
             setIsProbing(true);
             try {
+                const movieUrl = new URL('/api/discover/movie', window.location.origin);
+                Object.entries({ ...providerExtraParams.movie, page: 1 }).forEach(([k, v]) => movieUrl.searchParams.set(k, v));
+                
+                const tvUrl = new URL('/api/discover/tv', window.location.origin);
+                Object.entries({ ...providerExtraParams.tv, page: 1 }).forEach(([k, v]) => tvUrl.searchParams.set(k, v));
+
                 const [movieRes, tvRes] = await Promise.all([
-                    fetch(`/api/discover/movie?with_companies=${studioId}&page=1`),
-                    fetch(`/api/discover/tv?with_companies=${studioId}&page=1`)
+                    fetch(movieUrl),
+                    fetch(tvUrl)
                 ]);
                 const [movieData, tvData] = await Promise.all([movieRes.json(), tvRes.json()]);
+                
                 if (isMounted) {
                     const mCount = movieData.total_results || 0;
                     const tCount = tvData.total_results || 0;
@@ -73,14 +120,14 @@ const StudioPage = () => {
                     }
                 }
             } catch (err) {
-                console.error('Failed to probe studio counts:', err);
+                console.error('Failed to probe provider counts:', err);
             } finally {
                 if (isMounted) setIsProbing(false);
             }
         };
         probeCounts();
         return () => { isMounted = false; };
-    }, [studioId]);
+    }, [provider, providerExtraParams]);
 
     const [filters, setFilters] = useState(() => ({
         sort_by: searchParams.get('sort_by') || PANEL_DEFAULTS.sort_by,
@@ -102,8 +149,7 @@ const StudioPage = () => {
         setSearchParams(params, { replace: true });
     }, [filters, setSearchParams]);
 
-    const extraParams = useMemo(() => ({ with_companies: studioId }), [studioId]);
-    const feed = useDiscoverFeed({ mediaType: activeMediaType, filters, extraParams });
+    const feed = useDiscoverFeed({ mediaType: activeMediaType, filters, extraParams: providerExtraParams });
 
     const handleMediaTypeChange = (next) => {
         if (next === activeMediaType || (next === 'movie' && movieCount === 0) || (next === 'tv' && tvCount === 0)) return;
@@ -166,39 +212,39 @@ const StudioPage = () => {
 
     if (isProbing) {
         return (
-            <div className="studio-page">
-                <div className="studio-page-header" style={{ '--studio-color': studioInfo.color, '--studio-color-rgb': studioInfo.colorRgb }}>
+            <div className="streaming-provider-page" style={{ '--scoped-color': provider.color, '--scoped-color-rgb': provider.colorRgb }}>
+                <div className="streaming-provider-page-header">
                     <Link to="/" className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                         </svg>
                         Back
                     </Link>
-                    <div className="studio-page-title-section">
-                        <img src={studioInfo.logo} alt={studioInfo.name} className="studio-page-logo" />
+                    <div className="streaming-provider-page-title-section">
+                        {provider.logo && <img src={provider.logo} alt={provider.name} className="streaming-provider-page-logo" />}
                     </div>
                 </div>
-                <div className="studio-page-loading">
+                <div className="streaming-provider-page-loading">
                     <div className="loading-spinner" />
-                    <p>Loading {studioInfo.name} content...</p>
+                    <p>Loading {provider.name} content...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="studio-page">
-            <div className="studio-page-header" style={{ '--studio-color': studioInfo.color, '--studio-color-rgb': studioInfo.colorRgb }}>
+        <div className="streaming-provider-page" style={{ '--scoped-color': provider.color, '--scoped-color-rgb': provider.colorRgb }}>
+            <div className="streaming-provider-page-header">
                 <Link to="/" className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                     </svg>
                     Back
                 </Link>
-                <div className="studio-page-title-section">
-                    <img src={studioInfo.logo} alt={studioInfo.name} className="studio-page-logo" />
+                <div className="streaming-provider-page-title-section">
+                    {provider.logo && <img src={provider.logo} alt={provider.name} className="streaming-provider-page-logo" />}
                 </div>
-                <p className="studio-page-subtitle">Movies and TV shows from {studioInfo.name}</p>
+                <p className="streaming-provider-page-subtitle">{provider.subtitle}</p>
             </div>
 
             {activeMediaType === 'movie' ? (
@@ -219,15 +265,15 @@ const StudioPage = () => {
                 />
             )}
 
-            <section className="studio-section">
-                <div className="studio-section-header">
-                    <MediaTypeToggle 
-                        activeType={activeMediaType} 
-                        onToggle={handleMediaTypeChange} 
+            <section className="streaming-provider-section">
+                <div className="streaming-provider-section-header">
+                    <MediaTypeToggle
+                        activeType={activeMediaType}
+                        onToggle={handleMediaTypeChange}
                         disabled={{ movie: movieCount === 0, tv: tvCount === 0 }}
                     />
                 </div>
-                <span className="studio-section-count">{feed.totalResults} titles</span>
+                <span className="streaming-provider-section-count">{feed.totalResults} titles</span>
                 
                 <div className="content-rows">
                     <DiscoverGrid
@@ -268,4 +314,4 @@ const StudioPage = () => {
     );
 };
 
-export default StudioPage;
+export default StreamingProviderPage;

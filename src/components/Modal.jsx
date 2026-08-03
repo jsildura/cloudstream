@@ -28,6 +28,17 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
   // Current item being displayed (can change when clicking recommendations)
   const [item, setItem] = useState(initialItem);
 
+  // Sync local item state when the parent updates initialItem
+  // (e.g. Home opens modal immediately then enriches selectedItem async)
+  useEffect(() => {
+    if (initialItem?.id && initialItem.id === item?.id) {
+      // Merge: only overwrite fields that the parent has now filled in
+      setItem(prev => ({ ...prev, ...initialItem }));
+    } else if (initialItem?.id && initialItem.id !== item?.id) {
+      setItem(initialItem);
+    }
+  }, [initialItem]);
+
   // Internal recommendations state
   const [internalRecs, setInternalRecs] = useState([]);
   const [recsLoading, setRecsLoading] = useState(true);
@@ -46,6 +57,8 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
   const [logoPath, setLogoPath] = useState(null);
   const [logoLoaded, setLogoLoaded] = useState(false);
   const [contentRating, setContentRating] = useState(null);
+  // Lazily-loaded cast — populated from item.cast if present, otherwise fetched.
+  const [cast, setCast] = useState(initialItem?.cast || null);
 
   // Get badge color class based on rating
   const getRatingBadgeClass = (rating) => {
@@ -63,7 +76,9 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
     return 'rating-badge-gray';
   };
 
-  // Fetch trailer key, logo, and recommendations when modal opens or item changes
+  // Fetch trailer, logo, cast, contentRating, and recommendations when item changes.
+  // cast and contentRating are fetched lazily here so the parent can open the
+  // modal immediately with basic data and let these arrive a moment later.
   useEffect(() => {
     const loadData = async () => {
       if (item?.id) {
@@ -75,20 +90,22 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
         setLogoLoaded(false);
         setIsTrailerPlaying(false);
         setRecsLoading(true);
+        // Seed cast/rating from item if already enriched; clear otherwise
+        setCast(item.cast || null);
+        setContentRating(item.contentRating || null);
 
-        // Fetch trailer and logo
-        const [key, logo] = await Promise.all([
+        // Fetch trailer, logo, cast, and content rating in parallel
+        const [key, logo, fetchedCast, fetchedRating] = await Promise.all([
           fetchVideos(type, item.id),
-          fetchLogo(type, item.id)
+          fetchLogo(type, item.id),
+          item.cast ? Promise.resolve(null) : fetchCredits(type, item.id),
+          item.contentRating ? Promise.resolve(null) : fetchContentRating(type, item.id),
         ]);
         setTrailerKey(key);
         setLogoPath(logo);
         setLogoLoaded(true);
-
-        // Use pre-loaded contentRating if available, otherwise skip (no fetch delay)
-        if (item.contentRating) {
-          setContentRating(item.contentRating);
-        }
+        if (fetchedCast) setCast(fetchedCast.join(', ') || 'N/A');
+        if (fetchedRating) setContentRating(fetchedRating);
 
         // Fetch recommendations internally
         try {
@@ -116,7 +133,7 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
       }
     };
     loadData();
-  }, [item?.id, item?.media_type, item?.type, item?.contentRating, fetchVideos, fetchLogo, fetchMovieRecommendations, fetchTVRecommendations]);
+  }, [item?.id, item?.media_type, item?.type, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchMovieRecommendations, fetchTVRecommendations]);
 
   // Animated close handler
   const handleClose = useCallback(() => {
@@ -134,8 +151,8 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
     }
   }, [handleClose]);
 
-  // Ad configuration
-  const AD_URL = 'https://www.effectivegatecpm.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+  // Adsterra configuration smartlink
+  const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
   const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
   const playButtonClick = useCallback(() => {
@@ -192,36 +209,25 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
   }, [item.title, item.name, item.type, item.id]);
 
   // Handle clicking a recommendation card - update modal to show that content
-  const handleRecClick = useCallback(async (recItem) => {
+  const handleRecClick = useCallback((recItem) => {
     const type = recItem.media_type || (recItem.first_air_date ? 'tv' : 'movie');
     const genreMap = type === 'movie' ? movieGenres : tvGenres;
     const genreNames = recItem.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
 
-    // Fetch additional details
-    const [cast, rating] = await Promise.all([
-      fetchCredits(type, recItem.id),
-      fetchContentRating(type, recItem.id)
-    ]);
-
-    // Enrich item with all necessary data
-    const enrichedItem = {
+    // Switch immediately — cast & contentRating are lazily fetched by the effect.
+    setItem({
       ...recItem,
       type,
       media_type: type,
       genres: genreNames,
-      cast: cast.join(', ') || 'N/A',
-      contentRating: rating
-    };
-
-    // Update modal to show the clicked recommendation
-    setItem(enrichedItem);
+    });
 
     // Scroll modal back to top
     const scrollContainer = document.querySelector('.modal-scroll-container');
     if (scrollContainer) {
       scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [movieGenres, tvGenres, fetchCredits, fetchContentRating]);
+  }, [movieGenres, tvGenres]);
 
   // Ref to track if user manually toggled the trailer (to prevent auto-play interference)
   const userToggledTrailerRef = useRef(false);
@@ -562,7 +568,7 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
                   </div>
                   <div className="modal-info-item">
                     <span className="modal-info-label">Cast:</span>
-                    <span className="modal-info-value">{item.cast || 'N/A'}</span>
+                    <span className="modal-info-value">{cast || item.cast || 'N/A'}</span>
                   </div>
                   <div className="modal-info-item">
                     <span className="modal-info-label">Status:</span>
@@ -572,7 +578,12 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
               </div>
 
               {/* Ratings & Reviews Section */}
-              <ReviewSection contentId={item.id} type={item.type || item.media_type || 'movie'} />
+              <ReviewSection
+                contentId={item.id}
+                type={item.type || item.media_type || 'movie'}
+                voteAverage={item.vote_average}
+                voteCount={item.vote_count}
+              />
 
               {/* Collection Section */}
               {collection.length > 0 && (

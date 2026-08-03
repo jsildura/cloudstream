@@ -7,7 +7,9 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchHistory from '../hooks/useWatchHistory';
 import { getPosterAlt } from '../utils/altTextUtils';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
+import CarouselControls from './CarouselControls';
 
 const RecommendedForYou = memo(({ onItemClick }) => {
     const {
@@ -22,6 +24,7 @@ const RecommendedForYou = memo(({ onItemClick }) => {
         POSTER_URL
     } = useTMDB();
     const { watchHistory, isLoaded: historyLoaded } = useWatchHistory();
+    const { getPreviewProps, closeNow } = useHoverPreview();
 
     const [recommendations, setRecommendations] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -254,28 +257,15 @@ const RecommendedForYou = memo(({ onItemClick }) => {
 
     const handleItemClick = useCallback(async (item) => {
         if (isDragging) return;
-        const type = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-        const genreMap = type === 'movie' ? movieGenres : tvGenres;
-        const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
+        closeNow(); // dismiss the hover preview before the modal opens
 
-        const [cast, contentRating] = await Promise.all([
-            fetchCredits(type, item.id),
-            fetchContentRating(type, item.id)
-        ]);
-
-        const enrichedItem = {
-            ...item,
-            type,
-            media_type: type,
-            genres: genreNames,
-            cast: cast.join(', ') || 'N/A',
-            contentRating
-        };
-
+        // Delegate immediately to the parent handler which handles its own
+        // enrichment (fetchCredits / fetchContentRating). Pre-fetching here
+        // AND in the parent doubles the network round-trips.
         if (onItemClick) {
-            onItemClick(enrichedItem);
+            onItemClick(item);
         }
-    }, [isDragging, movieGenres, tvGenres, fetchCredits, fetchContentRating, onItemClick]);
+    }, [isDragging, onItemClick, closeNow]);
 
     // Don't render if no recommendations or still loading with no history
     if (!loading && recommendations.length === 0) {
@@ -315,15 +305,16 @@ const RecommendedForYou = memo(({ onItemClick }) => {
                     </div>
                 </div>
             ) : (
-                <div
-                    className={`trending-carousel${isDragging ? ' dragging' : ''}`}
-                    ref={carouselRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                >
-                    {displayContent.map((item) => {
+                <div className="carousel-container">
+                    <div
+                        className={`trending-carousel${isDragging ? ' dragging' : ''}`}
+                        ref={carouselRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                    >
+                        {displayContent.map((item) => {
                         const itemTitle = item.title || item.name;
                         const backdropSrc = item.backdrop_path
                             ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
@@ -339,6 +330,7 @@ const RecommendedForYou = memo(({ onItemClick }) => {
                                 key={item.id}
                                 className="trending-card"
                                 onClick={() => handleItemClick(item)}
+                                {...getPreviewProps(item, item.media_type || (item.first_air_date ? 'tv' : 'movie'), isDragging, handleItemClick)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
@@ -393,6 +385,8 @@ const RecommendedForYou = memo(({ onItemClick }) => {
                             </div>
                         );
                     })}
+                    </div>
+                    <CarouselControls carouselRef={carouselRef} />
                 </div>
             )}
         </div>

@@ -35,9 +35,19 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+// ===== SHARED GENRE MAPS =====
+// Module-level so ALL useTMDB instances share the same Maps.
+// Once any component fetches genres (e.g. Home on mount), every
+// subsequent caller — including HoverPreviewCard — gets them instantly.
+const sharedMovieGenres = new Map();
+const sharedTvGenres = new Map();
+let genresFetchPromise = null; // de-duplicates concurrent fetches
+
 export const useTMDB = () => {
-  const [movieGenres, setMovieGenres] = useState(new Map());
-  const [tvGenres, setTvGenres] = useState(new Map());
+  // Local state is seeded from the shared maps; we only trigger a re-render
+  // when the shared maps are populated for the first time.
+  const [movieGenres, setMovieGenres] = useState(sharedMovieGenres);
+  const [tvGenres, setTvGenres] = useState(sharedTvGenres);
   const [apiStatus, setApiStatus] = useState('checking');
 
   const getApiBaseUrl = useCallback(() => {
@@ -75,30 +85,40 @@ export const useTMDB = () => {
   }, [buildUrl]);
 
   const fetchGenres = useCallback(async () => {
-    try {
-      const [movieRes, tvRes] = await Promise.all([
-        fetch(buildUrl('/genre/movie/list')),
-        fetch(buildUrl('/genre/tv/list'))
-      ]);
+    // Already populated — nothing to do; components will read sharedMovieGenres directly.
+    if (sharedMovieGenres.size > 0) return;
 
-      if (!movieRes.ok) {
-        throw new Error(`Movie genres failed: ${movieRes.status}`);
-      }
-      if (!tvRes.ok) {
-        throw new Error(`TV genres failed: ${tvRes.status}`);
-      }
+    // If another component is already fetching, piggyback on that promise.
+    if (!genresFetchPromise) {
+      genresFetchPromise = (async () => {
+        try {
+          const [movieRes, tvRes] = await Promise.all([
+            fetch(buildUrl('/genre/movie/list')),
+            fetch(buildUrl('/genre/tv/list'))
+          ]);
 
-      const movieData = await movieRes.json();
-      const tvData = await tvRes.json();
+          if (!movieRes.ok) throw new Error(`Movie genres failed: ${movieRes.status}`);
+          if (!tvRes.ok) throw new Error(`TV genres failed: ${tvRes.status}`);
 
-      const movieMap = new Map(movieData.genres?.map(genre => [genre.id, genre.name]) || []);
-      const tvMap = new Map(tvData.genres?.map(genre => [genre.id, genre.name]) || []);
+          const movieData = await movieRes.json();
+          const tvData = await tvRes.json();
 
-      setMovieGenres(movieMap);
-      setTvGenres(tvMap);
-    } catch (error) {
-      console.error("Failed to fetch genres:", error);
+          // Populate shared Maps in-place so all existing references update.
+          movieData.genres?.forEach(g => sharedMovieGenres.set(g.id, g.name));
+          tvData.genres?.forEach(g => sharedTvGenres.set(g.id, g.name));
+        } catch (error) {
+          console.error('Failed to fetch genres:', error);
+        } finally {
+          genresFetchPromise = null;
+        }
+      })();
     }
+
+    await genresFetchPromise;
+
+    // Trigger a re-render in this component instance so it picks up the maps.
+    setMovieGenres(new Map(sharedMovieGenres));
+    setTvGenres(new Map(sharedTvGenres));
   }, [buildUrl]);
 
   // Memoize all fetch functions

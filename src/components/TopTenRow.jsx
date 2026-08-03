@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTMDB } from '../hooks/useTMDB';
 import { getPosterAlt } from '../utils/altTextUtils';
 import useTVDetect from '../hooks/useTVDetect';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TopTenRow.css';
+import CarouselControls from './CarouselControls';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const { BACKDROP_URL, LOGO_URL, fetchMovieDetails, fetchTVDetails, POSTER_URL } = useTMDB();
+    const { getPreviewProps, closeNow } = useHoverPreview();
 
     // Refs - carouselRef is now the scrollable container
     const carouselRef = useRef(null);
@@ -253,17 +256,18 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             <h2 className="top-ten-title">Top 10 in {countryName}</h2>
             <p className="top-ten-subtitle">What {countryName} is Watching</p>
 
-            <div
-                className={`top-ten-carousel${isDragging ? ' dragging' : ''}`}
-                ref={carouselRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
-                onMouseMove={handleMouseMove}
-                onTouchStart={handleTouchStart}
-                onTouchEnd={handleTouchEnd}
-            >
+            <div className="carousel-container">
+                <div
+                    className={`top-ten-carousel${isDragging ? ' dragging' : ''}`}
+                    ref={carouselRef}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    onMouseDown={handleMouseDown}
+                    onMouseUp={handleMouseUp}
+                    onMouseMove={handleMouseMove}
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                 {displayContent.map((item, index) => {
                     const title = item.title || item.name;
                     // Use Backdrop logic
@@ -283,7 +287,12 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                             key={item.id}
                             ref={el => cardRefs.current[index] = el}
                             className={`top-ten-card${isFocused ? ' focused' : ''}`}
-                            onClick={() => !isDragging && onItemClick(item)}
+                            onClick={() => {
+                                if (isDragging) return;
+                                closeNow(); // dismiss the hover preview before the modal opens
+                                onItemClick(item);
+                            }}
+                            {...getPreviewProps(item, undefined, isDragging, onItemClick)}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => handleKeyDown(e, index)}
@@ -336,6 +345,8 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                         </div>
                     );
                 })}
+                </div>
+                <CarouselControls carouselRef={carouselRef} />
             </div>
         </div>
     );

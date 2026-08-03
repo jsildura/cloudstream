@@ -1,0 +1,151 @@
+.tv-discover-filterbar {
+  position: sticky;
+  top: 68px;
+  /* ← navbar is exactly 68px tall */
+  z-index: 100;
+  padding: 10px 4%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* The pill count is capped per breakpoint in TVDiscoverFilterBar.jsx, so the row
+   is expected to fit without scrolling. Overflow stays scrollable purely as a
+   safety valve — an active overflow category is force-rendered so it can be
+   switched off, which can push the row past the cap. */
+.tv-filter-genres {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+}
+
+.tv-filter-genres::-webkit-scrollbar {
+  display: none;
+}
+
+.tv-filter-more-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  /* Fades the genre pills out as they pass under the button. */
+  padding-left: 12px;
+  background: linear-gradient(to right, transparent, rgba(10, 10, 12, 0.92) 40%);
+}
+
+/* Only rendered while something is filtered, so it stays quiet — the "More"
+   button next to it is the primary action. */
+.tv-filter-clear {
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+}
+
+.tv-filter-pill {
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.8rem;
+  font-family: inherit;
+  line-height: 1.4;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.tv-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.tv-filter-pill:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
+.tv-filter-pill.active {
+  background: #fff;
+  color: #0a0a0a;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.tv-filter-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.tv-filter-more-badge {
+  background: #fff;
+  color: #0a0a0a;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* 1080p TV scaling */
+@media (min-width: 1920px) {
+  .tv-discover-filterbar {
+    padding: 15px 4%;
+    gap: 16px;
+  }
+
+  .tv-filter-genres {
+    gap: 10px;
+  }
+
+  .tv-filter-pill {
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    border-radius: 30px;
+  }
+
+  .tv-filter-more {
+    gap: 12px;
+  }
+
+  .tv-filter-more-badge {
+    font-size: 0.95rem;
+    padding: 2px 11px;
+  }
+}
+
+/* 4K scaling */
+@media (min-width: 3840px) {
+  .tv-discover-filterbar {
+    padding: 25px 4%;
+    gap: 28px;
+  }
+
+  .tv-filter-genres {
+    gap: 16px;
+  }
+
+  .tv-filter-pill {
+    padding: 18px 40px;
+    font-size: 1.8rem;
+    border-radius: 50px;
+  }
+
+  .tv-filter-more {
+    gap: 18px;
+  }
+
+  .tv-filter-more-badge {
+    font-size: 1.5rem;
+    padding: 4px 18px;
+    border-radius: 20px;
+  }
+}

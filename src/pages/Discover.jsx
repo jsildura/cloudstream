@@ -1,349 +1,184 @@
-// Discover.jsx - Discover Movies Page
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import BannerSlider from '../components/BannerSlider';
+import MetaTags from '../components/MetaTags';
+import MovieDiscoverFilterBar from '../components/MovieDiscoverFilterBar';
 import FilterPanel from '../components/FilterPanel';
+import DiscoverGrid from '../components/DiscoverGrid';
 import { useTMDB } from '../hooks/useTMDB';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
+import { MOVIE_BAR_CATEGORIES } from '../constants/genres';
+import '../components/TrendingSection.css';
+
+const PANEL_DEFAULTS = {
+  year: '',
+  rating: '',
+  sort_by: 'popularity.desc'
+};
+
+const splitIds = (value) => value ? String(value).split(/[,|]/).filter(Boolean) : [];
 
 const Discover = () => {
-    const [movies, setMovies] = useState([]);
-    const [topMovies, setTopMovies] = useState([]);
-    const [selectedItem, setSelectedItem] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [loadingMore, setLoadingMore] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [hasMorePages, setHasMorePages] = useState(true);
-    const [showFilters, setShowFilters] = useState(false);
-    const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
-    const [searchParams, setSearchParams] = useSearchParams();
+  const [bannerMovies, setBannerMovies] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-    // Initialize filters from URL or defaults
-    const [filters, setFilters] = useState({
-        sort_by: searchParams.get('sort_by') || 'popularity.desc',
-        include_adult: searchParams.get('include_adult') === 'true' || false,
-        include_video: searchParams.get('include_video') === 'true' || false,
-        language: searchParams.get('language') || 'en-US',
-        page: parseInt(searchParams.get('page')) || 1,
-        year: searchParams.get('year') ? parseInt(searchParams.get('year')) : undefined,
-        with_genres: searchParams.get('with_genres') || undefined,
-        'vote_average.gte': searchParams.get('vote_average.gte') ? parseFloat(searchParams.get('vote_average.gte')) : undefined
+  const { closeNow } = useHoverPreview();
+  const { movieGenres, fetchCredits, fetchContentRating } = useTMDB();
+
+  const [filters, setFilters] = useState(() => ({
+    sort_by: searchParams.get('sort_by') || PANEL_DEFAULTS.sort_by,
+    language: searchParams.get('language') || 'en-US',
+    primary_release_year: searchParams.get('primary_release_year') || PANEL_DEFAULTS.year,
+    with_genres: searchParams.get('with_genres') || undefined,
+    with_keywords: searchParams.get('with_keywords') || undefined,
+    'vote_average.gte': searchParams.get('vote_average.gte') || PANEL_DEFAULTS.rating
+  }));
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.set(key, value.toString());
+      }
     });
+    setSearchParams(params, { replace: true });
+  }, [filters, setSearchParams]);
 
-    const {
-        movieGenres,
-        fetchCredits,
-        fetchContentRating
-    } = useTMDB();
-
-    useEffect(() => {
-        fetchMovies();
-    }, [filters]);
-
-    // Fetch top 10 movies for banner (new releases)
-    useEffect(() => {
-        const fetchTopMovies = async () => {
-            try {
-                const res = await fetch('/api/movie/now_playing');
-                if (res.ok) {
-                    const data = await res.json();
-                    const top10 = (data.results || []).slice(0, 10).map(item => ({
-                        ...item,
-                        media_type: 'movie'
-                    }));
-                    setTopMovies(top10);
-                }
-            } catch (error) {
-                console.error('Failed to fetch top movies:', error);
-            }
-        };
-        fetchTopMovies();
-    }, []);
-
-    // Update URL when filters change
-    useEffect(() => {
-        const params = new URLSearchParams();
-
-        Object.entries(filters).forEach(([key, value]) => {
-            if (value !== undefined && value !== null && value !== '') {
-                params.set(key, value.toString());
-            }
-        });
-
-        setSearchParams(params);
-    }, [filters, setSearchParams]);
-
-    const buildUrl = (endpoint, params = {}) => {
-        const url = new URL(`/api${endpoint}`, window.location.origin);
-        Object.keys(params).forEach(key => {
-            if (params[key] !== undefined && params[key] !== null) {
-                url.searchParams.append(key, params[key]);
-            }
-        });
-        return url.toString();
+  useEffect(() => {
+    const fetchTopMovies = async () => {
+      try {
+        const res = await fetch('/api/movie/popular');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const top10 = (data.results || []).slice(0, 10).map(item => ({
+          ...item,
+          media_type: 'movie'
+        }));
+        setBannerMovies(top10);
+      } catch (err) {
+        console.error('Failed to fetch popular movies:', err);
+      }
     };
+    fetchTopMovies();
+  }, []);
 
-    const fetchMovies = async (page = 1, append = false) => {
-        try {
-            if (append) {
-                setLoadingMore(true);
-            } else {
-                setLoading(true);
-            }
+  const extraParams = useMemo(() => ({}), []);
+  const feed = useDiscoverFeed({ mediaType: 'movie', filters, extraParams });
 
-            const url = buildUrl('/discover/movie', { ...filters, page });
-            console.log('Fetching discover movies from:', url);
+  const handleItemClick = useCallback(async (item) => {
+    closeNow();
+    const type = 'movie';
+    const genreNames = item.genre_ids?.map(id => movieGenres.get(id)).filter(Boolean) || [];
 
-            const res = await fetch(url);
+    const [cast, contentRating] = await Promise.all([
+      fetchCredits(type, item.id),
+      fetchContentRating(type, item.id)
+    ]);
 
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`HTTP error! status: ${res.status}, response: ${errorText}`);
-            }
+    setSelectedItem({
+      ...item,
+      type,
+      media_type: type,
+      genres: genreNames,
+      cast: cast.join(', ') || 'N/A',
+      contentRating
+    });
+    setIsModalOpen(true);
+  }, [closeNow, movieGenres, fetchCredits, fetchContentRating]);
 
-            const data = await res.json();
-            const newMovies = data.results || [];
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
 
-            if (append) {
-                // Filter out duplicates by ID
-                setMovies(prev => {
-                    const existingIds = new Set(prev.map(m => m.id));
-                    const uniqueNew = newMovies.filter(m => !existingIds.has(m.id));
-                    return [...prev, ...uniqueNew];
-                });
-            } else {
-                setMovies(newMovies);
-            }
+  const handleFilterChange = (newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  };
 
-            // Check if there are more pages
-            setHasMorePages(page < (data.total_pages || 1));
-            setCurrentPage(page);
-        } catch (error) {
-            console.error("Failed to fetch discover movies:", error);
-        } finally {
-            setLoading(false);
-            setLoadingMore(false);
-        }
-    };
+  const handleApplyFilters = (pending) => {
+    setFilters({
+      sort_by: pending.sort_by || PANEL_DEFAULTS.sort_by,
+      language: 'en-US',
+      with_genres: pending.genres?.length ? pending.genres.join(',') : undefined,
+      with_keywords: pending.keywords?.length ? pending.keywords.join('|') : undefined,
+      primary_release_year: pending.year || undefined,
+      'vote_average.gte': pending.rating || undefined
+    });
+  };
 
-    const handleLoadMore = () => {
-        if (!loadingMore && hasMorePages) {
-            fetchMovies(currentPage + 1, true);
-        }
-    };
+  const handleClearFilters = () => {
+    handleApplyFilters({ genres: [], keywords: [], ...PANEL_DEFAULTS });
+  };
 
-    const handleItemClick = async (item) => {
-        const type = 'movie';
-        const genreMap = movieGenres;
-        const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
+  const activeFilterCount =
+    splitIds(filters.with_genres).length +
+    splitIds(filters.with_keywords).length +
+    (String(filters.primary_release_year ?? '') !== PANEL_DEFAULTS.year ? 1 : 0) +
+    (String(filters['vote_average.gte'] ?? '') !== PANEL_DEFAULTS.rating ? 1 : 0) +
+    (filters.sort_by !== PANEL_DEFAULTS.sort_by ? 1 : 0);
 
-        const [cast, contentRating] = await Promise.all([
-            fetchCredits(type, item.id),
-            fetchContentRating(type, item.id)
-        ]);
+  return (
+    <div className="movie-discover-page">
+      <MetaTags
+        title="Movies | StreamFlix"
+        description="Discover the latest and greatest movies. Stream popular blockbusters, indies, and award-winning films for free on StreamFlix."
+      />
 
-        setSelectedItem({
-            ...item,
-            type,
-            genres: genreNames,
-            cast: cast.join(', ') || 'N/A',
-            contentRating
-        });
-        setIsModalOpen(true);
-    };
+      <BannerSlider
+        movies={bannerMovies}
+        onItemClick={handleItemClick}
+        loading={bannerMovies.length === 0}
+      />
 
-    const closeModal = () => {
-        setIsModalOpen(false);
-        setSelectedItem(null);
-    };
+      <MovieDiscoverFilterBar
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onMoreClick={() => setIsFilterPanelOpen(true)}
+        onClearFilters={handleClearFilters}
+        activeFilterCount={activeFilterCount}
+      />
 
-    const handleFilterChange = (newFilters) => {
-        setFilters(prev => ({ ...prev, ...newFilters, page: 1 }));
-        setCurrentPage(1);
-        setHasMorePages(true);
-    };
+      <div className="content-rows">
+        <DiscoverGrid
+          items={feed.visibleItems}
+          enrichedMap={feed.enrichedMap}
+          mediaType="movie"
+          loading={feed.loading}
+          error={feed.error}
+          emptyMessage="No movies match these filters. Try clearing a few."
+          isFetchingMore={feed.isFetchingMore}
+          sentinelRef={feed.sentinelRef}
+          canLoadMore={feed.canLoadMore}
+          onItemClick={handleItemClick}
+        />
+      </div>
 
-    const clearFilters = () => {
-        setFilters({
-            sort_by: 'popularity.desc',
-            include_adult: false,
-            include_video: false,
-            language: 'en-US',
-            page: 1
-        });
-        setCurrentPage(1);
-        setHasMorePages(true);
-    };
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        onClose={() => setIsFilterPanelOpen(false)}
+        mediaType="movie"
+        categories={MOVIE_BAR_CATEGORIES}
+        defaults={PANEL_DEFAULTS}
+        filters={{
+          genres: splitIds(filters.with_genres).map(Number),
+          keywords: splitIds(filters.with_keywords).map(Number),
+          year: filters.primary_release_year ? String(filters.primary_release_year) : '',
+          rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
+          sort_by: filters.sort_by || PANEL_DEFAULTS.sort_by
+        }}
+        onApply={handleApplyFilters}
+      />
 
-    // Handle filter panel apply
-    const handleApplyFilters = (newFilters) => {
-        const apiFilters = {
-            sort_by: 'popularity.desc',
-            include_adult: false,
-            include_video: false,
-            language: 'en-US',
-            page: 1
-        };
-
-        if (newFilters.genres && newFilters.genres.length > 0) {
-            apiFilters.with_genres = newFilters.genres.join(',');
-        }
-
-        if (newFilters.year) {
-            apiFilters.year = parseInt(newFilters.year);
-        }
-
-        if (newFilters.rating) {
-            apiFilters['vote_average.gte'] = parseFloat(newFilters.rating);
-        }
-
-        setFilters(apiFilters);
-        setCurrentPage(1);
-        setHasMorePages(true);
-    };
-
-    // Count active filters
-    const getActiveFilterCount = () => {
-        let count = 0;
-        if (filters.with_genres) count++;
-        if (filters.year) count++;
-        if (filters['vote_average.gte']) count++;
-        if (filters.sort_by && filters.sort_by !== 'popularity.desc') count++;
-        return count;
-    };
-
-    if (loading) {
-        return (
-            <div className="loading-screen">
-                <div className="loading-spinner"></div>
-                <p>Discovering movies...</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="movies-page">
-            {/* Banner Slider for New Releases */}
-            {topMovies.length > 0 && (
-                <BannerSlider movies={topMovies} onItemClick={handleItemClick} />
-            )}
-
-            {/* Page Title and Description */}
-            <div className="page-title-section">
-                <h1 style={{
-                    fontSize: '2rem',
-                    fontWeight: '700',
-                    color: '#fff',
-                    margin: '0 0 12px 0'
-                }}>Discover Movies</h1>
-                <p style={{
-                    fontSize: '1rem',
-                    color: 'rgba(255, 255, 255, 0.7)',
-                    margin: 0,
-                    width: '100%',
-                    lineHeight: '1.5'
-                }}>Uncover hidden gems and new releases in the world of cinema. Dive into a sea of movies waiting to be discovered by you.</p>
-            </div>
-
-            {/* Filter Panel */}
-            <FilterPanel
-                isOpen={isFilterPanelOpen}
-                onClose={() => setIsFilterPanelOpen(false)}
-                filters={{
-                    genres: filters.with_genres ? filters.with_genres.split(',').map(Number) : [],
-                    rating: filters['vote_average.gte'] ? String(filters['vote_average.gte']) : '',
-                    year: filters.year ? String(filters.year) : ''
-                }}
-                onApply={handleApplyFilters}
-                mediaType="movie"
-            />
-
-            <div className="content-rows">
-                <MovieRow
-                    title={`Movies (${movies.length})`}
-                    items={movies}
-                    onItemClick={handleItemClick}
-                    headerAction={
-                        <button
-                            className="select-filter-btn"
-                            onClick={() => setIsFilterPanelOpen(true)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                background: 'rgba(255, 255, 255, 0.1)',
-                                color: 'white',
-                                border: '1px solid rgba(255, 255, 255, 0.2)',
-                                padding: '8px 16px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                transition: 'all 0.2s ease'
-                            }}
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="4" y1="21" x2="4" y2="14"></line>
-                                <line x1="4" y1="10" x2="4" y2="3"></line>
-                                <line x1="12" y1="21" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12" y2="3"></line>
-                                <line x1="20" y1="21" x2="20" y2="16"></line>
-                                <line x1="20" y1="12" x2="20" y2="3"></line>
-                                <line x1="1" y1="14" x2="7" y2="14"></line>
-                                <line x1="9" y1="8" x2="15" y2="8"></line>
-                                <line x1="17" y1="16" x2="23" y2="16"></line>
-                            </svg>
-                            Filters
-                            {getActiveFilterCount() > 0 && (
-                                <span style={{
-                                    background: 'rgba(255, 255, 255, 0.9)',
-                                    color: '#000',
-                                    borderRadius: '10px',
-                                    padding: '2px 8px',
-                                    fontSize: '0.75rem',
-                                    fontWeight: '600',
-                                    marginLeft: '4px'
-                                }}>
-                                    {getActiveFilterCount()}
-                                </span>
-                            )}
-                        </button>
-                    }
-                />
-            </div>
-
-            {/* Load More Button */}
-            {hasMorePages && movies.length > 0 && (
-                <div className="load-more-container">
-                    <button
-                        className="load-more-btn"
-                        onClick={handleLoadMore}
-                        disabled={loadingMore}
-                    >
-                        {loadingMore ? (
-                            <>
-                                <span className="load-more-spinner"></span>
-                                Loading...
-                            </>
-                        ) : (
-                            <>
-                                Load More Movies
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="m6 9 6 6 6-6"></path>
-                                </svg>
-                            </>
-                        )}
-                    </button>
-                    <span className="load-more-count">Showing {movies.length} movies</span>
-                </div>
-            )}
-
-            {isModalOpen && selectedItem && (
-                <Modal item={selectedItem} onClose={closeModal} />
-            )}
-        </div>
-    );
+      {isModalOpen && selectedItem && (
+        <Modal item={selectedItem} onClose={closeModal} />
+      )}
+    </div>
+  );
 };
 
 export default Discover;

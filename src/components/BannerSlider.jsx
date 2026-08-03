@@ -158,8 +158,8 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     }
   };
 
-  // Ad configuration
-  const AD_URL = 'https://www.effectivegatecpm.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+  // Adsterra configuration smartlink
+  const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
   const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
   // Handle Watch Now button click with ad popup

@@ -841,3 +841,25 @@
         right: 32px;
     }
 }
+/* ===== Hover-capable pointers: the Interactive Preview Card owns the click =====
+   Where a real pointer exists, hovering a card opens the preview, and every
+   action (Watch now / Share / My List / More info) lives inside it. Leaving this
+   decorative play button on screen would offer a second, competing target that
+   no longer does anything, so it is hidden here.
+
+   The query is deliberately identical to the one HoverPreviewContext gates on
+   ('(hover: hover) and (pointer: fine)') - CSS and JS must never disagree about
+   which devices get the preview.
+
+   Touch and TV keep the button: they get no preview, so it stays their affordance. */
+@media (hover: hover) and (pointer: fine) {
+    .trending-play-btn {
+        display: none;
+    }
+
+    /* The card itself is inert on these devices - the preview takes the click -
+       so stop advertising a click target that does nothing. */
+    .trending-card {
+        cursor: default;
+    }
+}

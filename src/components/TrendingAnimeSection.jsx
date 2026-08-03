@@ -6,7 +6,9 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Modal from './Modal';
 import { useTMDB } from '../hooks/useTMDB';
 import { getPosterAlt } from '../utils/altTextUtils';
+import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
+import CarouselControls from './CarouselControls';
 
 // Anime type icons
 const ANIME_ICONS = {
@@ -42,6 +44,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
         LOGO_URL,
         POSTER_URL
     } = useTMDB();
+    const { getPreviewProps, closeNow } = useHoverPreview();
 
     const [content, setContent] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -213,6 +216,17 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
 
     const handleItemClick = async (item) => {
         if (isDragging) return;
+        closeNow(); // dismiss the hover preview before the modal opens
+
+        // When a parent onItemClick is provided (e.g. Home page), delegate
+        // immediately so the parent's own enrichment handles credits / rating.
+        // Doing a local await here AND in the parent doubles the round-trips.
+        if (onItemClick) {
+            onItemClick(item);
+            return;
+        }
+
+        // Internal modal path: enrich before opening since there's no parent.
         const type = animeType;
         const genreMap = type === 'movie' ? movieGenres : tvGenres;
         const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
@@ -231,12 +245,8 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
             contentRating
         };
 
-        if (onItemClick) {
-            onItemClick(enrichedItem);
-        } else {
-            setSelectedItem(enrichedItem);
-            setIsModalOpen(true);
-        }
+        setSelectedItem(enrichedItem);
+        setIsModalOpen(true);
     };
 
     const closeModal = () => {
@@ -293,14 +303,15 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                     </div>
                 </div>
             ) : (
-                <div
-                    className={`trending-carousel${isDragging ? ' dragging' : ''}`}
-                    ref={carouselRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseUp={handleMouseUp}
-                    onMouseMove={handleMouseMove}
-                >
+                <div className="carousel-container">
+                    <div
+                        className={`trending-carousel${isDragging ? ' dragging' : ''}`}
+                        ref={carouselRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                    >
                     {displayContent.map((item) => {
                         const itemTitle = item.title || item.name;
                         const backdropSrc = item.backdrop_path
@@ -317,6 +328,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                                 key={`${animeType}-${item.id}`}
                                 className="trending-card"
                                 onClick={() => handleItemClick(item)}
+                                {...getPreviewProps(item, animeType, isDragging, handleItemClick)}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
@@ -371,6 +383,8 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                             </div>
                         );
                     })}
+                    </div>
+                    <CarouselControls carouselRef={carouselRef} />
                 </div>
             )}
 

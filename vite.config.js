@@ -92,8 +92,7 @@ export default defineConfig(({ mode }) => {
           shortcuts: [
             { name: 'Home Page', url: '/home', description: 'Home page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
             { name: 'Movie Page', url: '/movies', description: 'Movie page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
-            { name: 'TV Shows Page', url: '/tv-shows', description: 'TV Shows page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] },
-            { name: 'Popular Page', url: '/popular', description: 'Popular page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] }
+            { name: 'TV Shows Page', url: '/tv-shows', description: 'TV Shows page for STREAMFLIX', icons: [{ src: '/icons/favicon-96x96.png', sizes: '96x96' }] }
           ]
         },
         workbox: {
@@ -149,17 +148,7 @@ export default defineConfig(({ mode }) => {
         dynamicRoutes: [
           // Main content pages
           '/tv-shows',
-          '/popular',
-          '/top-rated',
           '/discover',
-          '/trending',
-          // Anime pages
-          '/anime-movies',
-          '/anime-series',
-          // TV pages
-          '/trending-tv',
-          '/top-rated-tv',
-          '/popular-tv',
           // Streaming providers
           '/netflix',
           '/disney',

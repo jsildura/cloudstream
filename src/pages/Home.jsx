@@ -6,7 +6,7 @@ import Modal from '../components/Modal';
 import SearchModal from '../components/SearchModal';
 import PopularCollections from '../components/PopularCollections';
 import ContinueWatching from '../components/ContinueWatching';
-import StreamingPicks from '../components/StreamingPicks';
+import StreamingProviders from '../components/StreamingProviders';
 import TrendingSection from '../components/TrendingSection';
 import TrendingAnimeSection from '../components/TrendingAnimeSection';
 import RecommendedForYou from '../components/RecommendedForYou';
@@ -169,26 +169,19 @@ const Home = () => {
     }
   }, [searchTMDB]);
 
-  const handleItemClick = useCallback(async (item) => {
+  const handleItemClick = useCallback((item) => {
     const type = item.media_type === "movie" || item.release_date ? "movie" : "tv";
     const genreMap = type === 'movie' ? movieGenres : tvGenres;
     const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
 
-    // Fetch credits and content rating in parallel
-    const [cast, contentRating] = await Promise.all([
-      fetchCredits(type, item.id),
-      fetchContentRating(type, item.id)
-    ]);
-
+    // Open modal immediately — cast & contentRating are lazily loaded inside Modal.
     setSelectedItem({
       ...item,
       type,
-      genres: genreNames,
-      cast: cast.join(', ') || 'N/A',
-      contentRating
+      genres: item.genres?.length ? item.genres : genreNames,
     });
     setIsModalOpen(true);
-  }, [movieGenres, tvGenres, fetchCredits, fetchContentRating]);
+  }, [movieGenres, tvGenres]);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -261,44 +254,9 @@ const Home = () => {
           <MovieStudios />
         </LazyLoadSection>
 
-        {/* Netflix Originals Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="netflix" />
-        </LazyLoadSection>
-
-        {/* Disney+ Picks Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="disney" />
-        </LazyLoadSection>
-
-        {/* Prime Video Featured Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="prime" />
-        </LazyLoadSection>
-
-        {/* Apple TV+ Originals Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="apple" />
-        </LazyLoadSection>
-
-        {/* HBO Originals Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="hbo" />
-        </LazyLoadSection>
-
-        {/* VIU Picks Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="viu" />
-        </LazyLoadSection>
-
-        {/* Crunchyroll Anime Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="crunchyroll" />
-        </LazyLoadSection>
-
-        {/* Peacock Picks Section */}
-        <LazyLoadSection minHeight="350px">
-          <StreamingPicks provider="peacock" />
+        {/* Streaming Providers Section */}
+        <LazyLoadSection minHeight="300px">
+          <StreamingProviders />
         </LazyLoadSection>
 
 
