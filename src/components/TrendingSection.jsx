@@ -33,7 +33,7 @@ const MEDIA_ICONS = {
 };
 
 const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
-    const { movieGenres, tvGenres, fetchTrending, fetchCredits, fetchContentRating, BACKDROP_URL, LOGO_URL, POSTER_URL } = useTMDB();
+    const { movieGenres, tvGenres, fetchTrending, fetchCredits, fetchContentRating, fetchItemBundle, BACKDROP_URL, LOGO_URL, POSTER_URL } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     const [content, setContent] = useState([]);
@@ -87,17 +87,18 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                     content.map(async (item) => {
                         try {
                             const type = mediaType;
-                            const response = await fetch(`/api/${type}/${item.id}/images`);
-                            const imagesData = await response.json();
+                            // One bundled call instead of a bare /images hit — see
+                            // fetchItemBundle: appended data is nested under `images`.
+                            const data = await fetchItemBundle(type, item.id, ['images']);
 
                             // Get English logo or first available
-                            const logos = imagesData.logos || [];
+                            const logos = data.images?.logos || [];
                             const englishLogo = logos.find(l => l.iso_639_1 === 'en') || logos[0];
 
                             // Get backdrop
                             let backdrop_path = item.backdrop_path;
-                            if (!backdrop_path && imagesData.backdrops?.length) {
-                                backdrop_path = imagesData.backdrops[0].file_path;
+                            if (!backdrop_path && data.images?.backdrops?.length) {
+                                backdrop_path = data.images.backdrops[0].file_path;
                             }
 
                             return {
