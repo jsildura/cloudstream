@@ -425,6 +425,42 @@ export const useTMDB = () => {
     }
   }, [buildUrl]);
 
+  /**
+   * Fetch a movie/TV record with its sub-resources folded into ONE request.
+   *
+   * Every /api/ call is a billable Cloudflare Pages Function request, so
+   * `append_to_response` replaces the old pattern of hitting /images, /videos
+   * and the detail endpoint separately for the same item.
+   *
+   * Two things to know when reading the result:
+   *  - Appended data is NESTED under its own key (`data.images.logos`,
+   *    `data.videos.results`), never merged into the top level.
+   *  - Appended sub-requests inherit the parent's `language`, which filters the
+   *    image arrays down to nothing. `include_image_language=en,null` restores
+   *    English plus textless logos, so the English-first lookup still works.
+   */
+  const fetchItemBundle = useCallback(async (type, id, appends = []) => {
+    // Sorted so ['images','videos'] and ['videos','images'] share a cache entry.
+    const list = [...appends].sort();
+    const cacheKey = `bundle_${type}_${id}_${list.join(',')}`;
+
+    return fetchWithCache(cacheKey, async () => {
+      const params = { language: 'en-US' };
+      if (list.length) {
+        params.append_to_response = list.join(',');
+        if (list.includes('images')) params.include_image_language = 'en,null';
+      }
+
+      const res = await fetch(buildUrl(`/${type}/${id}`, params));
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      return await res.json();
+    });
+  }, [buildUrl]);
+
   const fetchPopularByRegion = useCallback(async (type = 'movie', region = 'US') => {
     const cacheKey = `popular_${type}_${region}`;
     return fetchWithCache(cacheKey, async () => {
@@ -487,6 +523,7 @@ export const useTMDB = () => {
     fetchTVRecommendations,
     fetchVideos,
     fetchLogo,
+    fetchItemBundle,
     fetchPopularByRegion,
     ...constants
   };
