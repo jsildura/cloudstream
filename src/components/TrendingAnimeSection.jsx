@@ -40,6 +40,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
         fetchDiscoverTV,
         fetchCredits,
         fetchContentRating,
+        fetchItemBundle,
         BACKDROP_URL,
         LOGO_URL,
         POSTER_URL
@@ -112,15 +113,15 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                     content.map(async (item) => {
                         try {
                             const type = animeType;
-                            const response = await fetch(`/api/${type}/${item.id}/images`);
-                            const imagesData = await response.json();
+                            // Bundled + cached; appended images are nested under `images`.
+                            const data = await fetchItemBundle(type, item.id, ['images']);
 
-                            const logos = imagesData.logos || [];
+                            const logos = data.images?.logos || [];
                             const englishLogo = logos.find(l => l.iso_639_1 === 'en') || logos[0];
 
                             let backdrop_path = item.backdrop_path;
-                            if (!backdrop_path && imagesData.backdrops?.length) {
-                                backdrop_path = imagesData.backdrops[0].file_path;
+                            if (!backdrop_path && data.images?.backdrops?.length) {
+                                backdrop_path = data.images.backdrops[0].file_path;
                             }
 
                             return {
