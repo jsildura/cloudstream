@@ -13,7 +13,7 @@ import CarouselControls from './CarouselControls';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
     const { popularContent, loading } = usePopularTracking();
-    const { BACKDROP_URL, LOGO_URL, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating } = useTMDB();
+    const { BACKDROP_URL, LOGO_URL, fetchItemBundle, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // State for enriched data (with logos)
@@ -57,34 +57,26 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 const enrichedItems = await Promise.all(
                     popularContent.map(async (item) => {
                         try {
-                            // Fetch images to get logo
+                            // One bundled call for the logo and the rating that
+                            // used to take a separate details request.
                             const type = item.type || 'movie';
-                            const response = await fetch(`/api/${type}/${item.id}/images`);
-                            // Fetch details to get rating
-                            const detailsPromise = type === 'movie'
-                                ? fetchMovieDetails(item.id)
-                                : fetchTVDetails(item.id);
-
-                            const [imagesData, details] = await Promise.all([
-                                response.json(),
-                                detailsPromise
-                            ]);
+                            const data = await fetchItemBundle(type, item.id, ['images']);
 
                             // Get English logo or first available
-                            const logos = imagesData.logos || [];
+                            const logos = data.images?.logos || [];
                             const englishLogo = logos.find(l => l.iso_639_1 === 'en') || logos[0];
 
                             // Also fetch backdrop if not available
                             let backdrop_path = item.backdrop_path;
-                            if (!backdrop_path && imagesData.backdrops?.length) {
-                                backdrop_path = imagesData.backdrops[0].file_path;
+                            if (!backdrop_path && data.images?.backdrops?.length) {
+                                backdrop_path = data.images.backdrops[0].file_path;
                             }
 
                             return {
                                 ...item,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
-                                vote_average: details.vote_average
+                                vote_average: data.vote_average
                             };
                         } catch (error) {
                             return item;
