@@ -7,7 +7,7 @@ import './TopTenRow.css';
 import CarouselControls from './CarouselControls';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
-    const { BACKDROP_URL, LOGO_URL, fetchMovieDetails, fetchTVDetails, POSTER_URL } = useTMDB();
+    const { BACKDROP_URL, LOGO_URL, fetchItemBundle, POSTER_URL } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // Refs - carouselRef is now the scrollable container
@@ -53,28 +53,23 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                     items.map(async (item) => {
                         try {
                             const type = item.type || item.media_type || 'movie';
-                            const response = await fetch(`/api/${type}/${item.id}/images`);
+                            // One bundled call covers both the images and the
+                            // vote_average that used to need its own details fetch.
+                            const data = await fetchItemBundle(type, item.id, ['images']);
 
-                            // Fetch details for rating if missing
-                            let rating = item.vote_average;
-                            if (rating === undefined) {
-                                const detailsPromise = type === 'movie'
-                                    ? fetchMovieDetails(item.id)
-                                    : fetchTVDetails(item.id);
-                                const details = await detailsPromise;
-                                rating = details.vote_average;
-                            }
-
-                            const imagesData = await response.json();
+                            // Fall back to the bundle's rating only when the item lacks one
+                            const rating = item.vote_average !== undefined
+                                ? item.vote_average
+                                : data.vote_average;
 
                             // Get English logo or first available
-                            const logos = imagesData.logos || [];
+                            const logos = data.images?.logos || [];
                             const englishLogo = logos.find(l => l.iso_639_1 === 'en') || logos[0];
 
                             // Get backdrop
                             let backdrop_path = item.backdrop_path;
-                            if (!backdrop_path && imagesData.backdrops?.length) {
-                                backdrop_path = imagesData.backdrops[0].file_path;
+                            if (!backdrop_path && data.images?.backdrops?.length) {
+                                backdrop_path = data.images.backdrops[0].file_path;
                             }
 
                             return {
