@@ -48,7 +48,6 @@ export const useTMDB = () => {
   // when the shared maps are populated for the first time.
   const [movieGenres, setMovieGenres] = useState(sharedMovieGenres);
   const [tvGenres, setTvGenres] = useState(sharedTvGenres);
-  const [apiStatus, setApiStatus] = useState('checking');
 
   const getApiBaseUrl = useCallback(() => {
     return '/api';
@@ -66,23 +65,6 @@ export const useTMDB = () => {
 
     return url.toString();
   }, [getApiBaseUrl]);
-
-  const checkApiStatus = useCallback(async () => {
-    try {
-      const testUrl = buildUrl('/configuration');
-      const testResponse = await fetch(testUrl);
-
-      if (testResponse.ok) {
-        setApiStatus('working');
-      } else {
-        setApiStatus('error');
-        console.error('API test failed:', await testResponse.text());
-      }
-    } catch (error) {
-      console.error('API connection error:', error);
-      setApiStatus('error');
-    }
-  }, [buildUrl]);
 
   const fetchGenres = useCallback(async () => {
     // Already populated — nothing to do; components will read sharedMovieGenres directly.
@@ -469,7 +451,6 @@ export const useTMDB = () => {
 
     const init = async () => {
       if (isMounted) {
-        await checkApiStatus();
         await fetchGenres();
       }
     };
@@ -479,7 +460,7 @@ export const useTMDB = () => {
     return () => {
       isMounted = false;
     };
-  }, [checkApiStatus, fetchGenres]);
+  }, [fetchGenres]);
 
   // Memoize constants to prevent recreation
   const constants = useMemo(() => ({
@@ -491,7 +472,6 @@ export const useTMDB = () => {
   return {
     movieGenres,
     tvGenres,
-    apiStatus,
     fetchNowPlaying,
     fetchTrending,
     fetchTrendingAnime,
