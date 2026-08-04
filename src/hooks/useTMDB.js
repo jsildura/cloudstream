@@ -9,20 +9,43 @@ const LOGO_URL = 'https://image.tmdb.org/t/p/w500';
 const apiCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
+// Requests that have been sent but not yet resolved, keyed the same way as
+// apiCache. Every /api/ call is a billable Cloudflare Pages Function request,
+// and the content rows all enrich inside concurrent Promise.all bursts — so
+// without this, three rows containing the same movie each miss the (still
+// empty) cache and fire three identical requests. Sharing the in-flight
+// promise collapses them into one.
+const inFlight = new Map();
+
 /**
  * Fetch data with caching support
  * @param {string} cacheKey - Unique key for this request
  * @param {Function} fetcher - Async function that returns the data
- * @returns {Promise<any>} - Cached or fresh data
+ * @returns {Promise<any>} - Cached, in-flight, or fresh data
  */
 const fetchWithCache = async (cacheKey, fetcher) => {
   const cached = apiCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.data;
   }
-  const data = await fetcher();
-  apiCache.set(cacheKey, { data, timestamp: Date.now() });
-  return data;
+
+  const pending = inFlight.get(cacheKey);
+  if (pending) return pending;
+
+  // Store the promise before awaiting so concurrent callers find it. Failures
+  // are removed rather than cached, so a transient error doesn't stick.
+  const request = (async () => {
+    try {
+      const data = await fetcher();
+      apiCache.set(cacheKey, { data, timestamp: Date.now() });
+      return data;
+    } finally {
+      inFlight.delete(cacheKey);
+    }
+  })();
+
+  inFlight.set(cacheKey, request);
+  return request;
 };
 
 // Clear stale cache entries periodically (every 10 minutes)
