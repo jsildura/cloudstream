@@ -3,7 +3,7 @@ import useTVDetect from '../hooks/useTVDetect';
 
 const ViewerCountContext = createContext();
 
-const HEARTBEAT_INTERVAL = 60000; // 60 seconds (reduced from 20s to stay within KV free tier: 1,000 writes/day)
+const HEARTBEAT_INTERVAL = 180000; // 180 seconds — reduced from 60s to stay within KV free tier: 1,000 writes/day
 const STORAGE_KEY = 'streamflix_visitor_uid';
 
 function getOrCreateUid() {
@@ -71,16 +71,30 @@ export function ViewerCountProvider({ children }) {
             }
         };
 
-        // Send initial heartbeat
+    // Send initial heartbeat
         sendHeartbeat();
 
         // Set up interval - this should continue running as long as the provider is mounted
         const currentInterval = isTVMode ? HEARTBEAT_INTERVAL * 3 : HEARTBEAT_INTERVAL;
-        const intervalId = setInterval(sendHeartbeat, currentInterval);
+        let intervalId = setInterval(sendHeartbeat, currentInterval);
+
+        // Pause the interval when the tab is hidden to avoid wasting requests
+        // on backgrounded tabs, and resume with an immediate heartbeat on return.
+        const handleVisibility = () => {
+            if (document.hidden) {
+                clearInterval(intervalId);
+                intervalId = null;
+            } else {
+                sendHeartbeat();
+                intervalId = setInterval(sendHeartbeat, currentInterval);
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
 
         return () => {
             isMountedRef.current = false;
-            clearInterval(intervalId);
+            if (intervalId) clearInterval(intervalId);
+            document.removeEventListener('visibilitychange', handleVisibility);
         };
     }, [isTVMode]); // Re-run if TV mode detects changes
 

@@ -196,3 +196,5 @@ Movie_Discover_Page_Redesign_(Re-Audited)_implementation_plan.md
 TV_Shows_Discover_Page_Redesign_(Re-Audited)_implementation_plan.md
 Remove Anime Pages & Simplify Navigation.md
 Coding Guide.md
+code_audit.md
+Cut Cloudflare Pages Function requests to restore TMDB data.md

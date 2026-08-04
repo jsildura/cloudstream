@@ -10,7 +10,7 @@
  */
 
 const VISITORS_KEY = 'active_visitors';
-const VISITOR_TTL_MS = 180000; // 3 minutes — visitor considered gone after this
+const VISITOR_TTL_MS = 300000; // 5 minutes — must exceed HEARTBEAT_INTERVAL (180s)
 
 function getCorsHeaders() {
     return {

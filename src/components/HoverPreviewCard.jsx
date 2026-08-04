@@ -8,7 +8,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { useTMDB } from '../hooks/useTMDB';
+import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
@@ -46,7 +46,7 @@ const AD_COOLDOWN_MS = 2 * 60 * 1000;
 
 const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) => {
     const navigate = useNavigate();
-    const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchVideos, fetchLogo, fetchContentRating, movieGenres, tvGenres } = useTMDB();
+    const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchItemBundle, movieGenres, tvGenres } = useTMDB();
     const { isInWatchlist, toggleWatchlist } = useWatchlist();
     const { showSuccess } = useToast();
     const { keepPreview, closePreview, closeNow } = useHoverPreview();
@@ -76,21 +76,30 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
         (async () => {
             const needsRuntime = !item.runtime && !(Array.isArray(item.episode_run_time) && item.episode_run_time[0]);
 
-            const [logo, key, rating, details] = await Promise.all([
-                item.logo_path ? Promise.resolve(item.logo_path) : fetchLogo(type, item.id),
-                fetchVideos(type, item.id),
-                item.contentRating ? Promise.resolve(item.contentRating) : fetchContentRating(type, item.id),
-                // Only fetch detail endpoint when runtime isn't already on the item
-                needsRuntime
-                    ? fetch(`/api/${type}/${item.id}`).then(r => r.ok ? r.json() : null).catch(() => null)
-                    : Promise.resolve(null),
-            ]);
-            if (!alive) return;
+            // One request covers all four pieces. Runtime and the rating come
+            // from the detail record we have to load anyway, so only the appends
+            // are conditional: skip them when the row already enriched the item.
+            const appends = ['videos'];
+            if (!item.logo_path) appends.push('images');
+            if (!item.contentRating) {
+                appends.push(type === 'tv' ? 'content_ratings' : 'release_dates');
+            }
+
+            const data = await fetchItemBundle(type, item.id, appends).catch(() => null);
+            if (!alive || !data) return;
+
+            const logo = item.logo_path || pickLogoPath(data.images?.logos || []);
+            const rating = item.contentRating || parseContentRating(
+                type,
+                type === 'tv' ? data.content_ratings : data.release_dates
+            );
+            const key = pickTrailerKey(data.videos?.results || []);
+
             if (logo) setLogoPath(logo);
             if (rating) setContentRating(rating);
-            if (details) {
-                const mins = details.runtime ||
-                    (Array.isArray(details.episode_run_time) ? details.episode_run_time[0] : null);
+            if (needsRuntime) {
+                const mins = data.runtime ||
+                    (Array.isArray(data.episode_run_time) ? data.episode_run_time[0] : null);
                 if (mins) setRuntimeMins(mins);
             }
             if (key) {
@@ -103,7 +112,7 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
             alive = false;
             if (videoTimer.current) clearTimeout(videoTimer.current);
         };
-    }, [item.id, type, item.logo_path, item.contentRating, item.runtime, fetchLogo, fetchVideos, fetchContentRating]);
+    }, [item.id, type, item.logo_path, item.contentRating, item.runtime, item.episode_run_time, fetchItemBundle]);
 
     // Position: centred on the source card, clamped to the viewport, flipped
     // above the card when there isn't room below.

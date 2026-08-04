@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTMDB } from '../hooks/useTMDB';
+import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
@@ -19,7 +19,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const trailerRef = useRef(null);
-  const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchLogo, fetchVideos, fetchContentRating, fetchMovieDetails, fetchTVDetails, fetchSeasonEpisodes, movieGenres, tvGenres } = useTMDB();
+  const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchItemBundle, fetchSeasonEpisodes, movieGenres, tvGenres } = useTMDB();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const { showSuccess } = useToast();
   const isTVMode = useTVDetect();
@@ -59,26 +59,6 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     };
   }, [currentSlide, movies.length, isTrailerPlaying, isTVMode]);
 
-  // Fetch logos for all banner movies
-  useEffect(() => {
-    const fetchLogos = async () => {
-      for (const movie of movies) {
-        const cacheKey = `${movie.media_type || (movie.release_date ? 'movie' : 'tv')}_${movie.id}`;
-        if (!logoCache[cacheKey]) {
-          const type = movie.media_type || (movie.release_date ? 'movie' : 'tv');
-          const logoPath = await fetchLogo(type, movie.id);
-          if (logoPath) {
-            setLogoCache(prev => ({ ...prev, [cacheKey]: logoPath }));
-          }
-        }
-      }
-    };
-
-    if (movies.length > 0 && fetchLogo) {
-      fetchLogos();
-    }
-  }, [movies, fetchLogo]);
-
   const goToSlide = (index) => {
     setCurrentSlide(index);
     setProgress(0);
@@ -94,24 +74,102 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const currentLogoPath = logoCache[currentLogoKey];
   const currentTrailerKey = trailerCache[currentLogoKey];
 
-  // Fetch trailer for current movie
+  // --- Bundled fetch: logo + trailer + rating + runtime in ONE call per slide ---
+  // Replaces four separate useEffects that each hit /api/ independently.
+  // fetchSeasonEpisodes stays separate — season data can't be appended.
   useEffect(() => {
-    if (showSkeleton) return; // Skip fetch when in skeleton mode
+    if (showSkeleton || !currentMovie.id) return;
 
-    const fetchTrailer = async () => {
-      if (!trailerCache[currentLogoKey] && currentMovie.id) {
-        const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
-        const key = await fetchVideos(type, currentMovie.id);
-        if (key) {
-          setTrailerCache(prev => ({ ...prev, [currentLogoKey]: key }));
+    // Skip entirely if we already have all four pieces cached for this slide.
+    // Use `in` so an explicit null (meaning "fetched, nothing found") still counts
+    // as cached — !! would coerce null to false and re-trigger the bundle call.
+    const hasLogo    = currentLogoKey in logoCache;
+    const hasTrailer = currentLogoKey in trailerCache;
+    const hasRating  = currentLogoKey in ratingCache;
+    const hasRuntime = currentLogoKey in runtimeCache;
+    if (hasLogo && hasTrailer && hasRating && hasRuntime) return;
+
+    let alive = true;
+
+    (async () => {
+      const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
+
+      // Build appends list: images for logo, videos for trailer,
+      // release_dates (movie) or content_ratings (TV) for the age badge.
+      // The detail record itself carries runtime / number_of_seasons.
+      const appends = ['images', 'videos'];
+      appends.push(type === 'tv' ? 'content_ratings' : 'release_dates');
+
+      const data = await fetchItemBundle(type, currentMovie.id, appends).catch(() => null);
+      if (!alive || !data) return;
+
+      // --- Logo ---
+      if (!hasLogo) {
+        const logo = pickLogoPath(data.images?.logos || []);
+        // Always store (even null) so the `in` guard marks this slide as fetched
+        // and prevents a re-fetch on the next banner loop.
+        setLogoCache(prev => ({ ...prev, [currentLogoKey]: logo || null }));
+      }
+
+      // --- Trailer ---
+      if (!hasTrailer) {
+        const key = pickTrailerKey(data.videos?.results || []);
+        // Store even if null so we don't re-fetch
+        setTrailerCache(prev => ({ ...prev, [currentLogoKey]: key }));
+      }
+
+      // --- Content rating ---
+      if (!hasRating) {
+        const rating = parseContentRating(
+          type,
+          type === 'tv' ? data.content_ratings : data.release_dates
+        );
+        // Always store (even null) so the `in` guard marks this slide as fetched.
+        setRatingCache(prev => ({ ...prev, [currentLogoKey]: rating || null }));
+      }
+
+      // --- Runtime ---
+      if (!hasRuntime) {
+        if (type === 'movie') {
+          // Always store (even null) so the `in` guard marks this slide as fetched.
+          setRuntimeCache(prev => ({ ...prev, [currentLogoKey]: { runtime: data.runtime || null, type: 'movie' } }));
+        } else {
+          // TV: details come from the bundle; season episodes stay separate
+          setTvDetailsCache(prev => ({ ...prev, [currentLogoKey]: data }));
+
+          const latestSeason = data.number_of_seasons || 1;
+          if (latestSeason >= 1) {
+            try {
+              const episodes = await fetchSeasonEpisodes(currentMovie.id, latestSeason);
+              if (!alive) return;
+              const totalRuntime = episodes.length > 0
+                ? episodes.reduce((sum, ep) => sum + (ep.runtime || 0), 0)
+                : null;
+              // Always store so the `in` guard marks this TV slide as fetched.
+              setRuntimeCache(prev => ({
+                ...prev,
+                [currentLogoKey]: {
+                  runtime: totalRuntime,
+                  type: 'tv',
+                  episodeCount: episodes.length,
+                  latestSeason: latestSeason
+                }
+              }));
+            } catch (err) {
+              console.error('Failed to fetch latest season episodes:', err);
+              // Store a sentinel so we don't re-fetch on the next banner loop visit.
+              if (alive) setRuntimeCache(prev => ({ ...prev, [currentLogoKey]: { runtime: null, type: 'tv' } }));
+            }
+          } else {
+            // No seasons — mark as fetched with null runtime.
+            setRuntimeCache(prev => ({ ...prev, [currentLogoKey]: { runtime: null, type: 'tv' } }));
+          }
         }
       }
-    };
+    })();
 
-    if (fetchVideos) {
-      fetchTrailer();
-    }
-  }, [currentMovie.id, currentLogoKey, fetchVideos, showSkeleton]);
+    return () => { alive = false; };
+  }, [currentMovie.id, currentLogoKey, showSkeleton, fetchItemBundle, fetchSeasonEpisodes]);
 
   // Toggle trailer playback
   const toggleTrailer = () => {
@@ -199,79 +257,8 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const year = currentMovie.release_date?.substring(0, 4) ||
     currentMovie.first_air_date?.substring(0, 4) || 'N/A';
 
-  // Fetch content rating for current movie
-  useEffect(() => {
-    if (showSkeleton) return; // Skip fetch when in skeleton mode
-
-    const fetchRating = async () => {
-      if (!ratingCache[currentLogoKey] && currentMovie.id) {
-        const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
-        const rating = await fetchContentRating(type, currentMovie.id);
-        if (rating) {
-          setRatingCache(prev => ({ ...prev, [currentLogoKey]: rating }));
-        }
-      }
-    };
-
-    if (fetchContentRating) {
-      fetchRating();
-    }
-  }, [currentMovie.id, currentLogoKey, fetchContentRating, showSkeleton]);
-
   // Get content rating from cache or fallback
   const contentRating = ratingCache[currentLogoKey] || (currentMovie.adult ? 'R' : 'NR');
-
-  // Fetch runtime for current movie/TV show
-  useEffect(() => {
-    if (showSkeleton) return; // Skip fetch when in skeleton mode
-
-    const fetchRuntime = async () => {
-      if (!runtimeCache[currentLogoKey] && currentMovie.id) {
-        const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
-        try {
-          if (type === 'movie') {
-            const details = await fetchMovieDetails(currentMovie.id);
-            if (details?.runtime) {
-              setRuntimeCache(prev => ({ ...prev, [currentLogoKey]: { runtime: details.runtime, type: 'movie' } }));
-            }
-          } else {
-            // For TV shows, fetch details and latest season episodes
-            const details = await fetchTVDetails(currentMovie.id);
-            setTvDetailsCache(prev => ({ ...prev, [currentLogoKey]: details }));
-
-            // Fetch latest season episodes to calculate total runtime
-            const latestSeason = details?.number_of_seasons || 1;
-            if (latestSeason >= 1) {
-              try {
-                const episodes = await fetchSeasonEpisodes(currentMovie.id, latestSeason);
-                if (episodes && episodes.length > 0) {
-                  // Calculate total runtime for latest season
-                  const totalRuntime = episodes.reduce((sum, ep) => sum + (ep.runtime || 0), 0);
-                  setRuntimeCache(prev => ({
-                    ...prev,
-                    [currentLogoKey]: {
-                      runtime: totalRuntime,
-                      type: 'tv',
-                      episodeCount: episodes.length,
-                      latestSeason: latestSeason
-                    }
-                  }));
-                }
-              } catch (err) {
-                console.error('Failed to fetch latest season episodes:', err);
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch runtime:', error);
-        }
-      }
-    };
-
-    if (fetchMovieDetails && fetchTVDetails && fetchSeasonEpisodes) {
-      fetchRuntime();
-    }
-  }, [currentMovie.id, currentLogoKey, fetchMovieDetails, fetchTVDetails, fetchSeasonEpisodes, showSkeleton]);
 
   // Format runtime as "Xh Ym"
   const formatRuntime = (minutes) => {

@@ -50,8 +50,6 @@ export async function onRequest(context) {
 
     const fullURL = `${TMDB_BASE_URL}/${path}${queryString}`;
 
-    console.log('Proxying request to TMDB:', fullURL);
-
     const response = await fetch(fullURL, {
       headers: {
         'Accept': 'application/json',

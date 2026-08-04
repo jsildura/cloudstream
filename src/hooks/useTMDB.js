@@ -4,10 +4,52 @@ const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
 const LOGO_URL = 'https://image.tmdb.org/t/p/w500';
 
+// ===== RESPONSE PARSERS =====
+// Shared so the dedicated endpoints (/images, /videos, /content_ratings) and
+// the bundled append_to_response responses pick the same value from the same
+// data. Each takes the sub-resource object, which is the whole body for a
+// dedicated call and a nested key for a bundled one.
+
+/** English logo first, then any logo. */
+export const pickLogoPath = (logos = []) => {
+  const englishLogo = logos.find(l => l.iso_639_1 === 'en');
+  return (englishLogo || logos[0])?.file_path || null;
+};
+
+/** YouTube trailer, preferring the official one. */
+export const pickTrailerKey = (videos = []) => {
+  const trailer =
+    videos.find(v => v.site === 'YouTube' && v.type === 'Trailer' && v.official) ||
+    videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') ||
+    videos.find(v => v.site === 'YouTube');
+  return trailer?.key || null;
+};
+
+/**
+ * US certification first, then any.
+ * Movies carry it in `release_dates`, TV in `content_ratings` — different
+ * endpoints and different shapes, so the caller passes the media type.
+ */
+export const parseContentRating = (type, data) => {
+  const results = data?.results;
+  if (!results) return null;
+
+  if (type === 'tv') {
+    const usRating = results.find(r => r.iso_3166_1 === 'US');
+    return usRating?.rating || results[0]?.rating || null;
+  }
+
+  const usRelease = results.find(r => r.iso_3166_1 === 'US');
+  const usCert = usRelease?.release_dates?.find(rd => rd.certification)?.certification;
+  const anyRelease = results.find(r => r.release_dates?.some(rd => rd.certification));
+  const anyCert = anyRelease?.release_dates?.find(rd => rd.certification)?.certification;
+  return usCert || anyCert || null;
+};
+
 // ===== API CACHING =====
 // In-memory cache with TTL to reduce redundant API calls
 const apiCache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes — TMDB metadata is effectively static
 
 // Requests that have been sent but not yet resolved, keyed the same way as
 // apiCache. Every /api/ call is a billable Cloudflare Pages Function request,
@@ -216,41 +258,48 @@ export const useTMDB = () => {
   }, [buildUrl]);
 
   const fetchCredits = useCallback(async (type, id) => {
-    try {
-      const url = buildUrl(`/${type}/${id}/credits`);
-      const res = await fetch(url);
+    const cacheKey = `credits_${type}_${id}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/${type}/${id}/credits`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data.cast?.slice(0, 4).map(actor => actor.name) || [];
+      } catch (error) {
+        console.error("Failed to fetch credits:", error);
+        return [];
       }
-
-      const data = await res.json();
-      return data.cast?.slice(0, 4).map(actor => actor.name) || [];
-    } catch (error) {
-      console.error("Failed to fetch credits:", error);
-      return [];
-    }
+    });
   }, [buildUrl]);
 
   const fetchSeasonEpisodes = useCallback(async (tvId, seasonNumber) => {
-    try {
-      const url = buildUrl(`/tv/${tvId}/season/${seasonNumber}`);
-      const res = await fetch(url);
+    const cacheKey = `seasonEpisodes_${tvId}_${seasonNumber}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/tv/${tvId}/season/${seasonNumber}`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data.episodes || [];
+      } catch (error) {
+        console.error("Failed to fetch episodes:", error);
+        throw error;
       }
-
-      const data = await res.json();
-      return data.episodes || [];
-    } catch (error) {
-      console.error("Failed to fetch episodes:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchTVDetails = useCallback(async (tvId) => {
-    try {
+    const cacheKey = `tvDetails_${tvId}`;
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl(`/tv/${tvId}`);
       const res = await fetch(url);
 
@@ -259,14 +308,12 @@ export const useTMDB = () => {
       }
 
       return await res.json();
-    } catch (error) {
-      console.error("Failed to fetch TV details:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchMovieDetails = useCallback(async (movieId) => {
-    try {
+    const cacheKey = `movieDetails_${movieId}`;
+    return fetchWithCache(cacheKey, async () => {
       const url = buildUrl(`/movie/${movieId}`);
       const res = await fetch(url);
 
@@ -275,22 +322,23 @@ export const useTMDB = () => {
       }
 
       return await res.json();
-    } catch (error) {
-      console.error("Failed to fetch movie details:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchDiscoverMovies = useCallback(async (params = {}) => {
-    try {
-      const url = buildUrl('/discover/movie', {
-        sort_by: 'popularity.desc',
-        include_adult: false,
-        include_video: false,
-        language: 'en-US',
-        page: 1,
-        ...params
-      });
+    // Serialise the full merged params so different studios/providers/genres
+    // never share a cache entry. Sorted keys for stability.
+    const merged = {
+      sort_by: 'popularity.desc',
+      include_adult: false,
+      include_video: false,
+      language: 'en-US',
+      page: 1,
+      ...params
+    };
+    const cacheKey = `discoverMovie_${Object.keys(merged).sort().map(k => `${k}=${merged[k]}`).join('&')}`;
+    return fetchWithCache(cacheKey, async () => {
+      const url = buildUrl('/discover/movie', merged);
 
       const res = await fetch(url);
 
@@ -301,22 +349,21 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch discover movies:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchDiscoverTV = useCallback(async (params = {}) => {
-    try {
-      const url = buildUrl('/discover/tv', {
-        sort_by: 'popularity.desc',
-        include_adult: false,
-        include_null_first_air_dates: false,
-        language: 'en-US',
-        page: 1,
-        ...params
-      });
+    const merged = {
+      sort_by: 'popularity.desc',
+      include_adult: false,
+      include_null_first_air_dates: false,
+      language: 'en-US',
+      page: 1,
+      ...params
+    };
+    const cacheKey = `discoverTV_${Object.keys(merged).sort().map(k => `${k}=${merged[k]}`).join('&')}`;
+    return fetchWithCache(cacheKey, async () => {
+      const url = buildUrl('/discover/tv', merged);
 
       const res = await fetch(url);
 
@@ -327,125 +374,110 @@ export const useTMDB = () => {
 
       const data = await res.json();
       return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch discover TV:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchMovieRecommendations = useCallback(async (movieId) => {
-    try {
-      const url = buildUrl(`/movie/${movieId}/recommendations`);
-      const res = await fetch(url);
+    const cacheKey = `movieRecs_${movieId}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/movie/${movieId}/recommendations`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data.results || [];
+      } catch (error) {
+        console.error("Failed to fetch movie recommendations:", error);
+        throw error;
       }
-
-      const data = await res.json();
-      return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch movie recommendations:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchTVRecommendations = useCallback(async (tvId) => {
-    try {
-      const url = buildUrl(`/tv/${tvId}/recommendations`);
-      const res = await fetch(url);
+    const cacheKey = `tvRecs_${tvId}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/tv/${tvId}/recommendations`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return data.results || [];
+      } catch (error) {
+        console.error("Failed to fetch TV recommendations:", error);
+        throw error;
       }
-
-      const data = await res.json();
-      return data.results || [];
-    } catch (error) {
-      console.error("Failed to fetch TV recommendations:", error);
-      throw error;
-    }
+    });
   }, [buildUrl]);
 
   const fetchVideos = useCallback(async (type, id) => {
-    try {
-      const url = buildUrl(`/${type}/${id}/videos`);
-      const res = await fetch(url);
+    const cacheKey = `videos_${type}_${id}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/${type}/${id}/videos`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return pickTrailerKey(data.results || []);
+      } catch (error) {
+        console.error("Failed to fetch videos:", error);
+        return null;
       }
-
-      const data = await res.json();
-      // Find YouTube trailer, preferring official trailers
-      const videos = data.results || [];
-      const trailer = videos.find(v =>
-        v.site === 'YouTube' && v.type === 'Trailer' && v.official
-      ) || videos.find(v =>
-        v.site === 'YouTube' && v.type === 'Trailer'
-      ) || videos.find(v =>
-        v.site === 'YouTube'
-      );
-      return trailer?.key || null;
-    } catch (error) {
-      console.error("Failed to fetch videos:", error);
-      return null;
-    }
+    });
   }, [buildUrl]);
 
   const fetchLogo = useCallback(async (type, id) => {
-    try {
-      const url = buildUrl(`/${type}/${id}/images`);
-      const res = await fetch(url);
+    const cacheKey = `logo_${type}_${id}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const url = buildUrl(`/${type}/${id}/images`);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return pickLogoPath(data.logos || []);
+      } catch (error) {
+        console.error("Failed to fetch logo:", error);
+        return null;
       }
-
-      const data = await res.json();
-      // Find English logo first, then any logo
-      const logos = data.logos || [];
-      const englishLogo = logos.find(l => l.iso_639_1 === 'en');
-      const anyLogo = logos[0];
-      return (englishLogo || anyLogo)?.file_path || null;
-    } catch (error) {
-      console.error("Failed to fetch logo:", error);
-      return null;
-    }
+    });
   }, [buildUrl]);
 
   const fetchContentRating = useCallback(async (type, id) => {
-    try {
-      const endpoint = type === 'tv'
-        ? `/${type}/${id}/content_ratings`
-        : `/movie/${id}/release_dates`;
-      const url = buildUrl(endpoint);
-      const res = await fetch(url);
+    const cacheKey = `rating_${type}_${id}`;
+    return fetchWithCache(cacheKey, async () => {
+      try {
+        const endpoint = type === 'tv'
+          ? `/${type}/${id}/content_ratings`
+          : `/movie/${id}/release_dates`;
+        const url = buildUrl(endpoint);
+        const res = await fetch(url);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return parseContentRating(type, data);
+      } catch (error) {
+        console.error("Failed to fetch content rating:", error);
+        return null;
       }
-
-      const data = await res.json();
-
-      if (type === 'tv') {
-        // For TV shows, look for US rating first, then any available
-        const usRating = data.results?.find(r => r.iso_3166_1 === 'US');
-        const anyRating = data.results?.[0];
-        return usRating?.rating || anyRating?.rating || null;
-      } else {
-        // For movies, look for US certification first
-        const usRelease = data.results?.find(r => r.iso_3166_1 === 'US');
-        const usCert = usRelease?.release_dates?.find(rd => rd.certification)?.certification;
-        // Fallback to any certification
-        const anyRelease = data.results?.find(r => r.release_dates?.some(rd => rd.certification));
-        const anyCert = anyRelease?.release_dates?.find(rd => rd.certification)?.certification;
-        return usCert || anyCert || null;
-      }
-    } catch (error) {
-      console.error("Failed to fetch content rating:", error);
-      return null;
-    }
+    });
   }, [buildUrl]);
 
   /**

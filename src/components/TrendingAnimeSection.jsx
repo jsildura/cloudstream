@@ -90,6 +90,10 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
 
             setContent(data.slice(0, 20));
             setEnrichedContent([]);
+            // Reset enrichment lock so the new content's enrichment effect can
+            // start even if the previous run's `cancelled` cleanup suppressed
+            // its `setIsEnriching(false)` in the finally block.
+            setIsEnriching(false);
         } catch (err) {
             console.error('Error fetching trending anime:', err);
         } finally {
@@ -101,10 +105,14 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
         fetchContent();
     }, [animeType]);
 
-    // Enrich content with logos and backdrops
+    // Enrich content with logos and backdrops.
+    // `cancelled` prevents a stale run (previous animeType) from
+    // overwriting the new content or leaving isEnriching stuck at true.
     useEffect(() => {
+        let cancelled = false;
+
         const enrichContent = async () => {
-            if (!content || !content.length || isEnriching) return;
+            if (!content || !content.length) return;
 
             setIsEnriching(true);
 
@@ -135,17 +143,18 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                     })
                 );
 
-                setEnrichedContent(enrichedItems);
+                if (!cancelled) setEnrichedContent(enrichedItems);
             } catch (error) {
                 console.error('Error enriching anime content:', error);
-                setEnrichedContent(content);
+                if (!cancelled) setEnrichedContent(content);
             } finally {
-                setIsEnriching(false);
+                if (!cancelled) setIsEnriching(false);
             }
         };
 
         enrichContent();
-    }, [content]);
+        return () => { cancelled = true; };
+    }, [content]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const displayContent = enrichedContent.length > 0 ? enrichedContent : content;
 

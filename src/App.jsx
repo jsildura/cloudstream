@@ -219,7 +219,7 @@ function App() {
                 <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
                 {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
                 <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
-                {/* Music routes - nested under MusicApp layout */}
+                {/* Temporarily disabled - Music routes
                 <Route path="/music" element={<MusicApp />}>
                   <Route index element={<MusicHome />} />
                   <Route path="album/:id" element={<MusicAlbum />} />
@@ -227,6 +227,7 @@ function App() {
                   <Route path="track/:id" element={<MusicTrack />} />
                   <Route path="playlist/:id" element={<MusicPlaylist />} />
                 </Route>
+                */}
                 <Route path="*" element={<Home />} />
               </Routes>
             </Suspense>

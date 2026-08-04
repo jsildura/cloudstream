@@ -304,6 +304,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             )}
           </div>
 
+          {/* Temporarily disabled - Music
           <NavLink to="/music" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 18V5l12-2v13" />
@@ -312,6 +313,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
             </svg>
             Music
           </NavLink>
+          */}
 
           <NavLink to="/my-list" className="nav-link">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -460,7 +462,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
               </div>
             </div>
 
-            {/* Music - Non-expandable */}
+            {/* Temporarily disabled - Music
             <NavLink to="/music" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
               <div className="bottom-sheet-item-header">
                 <div className="bottom-sheet-item-icon">
@@ -473,6 +475,7 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
                 <span className="bottom-sheet-item-label">Music</span>
               </div>
             </NavLink>
+            */}
 
             {/* Watchlist - Non-expandable */}
             <NavLink to="/my-list" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>

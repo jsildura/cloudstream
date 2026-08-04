@@ -5,7 +5,7 @@
  */
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import usePopularTracking from '../hooks/usePopularTracking';
-import { useTMDB } from '../hooks/useTMDB';
+import { useTMDB, parseContentRating } from '../hooks/useTMDB';
 import useTVDetect from '../hooks/useTVDetect';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './PopularOnStreamflix.css';
@@ -13,7 +13,7 @@ import CarouselControls from './CarouselControls';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
     const { popularContent, loading } = usePopularTracking();
-    const { BACKDROP_URL, LOGO_URL, fetchItemBundle, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating } = useTMDB();
+    const { BACKDROP_URL, LOGO_URL, fetchItemBundle } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // State for enriched data (with logos)
@@ -46,10 +46,14 @@ const PopularOnStreamflix = ({ onItemClick }) => {
     const velX = useRef(0);
     const animationFrameId = useRef(null);
 
-    // Fetch logos for popular content
+    // Fetch logos for popular content.
+    // `cancelled` prevents a stale enrichment run (previous popularContent) from
+    // overwriting new content or leaving isEnriching stuck at true.
     useEffect(() => {
+        let cancelled = false;
+
         const enrichContent = async () => {
-            if (!popularContent.length || isEnriching) return;
+            if (!popularContent.length) return;
 
             setIsEnriching(true);
 
@@ -76,7 +80,11 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                 ...item,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
-                                vote_average: data.vote_average
+                                // Bug 3 fix: preserve existing vote_average (e.g. from Firebase
+                                // tracking) rather than blindly overwriting with the bundle value.
+                                vote_average: item.vote_average !== undefined
+                                    ? item.vote_average
+                                    : data.vote_average,
                             };
                         } catch (error) {
                             return item;
@@ -84,17 +92,18 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                     })
                 );
 
-                setEnrichedContent(enrichedItems);
+                if (!cancelled) setEnrichedContent(enrichedItems);
             } catch (error) {
                 console.error('Error enriching content:', error);
-                setEnrichedContent(popularContent);
+                if (!cancelled) setEnrichedContent(popularContent);
             } finally {
-                setIsEnriching(false);
+                if (!cancelled) setIsEnriching(false);
             }
         };
 
         enrichContent();
-    }, [popularContent]);
+        return () => { cancelled = true; };
+    }, [popularContent]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Cleanup on unmount
     useEffect(() => {
@@ -200,27 +209,28 @@ const PopularOnStreamflix = ({ onItemClick }) => {
         cardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }, []);
 
-    // Handle item click with full details fetch
+    // Handle item click — one bundled call covers details + credits + content rating.
+    // Previously three sequential/parallel requests; now a single fetchItemBundle.
     const handleItemClick = useCallback(async (item) => {
         if (isDragging) return;
         closeNow(); // dismiss the hover preview before the modal opens
 
         try {
-            // Fetch full details from TMDB
-            const type = item.type;
-            const details = type === 'movie'
-                ? await fetchMovieDetails(item.id)
-                : await fetchTVDetails(item.id);
+            const type = item.type || 'movie';
+            // Bundle: details (top level) + credits + age rating in one /api/ call.
+            const ratingAppend = type === 'tv' ? 'content_ratings' : 'release_dates';
+            const data = await fetchItemBundle(type, item.id, ['credits', ratingAppend]);
 
-            const [cast, contentRating] = await Promise.all([
-                fetchCredits(type, item.id),
-                fetchContentRating(type, item.id)
-            ]);
-
-            const genreNames = details.genres?.map(g => g.name) || [];
+            const genreNames = data.genres?.map(g => g.name) || [];
+            // credits are nested under data.credits when appended
+            const cast = data.credits?.cast?.slice(0, 4).map(a => a.name) || [];
+            const contentRating = parseContentRating(
+                type,
+                type === 'tv' ? data.content_ratings : data.release_dates
+            );
 
             onItemClick({
-                ...details,
+                ...data,
                 type,
                 genres: genreNames,
                 cast: cast.join(', ') || 'N/A',
@@ -237,7 +247,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 type: item.type
             });
         }
-    }, [isDragging, closeNow, fetchMovieDetails, fetchTVDetails, fetchCredits, fetchContentRating, onItemClick]);
+    }, [isDragging, closeNow, fetchItemBundle, onItemClick]);
 
     const handleKeyDown = useCallback((e, index) => {
         const itemsLength = displayContent?.length || 0;

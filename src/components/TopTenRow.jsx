@@ -41,10 +41,14 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const velX = useRef(0);
     const animationFrameId = useRef(null);
 
-    // Fetch logos and backdrops
+    // Fetch logos and backdrops.
+    // `cancelled` prevents a stale enrichment run (previous `items` prop) from
+    // overwriting new content or leaving isEnriching stuck at true.
     useEffect(() => {
+        let cancelled = false;
+
         const enrichContent = async () => {
-            if (!items || !items.length || isEnriching) return;
+            if (!items || !items.length) return;
 
             setIsEnriching(true);
 
@@ -84,17 +88,18 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                     })
                 );
 
-                setEnrichedContent(enrichedItems);
+                if (!cancelled) setEnrichedContent(enrichedItems);
             } catch (error) {
                 console.error('Error enriching Top 10 content:', error);
-                setEnrichedContent(items);
+                if (!cancelled) setEnrichedContent(items);
             } finally {
-                setIsEnriching(false);
+                if (!cancelled) setIsEnriching(false);
             }
         };
 
         enrichContent();
-    }, [items]);
+        return () => { cancelled = true; };
+    }, [items]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const displayContent = enrichedContent.length > 0 ? enrichedContent : items;
 
