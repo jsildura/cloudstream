@@ -113,16 +113,6 @@ export default defineConfig(({ mode }) => {
               }
             },
             {
-              urlPattern: ({ url }) => url.hostname === 'api.themoviedb.org',
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'tmdb-api',
-                networkTimeoutSeconds: 5,
-                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 },
-                cacheableResponse: { statuses: [0, 200] }
-              }
-            },
-            {
               urlPattern: ({ url }) => url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com',
               handler: 'CacheFirst',
               options: {
@@ -132,13 +122,28 @@ export default defineConfig(({ mode }) => {
               }
             },
             {
-              // Never cache streaming media manifests/segments or the local API proxy.
+              // Never cache streaming media manifests/segments, the live viewer
+              // heartbeat, or the generic passthrough proxy. Must stay ahead of
+              // the /api/ rule below — Workbox matches in array order.
               urlPattern: ({ url, request }) =>
                 /\.(m3u8|mpd|ts|m4s)(\?|$)/.test(url.pathname) ||
-                url.pathname.startsWith('/api/') ||
+                url.pathname === '/api/visit' ||
+                url.pathname === '/api/proxy' ||
                 request.destination === 'video' ||
                 request.destination === 'audio',
               handler: 'NetworkOnly'
+            },
+            {
+              // TMDB metadata via our Pages Function. Every one of these is a
+              // billable Function request, so serve from cache immediately and
+              // refresh in the background — repeat visits cost nothing.
+              urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'tmdb-proxy',
+                expiration: { maxEntries: 500, maxAgeSeconds: 60 * 60 * 6 },
+                cacheableResponse: { statuses: [0, 200] }
+              }
             }
           ]
         }
