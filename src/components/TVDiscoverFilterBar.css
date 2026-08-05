@@ -85,6 +85,26 @@
   border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* Loading skeleton: same pill geometry (incl. TV/4K scaling below), shimmer fill */
+.tv-filter-pill-skeleton {
+  pointer-events: none;
+  user-select: none;
+  border-color: transparent;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0.07) 100%);
+  background-size: 200% 100%;
+  animation: tvFilterShimmer 1.4s infinite;
+}
+
+@keyframes tvFilterShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 .tv-filter-more-badge {
   background: #fff;
   color: #0a0a0a;

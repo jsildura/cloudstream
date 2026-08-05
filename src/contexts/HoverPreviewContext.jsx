@@ -6,6 +6,7 @@
  * portal, so it can grow outside the carousels' `overflow-x: auto` clipping.
  */
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import HoverPreviewCard from '../components/HoverPreviewCard';
 
 const HoverPreviewContext = createContext(null);
@@ -77,6 +78,16 @@ export const HoverPreviewProvider = ({ children }) => {
             window.removeEventListener('resize', closeNow);
         };
     }, [preview, closeNow]);
+
+    // Route change: dismiss. The card is portaled above the router, so any
+    // navigation that didn't originate from the preview's own buttons (e.g.
+    // card-edge click → modal → "Watch now") would otherwise leave the trailer
+    // playing over the destination page. closeNow/clearTimers are stable
+    // callbacks, so only pathname/search changes trigger this.
+    const location = useLocation();
+    useEffect(() => {
+        closeNow();
+    }, [location.pathname, location.search, closeNow]);
 
     const openPreview = useCallback((element, item, type, onMoreInfo) => {
         if (!canHover.current || !element || !item?.id) return;

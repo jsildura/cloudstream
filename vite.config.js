@@ -5,18 +5,25 @@ import { VitePWA } from 'vite-plugin-pwa';
 import Sitemap from 'vite-plugin-sitemap'
 import http from 'http';
 import https from 'https';
+import { Readable } from 'node:stream';
 
 const corsProxyPlugin = () => ({
   name: 'cors-proxy',
   configureServer(server) {
+    // ZXC stream secret for dev: process.env first, then the .env file.
+    // (Never committed — .gitignore covers .env. Production uses Cloudflare's
+    // encrypted ZXC_STREAM_SECRET binding instead.)
+    const devEnv = loadEnv('development', process.cwd(), '');
+    const ZXC_SECRET = process.env.ZXC_STREAM_SECRET || devEnv.ZXC_STREAM_SECRET;
+
     // Mock visit endpoint
-    server.middlewares.use('/api/visit', (req, res, next) => {
+    server.middlewares.use('/api/visit', (req, res, _next) => {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ success: true }));
     });
 
     // General proxy endpoint
-    server.middlewares.use('/api/proxy', (req, res, next) => {
+    server.middlewares.use('/api/proxy', (req, res, _next) => {
       const urlObj = new URL(req.url, `http://${req.headers.host}`);
       const targetUrl = urlObj.searchParams.get('url');
 
@@ -46,6 +53,62 @@ const corsProxyPlugin = () => ({
         res.statusCode = 500;
         res.end('Proxy failed');
       });
+    });
+
+    // Stream resolver endpoint (dev only)
+    server.middlewares.use('/api/stream/streamflix', async (req, res, next) => {
+      if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        res.end();
+        return;
+      }
+      if (req.method !== 'POST') return next();
+      let body = '';
+      req.on('data', (c) => (body += c));
+      req.on('end', async () => {
+        try {
+          const meta = JSON.parse(body || '{}');
+          const { resolveStream } = await import('./src/api/stream/zxcstream.js');
+          const { routeSources } = await import('./src/api/stream/routing.js');
+          const result = await resolveStream(meta, ZXC_SECRET);
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify(routeSources(result)));
+        } catch (err) {
+          console.error('Stream resolve error:', err);
+          res.statusCode = 500;
+          res.end(JSON.stringify({ success: false, reason: 'exception' }));
+        }
+      });
+    });
+
+    // Media proxy endpoint (dev only) — thin adapter over the shared proxy.
+    server.middlewares.use('/api/stream/media', async (req, res, next) => {
+      if (req.method === 'OPTIONS') {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', '*');
+        res.end();
+        return;
+      }
+      if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+      try {
+        const { handleMediaRequest } = await import('./src/api/stream/media-core.js');
+        const u = new URL(req.url, `http://${req.headers.host}`).searchParams.get('u') || '';
+        const resp = await handleMediaRequest(u, req.headers.range || '');
+        resp.headers.forEach((value, key) => res.setHeader(key, value));
+        res.statusCode = resp.status;
+        if (resp.body) {
+          Readable.fromWeb(resp.body).on('error', () => res.destroy()).pipe(res);
+        } else {
+          res.end();
+        }
+      } catch (err) {
+        console.error('Media proxy error:', err);
+        res.statusCode = 500;
+        res.end('proxy error');
+      }
     });
   }
 });
@@ -108,7 +171,9 @@ export default defineConfig(({ mode }) => {
               handler: 'CacheFirst',
               options: {
                 cacheName: 'tmdb-images',
-                expiration: { maxEntries: 500, maxAgeSeconds: 30 * 24 * 60 * 60 },
+                // Tight cap: originals are MB each, and mobile storage is
+                // precious. 200 images ≈ 100-400 MB worst case.
+                expiration: { maxEntries: 200, maxAgeSeconds: 14 * 24 * 60 * 60 },
                 cacheableResponse: { statuses: [0, 200] }
               }
             },
@@ -127,6 +192,7 @@ export default defineConfig(({ mode }) => {
               // the /api/ rule below — Workbox matches in array order.
               urlPattern: ({ url, request }) =>
                 /\.(m3u8|mpd|ts|m4s)(\?|$)/.test(url.pathname) ||
+                url.pathname.startsWith('/api/stream') ||
                 url.pathname === '/api/visit' ||
                 url.pathname === '/api/proxy' ||
                 request.destination === 'video' ||
@@ -195,6 +261,7 @@ export default defineConfig(({ mode }) => {
             // Vendor chunks for better caching
             'vendor-react': ['react', 'react-dom', 'react-router-dom'],
             'vendor-shaka': ['shaka-player'],
+            'vendor-hls': ['hls.js'],
           }
         }
       }
@@ -211,16 +278,16 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'https://api.themoviedb.org/3',
           changeOrigin: true,
-          bypass: (req, res, proxyOptions) => {
+          bypass: (req, _res, _proxyOptions) => {
             // Let corsProxyPlugin middleware handle these paths
-            if (req.url.startsWith('/api/proxy') || req.url.startsWith('/api/visit')) {
+            if (req.url.startsWith('/api/proxy') || req.url.startsWith('/api/visit') || req.url.startsWith('/api/stream')) {
               return req.url;
             }
             return null; // Proxy to TMDB
           },
           rewrite: (path) => path.replace(/^\/api/, ''),
-          configure: (proxy, options) => {
-            proxy.on('proxyReq', (proxyReq, req, res) => {
+          configure: (proxy, _options) => {
+            proxy.on('proxyReq', (proxyReq, _req, _res) => {
               if (env.VITE_TMDB_READ_ACCESS_TOKEN) {
                 proxyReq.setHeader('Accept', 'application/json');
                 proxyReq.setHeader('Authorization', `Bearer ${env.VITE_TMDB_READ_ACCESS_TOKEN}`);

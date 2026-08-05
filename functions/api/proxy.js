@@ -43,8 +43,9 @@ export async function onRequest(context) {
   }
 
   try {
-    // Validate URL format
-    const parsedUrl = new URL(targetUrl);
+    // Validate URL format — `new URL` throws on malformed input, which the
+    // surrounding try/catch turns into a 400 response below.
+    new URL(targetUrl);
     
     // Optional: Restrict to specific domains for security
     // const allowedDomains = ['resources.tidal.com', 'i.scdn.co'];

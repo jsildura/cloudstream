@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import { useToast } from '../contexts/ToastContext';
@@ -10,6 +10,12 @@ import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
 import { generateVideoObjectSchema } from '../utils/schemaUtils';
 import { generateContentMeta } from '../utils/metaUtils';
+import DirectPlayer from '../components/DirectPlayer';
+
+// Chance (0-1) that a Server 1 load plays through the direct player instead
+// of the site's own iframe. 0.5 = random per load; only applies to servers
+// with `directPlayer: true` in src/config/servers.js.
+const DIRECT_STREAM_CHANCE = 0.5;
 
 const Watch = () => {
   const location = useLocation();
@@ -34,7 +40,7 @@ const Watch = () => {
         replace: true  // Replace history entry so "Back" goes to actual previous page
       });
     }
-  }, []);  // Run once on mount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: redirect runs once on mount
 
   const [currentServer, setCurrentServer] = useState(0);
   const [currentSeason, setCurrentSeason] = useState(urlSeason ? parseInt(urlSeason) : 1);
@@ -45,13 +51,31 @@ const Watch = () => {
   const [loading, setLoading] = useState(true);
 
   const [playerLoaded, setPlayerLoaded] = useState(false);
+  // Server 1 mode is rolled ONCE at mount (a true per-session dice roll):
+  // Math.random() < 0.5 → direct player, otherwise the site's own iframe.
+  // currentServer always starts at 0, which is the only direct-capable
+  // server, so serverConfig[0] is read directly here.
+  const [useIframe, setUseIframe] = useState(() => {
+    return !(serverConfig[0].directPlayer && Math.random() < DIRECT_STREAM_CHANCE);
+  });
+  // Guards the effect below: the mount roll already happened in the state
+  // initializer, so the first effect run must NOT re-roll (it would override
+  // the initializer and waste the decision).
+  const hasRolledRef = useRef(false);
 
   const [serverDrawerOpen, setServerDrawerOpen] = useState(false);
   const [sandboxEnabled, setSandboxEnabled] = useState(true);
   const [drawerTranslateY, setDrawerTranslateY] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
-  const [warningExpanded, setWarningExpanded] = useState(false);
+  const [controlsLocked, setControlsLocked] = useState(false);
+  const lockOverlayRef = useRef(null);
+
+  useEffect(() => {
+    if (controlsLocked && lockOverlayRef.current) {
+      lockOverlayRef.current.focus();
+    }
+  }, [controlsLocked]);
 
   // Episode drawer state
   const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
@@ -82,7 +106,9 @@ const Watch = () => {
 
   const { POSTER_URL } = useTMDB();
   const { showNowPlaying } = useToast();
-  const { addToHistory } = useWatchHistory();
+  const { addToHistory, updateProgress, getLastWatched } = useWatchHistory();
+  const getLastWatchedRef = useRef(getLastWatched);
+  getLastWatchedRef.current = getLastWatched;
   const { trackWatch } = usePopularTracking();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const hasShownToast = useRef(false);
@@ -106,7 +132,7 @@ const Watch = () => {
           if (wakeLockRef.current) {
             try {
               await wakeLockRef.current.release();
-            } catch (e) {
+            } catch {
               // Ignore release errors
             }
             wakeLockRef.current = null;
@@ -219,12 +245,16 @@ const Watch = () => {
 
   useEffect(() => {
     if (playerLoaded && contentInfo) {
+      // Keep any previously saved progress so a fresh session doesn't reset it.
+      const prev = getLastWatchedRef.current(contentInfo.id);
       addToHistory({
         id: contentInfo.id,
         type,
         title: contentInfo.title || contentInfo.name,
         poster_path: contentInfo.poster_path,
         backdrop_path: contentInfo.backdrop_path,
+        currentTime: prev?.currentTime || 0,
+        duration: prev?.duration || 0,
         ...(type === 'tv' && {
           lastSeason: currentSeason,
           lastEpisode: currentEpisode,
@@ -240,6 +270,38 @@ const Watch = () => {
     }
   }, [playerLoaded, contentInfo, currentSeason, currentEpisode, type, seasons.length, addToHistory, trackWatch]);
 
+  // Progress updates from DirectPlayer — entry already exists (see above),
+  // so only the time/duration/progress fields are refreshed.
+  const handlePlayerProgress = useCallback((data) => {
+    if (!contentInfo) return;
+    updateProgress(contentInfo.id, data.timestamp, data.duration);
+  }, [contentInfo, updateProgress]);
+
+  // Resume position: captured once per title/episode so live progress
+  // updates can't re-seek mid-playback. TV resumes only when the saved
+  // season/episode match; movies restart once >= 95% finished.
+  const [resumeTime, setResumeTime] = useState(0);
+  useEffect(() => {
+    if (!contentInfo) {
+      setResumeTime(0);
+      return;
+    }
+    const prev = getLastWatchedRef.current(contentInfo.id);
+    if (!prev) {
+      setResumeTime(0);
+      return;
+    }
+    if (type === 'tv') {
+      const sameEpisode =
+        prev.lastSeason === currentSeason && prev.lastEpisode === currentEpisode;
+      setResumeTime(sameEpisode ? prev.currentTime || 0 : 0);
+    } else {
+      const t = prev.currentTime || 0;
+      const d = prev.duration || 0;
+      setResumeTime(t > 0 && d > 0 && t / d < 0.95 ? t : 0);
+    }
+  }, [contentInfo, type, currentSeason, currentEpisode]);
+
   const isBot = () => {
     if (typeof navigator === 'undefined') return false;
     const botPatterns = [
@@ -253,7 +315,7 @@ const Watch = () => {
     return botPatterns.some(pattern => userAgent.includes(pattern));
   };
 
-  const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const [_devToolsOpen, setDevToolsOpen] = useState(false);
 
   useEffect(() => {
     const detectDevTools = () => {
@@ -366,6 +428,7 @@ const Watch = () => {
     hasAds: s.hasAds || false,
     isLocked: s.locked || false,
     password: s.password || null,
+    directPlayer: s.directPlayer || false,
     getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
   })), [type, id]);
 
@@ -386,16 +449,27 @@ const Watch = () => {
     } else {
       setLoading(false);
     }
+    // `fetchContentData` is recreated every render; its real inputs are
+    // type/id (+ URL params read via closure). Listing it would refetch each
+    // render. Incl. only the inputs is intentional.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type, id]);
 
   useEffect(() => {
     setSandboxEnabled(servers[currentServer].sandboxSupport);
-    setPlayerLoaded(false);
-  }, [currentServer]);
+  }, [currentServer, servers]);
 
+  // Any change that forces a fresh load re-rolls the player mode for
+  // direct-capable servers (Server 1): a dice roll picks the direct player
+  // or the site's own iframe. Servers without `directPlayer` always embed.
   useEffect(() => {
     setPlayerLoaded(false);
-  }, [currentSeason, currentEpisode]);
+    if (!hasRolledRef.current) {
+      hasRolledRef.current = true;
+      return; // keep the roll decided in the useState initializer
+    }
+    setUseIframe(!(servers[currentServer].directPlayer && Math.random() < DIRECT_STREAM_CHANCE));
+  }, [currentServer, servers, currentSeason, currentEpisode, type, id]);
 
   const fetchContentData = async () => {
     try {
@@ -422,7 +496,11 @@ const Watch = () => {
       setSeasons(validSeasons);
 
       if (validSeasons.length > 0) {
-        const seasonToLoad = urlSeason ? parseInt(urlSeason) : validSeasons[0].season_number;
+        // TMDB lists Season 0 (Specials) first — default to the first real
+        // season instead, unless the URL explicitly asked for specials.
+        const seasonToLoad = urlSeason
+          ? parseInt(urlSeason)
+          : (validSeasons.find((s) => s.season_number > 0) ?? validSeasons[0]).season_number;
 
         if (!urlSeason) {
           setCurrentSeason(seasonToLoad);
@@ -702,7 +780,9 @@ const Watch = () => {
 
   const getBackdropUrl = () => {
     if (contentInfo?.backdrop_path) {
-      return `https://image.tmdb.org/t/p/original${contentInfo.backdrop_path}`;
+      // w1280: it's a blurred lazy-load backdrop — the 2-6MB original is
+      // wasted storage (and it fills the SW tmdb-images cache on mobile).
+      return `https://image.tmdb.org/t/p/w1280${contentInfo.backdrop_path}`;
     }
     return null;
   };
@@ -746,18 +826,47 @@ const Watch = () => {
         {/* Video Player - Lazy Loaded */}
         {playerLoaded ? (
           <>
-            <iframe
-              key={`${currentServer}-${currentSeason}-${currentEpisode}-${sandboxEnabled}`}
-              src={getVideoUrl()}
-              className="watch-video-player"
-              allowFullScreen
-              title="Video Player"
-              referrerPolicy="no-referrer"
-              allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-              {...(sandboxEnabled && {
-                sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
-              })}
-            />
+            {servers[currentServer].directPlayer && !useIframe ? (
+              <DirectPlayer
+                server="zxcstream"
+                type={type}
+                id={id}
+                season={currentSeason}
+                episode={currentEpisode}
+                title={contentInfo?.title || contentInfo?.name}
+                year={contentInfo?.release_date?.slice(0, 4) || contentInfo?.first_air_date?.slice(0, 4)}
+                date={contentInfo?.release_date || contentInfo?.first_air_date}
+                runtime={contentInfo?.runtime || contentInfo?.episode_run_time?.[0]}
+                onFallback={() => {
+                  setUseIframe(true);
+                  // Direct resolution failed (e.g. S0 specials are not hosted
+                  // on zxcstream at all). Falling back to Server 1's own iframe
+                  // would hit the same dead backend — skip to the next server,
+                  // whose embed aggregates from different sources.
+                  const nextServer = currentServer + 1;
+                  if (nextServer < servers.length) {
+                    setCurrentServer(nextServer);
+                  }
+                }}
+                showControls={!controlsLocked}
+                backdrop={getBackdropUrl()}
+                onProgress={handlePlayerProgress}
+                resumeTime={resumeTime}
+              />
+            ) : (
+              <iframe
+                key={`${currentServer}-${currentSeason}-${currentEpisode}-${sandboxEnabled}`}
+                src={getVideoUrl()}
+                className="watch-video-player"
+                allowFullScreen
+                title="Video Player"
+                referrerPolicy="no-referrer"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                {...(sandboxEnabled && {
+                  sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
+                })}
+              />
+            )}
             {/* Invisible overlay to capture touch/mouse when controls are hidden */}
             {!controlsVisible && (
               <div
@@ -766,6 +875,40 @@ const Watch = () => {
                 onClick={resetHideTimer}
                 onTouchStart={resetHideTimer}
               />
+            )}
+            {/* Lock overlay: blocks all interaction with the embed/player while locked */}
+            {controlsLocked && (
+              <div
+                ref={lockOverlayRef}
+                className="watch-lock-overlay"
+                tabIndex={-1}
+                aria-label="Controls locked"
+                onMouseMove={resetHideTimer}
+                onTouchStart={resetHideTimer}
+                onClick={(e) => e.preventDefault()}
+                onWheel={(e) => e.preventDefault()}
+                onKeyDown={(e) => e.preventDefault()}
+              />
+            )}
+            {/* Streamflix-side overlay (title badge) belongs to the native
+                DirectPlayer only — iframe servers render their own
+                title/player UI, so they must not be covered by ours. */}
+            {servers[currentServer].directPlayer && !useIframe && (
+              <>
+                {controlsVisible && (
+                  <div className="watch-title-badge" aria-hidden="true">
+                    <p className="watch-title-badge-eyebrow">Your Watching</p>
+                    {type === 'tv' && (
+                      <p className="watch-title-badge-kicker">
+                        Season {currentSeason} • Episode {currentEpisode}
+                      </p>
+                    )}
+                    <h1 className="watch-title-badge-title">
+                      {contentInfo?.title || contentInfo?.name}
+                    </h1>
+                  </div>
+                )}
+              </>
             )}
           </>
         ) : (
@@ -812,6 +955,7 @@ const Watch = () => {
             <button
               className="watch-control-bar-btn"
               onClick={handleBack}
+              disabled={controlsLocked}
               title="Back to Home"
               aria-label="Back to Home"
             >
@@ -828,6 +972,7 @@ const Watch = () => {
               <button
                 className="watch-control-bar-btn"
                 onClick={() => setEpisodeDrawerOpen(true)}
+                disabled={controlsLocked}
                 title={`S${currentSeason} E${currentEpisode}`}
                 aria-label="Open episode selector"
               >
@@ -848,6 +993,7 @@ const Watch = () => {
               <button
                 className="watch-control-bar-btn watch-nav-btn"
                 onClick={handlePrevEpisode}
+                disabled={controlsLocked}
                 title="Previous Episode"
                 aria-label="Previous Episode"
               >
@@ -865,6 +1011,7 @@ const Watch = () => {
               <button
                 className="watch-control-bar-btn watch-nav-btn"
                 onClick={handleNextEpisode}
+                disabled={controlsLocked}
                 title="Next Episode"
                 aria-label="Next Episode"
               >
@@ -895,6 +1042,7 @@ const Watch = () => {
                   });
                 }
               }}
+              disabled={controlsLocked}
               title={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
               aria-label={isSaved ? 'Remove from Watchlist' : 'Add to Watchlist'}
             >
@@ -917,6 +1065,7 @@ const Watch = () => {
             <button
               className="watch-control-bar-btn server-pulse"
               onClick={() => setServerDrawerOpen(true)}
+              disabled={controlsLocked}
               title="Change Server"
               aria-label="Change Server"
             >
@@ -972,6 +1121,7 @@ const Watch = () => {
               }}
               title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               aria-label={isFullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
+              disabled={controlsLocked}
             >
               {isFullscreen ? (
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -990,6 +1140,30 @@ const Watch = () => {
               )}
             </button>
             <span className="watch-control-bar-label">{isFullscreen ? 'Exit' : 'Fullscreen'}</span>
+          </div>
+
+          {/* Lock / Unlock Controls Button */}
+          <div className="watch-control-bar-item">
+            <button
+              className={`watch-control-bar-btn${controlsLocked ? ' active' : ''}`}
+              onClick={() => setControlsLocked((prev) => !prev)}
+              title={controlsLocked ? 'Unlock Controls' : 'Lock Controls'}
+              aria-label={controlsLocked ? 'Unlock Controls' : 'Lock Controls'}
+              aria-pressed={controlsLocked}
+            >
+              {controlsLocked ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                </svg>
+              )}
+            </button>
+            <span className="watch-control-bar-label">{controlsLocked ? 'Unlock' : 'Lock'}</span>
           </div>
         </div>
 

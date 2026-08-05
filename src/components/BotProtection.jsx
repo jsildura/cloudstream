@@ -100,7 +100,7 @@ const BotProtection = () => {
                         }
                     }
                 }
-            } catch (e) { }
+            } catch { /* WebGL detection failures are non-fatal */ }
 
             // Bot user agent patterns
             const botPatterns = [/bot/i, /crawl/i, /spider/i, /scrape/i, /headless/i, /phantom/i, /selenium/i, /webdriver/i];
@@ -151,7 +151,7 @@ const BotProtection = () => {
 
                 DisableDevtool({
                     // Callback when devtools is detected
-                    ondevtoolopen: (type, next) => {
+                    ondevtoolopen: (_type, _next) => {
                         // FAILSAFE: Re-check if we're on mobile - this catches cases where
                         // the module-level detection failed (navigator not ready at module load)
                         if (isMobileOrTV()) {

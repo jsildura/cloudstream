@@ -1,13 +1,12 @@
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import './UpdatePrompt.css';
 
 /**
  * Shows a small toast when a new service-worker version is available (registerType: 'prompt').
- * Clicking "Reload" activates the new SW and refreshes the page.
- * Also surfaces a brief "ready to work offline" confirmation on first install.
+ * Clicking "Update" activates the new SW and refreshes the page.
  */
 export default function UpdatePrompt() {
   const {
-    offlineReady: [offlineReady, setOfflineReady],
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
   } = useRegisterSW({
@@ -22,72 +21,38 @@ export default function UpdatePrompt() {
     },
   });
 
-  if (!offlineReady && !needRefresh) return null;
+  if (!needRefresh) return null;
 
   const close = () => {
-    setOfflineReady(false);
     setNeedRefresh(false);
   };
 
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      style={{
-        position: 'fixed',
-        left: '50%',
-        bottom: '24px',
-        transform: 'translateX(-50%)',
-        zIndex: 100000,
-        maxWidth: '92vw',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        padding: '12px 16px',
-        background: '#181818',
-        color: '#fff',
-        border: '1px solid #2a2a2a',
-        borderRadius: '10px',
-        boxShadow: '0 8px 30px rgba(0,0,0,0.55)',
-        fontSize: '14px',
-      }}
-    >
-      <span>
-        {needRefresh
-          ? 'A new version of STREAMFLIX is available.'
-          : 'STREAMFLIX is ready to work offline.'}
+    <div className="update-prompt" role="status" aria-live="polite">
+      <span className="update-prompt-badge" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
       </span>
 
-      {needRefresh && (
-        <button
-          onClick={() => updateServiceWorker(true)}
-          style={{
-            background: '#e50914',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            padding: '7px 14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Reload
-        </button>
-      )}
+      <span className="update-prompt-text">
+        <span className="update-prompt-title">Update available</span>
+        <span className="update-prompt-message">A new version of STREAMFLIX is out.</span>
+      </span>
 
       <button
+        className="update-prompt-reload"
+        onClick={() => updateServiceWorker(true)}
+      >
+        Update
+      </button>
+
+      <button
+        className="update-prompt-close"
         onClick={close}
         aria-label="Dismiss"
-        style={{
-          background: 'transparent',
-          color: '#aaa',
-          border: 'none',
-          fontSize: '18px',
-          lineHeight: 1,
-          cursor: 'pointer',
-          padding: '2px 4px',
-        }}
       >
         ×
       </button>

@@ -16,6 +16,7 @@
 		"@ffmpeg/util": "^0.12.2",
 		"@formspree/react": "^3.0.0",
 		"disable-devtool": "^0.3.9",
+		"hls.js": "^1.6.16",
 		"jszip": "^3.10.1",
 		"lucide-react": "^0.562.0",
 		"react": "^19.1.1",

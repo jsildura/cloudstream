@@ -224,6 +224,25 @@ const StreamingProviderPage = () => {
                         {provider.logo && <img src={provider.logo} alt={provider.name} className="streaming-provider-page-logo" />}
                     </div>
                 </div>
+                {activeMediaType === 'movie' ? (
+                    <MovieDiscoverFilterBar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onMoreClick={() => setIsFilterPanelOpen(true)}
+                        onClearFilters={handleClearFilters}
+                        activeFilterCount={activeFilterCount}
+                        loading
+                    />
+                ) : (
+                    <TVDiscoverFilterBar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onMoreClick={() => setIsFilterPanelOpen(true)}
+                        onClearFilters={handleClearFilters}
+                        activeFilterCount={activeFilterCount}
+                        loading
+                    />
+                )}
                 <div className="streaming-provider-page-loading">
                     <div className="loading-spinner" />
                     <p>Loading {provider.name} content...</p>

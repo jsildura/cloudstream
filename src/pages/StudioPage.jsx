@@ -178,6 +178,25 @@ const StudioPage = () => {
                         <img src={studioInfo.logo} alt={studioInfo.name} className="studio-page-logo" />
                     </div>
                 </div>
+                {activeMediaType === 'movie' ? (
+                    <MovieDiscoverFilterBar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onMoreClick={() => setIsFilterPanelOpen(true)}
+                        onClearFilters={handleClearFilters}
+                        activeFilterCount={activeFilterCount}
+                        loading
+                    />
+                ) : (
+                    <TVDiscoverFilterBar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                        onMoreClick={() => setIsFilterPanelOpen(true)}
+                        onClearFilters={handleClearFilters}
+                        activeFilterCount={activeFilterCount}
+                        loading
+                    />
+                )}
                 <div className="studio-page-loading">
                     <div className="loading-spinner" />
                     <p>Loading {studioInfo.name} content...</p>

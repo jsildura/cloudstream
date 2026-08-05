@@ -23,6 +23,7 @@ export const serverConfig = [
         sandboxSupport: false,
         hasAds: false,
         pattern: 'default',
+        directPlayer: true,
     },
     {
         name: 'Server 2',

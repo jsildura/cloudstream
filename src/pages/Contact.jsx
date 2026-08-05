@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useForm, ValidationError } from '@formspree/react';
 import '../styles/LegalPages.css';
 
-const BACKDROP_URL = 'https://image.tmdb.org/t/p/original';
+const BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
 
 const Contact = () => {
     const [state, handleSubmit] = useForm("mnjalzry");

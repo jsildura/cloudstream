@@ -41,6 +41,9 @@ const VISIBLE_STEPS = [
 const countForWidth = (width) =>
   (VISIBLE_STEPS.find(step => width >= step.min) ?? VISIBLE_STEPS[VISIBLE_STEPS.length - 1]).count;
 
+// Pseudo-random pill widths (em, so they scale with the TV/4K font tiers).
+const SKELETON_WIDTHS = ['5em', '6.5em', '4.5em', '7em', '5.5em', '6em', '4.8em', '6.8em'];
+
 const useVisibleCount = () => {
   const [count, setCount] = useState(() =>
     typeof window === 'undefined' ? MOVIE_BAR_CATEGORIES.length : countForWidth(window.innerWidth)
@@ -59,7 +62,7 @@ const useVisibleCount = () => {
   return count;
 };
 
-const MovieDiscoverFilterBar = ({ filters, onMoreClick, onFilterChange, onClearFilters, activeFilterCount = 0 }) => {
+const MovieDiscoverFilterBar = ({ filters, onMoreClick, onFilterChange, onClearFilters, activeFilterCount = 0, loading = false }) => {
   const visibleCount = useVisibleCount();
 
   const selectedFor = (param) =>
@@ -85,57 +88,69 @@ const MovieDiscoverFilterBar = ({ filters, onMoreClick, onFilterChange, onClearF
 
   return (
     <div className="tv-discover-filterbar">
-      <div className="tv-filter-genres" role="group" aria-label="Categories">
-        {visibleCategories.map(category => {
-          const active = isActive(category);
-          return (
-            <button
-              key={category.key}
-              type="button"
-              className={`tv-filter-pill ${active ? 'active' : ''}`}
-              aria-pressed={active}
-              onClick={() => handleCategoryClick(category)}
-            >
-              {category.name}
-            </button>
-          );
-        })}
+      <div className="tv-filter-genres" role="group" aria-label="Categories" aria-busy={loading}>
+        {loading ? (
+          SKELETON_WIDTHS.map((width, i) => (
+            <span key={i} className="tv-filter-pill tv-filter-pill-skeleton" style={{ width }} />
+          ))
+        ) : (
+          visibleCategories.map(category => {
+            const active = isActive(category);
+            return (
+              <button
+                key={category.key}
+                type="button"
+                className={`tv-filter-pill ${active ? 'active' : ''}`}
+                aria-pressed={active}
+                onClick={() => handleCategoryClick(category)}
+              >
+                {category.name}
+              </button>
+            );
+          })
+        )}
       </div>
 
       <div className="tv-filter-more-group">
-        {showClear && (
-          <button
-            type="button"
-            className="tv-filter-pill tv-filter-clear"
-            onClick={onClearFilters}
-          >
-            Clear
-          </button>
+        {loading ? (
+          <span className="tv-filter-pill tv-filter-pill-skeleton" style={{ width: '7em' }} />
+        ) : (
+          <>
+            {showClear && (
+              <button
+                type="button"
+                className="tv-filter-pill tv-filter-clear"
+                onClick={onClearFilters}
+              >
+                Clear
+              </button>
+            )}
+            <button
+              type="button"
+              className="tv-filter-pill tv-filter-more"
+              onClick={onMoreClick}
+              aria-haspopup="dialog"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <line x1="4" y1="21" x2="4" y2="14"></line>
+                <line x1="4" y1="10" x2="4" y2="3"></line>
+                <line x1="12" y1="21" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="3"></line>
+                <line x1="20" y1="21" x2="20" y2="16"></line>
+                <line x1="20" y1="12" x2="20" y2="3"></line>
+                <line x1="1" y1="14" x2="7" y2="14"></line>
+                <line x1="9" y1="8" x2="15" y2="8"></line>
+                <line x1="17" y1="16" x2="23" y2="16"></line>
+              </svg>
+              More
+              {activeFilterCount > 0 && (
+                <span className="tv-filter-more-badge" aria-label={`${activeFilterCount} active filters`}>
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          className="tv-filter-pill tv-filter-more"
-          onClick={onMoreClick}
-          aria-haspopup="dialog"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="4" y1="21" x2="4" y2="14"></line>
-            <line x1="4" y1="10" x2="4" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12" y2="3"></line>
-            <line x1="20" y1="21" x2="20" y2="16"></line>
-            <line x1="20" y1="12" x2="20" y2="3"></line>
-            <line x1="1" y1="14" x2="7" y2="14"></line>
-            <line x1="9" y1="8" x2="15" y2="8"></line>
-            <line x1="17" y1="16" x2="23" y2="16"></line>
-          </svg>
-          More
-          {activeFilterCount > 0 && (
-            <span className="tv-filter-more-badge" aria-label={`${activeFilterCount} active filters`}>
-              {activeFilterCount}
-            </span>
-          )}
-        </button>
       </div>
     </div>
   );
