@@ -1,0 +1,156 @@
+/* Full-viewport near-black surface. Netflix-ish overlay feel, real route. */
+.search-page {
+  min-height: 100vh;
+  background: #0b0b0b;
+  padding: 96px 4vw 64px;
+}
+
+/* ---- Input ---- */
+
+.search-page-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 900px;
+  margin: 0 auto 40px;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.15);
+  transition: border-color 0.2s ease;
+}
+
+.search-page-input-wrap:focus-within {
+  border-bottom-color: #e50914;
+}
+
+.search-page-input-wrap svg {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search-page-input {
+  flex: 1;
+  padding: 12px 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 32px;
+  font-weight: 500;
+  outline: none;
+}
+
+.search-page-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.search-page-clear {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.search-page-clear:hover { color: #fff; }
+
+/* ---- Results grid ----
+   Same 16:9 cards as /discover. `.trending-card` is `width: 380px` for the
+   carousel, so it must be overridden to fill the grid cell at every
+   breakpoint — mirrors what DiscoverGrid.css does for .movie-discover-grid. */
+
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 4px 0 24px;
+}
+
+.search-results-grid .trending-card { width: 100%; flex: initial; }
+.search-results-grid .trending-card-skeleton { width: 100%; }
+
+@media (max-width: 1023px) {
+  .search-results-grid { grid-template-columns: repeat(3, 1fr); }
+  .search-results-grid .trending-card { width: 100%; }
+}
+
+@media (max-width: 767px) {
+  .search-results-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .search-results-grid .trending-card { width: 100%; }
+  .search-page { padding: 80px 4vw 48px; }
+  .search-page-input { font-size: 22px; }
+}
+
+/* Big-screen TV: more columns rather than giant cards. */
+@media (min-width: 1920px) {
+  .search-results-grid { grid-template-columns: repeat(5, 1fr); gap: 20px; }
+}
+
+@media (min-width: 3840px) {
+  .search-results-grid { grid-template-columns: repeat(6, 1fr); gap: 28px; }
+  .search-page-input { font-size: 48px; }
+}
+
+/* ---- Empty state ---- */
+
+.search-page-section { max-width: 900px; margin: 0 auto 36px; }
+
+.search-page-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.search-page-section-head h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+}
+
+.search-page-clear-all {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.search-page-clear-all:hover { color: #fff; text-decoration: underline; }
+
+.search-page-chips { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.search-page-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.search-page-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-page-chip:focus-visible {
+  outline: 2px solid #e50914;
+  outline-offset: 2px;
+}
+
+.search-page-chip-x {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 16px;
+  line-height: 1;
+}
+
+.search-page-chip-x:hover { color: #fff; }
