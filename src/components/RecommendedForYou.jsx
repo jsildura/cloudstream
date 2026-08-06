@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchHistory from '../hooks/useWatchHistory';
 import { getPosterAlt } from '../utils/altTextUtils';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
 import CarouselControls from './CarouselControls';
@@ -18,10 +19,7 @@ const RecommendedForYou = memo(({ onItemClick }) => {
         fetchMovieRecommendations,
         fetchTVRecommendations,
         fetchCredits,
-        fetchContentRating,
-        BACKDROP_URL,
-        LOGO_URL,
-        POSTER_URL
+        fetchContentRating
     } = useTMDB();
     const { watchHistory, isLoaded: historyLoaded } = useWatchHistory();
     const { getPreviewProps, closeNow } = useHoverPreview();
@@ -316,14 +314,10 @@ const RecommendedForYou = memo(({ onItemClick }) => {
                     >
                         {displayContent.map((item) => {
                         const itemTitle = item.title || item.name;
-                        const backdropSrc = item.backdrop_path
-                            ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
-                            : item.poster_path
-                                ? `${POSTER_URL}${item.poster_path}`
-                                : '/placeholder-backdrop.jpg';
-                        const logoSrc = item.logo_path
-                            ? `${LOGO_URL}${item.logo_path}`
-                            : null;
+                        const backdropSrc = cardBackdrop(item.backdrop_path)
+                            ?? posterAsBackdrop(item.poster_path)
+                            ?? '/placeholder-backdrop.jpg';
+                        const logoSrc = cardLogo(item.logo_path);
 
                         return (
                             <div
