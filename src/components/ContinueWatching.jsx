@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useWatchHistory from '../hooks/useWatchHistory';
-import { useTMDB } from '../hooks/useTMDB';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import './ContinueWatching.css';
 
 const ContinueWatching = ({ onItemClick }) => {
     const { watchHistory, removeFromHistory, clearHistory } = useWatchHistory();
-    const { LOGO_URL, BACKDROP_URL, POSTER_URL } = useTMDB();
     const navigate = useNavigate();
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
@@ -235,14 +234,10 @@ const ContinueWatching = ({ onItemClick }) => {
                 style={{ cursor: 'grab' }}
             >
                 {displayItems.map((item) => {
-                    const backdropSrc = item.backdrop_path
-                        ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
-                        : item.poster_path
-                            ? `${POSTER_URL}${item.poster_path}`
-                            : '/placeholder-backdrop.jpg';
-                    const logoSrc = item.logo_path
-                        ? `${LOGO_URL}${item.logo_path}`
-                        : null;
+                    const backdropSrc = cardBackdrop(item.backdrop_path)
+                        ?? posterAsBackdrop(item.poster_path)
+                        ?? '/placeholder-backdrop.jpg';
+                    const logoSrc = cardLogo(item.logo_path);
 
                     return (
                         <div
