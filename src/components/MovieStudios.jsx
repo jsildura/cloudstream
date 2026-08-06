@@ -4,11 +4,11 @@ import { useTMDB } from '../hooks/useTMDB';
 import useTVDetect from '../hooks/useTVDetect';
 import Modal from './Modal';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import { cardBackdrop, cardLogo } from '../utils/images';
 import './MovieStudios.css';
 import CarouselControls from './CarouselControls';
 
 const TMDB_LOGO_URL = 'https://image.tmdb.org/t/p/w500';
-const BACKDROP_URL = 'https://image.tmdb.org/t/p/w780';
 
 // TMDB Company IDs and logo paths for major studios
 const STUDIOS = [
@@ -32,7 +32,7 @@ const MovieStudios = () => {
     const gridRef = useRef(null);
     const moviesGridRef = useRef(null);
     const [imageErrors, setImageErrors] = useState({});
-    const { fetchDiscoverMovies, fetchDiscoverTV, movieGenres, fetchCredits, fetchContentRating, fetchLogo, LOGO_URL } = useTMDB();
+    const { fetchDiscoverMovies, fetchDiscoverTV, movieGenres, fetchCredits, fetchContentRating, fetchLogo } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // Selected studio state - default to Marvel Studios
@@ -469,7 +469,7 @@ const MovieStudios = () => {
                                         <div className="studio-movie-backdrop">
                                             {movie.backdrop_path ? (
                                                 <img
-                                                    src={`${BACKDROP_URL}${movie.backdrop_path}`}
+                                                    src={cardBackdrop(movie.backdrop_path)}
                                                     alt={movie.name || movie.title}
                                                     draggable="false"
                                                 />
@@ -497,7 +497,7 @@ const MovieStudios = () => {
                                             {movieLogos[movie.id] ? (
                                                 <div className="studio-movie-logo-overlay">
                                                     <img
-                                                        src={`${LOGO_URL}${movieLogos[movie.id]}`}
+                                                        src={cardLogo(movieLogos[movie.id])}
                                                         alt={movie.name || movie.title}
                                                         draggable="false"
                                                     />
