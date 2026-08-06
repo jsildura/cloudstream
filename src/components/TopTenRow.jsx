@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { getPosterAlt } from '../utils/altTextUtils';
 import useTVDetect from '../hooks/useTVDetect';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
@@ -7,7 +8,7 @@ import './TopTenRow.css';
 import CarouselControls from './CarouselControls';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
-    const { BACKDROP_URL, LOGO_URL, fetchItemBundle, POSTER_URL } = useTMDB();
+    const { fetchItemBundle } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // Refs - carouselRef is now the scrollable container
@@ -271,14 +272,10 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                 {displayContent.map((item, index) => {
                     const title = item.title || item.name;
                     // Use Backdrop logic
-                    const backdropSrc = item.backdrop_path
-                        ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
-                        : item.poster_path
-                            ? `${POSTER_URL}${item.poster_path}`
-                            : '/placeholder-backdrop.jpg';
-                    const logoSrc = item.logo_path
-                        ? `${LOGO_URL}${item.logo_path}`
-                        : null;
+                    const backdropSrc = cardBackdrop(item.backdrop_path)
+                        ?? posterAsBackdrop(item.poster_path)
+                        ?? '/placeholder-backdrop.jpg';
+                    const logoSrc = cardLogo(item.logo_path);
 
                     const isFocused = (isKeyboardNav || !isPaused) && focusedCardIndex === index;
 
