@@ -1,7 +1,7 @@
 import React from 'react';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import { getPosterAlt } from '../utils/altTextUtils';
-import { useTMDB } from '../hooks/useTMDB';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { SKELETON_COUNT } from '../hooks/useDiscoverFeed';
 import './TrendingSection.css';
 import './DiscoverGrid.css';
@@ -20,7 +20,6 @@ const DiscoverGrid = ({
   gridClassName = 'movie-discover-grid'
 }) => {
   const { getPreviewProps } = useHoverPreview();
-  const { POSTER_URL, LOGO_URL } = useTMDB();
 
   return (
     <>
@@ -36,12 +35,10 @@ const DiscoverGrid = ({
           : items.map(item => {
           const enriched = enrichedMap.get(item.id) || {};
           const itemTitle = item.title || item.name;
-          const backdropSrc = enriched.backdrop_path
-            ? `https://image.tmdb.org/t/p/w780${enriched.backdrop_path}`
-            : item.poster_path
-              ? `${POSTER_URL}${item.poster_path}`
-              : '/placeholder-backdrop.jpg';
-          const logoSrc = enriched.logo_path ? `${LOGO_URL}${enriched.logo_path}` : null;
+          const backdropSrc = cardBackdrop(enriched.backdrop_path)
+            ?? posterAsBackdrop(item.poster_path)
+            ?? '/placeholder-backdrop.jpg';
+          const logoSrc = cardLogo(enriched.logo_path);
           // Enrichment lives in a side Map, so fold it back onto the item for
           // anything downstream that reads `logo_path`/`backdrop_path` off the
           // item directly — the hover preview does, for both.
