@@ -1,18 +1,15 @@
 import React, { memo } from 'react';
-import { useTMDB } from '../hooks/useTMDB';
 import { getPosterAlt } from '../utils/altTextUtils';
+import { cardPoster } from '../utils/images';
 
 const MovieCard = memo(({ item, onClick }) => {
-  const { POSTER_URL } = useTMDB();
 
   const title = item.title || item.name;
   const rating = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
   const year = item.release_date ? item.release_date.substring(0, 4) :
     (item.first_air_date ? item.first_air_date.substring(0, 4) : '');
 
-  const posterSrc = item.poster_path
-    ? `${POSTER_URL}${item.poster_path}`
-    : '/placeholder-poster.jpg';
+  const posterSrc = cardPoster(item.poster_path) ?? '/placeholder-poster.jpg';
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
