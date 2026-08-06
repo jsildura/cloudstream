@@ -5,6 +5,7 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Modal from './Modal';
 import { useTMDB } from '../hooks/useTMDB';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { getPosterAlt } from '../utils/altTextUtils';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
@@ -40,10 +41,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
         fetchDiscoverTV,
         fetchCredits,
         fetchContentRating,
-        fetchItemBundle,
-        BACKDROP_URL,
-        LOGO_URL,
-        POSTER_URL
+        fetchItemBundle
     } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
@@ -324,14 +322,10 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                     >
                     {displayContent.map((item) => {
                         const itemTitle = item.title || item.name;
-                        const backdropSrc = item.backdrop_path
-                            ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
-                            : item.poster_path
-                                ? `${POSTER_URL}${item.poster_path}`
-                                : '/placeholder-backdrop.jpg';
-                        const logoSrc = item.logo_path
-                            ? `${LOGO_URL}${item.logo_path}`
-                            : null;
+                        const backdropSrc = cardBackdrop(item.backdrop_path)
+                            ?? posterAsBackdrop(item.poster_path)
+                            ?? '/placeholder-backdrop.jpg';
+                        const logoSrc = cardLogo(item.logo_path);
 
                         return (
                             <div
