@@ -35,6 +35,9 @@ const DiscoverGrid = ({
           : items.map(item => {
           const enriched = enrichedMap.get(item.id) || {};
           const itemTitle = item.title || item.name;
+          // Search returns mixed movie/tv in one list, so the type lives on the
+          // item. /discover results have no media_type and fall back to the prop.
+          const itemType = item.media_type || mediaType;
           const backdropSrc = cardBackdrop(enriched.backdrop_path)
             ?? posterAsBackdrop(item.poster_path)
             ?? '/placeholder-backdrop.jpg';
@@ -48,7 +51,7 @@ const DiscoverGrid = ({
 
           return (
             <div
-              key={`${mediaType}-${item.id}`}
+              key={`${itemType}-${item.id}`}
               className="trending-card"
               onClick={() => onItemClick(item)}
               // The preview seeds its logo from `item.logo_path` and only
@@ -56,7 +59,7 @@ const DiscoverGrid = ({
               // already holds the logo, so hand it over rather than making
               // the preview re-fetch what we have — that round-trip is what
               // made the logo appear a beat after the card opened.
-              {...getPreviewProps(previewItem, mediaType, false, onItemClick)}
+              {...getPreviewProps(previewItem, itemType, false, onItemClick)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -70,7 +73,7 @@ const DiscoverGrid = ({
               <div className="trending-card-backdrop">
                 <img
                   src={backdropSrc}
-                  alt={getPosterAlt({ ...item, media_type: mediaType })}
+                  alt={getPosterAlt({ ...item, media_type: itemType })}
                   loading="lazy"
                   draggable="false"
                 />
