@@ -8,6 +8,7 @@ import SchemaMarkup from './SchemaMarkup';
 import ReviewSection from './ReviewSection';
 import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
 import { getBackdropAlt, getPosterAlt, getLogoAlt } from '../utils/altTextUtils';
+import { cardPoster } from '../utils/images';
 
 const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs = [], collection = [] }) => {
   const navigate = useNavigate();
@@ -631,7 +632,7 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
                           }}
                         >
                           <img
-                            src={rec.poster_path ? `${POSTER_URL}${rec.poster_path}` : '/placeholder-poster.jpg'}
+                            src={cardPoster(rec.poster_path) ?? '/placeholder-poster.jpg'}
                             alt={getPosterAlt(rec)}
                             className="modal-recommendation-img"
                             loading="lazy"
