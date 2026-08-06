@@ -3,9 +3,8 @@ import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import Modal from '../components/Modal';
+import { cardPoster } from '../utils/images';
 import './MyList.css';
-
-const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 
 const MyList = () => {
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
@@ -181,7 +180,7 @@ const MyList = () => {
                             >
                                 <div className="mylist-card-image-container">
                                     <img
-                                        src={item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/placeholder-poster.jpg'}
+                                        src={cardPoster(item.poster_path) ?? '/placeholder-poster.jpg'}
                                         alt={item.title}
                                         className="mylist-card-image"
                                         loading="lazy"
