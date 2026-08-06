@@ -12,6 +12,7 @@ import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../ho
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import { previewBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import YouTubePlayer from './YouTubePlayer';
 import './HoverPreviewCard.css';
 
@@ -46,7 +47,7 @@ const AD_COOLDOWN_MS = 2 * 60 * 1000;
 
 const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) => {
     const navigate = useNavigate();
-    const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchItemBundle, movieGenres, tvGenres } = useTMDB();
+    const { fetchItemBundle, movieGenres, tvGenres } = useTMDB();
     const { isInWatchlist, toggleWatchlist } = useWatchlist();
     const { showSuccess } = useToast();
     const { keepPreview, closePreview, closeNow } = useHoverPreview();
@@ -192,11 +193,9 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
         onMoreInfo?.(item);
     }, [item, onMoreInfo, closeNow]);
 
-    const backdropSrc = item.backdrop_path
-        ? `${BACKDROP_URL}${item.backdrop_path}`
-        : item.poster_path
-            ? `${POSTER_URL}${item.poster_path}`
-            : null;
+    const backdropSrc = previewBackdrop(item.backdrop_path)
+        ?? posterAsBackdrop(item.poster_path)
+        ?? null;
 
     const year = (item.release_date || item.first_air_date || '').substring(0, 4);
 
@@ -244,7 +243,7 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
 
                 {logoPath ? (
                     <div className="hover-preview-logo-overlay">
-                        <img src={`${LOGO_URL}${logoPath}`} alt={title} draggable="false" />
+                        <img src={cardLogo(logoPath)} alt={title} draggable="false" />
                     </div>
                 ) : (
                     <div className="hover-preview-title-overlay">{title}</div>
