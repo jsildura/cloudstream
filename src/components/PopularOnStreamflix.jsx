@@ -6,6 +6,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import usePopularTracking from '../hooks/usePopularTracking';
 import { useTMDB, parseContentRating } from '../hooks/useTMDB';
+import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import useTVDetect from '../hooks/useTVDetect';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './PopularOnStreamflix.css';
@@ -13,7 +14,7 @@ import CarouselControls from './CarouselControls';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
     const { popularContent, loading } = usePopularTracking();
-    const { BACKDROP_URL, LOGO_URL, fetchItemBundle } = useTMDB();
+    const { fetchItemBundle } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
     // State for enriched data (with logos)
@@ -311,15 +312,11 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                     ))
                 ) : (
                     displayContent.map((item, index) => {
-                        const backdropSrc = item.backdrop_path
-                            ? `https://image.tmdb.org/t/p/w780${item.backdrop_path}`
-                            : item.poster_path
-                                ? `https://image.tmdb.org/t/p/w780${item.poster_path}`
-                                : null;
+                        const backdropSrc = cardBackdrop(item.backdrop_path)
+                            ?? posterAsBackdrop(item.poster_path, 780)
+                            ?? null;
 
-                        const logoSrc = item.logo_path
-                            ? `${LOGO_URL}${item.logo_path}`
-                            : null;
+                        const logoSrc = cardLogo(item.logo_path);
 
                         const { isPaused, isKeyboardNav } = interactionState;
                         const isFocused = (isKeyboardNav || !isPaused) && focusedCardIndex === index;
