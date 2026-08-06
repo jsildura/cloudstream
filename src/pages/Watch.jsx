@@ -10,6 +10,7 @@ import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
 import { generateVideoObjectSchema } from '../utils/schemaUtils';
 import { generateContentMeta } from '../utils/metaUtils';
+import { episodeStill } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
 
 // Chance (0-1) that a Server 1 load plays through the direct player instead
@@ -1423,7 +1424,7 @@ const Watch = () => {
                       <div className="watch-episode-thumbnail">
                         {episode.still_path ? (
                           <img
-                            src={`https://image.tmdb.org/t/p/w300${episode.still_path}`}
+                            src={episodeStill(episode.still_path)}
                             alt={episode.name}
                             loading="lazy"
                           />
