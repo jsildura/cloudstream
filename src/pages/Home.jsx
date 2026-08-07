@@ -3,7 +3,6 @@ import { useLocation } from 'react-router-dom';
 import BannerSlider from '../components/BannerSlider';
 import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
-import SearchModal from '../components/SearchModal';
 import PopularCollections from '../components/PopularCollections';
 import ContinueWatching from '../components/ContinueWatching';
 import StreamingProviders from '../components/StreamingProviders';
@@ -19,6 +18,7 @@ import NativeAd from '../components/NativeAd';
 import SpreadTheWordModal from '../components/SpreadTheWordModal';
 import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
+import { useToast } from '../contexts/ToastContext';
 import './Home.css';
 
 // Timezone to country code mapping for popular regions
@@ -69,8 +69,6 @@ const Home = () => {
   const [userCountry, setUserCountry] = useState({ code: 'US', name: 'Your Country' });
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const {
@@ -78,10 +76,10 @@ const Home = () => {
     tvGenres,
     fetchNowPlaying,
     fetchPopularByRegion,
-    searchTMDB,
     fetchCredits,
     fetchContentRating
   } = useTMDB();
+  const { showError } = useToast();
 
   useEffect(() => {
     initializeData();
@@ -102,6 +100,14 @@ const Home = () => {
     try {
       const res = await fetch(`/api/${type}/${id}`);
       const contentData = await res.json();
+
+      // The API proxies can return an error body with HTTP 200. A shared
+      // /watch link or recommendation may point at a title that no longer
+      // exists, so treat a payload without an id as "not found" too — the
+      // toast below is the graceful failure for stale ids.
+      if (!contentData || typeof contentData.id === 'undefined') {
+        throw new Error('Content not found');
+      }
 
       const genreNames = contentData.genres?.map(g => g.name) || [];
 
@@ -125,6 +131,7 @@ const Home = () => {
       setIsModalOpen(true);
     } catch (error) {
       console.error('Failed to load content for modal:', error);
+      showError('This title is no longer available');
     }
   };
 
@@ -154,20 +161,6 @@ const Home = () => {
 
 
 
-  const handleSearch = useCallback(async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    try {
-      const results = await searchTMDB(query);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    }
-  }, [searchTMDB]);
 
   const handleItemClick = useCallback((item) => {
     const type = item.media_type === "movie" || item.release_date ? "movie" : "tv";
@@ -186,12 +179,6 @@ const Home = () => {
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setSelectedItem(null);
-  }, []);
-
-  const openSearch = useCallback(() => setIsSearchOpen(true), []);
-  const closeSearch = useCallback(() => {
-    setIsSearchOpen(false);
-    setSearchResults([]);
   }, []);
 
 
@@ -266,14 +253,6 @@ const Home = () => {
         <Modal item={selectedItem} onClose={closeModal} />
       )}
 
-      {isSearchOpen && (
-        <SearchModal
-          searchResults={searchResults}
-          onSearch={handleSearch}
-          onClose={closeSearch}
-          onItemClick={handleItemClick}
-        />
-      )}
 
       {/* Spread the Word Modal - shows once every 3 days */}
       <SpreadTheWordModal />

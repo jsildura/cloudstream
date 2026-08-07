@@ -12,6 +12,21 @@ const ENRICH_RETRY_BASE_MS = 250;
 // cap, an id that always fails would be retried on every append for the session.
 const ENRICH_MAX_PASSES = 3;
 export const SKELETON_COUNT = 12;
+// Minimum time the initial skeleton stays on screen. /discover responses are
+// cached at the proxy and can resolve in ~3ms, which would otherwise flash the
+// skeleton in and out within a single frame — an invisible loading state. Home's
+// trending rows take ~690ms naturally; this floor keeps every grid's loading
+// state just as perceptible and consistent.
+const MIN_LOAD_MS = 600;
+// Resolves after the browser has painted at least one frame of the current
+// DOM (the skeleton). rAF pauses in hidden/occluded tabs, so a generous
+// timeout backstops it — 300ms lets a normal 60Hz frame always win the race.
+const waitForPaint = () => new Promise(resolve => {
+  let done = false;
+  const finish = () => { if (!done) { done = true; resolve(); } };
+  requestAnimationFrame(() => requestAnimationFrame(finish));
+  setTimeout(finish, 300);
+});
 // How many cards each scroll-to-bottom reveals. TMDB's page size is fixed at 20
 // and is not configurable, so a fetch fills a 20-item pool and the grid renders
 // half of it. The next scroll reveals the remainder straight from the pool with
@@ -60,6 +75,8 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
     const controller = new AbortController();
     abortRef.current = controller;
     const generation = ++generationRef.current;
+
+    const loadStartedAt = performance.now();
 
     if (append) {
       setIsFetchingMore(true);
@@ -114,9 +131,26 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
         setError(`We could not load ${mediaType === 'movie' ? 'movies' : 'TV shows'} right now. Please try again.`);
       }
     } finally {
+      // A superseded fetch must not touch loading — the newer one owns it. The
+      // generation re-check below handles a filter change landing mid-wait.
       if (generation === generationRef.current) {
-        setLoading(false);
         setIsFetchingMore(false);
+        if (!append) {
+          // Make sure the skeleton has actually painted before deciding to hold
+          // it: on a busy main thread (dev boot, banner images) the first paint
+          // can lag well past a fast response, and without this the cards
+          // commit would replace the skeleton before it ever reached the
+          // screen, making the loading state invisible.
+          await waitForPaint();
+          // Only top up fast responses. If the request itself took longer than
+          // MIN_LOAD_MS, the skeleton was visible for the whole fetch and needs
+          // no extra hold. Cached responses (a few ms) get a full, perceptible
+          // beat on screen — matching the home rows' feel.
+          if (performance.now() - loadStartedAt < MIN_LOAD_MS) {
+            await new Promise(r => setTimeout(r, MIN_LOAD_MS));
+          }
+          if (generation === generationRef.current) setLoading(false);
+        }
       }
     }
   }, [mediaType, filters, extraParams]);

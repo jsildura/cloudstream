@@ -1,0 +1,136 @@
+/* Compact title card shown for shared /watch links inside chat bubbles. */
+.gc-link-card {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 8px;
+    max-width: 280px;
+    min-width: 0;
+    width: fit-content;
+    margin-top: 6px;
+    position: relative;
+    cursor: default;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.gc-link-card.clickable {
+    cursor: pointer;
+}
+
+.gc-link-card.clickable:hover,
+.gc-link-card.clickable:focus-visible {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+    outline: none;
+}
+
+.gc-link-card-img {
+    width: 88px;
+    height: 62px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.gc-link-card-body {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gc-link-card-title {
+    font-weight: 600;
+    font-size: 0.88rem;
+    line-height: 1.25;
+    color: #fff;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.gc-link-card-meta {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.gc-link-card-overview {
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: #cbd5e1;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.gc-link-card-dismiss {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: #333;
+    color: #fff;
+    font-size: 0.7rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gc-link-card-dismiss:hover {
+    background: #e50914;
+}
+
+/* Loading/error pill fallback inside bubbles. */
+.gc-link-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 50px;
+    border: 1px solid rgba(229, 9, 20, 0.5);
+    background: rgba(229, 9, 20, 0.12);
+    font-size: 0.85rem;
+    margin-top: 2px;
+}
+
+/* Live preview above the input while typing. */
+.gc-compose-preview {
+    padding: 0 14px 6px;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.gc-compose-preview .gc-link-card {
+    margin-top: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.gc-link-compose-hint {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+}
+
+.gc-link-compose-hint.error {
+    color: #fca5a5;
+    border-color: rgba(229, 9, 20, 0.4);
+    background: rgba(229, 9, 20, 0.08);
+}

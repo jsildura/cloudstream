@@ -17,8 +17,10 @@ const DiscoverGrid = ({
   sentinelRef,
   canLoadMore,
   onItemClick,
-  gridClassName = 'movie-discover-grid'
+  gridClassName = 'movie-discover-grid',
+  variant = 'grid'   // 'search' = portrait poster + title overlay + mobile row meta
 }) => {
+  const isSearch = variant === 'search';
   const { getPreviewProps } = useHoverPreview();
 
   return (
@@ -33,14 +35,29 @@ const DiscoverGrid = ({
             <div key={`skeleton-${i}`} className="trending-card-skeleton" />
           ))
           : items.map(item => {
-          const enriched = enrichedMap.get(item.id) || {};
           const itemTitle = item.title || item.name;
           // Search returns mixed movie/tv in one list, so the type lives on the
           // item. /discover results have no media_type and fall back to the prop.
           const itemType = item.media_type || mediaType;
+          // useDiscoverFeed keys enrichment by bare id (one media type per
+          // feed); useSearchFeed keys by "type-id" because /search/multi mixes
+          // both. Look the composite key up first so either map works here.
+          const enriched = enrichedMap.get(`${itemType}-${item.id}`)
+            || enrichedMap.get(item.id)
+            || {};
+          // `enriched.backdrop_path` only exists once enrichment lands, and
+          // search never enriches. `item.backdrop_path` ships with both the
+          // /discover and /search/multi payloads, so it covers the gap — and
+          // since enrichOne resolves to that same value, /discover no longer
+          // flickers from poster-crop to backdrop when enrichment arrives.
           const backdropSrc = cardBackdrop(enriched.backdrop_path)
+            ?? cardBackdrop(item.backdrop_path)
             ?? posterAsBackdrop(item.poster_path)
-            ?? '/placeholder-backdrop.jpg';
+            ?? '/icons/placeholder.svg';
+          // The placeholder SVG is decorative art, not a real backdrop — keep
+          // it letterboxed (contain) on a dark ground instead of stretching it
+          // full-bleed like a real backdrop. See DiscoverGrid.css.
+          const isPlaceholder = backdropSrc === '/icons/placeholder.svg';
           const logoSrc = cardLogo(enriched.logo_path);
           // Enrichment lives in a side Map, so fold it back onto the item for
           // anything downstream that reads `logo_path`/`backdrop_path` off the
@@ -59,7 +76,7 @@ const DiscoverGrid = ({
               // already holds the logo, so hand it over rather than making
               // the preview re-fetch what we have — that round-trip is what
               // made the logo appear a beat after the card opened.
-              {...getPreviewProps(previewItem, itemType, false, onItemClick)}
+              {...(!isSearch && getPreviewProps(previewItem, itemType, false, onItemClick))}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
@@ -74,6 +91,7 @@ const DiscoverGrid = ({
                 <img
                   src={backdropSrc}
                   alt={getPosterAlt({ ...item, media_type: itemType })}
+                  className={isPlaceholder ? 'trending-card-placeholder-img' : undefined}
                   loading="lazy"
                   draggable="false"
                 />

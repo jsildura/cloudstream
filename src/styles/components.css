@@ -912,6 +912,92 @@
   outline-offset: 4px;
 }
 
+/* ===== Desktop inline search =====
+   Collapsed by default at EVERY size, including desktop. The desktop @media
+   block below is the only thing that reveals it. Pairing a `display: none`
+   default with a `min-width` override (rather than a `max-width: 1024px`
+   rule) means there is no gap at fractional widths like 1024.5px where
+   neither the navbar bar nor the page input would render. */
+.navbar-inline-search {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: width 0.35s cubic-bezier(0.22, 0.61, 0.36, 1),
+              opacity 0.25s ease;
+}
+
+.navbar-inline-search svg {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.navbar-inline-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 400;
+  outline: none;
+  padding: 10px 0;
+}
+
+.navbar-inline-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+
+.navbar-inline-input:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 4px;
+}
+
+.navbar-inline-clear {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.navbar-inline-clear:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+
+/* ===== Desktop only: mouse-driven screens 1025px and up =====
+   This exact query string also appears in Navbar.jsx, Search.jsx, and
+   Search.css. If you change it, change it in all four. Excluding
+   (hover: hover) and (pointer: fine) is what keeps Android TV and large
+   tablets on the page input — see plan section 5.2. */
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
+  .navbar-inline-search {
+    display: flex;
+  }
+
+  .navbar-inline-search.open {
+    width: min(340px, 24vw);
+    opacity: 1;
+    /* When the bar is open, the button hides, so the bar takes over the auto margin */
+    margin-left: auto;
+  }
+
+  .navbar-inline-search:focus-within { border-bottom-color: #e50914; }
+
+  /* The bar visually replaces the button while expanded. Scoped to desktop
+     so it can never hide the ONLY search control on a touch device. */
+  .navbar-search-btn.is-expanded { display: none; }
+}
+
 /* TV 1080p Scaling */
 @media (min-width: 1920px) and (max-width: 2559px) {
   .navbar-search-btn {
@@ -924,6 +1010,13 @@
     width: 40px;
     height: 40px;
   }
+
+  /* add inside the existing block at line 916 — navbar is 136px here */
+  .navbar-inline-search.open { width: 560px; }
+  .navbar-inline-search { border-bottom-width: 4px; }
+  .navbar-inline-search svg { width: 40px; height: 40px; }
+  .navbar-inline-input { font-size: 2rem; padding: 20px 0; }
+  .navbar-inline-clear { width: 56px; height: 56px; font-size: 40px; }
 }
 
 /* TV 4K Scaling */
@@ -938,44 +1031,16 @@
     width: 80px;
     height: 80px;
   }
+
+  /* add inside the existing block at line 929 — navbar is 300px here */
+  .navbar-inline-search.open { width: 1120px; }
+  .navbar-inline-search { border-bottom-width: 8px; }
+  .navbar-inline-search svg { width: 80px; height: 80px; }
+  .navbar-inline-input { font-size: 4rem; padding: 40px 0; }
+  .navbar-inline-clear { width: 112px; height: 112px; font-size: 80px; }
 }
 
-@media (max-width: 1024px) {
-  .navbar-search-btn {
-    display: none;
-  }
-}
 
-/* Mobile Search Button - Shows on mobile/tablet */
-.mobile-search-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  margin-left: auto;
-}
-
-.mobile-search-btn:hover {
-  color: #fff;
-}
-
-.mobile-search-btn svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.mobile-search-label {
-  display: inline;
-  font-weight: 400;
-}
 
 /* My List / Watchlist Button */
 .navbar-mylist-btn {
@@ -1051,9 +1116,7 @@
     display: none;
   }
 
-  .mobile-search-btn {
-    display: flex;
-  }
+
 
   .menu-toggle {
     display: -webkit-box !important;
@@ -2194,6 +2257,26 @@
   object-fit: cover;
   mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
+}
+
+/* Placeholder fallback art: the placeholder.svg is decorative, not a real
+   backdrop, so it must NOT stretch across the whole 16:9 slot. Keep it at a
+   fixed 60% width, centered, aspect preserved — the ground shows around it
+   (same treatment as DiscoverGrid / HoverPreviewCard). */
+/* Placeholder ground: muted dark gray instead of plain black. */
+.modal-backdrop-container.placeholder {
+  background: rgba(30, 30, 30, 0.8);
+}
+
+.modal-backdrop-img.placeholder {
+  width: 60%;
+  height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.9;
 }
 
 /* YouTube Trailer Video - Slight scale to hide YouTube UI */
@@ -4049,7 +4132,7 @@
 
 /* Mobile responsive updates */
 @media (max-width: 768px) {
-  /* Search bar uses mobile dropdown - see mobile-search-btn styles */
+
 
   .search-results-dropdown {
     width: 100%;

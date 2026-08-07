@@ -267,7 +267,7 @@
     align-items: flex-end;
     justify-content: flex-end;
     text-align: right;
-    font-size: 1.1rem;
+    font-size: 0.85rem;
     font-weight: 700;
     font-style: italic;
     color: #fff;
@@ -358,7 +358,7 @@
     }
 
     .trending-title-overlay {
-        font-size: 0.85rem;
+        font-size: 0.6rem;
     }
 
     .trending-skeleton-slide {
@@ -462,7 +462,7 @@
     .trending-title-overlay {
         bottom: 20px;
         right: 20px;
-        font-size: 1.6rem;
+        font-size: 1.24rem;
     }
 
     /* Hover Overlay */
@@ -580,7 +580,7 @@
     .trending-title-overlay {
         bottom: 48px;
         right: 48px;
-        font-size: 4.4rem;
+        font-size: 3.42rem;
         text-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
     }
 

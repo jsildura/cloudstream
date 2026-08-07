@@ -40,8 +40,22 @@
     justify-content: center;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 10000;
-    margin-top: 10px;
     overflow: hidden;
+}
+
+/* The badge hangs over the FAB's edge. .gc-fab clips its own interior
+   (overflow:hidden for the animated border), so the badge lives as a sibling
+   anchored to this wrapper — no clipping, and it paints above the button. */
+.gc-fab-wrap {
+    position: relative;
+    margin-top: 10px; /* was on .gc-fab */
+}
+
+.gc-fab-wrap .gc-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    z-index: 10001; /* above the FAB's own z-index: 10000 */
 }
 
 /* Animated gradient border - mapple.uk style */
@@ -91,8 +105,13 @@
 
 .gc-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    /* Inside the FAB's bounds: .gc-fab has overflow:hidden (it clips the
+       spinning gradient border), so negative offsets would be cut off. */
+    top: 0;
+    right: 0;
+    /* Above .gc-fab::after (the dark interior cover) — without this the
+       badge is painted over and invisible. */
+    z-index: 2;
     background: #3b82f6;
     color: white;
     font-size: 10px;
@@ -104,7 +123,8 @@
     text-align: center;
 }
 
-.gc-wrapper.chat-open .gc-fab {
+.gc-wrapper.chat-open .gc-fab,
+.gc-wrapper.chat-open .gc-fab-wrap {
     display: none !important;
 }
 
@@ -655,6 +675,63 @@
     border-radius: 18px 18px 4px 18px;
 }
 
+/* === CHAT LINK STYLES ===
+   URLs in message text are rendered as clickable links: the app's own
+   /watch links open the content detail modal, any other URL opens in a
+   new tab. Watch links get the StreamFlix red accent + play glyph. */
+.gc-msg-text a.gc-chat-link {
+    color: #8ab4f8;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    word-break: break-all;
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.gc-msg-text a.gc-chat-link:hover {
+    color: #c2dcff;
+}
+
+.gc-msg-text a.gc-chat-link.gc-chat-link-watch {
+    color: #ff4d5a;
+    font-weight: 600;
+}
+
+.gc-msg-text a.gc-chat-link.gc-chat-link-watch:hover {
+    color: #ff7d87;
+}
+
+/* Own bubbles have a red background — lighten link colors for contrast. */
+.gc-msg.gc-own .gc-msg-text a.gc-chat-link {
+    color: #cfe3ff;
+}
+
+.gc-msg.gc-own .gc-msg-text a.gc-chat-link:hover {
+    color: #ffffff;
+}
+
+.gc-msg.gc-own .gc-msg-text a.gc-chat-link.gc-chat-link-watch {
+    color: #ffc9cd;
+}
+
+.gc-msg.gc-own .gc-msg-text a.gc-chat-link.gc-chat-link-watch:hover {
+    color: #ffe1e4;
+}
+
+.gc-chat-link-play {
+    margin-right: 4px;
+    font-size: 0.8em;
+}
+
+/* External (non-watch) links get a small ⧉ icon so they're visually
+   distinct from the in-app /watch preview cards/pills. */
+.gc-chat-link-external-icon {
+    margin-left: 3px;
+    font-size: 0.75em;
+    opacity: 0.7;
+    vertical-align: 0.1em;
+}
+
 .gc-msg.gc-own .gc-msg-bubble:hover {
     background: #a33735;
 }
@@ -753,6 +830,21 @@
 
 /* === MESSAGE ACTIONS === */
 /* === MESSAGE ACTIONS === */
+/* Hover actions are a mouse-only affordance. Touch devices long-press for the
+   action sheet instead — never show the React/Reply/⋮ cluster there, and don't
+   let the native iOS callout/selection UI intercept the long-press. */
+@media (hover: none), (pointer: coarse) {
+    .gc-msg-actions {
+        display: none !important;
+    }
+
+    .gc-msg-bubble {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+}
+
 .gc-msg-actions {
     position: absolute !important;
     top: 50% !important;
@@ -963,6 +1055,10 @@
     background: rgba(255, 255, 255, 0.05);
     border-radius: 20px;
     padding: 0 12px;
+    /* Transparent border reserves the 1px focus ring from
+       :focus-within, so focusing the composer doesn't shift the
+       footer's height. */
+    border: 1px solid transparent;
     display: flex;
     align-items: center;
 }
@@ -975,9 +1071,10 @@
     padding: 10px 0;
     outline: none;
     resize: none;
-    height: 40px;
+    min-height: 40px;
+    max-height: 120px;
     line-height: 20px;
-    overflow: hidden;
+    overflow-y: auto;
     font-family: inherit;
     font-size: 0.95rem;
 }
@@ -1702,6 +1799,9 @@
         padding: 6px 10px;
         border-radius: 14px;
         min-width: 28px;
+    }
+
+    .gc-fab-wrap .gc-badge {
         top: -8px;
         right: -8px;
     }
@@ -1813,9 +1913,12 @@
         padding: 16px 32px;
         border-radius: 40px;
         min-width: 80px;
+        border-width: 8px;
+    }
+
+    .gc-fab-wrap .gc-badge {
         top: -20px;
         right: -20px;
-        border-width: 8px;
     }
 
     /* Accessibility Focus for D-pad */
@@ -2046,12 +2149,17 @@
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* === POPOVER OVERLAY (click-outside dismiss) === */
+/* === POPOVER OVERLAY (click-outside dismiss) ===
+   Must re-enable pointer-events: .gc-wrapper is `pointer-events: none` so the
+   chat doesn't block the page, and this overlay inherits that — without this
+   rule, clicks outside the reaction popover pass straight through it and the
+   popover never closes (Messenger-style click-away dismiss). */
 .gc-popover-overlay {
     position: fixed;
     inset: 0;
     z-index: 2147483646;
     background: transparent;
+    pointer-events: auto;
 }
 
 /* === REPORTS PANEL (Admin Only) === */
@@ -2542,4 +2650,358 @@
 .gc-admin-purge-btn:hover {
     opacity: 1;
     transform: scale(1.1);
+}
+
+/* === @everyone BROADCASTS ===
+   Admin-only announcements. The bubble gets a warm amber accent so it reads
+   as a broadcast, and the FAB badge glows/pulses while unread broadcasts
+   exist. Appended last so these rules win over the base bubble/badge styles. */
+.gc-msg-bubble.gc-broadcast {
+    background: linear-gradient(135deg, rgba(255, 77, 90, 0.22), rgba(255, 153, 0, 0.16));
+    border: 1px solid rgba(255, 153, 0, 0.55);
+    box-shadow: 0 0 12px rgba(255, 153, 0, 0.25);
+}
+
+.gc-msg-bubble.gc-broadcast .gc-msg-text {
+    font-size: 1.02em;
+}
+
+.gc-broadcast-label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #ffb84d;
+    margin-bottom: 3px;
+}
+
+.gc-badge-broadcast {
+    background: linear-gradient(135deg, #ff4d5a, #ff9f1a);
+    animation: gc-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes gc-badge-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 90, 0.45);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(255, 77, 90, 0);
+    }
+}
+
+.gc-mention-item.gc-mention-everyone {
+    background: rgba(255, 153, 0, 0.12);
+}
+
+.gc-mention-item.gc-mention-everyone:hover {
+    background: rgba(255, 153, 0, 0.25);
+}
+
+.gc-mention-everyone-icon {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    background: rgba(255, 153, 0, 0.18);
+    border-radius: 50%;
+}
+
+/* === MESSAGE FORMATTING (paragraphs & bullet lists) ===
+   Message text renders as block structure: paragraphs (blank-line
+   separated) and bullet lists (`- `, `* `, `• ` prefixes). Default
+   UA margins are removed so bubbles stay compact. */
+.gc-msg-text .gc-msg-para {
+    margin: 0 0 6px;
+}
+
+.gc-msg-text .gc-msg-para:last-child {
+    margin-bottom: 0;
+}
+
+.gc-msg-text .gc-msg-list {
+    margin: 0 0 6px;
+    padding-left: 18px;
+}
+
+.gc-msg-text .gc-msg-list:last-child {
+    margin-bottom: 0;
+}
+
+.gc-msg-text .gc-msg-list li {
+    margin-bottom: 4px;
+    word-break: break-word;
+}
+
+.gc-msg-text .gc-msg-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* === MOVIE RECOMMENDATION LISTS ===
+   The 🎬 composer picker, selected chips, and list-message bubbles. The
+   picker anchors above the footer exactly like the mention list; the chip
+   row sits between the composer and the messages. */
+
+/* Composer + button (opens the options menu). The button sits in a
+   relative wrapper so the menu can anchor to it, right-aligned. */
+.gc-rec-btn {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    opacity: 0.85;
+    color: #b9c0cc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.gc-rec-btn:hover,
+.gc-rec-btn.active {
+    opacity: 1;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Composer options menu — anchored to the top of .gc-footer (8px above
+   it, right-aligned like the movie picker), so it sits at the composer
+   bar instead of floating high over the messages. Width fits the item
+   text; never wider than needed. */
+.gc-rec-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 12px;
+    width: max-content;
+    min-width: 150px;
+    padding: 5px;
+    background: #1d1f24;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
+    z-index: 50;
+}
+
+.gc-rec-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #fff;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.88rem;
+    text-align: left;
+    white-space: nowrap;
+    transition: background 0.15s ease;
+}
+
+.gc-rec-menu-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+/* Picker popover (anchored above the footer) */
+.gc-rec-picker {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 12px;
+    right: 12px;
+    max-height: 320px;
+    display: flex;
+    flex-direction: column;
+    background: #1d1f24;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
+    z-index: 50;
+    overflow: hidden;
+}
+
+.gc-rec-search {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.gc-rec-search::placeholder {
+    color: #6b7280;
+}
+
+.gc-rec-results {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 6px;
+}
+
+.gc-rec-empty {
+    padding: 14px 10px;
+    color: #8b93a1;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.gc-rec-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    font-family: inherit;
+    transition: background 0.15s ease;
+}
+
+.gc-rec-result:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.gc-rec-result.selected {
+    background: rgba(229, 9, 20, 0.28);
+}
+
+.gc-rec-result-img {
+    width: 36px;
+    height: 54px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #2a2a2a;
+}
+
+.gc-rec-result-img-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+.gc-rec-result-title {
+    flex: 1;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gc-rec-result-year {
+    font-size: 0.75rem;
+    color: #8b93a1;
+    flex-shrink: 0;
+}
+
+.gc-rec-picker-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.78rem;
+    color: #8b93a1;
+}
+
+.gc-rec-picker-done {
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 5px 16px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.gc-rec-picker-done:hover {
+    background: #f6121d;
+}
+
+/* Selected chips above the composer */
+.gc-rec-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px 0;
+}
+
+.gc-rec-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 180px;
+    padding: 3px 6px 3px 3px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 0.78rem;
+    color: #fff;
+}
+
+.gc-rec-chip-img {
+    width: 22px;
+    height: 32px;
+    border-radius: 4px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #2a2a2a;
+}
+
+.gc-rec-chip-img-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+}
+
+.gc-rec-chip-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gc-rec-chip-x {
+    background: none;
+    border: none;
+    color: #b9c0cc;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px;
+    line-height: 1;
+}
+
+.gc-rec-chip-x:hover {
+    color: #fff;
+}
+
+.gc-rec-chip-clear {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    color: #b9c0cc;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.gc-rec-chip-clear:hover {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
 }

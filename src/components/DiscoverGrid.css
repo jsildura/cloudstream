@@ -30,6 +30,20 @@
   .movie-discover-grid .trending-card { width: 100%; }
 }
 
+/* Placeholder backdrop: the placeholder.svg art is decorative, not a real
+   backdrop, so it must NOT stretch across the whole 16:9 slot. Keep it at a
+   fixed 60% width, centered, aspect preserved — dark ground shows around it. */
+.trending-card-backdrop img.trending-card-placeholder-img {
+  width: 60%;
+  height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.9;
+}
+
 /* Sentinel (invisible trigger for IntersectionObserver) */
 .movie-discover-sentinel { height: 1px; }
 

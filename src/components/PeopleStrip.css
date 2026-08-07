@@ -1,0 +1,119 @@
+/* ─── People Strip ─────────────────────────────────────────────────── */
+
+/* Full-width section sharing the page's 4vw padding — its edges must align
+   with the results grid below it at every breakpoint. The old 900px centered
+   cap inset the strip relative to the grid on wide screens, which is exactly
+   the padding/spacing drift this file is fixing. */
+.people-strip {
+  margin: 0 0 32px;
+}
+
+.people-strip-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 16px;
+  /* Red accent underline matching the site's brand */
+  border-bottom: 2px solid #e50914;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.people-strip-row {
+  display: flex;
+  gap: 16px;   /* mirrors .search-results-grid gap at the default width */
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.2) transparent;
+}
+
+/* Webkit scrollbar styling */
+.people-strip-row::-webkit-scrollbar {
+  height: 4px;
+}
+.people-strip-row::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+}
+
+.people-strip-card {
+  flex: 0 0 auto;
+  width: 130px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  padding: 0;
+  color: #fff;
+  transition: transform 0.2s ease;
+}
+
+.people-strip-card:hover {
+  transform: scale(1.04);
+}
+.people-strip-card:hover .people-strip-name {
+  text-decoration: underline;
+}
+
+.people-strip-card img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* Fallback when there's no photo */
+.people-strip-avatar {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  background: #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 8px;
+}
+
+.people-strip-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.people-strip-dept {
+  display: block;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}
+
+/* Mobile: smaller cards + grid-matching gap (search grid is 2 cols / 12px) */
+@media (max-width: 767px) {
+  .people-strip-card { width: 100px; }
+  .people-strip-title { font-size: 17px; }
+  .people-strip-row { gap: 12px; }
+}
+
+/* Large screens: mirror the search grid's wider gaps at every TV breakpoint */
+@media (min-width: 1920px) {
+  .people-strip-card { width: 160px; }
+  .people-strip-row { gap: 20px; }
+}
+
+@media (min-width: 2560px) and (max-width: 3839px) {
+  .people-strip-row { gap: 24px; }
+}
+
+@media (min-width: 3840px) {
+  .people-strip-row { gap: 28px; }
+}

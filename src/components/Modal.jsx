@@ -432,7 +432,7 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
           <div className={`modal-scroll-container ${isTrailerPlaying ? 'trailer-playing' : ''}`}>
             {/* Hero Header with Backdrop/Trailer */}
             <div className="modal-hero">
-              <div className="modal-backdrop-container">
+              <div className={`modal-backdrop-container${item.backdrop_path ? '' : ' placeholder'}`}>
                 {isTrailerPlaying && trailerKey ? (
                   /* YouTube Trailer Iframe - with controls for mobile unmute */
                   <iframe
@@ -444,11 +444,14 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
                     allowFullScreen
                   />
                 ) : (
-                  /* Backdrop Image */
+                  /* Backdrop Image - fall back to the placeholder art when the
+                     title has no backdrop_path (avoids a broken .../w1280null URL) */
                   <img
-                    src={`${BACKDROP_URL}${item.backdrop_path}`}
+                    src={item.backdrop_path
+                      ? `${BACKDROP_URL}${item.backdrop_path}`
+                      : '/icons/placeholder.svg'}
                     alt={getBackdropAlt(item)}
-                    className="modal-backdrop-img"
+                    className={`modal-backdrop-img${item.backdrop_path ? '' : ' placeholder'}`}
                   />
                 )}
               </div>

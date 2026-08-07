@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
@@ -7,6 +8,7 @@ import { cardPoster } from '../utils/images';
 import './MyList.css';
 
 const MyList = () => {
+    const navigate = useNavigate();
     const { movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
     const { watchlist, removeFromWatchlist, clearWatchlist } = useWatchlist();
     const { showSuccess } = useToast();
@@ -153,18 +155,28 @@ const MyList = () => {
 
             {watchlist.length === 0 ? (
                 <div className="mylist-empty">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 5v14" />
-                        <path d="M5 12h14" />
-                    </svg>
+                    <div className="mylist-empty-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 5v14" />
+                            <path d="M5 12h14" />
+                        </svg>
+                    </div>
                     <h3>Your list is empty</h3>
                     <p>Add movies and TV shows to your list to watch later.</p>
+                    <button className="mylist-empty-cta" onClick={() => navigate('/discover')}>
+                        Browse Movies &amp; TV Shows
+                    </button>
                 </div>
             ) : (
                 <>
                     <p className="mylist-count">{watchlist.length} item{watchlist.length !== 1 ? 's' : ''}</p>
                     <div className="mylist-grid">
-                        {sortedWatchlist.map((item) => (
+                        {sortedWatchlist.map((item) => {
+                        // Portrait 2:3 card — the placeholder art is decorative,
+                        // so letterbox it via CSS when TMDB has no poster.
+                        const poster = cardPoster(item.poster_path) ?? '/icons/placeholder.svg';
+                        const isPlaceholder = poster === '/icons/placeholder.svg';
+                        return (
                             <div
                                 key={item.id}
                                 className="mylist-card"
@@ -180,27 +192,26 @@ const MyList = () => {
                             >
                                 <div className="mylist-card-image-container">
                                     <img
-                                        src={cardPoster(item.poster_path) ?? '/placeholder-poster.jpg'}
-                                        alt={item.title}
-                                        className="mylist-card-image"
+                                        src={poster}
+                                        alt={item.title || item.name || 'Title'}
+                                        className={`mylist-card-image${isPlaceholder ? ' mylist-card-image-placeholder' : ''}`}
                                         loading="lazy"
                                     />
-                                    <div className="mylist-card-overlay">
-                                        <button
-                                            className="mylist-remove-btn"
-                                            onClick={(e) => handleRemove(e, item.id)}
-                                            title="Remove from list"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M18 6 6 18" />
-                                                <path d="m6 6 12 12" />
-                                            </svg>
-                                        </button>
-                                    </div>
+                                    <button
+                                        className="mylist-remove-btn"
+                                        onClick={(e) => handleRemove(e, item.id)}
+                                        title="Remove from list"
+                                        aria-label={`Remove ${item.title || item.name} from list`}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M18 6 6 18" />
+                                            <path d="m6 6 12 12" />
+                                        </svg>
+                                    </button>
                                     <span className="mylist-card-type">{item.type === 'tv' ? 'TV' : 'Movie'}</span>
                                 </div>
                                 <div className="mylist-card-info">
-                                    <h3 className="mylist-card-title">{item.title}</h3>
+                                    <h3 className="mylist-card-title">{item.title || item.name}</h3>
                                     {item.vote_average > 0 && (
                                         <span className="mylist-card-rating">
                                             ★ {item.vote_average.toFixed(1)}
@@ -208,7 +219,8 @@ const MyList = () => {
                                     )}
                                 </div>
                             </div>
-                        ))}
+                        );
+                        })}
                     </div>
                 </>
             )}

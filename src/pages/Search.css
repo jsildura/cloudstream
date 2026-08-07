@@ -1,8 +1,9 @@
-/* Full-viewport near-black surface. Netflix-ish overlay feel, real route. */
+/* Flat near-black, identical to globals.css:25 so there is no banding where
+   the page meets the navbar or the footer. */
 .search-page {
   min-height: 100vh;
-  background: #0b0b0b;
-  padding: 96px 4vw 64px;
+  background: #141414;
+  padding: 96px 4vw 64px;   /* 68px navbar + 28px breathing room */
 }
 
 /* ---- Input ---- */
@@ -69,16 +70,29 @@
 .search-results-grid .trending-card { width: 100%; flex: initial; }
 .search-results-grid .trending-card-skeleton { width: 100%; }
 
+/* Stale-while-revalidate: old results stay put and dim while the new query
+   loads. This is what replaced the full-grid skeleton blank. */
+.search-results-grid.is-refreshing {
+  opacity: 0.45;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
 @media (max-width: 1023px) {
   .search-results-grid { grid-template-columns: repeat(3, 1fr); }
   .search-results-grid .trending-card { width: 100%; }
 }
 
+/* Same query string as components.css, Navbar.jsx and Search.jsx.
+   Excluding touch/TV is deliberate — see plan section 5.2. */
+@media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
+  .search-page-input-wrap { display: none; }
+}
+
 @media (max-width: 767px) {
-  .search-results-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .search-results-grid .trending-card { width: 100%; }
-  .search-page { padding: 80px 4vw 48px; }
+  .search-page { padding: 84px 4vw 48px; }   /* 68px navbar + 16px */
   .search-page-input { font-size: 22px; }
+  .search-results-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
 
 /* Big-screen TV: more columns rather than giant cards. */
@@ -86,71 +100,60 @@
   .search-results-grid { grid-template-columns: repeat(5, 1fr); gap: 20px; }
 }
 
+@media (min-width: 1920px) and (max-width: 2559px) {
+  .search-page { padding: 168px 4vw 96px; }    /* 136px navbar + 32px */
+}
+
+@media (min-width: 2560px) and (max-width: 3839px) {
+  .search-page { padding: 118px 4vw 96px; }    /* 90px navbar + 28px */
+  .search-results-grid { grid-template-columns: repeat(5, 1fr); gap: 24px; }
+}
+
 @media (min-width: 3840px) {
+  .search-page { padding: 340px 4vw 160px; }   /* 300px navbar + 40px */
   .search-results-grid { grid-template-columns: repeat(6, 1fr); gap: 28px; }
   .search-page-input { font-size: 48px; }
 }
 
+/* Person-mode lazy-enrich sentinel — invisible, just a scroll target */
+.person-enrich-sentinel {
+  height: 2px;
+}
+
 /* ---- Empty state ---- */
 
-.search-page-section { max-width: 900px; margin: 0 auto 36px; }
+.search-page-section { max-width: none; margin: 0 0 36px; }
 
-.search-page-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-
-.search-page-section-head h2 {
+.search-page-top {
+  margin: 0 0 24px;
   font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-page-top-label {
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
-  margin: 0;
+  color: rgba(255, 255, 255, 0.85);
+  margin-right: 8px;
 }
 
-.search-page-clear-all {
+.search-page-top-sep {
+  margin: 0 10px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.search-page-top-link {
   border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.search-page-clear-all:hover { color: #fff; text-decoration: underline; }
-
-.search-page-chips { display: flex; flex-wrap: wrap; gap: 10px; }
-
-.search-page-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
+  background: none;
   color: #fff;
-  font-size: 14px;
+  font-size: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.25);
+  transition: text-decoration-color 0.2s ease;
 }
 
-.search-page-chip:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.3);
+.search-page-top-link:hover {
+  text-decoration-color: rgba(255, 255, 255, 0.7);
 }
-
-.search-page-chip:focus-visible {
-  outline: 2px solid #e50914;
-  outline-offset: 2px;
-}
-
-.search-page-chip-x {
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 16px;
-  line-height: 1;
-}
-
-.search-page-chip-x:hover { color: #fff; }

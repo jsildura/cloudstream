@@ -1,5 +1,9 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import useTVDetect from '../hooks/useTVDetect';
+import ChatLinkPreview from './ChatLinkPreview';
+import MovieRecRow from './MovieRecRow';
+import { cardPoster } from '../utils/images';
 import './GlobalChat.css';
 
 // Firebase configuration for StreamFlix Chat
@@ -15,14 +19,186 @@ const firebaseConfig = {
 
 // Constants
 const REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+
+// Hover action buttons (React/Reply/⋮) are a mouse-only affordance. Touch
+// devices long-press for the action sheet instead, so only track hover when
+// the primary pointer actually hovers.
+const HOVER_MQ = window.matchMedia('(hover: hover) and (pointer: fine)');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ADMIN_NICKNAME = "StreamFlix";
 const ADMIN_AVATAR = "/logo/streamflix.png";
 // Google Apps Script URL for file uploads (same as Shakzz-TV)
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec";
 
+// ─── Chat link support ─────────────────────────────────────────────────
+// URLs inside message text are rendered as clickable links. The app's own
+// /watch links open the existing content detail modal (modal-content-new)
+// via Home's `openModalForContent` location-state mechanism — the same path
+// Watch.jsx uses when someone visits a /watch URL directly. Any other URL
+// opens in a new tab.
+const CHAT_URL_RE = /(https?:\/\/[^\s<>"']+|\/watch\?[^\s<>"']*)/g;
+// A greedy URL match can swallow sentence punctuation (".", ",", ")", "?",
+// ...). Strip it so the link stays clean and the punctuation stays in the
+// message text.
+const CHAT_URL_TRAILING_RE = /[.,;:!?'")\]}]+$/;
+
+// Parse a /watch URL (absolute or relative) into the fields the content
+// modal needs. Returns null for anything that isn't a valid watch link.
+// Deliberately host-agnostic: a watch URL shared from any origin (dev
+// localhost, the deployed site, a share link) opens the same modal, and it
+// never navigates to the foreign host — clicking stays in this app.
+const parseWatchLink = (url) => {
+    try {
+        const u = new URL(url, window.location.origin);
+        if (u.pathname.replace(/\/+$/, '') !== '/watch') return null;
+        const type = u.searchParams.get('type');
+        const id = u.searchParams.get('id');
+        if ((type === 'movie' || type === 'tv') && id && /^\d+$/.test(id)) {
+            return {
+                type,
+                id,
+                season: u.searchParams.get('season'),
+                episode: u.searchParams.get('episode')
+            };
+        }
+    } catch { /* not a parseable URL */ }
+    return null;
+};
+
+// Split message text into plain-text chunks and { url } link parts.
+const splitChatLinks = (text) => {
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    CHAT_URL_RE.lastIndex = 0;
+    while ((match = CHAT_URL_RE.exec(text)) !== null) {
+        const raw = match[0];
+        // Drop trailing punctuation the greedy match swallowed; it is kept
+        // as plain text via `lastIndex` below.
+        const url = raw.replace(CHAT_URL_TRAILING_RE, '');
+        if (match.index > lastIndex) parts.push(text.slice(lastIndex, match.index));
+        parts.push({ url });
+        lastIndex = match.index + url.length;
+    }
+    if (lastIndex < text.length) parts.push(text.slice(lastIndex));
+    return parts;
+};
+
+// Parse message text into block-level structure: bullet lists (`- `, `* ` or
+// `• ` prefixes) and paragraphs. Every non-blank line becomes its own
+// paragraph block so a single Enter break is never collapsed — blank lines
+// simply separate blocks visually. Returns an array of { type: 'p', text } /
+// { type: 'ul', items: [] } blocks. Kept as a pure module helper so
+// rendering and the composer share the same rules.
+const splitMessageBlocks = (text) => {
+    const blocks = [];
+    let list = null;   // accumulating bullet items
+
+    const flushList = () => {
+        if (list) { blocks.push({ type: 'ul', items: list }); list = null; }
+    };
+
+    text.split('\n').forEach((line) => {
+        const trimmed = line.trim();
+        const bullet = trimmed.match(/^[-*\u2022]\s+(.*)$/);
+        if (bullet) {
+            (list = list || []).push(bullet[1].trim());
+        } else if (trimmed) {
+            flushList();
+            blocks.push({ type: 'p', text: trimmed });
+        } else {
+            // Blank line: end any open list so the next item starts fresh.
+            flushList();
+        }
+    });
+    flushList();
+    return blocks;
+};
+
+// ─── Broadcast notifications & sound ────────────────────────────────────
+// When an @everyone broadcast arrives while the chat is closed, notify the
+// user with a browser Notification (if permission is granted) and a short
+// two-tone chime. The chime is synthesized with Web Audio so no asset file is
+// needed, and the context is created/resumed on the first user interaction to
+// satisfy browser autoplay policies.
+
+let broadcastAudioCtx = null;
+let broadcastAudioUnlocked = false;
+
+const ensureAudioUnlocked = () => {
+    try {
+        if (!broadcastAudioCtx) {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            broadcastAudioCtx = new Ctx();
+        }
+        // resume() can reject when called outside a user gesture (autoplay
+        // policy) — swallow that, and only report the context unlocked once it
+        // is actually running so we never schedule sound on a silent context.
+        if (broadcastAudioCtx.state === 'suspended') {
+            const r = broadcastAudioCtx.resume();
+            if (r && r.catch) r.catch(() => {});
+        }
+        if (broadcastAudioCtx.state === 'running') broadcastAudioUnlocked = true;
+    } catch { /* audio unavailable — ignore */ }
+};
+
+// Two-tone chime (E6 → A6) so an unread broadcast is noticed even with the
+// tab in the background.
+const playBroadcastSound = () => {
+    try {
+        ensureAudioUnlocked();
+        if (!broadcastAudioCtx || !broadcastAudioUnlocked) return;
+        const ctx = broadcastAudioCtx;
+        const now = ctx.currentTime;
+        [880, 1174.66].forEach((freq, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            const start = now + i * 0.18;
+            gain.gain.setValueAtTime(0.0001, start);
+            gain.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(start);
+            osc.stop(start + 0.3);
+        });
+    } catch { /* ignore */ }
+};
+
+// Ask for notification permission once, from a user gesture (chat open).
+const requestBroadcastNotificationPermission = () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'default') return;
+    try {
+        const p = Notification.requestPermission();
+        if (p && p.catch) p.catch(() => {});
+    } catch { /* older callback-style API — ignore */ }
+};
+
+// Browser Notification + chime for one unread @everyone broadcast.
+const notifyBroadcast = (msg) => {
+    try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            const body = msg.text
+                ? (msg.text.length > 120 ? msg.text.slice(0, 120) + '…' : msg.text)
+                : 'A new announcement has been posted';
+            const n = new Notification('📢 Announcement — StreamFlix Chat', {
+                body: `${msg.nickname || 'Admin'}: ${body}`,
+                icon: msg.avatarUrl || '/logo/streamflix.png',
+                tag: `sf-broadcast-${msg.id}`,
+                silent: true // we play our own chime so the OS doesn't double up
+            });
+            n.onclick = () => { window.focus(); n.close(); };
+        }
+        playBroadcastSound();
+    } catch { /* notifications unavailable — ignore */ }
+};
+
 function GlobalChat() {
     const isTVMode = useTVDetect();
+    const navigate = useNavigate();
     // State
     const [showFab, setShowFab] = useState(false); // Delay FAB until loading screen finishes
     const [isOpen, setIsOpen] = useState(false);
@@ -30,7 +206,19 @@ function GlobalChat() {
     const [nickname, setNickname] = useState('');
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
-    const [unreadCount, setUnreadCount] = useState(0);
+
+    // Movie recommendation list: selected snapshots for the message being
+    // composed (max 10), plus the picker UI state.
+    const [recMovies, setRecMovies] = useState([]);
+    const [showRecPicker, setShowRecPicker] = useState(false);
+    const [showRecMenu, setShowRecMenu] = useState(false);
+    const [recQuery, setRecQuery] = useState('');
+    const [recResults, setRecResults] = useState([]);
+    const [recSearching, setRecSearching] = useState(false);
+    // Ids of unread @everyone broadcasts that sit outside the loaded
+    // 30-message window (backfilled once at setup). The FAB badge number is
+    // the sum of unread broadcasts in the window plus these stale ids.
+    const [staleBroadcastIds, setStaleBroadcastIds] = useState(new Set());
     const [error, setError] = useState('');
     const [isJoining, setIsJoining] = useState(false);
     const [isSending, setIsSending] = useState(false);
@@ -49,6 +237,7 @@ function GlobalChat() {
     const [hoveredMessageId, setHoveredMessageId] = useState(null);
     const [moreMenuMessageId, setMoreMenuMessageId] = useState(null);
     const [showAdminMenu, setShowAdminMenu] = useState(false);
+    const [dismissedComposeKey, setDismissedComposeKey] = useState(null); // which live link preview the user dismissed
 
     // Avatar customization states
     const [avatarStyle, setAvatarStyle] = useState('adventurer');
@@ -163,6 +352,20 @@ function GlobalChat() {
     const streamRef = useRef(null);
     const chunksRef = useRef([]);
     const longPressTimerRef = useRef(null);
+    const longPressStartRef = useRef(null);
+    const suppressClickRef = useRef(false);
+    // Set the first time the chat is opened after setup — the broadcast
+    // backfill uses it to avoid resurrecting the badge with broadcasts the
+    // user has already read.
+    const chatOpenedRef = useRef(false);
+    // Ids of messages hard-deleted during this session, so reply previews that
+    // reference a deleted message disappear too (no trace). Distinct from the
+    // messages array: a reply target that simply hasn't been loaded yet must
+    // keep its preview.
+    const deletedMsgIdsRef = useRef(new Set());
+    // Broadcasts already alerted (Notification + chime) this session, so a
+    // duplicate child_added event can never double-fire the alert.
+    const notifiedBroadcastIdsRef = useRef(new Set());
 
     // Delay FAB visibility until loading screen is gone (4s + 0.5s fade)
     useEffect(() => {
@@ -172,6 +375,19 @@ function GlobalChat() {
         }, 4500);
         return () => clearTimeout(timer);
     }, [isTVMode]);
+
+    // First user interaction unlocks the audio context (autoplay policy) so
+    // the broadcast chime can play later. Chat-open also unlocks; this is a
+    // fallback for users who interact elsewhere on the page first.
+    useEffect(() => {
+        const unlock = () => ensureAudioUnlocked();
+        window.addEventListener('pointerdown', unlock, { once: true });
+        window.addEventListener('keydown', unlock, { once: true });
+        return () => {
+            window.removeEventListener('pointerdown', unlock);
+            window.removeEventListener('keydown', unlock);
+        };
+    }, []);
 
     // Initialize Firebase
     useEffect(() => {
@@ -271,6 +487,41 @@ function GlobalChat() {
         };
     }, [isSetup]);
 
+    // Backfill unread @everyone broadcasts that are older than the loaded
+    // 30-message window (so they never enter `messages`), so the FAB badge
+    // still counts them. Requires a Firebase rule of
+    // `"messages": { ".indexOn": ["broadcast"] }`; if the query is rejected
+    // the badge falls back to the loaded window + live arrivals, which covers
+    // every realistic case.
+    useEffect(() => {
+        if (!dbRef.current || isSetup || !currentUserRef.current) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const me = currentUserRef.current.uid;
+                const snap = await dbRef.current.ref('messages')
+                    .orderByChild('broadcast').equalTo(true).once('value');
+                if (cancelled || !snap.exists()) return;
+                const unread = [];
+                snap.forEach(child => {
+                    const v = child.val();
+                    if (!v) return;
+                    // Admins' own broadcasts count too — they have no seenBy
+                    // until the chat is opened again.
+                    if (!v.seenBy || !v.seenBy[me]) unread.push(child.key);
+                });
+                // If the chat was already opened, the user has caught up —
+                // re-adding these ids would resurrect the badge.
+                if (unread.length > 0 && !chatOpenedRef.current) {
+                    setStaleBroadcastIds(prev => new Set([...prev, ...unread]));
+                }
+            } catch (err) {
+                console.warn('Broadcast backfill query failed (add ".indexOn": ["broadcast"] to rules):', err);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [isSetup]);
+
     // Load messages function
     const loadMessages = useCallback(() => {
         if (!dbRef.current || !currentUserRef.current) return;
@@ -296,6 +547,33 @@ function GlobalChat() {
         });
     }, []);
 
+    // Mark @everyone broadcasts as seen (seenBy). The FAB badge only counts
+    // broadcasts, so only opening the chat — or a broadcast arriving while it
+    // is open — clears it. Includes the admin's own broadcasts, so the badge
+    // the admin sees after posting clears the moment the chat is opened again.
+    // Declared above startLiveListener/loadOlderMessages because their
+    // dependency arrays reference it during render.
+    const markBroadcastsSeen = useCallback((msgs) => {
+        if (!dbRef.current || !currentUserRef.current || !userDataRef.current.nickname) return;
+
+        const updates = {};
+        let hasUpdates = false;
+
+        msgs.forEach(msg => {
+            if (msg.broadcast) {
+                if (!msg.seenBy || !msg.seenBy[currentUserRef.current.uid]) {
+                    updates[`messages/${msg.id}/seenBy/${currentUserRef.current.uid}`] = userDataRef.current.nickname;
+                    updates[`messages/${msg.id}/status`] = 'seen';
+                    hasUpdates = true;
+                }
+            }
+        });
+
+        if (hasUpdates) {
+            dbRef.current.ref().update(updates);
+        }
+    }, []);
+
     // Start live listener
     const startLiveListener = useCallback(() => {
         if (!dbRef.current) return;
@@ -307,20 +585,26 @@ function GlobalChat() {
 
             setMessages(prev => {
                 if (prev.find(m => m.id === snapshot.key)) return prev;
-
-                if (!isOpen && newMsg.uid !== currentUserRef.current?.uid) {
-                    setUnreadCount(c => c + 1);
-                }
-
                 return [...prev, newMsg];
             });
 
             if (!oldestKeyRef.current) oldestKeyRef.current = snapshot.key;
 
+            // Browser Notification + chime for an @everyone broadcast that
+            // arrives while the chat is closed.
+            if (!isOpen && newMsg.broadcast && newMsg.uid !== currentUserRef.current?.uid &&
+                !notifiedBroadcastIdsRef.current.has(snapshot.key)) {
+                notifiedBroadcastIdsRef.current.add(snapshot.key);
+                notifyBroadcast(newMsg);
+            }
+
             if (isOpen) {
                 scrollToBottom(false);
-                if (snapshot.val().uid !== currentUserRef.current?.uid) {
-                    updateMessageStatus(snapshot.key, 'seen');
+                if (newMsg.uid !== currentUserRef.current?.uid) {
+                    // Mark straight away so an @everyone broadcast arriving
+                    // while the chat is open never leaves the FAB badge up.
+                    if (newMsg.broadcast) markBroadcastsSeen([newMsg]);
+                    else updateMessageStatus(snapshot.key, 'seen');
                 }
             }
         };
@@ -330,10 +614,20 @@ function GlobalChat() {
             setMessages(prev => prev.map(m => m.id === snapshot.key ? updatedMsg : m));
         };
 
-        // Handle message removal (hard delete)
+        // Handle message removal (hard delete). Also record the id so reply
+        // previews referencing a deleted message disappear (no trace), while
+        // replies to merely-unloaded older messages keep their preview.
         const removedCallback = (snapshot) => {
             console.log('Message removed from DB:', snapshot.key);
+            deletedMsgIdsRef.current.add(snapshot.key);
             setMessages(prev => prev.filter(m => m.id !== snapshot.key));
+            // A deleted broadcast must stop counting toward the FAB badge.
+            setStaleBroadcastIds(prev => {
+                if (!prev.has(snapshot.key)) return prev;
+                const next = new Set(prev);
+                next.delete(snapshot.key);
+                return next;
+            });
         };
 
         messagesRef.limitToLast(1).on('child_added', addedCallback);
@@ -345,7 +639,7 @@ function GlobalChat() {
             () => messagesRef.off('child_changed', changedCallback),
             () => messagesRef.off('child_removed', removedCallback)
         );
-    }, [isOpen]);
+    }, [isOpen, markBroadcastsSeen]);
 
     // Load older messages on scroll
     const loadOlderMessages = useCallback(async () => {
@@ -380,13 +674,20 @@ function GlobalChat() {
 
         setMessages(prev => [...olderMsgs, ...prev]);
 
+        // Broadcasts loaded via scroll-pagination were seen by the reader
+        // (scrolling up only happens with the chat open), so mark them seen —
+        // otherwise they'd count toward the badge after the chat closes.
+        if (isOpen) {
+            markBroadcastsSeen(olderMsgs);
+        }
+
         requestAnimationFrame(() => {
             if (container) {
                 container.scrollTop = container.scrollHeight - oldHeight;
             }
             isLoadingHistoryRef.current = false;
         });
-    }, []);
+    }, [isOpen, markBroadcastsSeen]);
 
     // Handle scroll for loading history
     useEffect(() => {
@@ -435,9 +736,13 @@ function GlobalChat() {
         let hasUpdates = false;
 
         msgs.forEach(msg => {
+            // @everyone broadcasts are exempt here: they must stay unread until
+            // the chat is actually opened, because only they drive the FAB
+            // badge. Regular messages are auto-seen on load as before.
             if (msg.uid !== currentUserRef.current.uid &&
                 msg.status === 'sent' &&
-                !msg.deletedForAll) {
+                !msg.deletedForAll &&
+                !msg.broadcast) {
                 if (!msg.seenBy || !msg.seenBy[currentUserRef.current.uid]) {
                     updates[`messages/${msg.id}/seenBy/${currentUserRef.current.uid}`] = userDataRef.current.nickname;
                     updates[`messages/${msg.id}/status`] = 'seen';
@@ -567,10 +872,26 @@ function GlobalChat() {
     // Handle chat open
     const handleOpenChat = () => {
         setIsOpen(true);
-        setUnreadCount(0);
+        chatOpenedRef.current = true;
+        // Opening the chat is a user gesture — unlock the broadcast chime and
+        // ask once for notification permission so future broadcasts can alert.
+        ensureAudioUnlocked();
+        requestBroadcastNotificationPermission();
         scrollToBottom(true);
         if (messages.length > 0) {
             markMessagesAsSeen(messages);
+            markBroadcastsSeen(messages);
+        }
+        // Mark any backfilled (older-than-window) broadcasts as seen too, so
+        // the badge clears the moment the chat is actually opened.
+        const myNickname = userDataRef.current.nickname;
+        if (staleBroadcastIds.size > 0 && currentUserRef.current && myNickname) {
+            const updates = {};
+            staleBroadcastIds.forEach(id => {
+                updates[`messages/${id}/seenBy/${currentUserRef.current.uid}`] = myNickname;
+            });
+            dbRef.current.ref().update(updates);
+            setStaleBroadcastIds(new Set());
         }
     };
 
@@ -758,7 +1079,7 @@ function GlobalChat() {
     const handleSendMessage = async () => {
         if (isSending) return;
         const text = messageText.trim();
-        if (!text && !pendingFile) return;
+        if (!text && !pendingFile && recMovies.length === 0) return;
         if (!currentUserRef.current || !dbRef.current) return;
 
         setIsSending(true);
@@ -774,6 +1095,11 @@ function GlobalChat() {
 
             const newMessageRef = dbRef.current.ref('messages').push();
 
+            // Only the admin can broadcast to everyone. A non-admin who types
+            // "@everyone" manually just sends plain text (no broadcast flag,
+            // so it never triggers the FAB badge).
+            const isBroadcast = userDataRef.current.isAdmin && /\B@everyone\b/i.test(text);
+
             const message = {
                 uid: currentUserRef.current.uid,
                 nickname: userDataRef.current.nickname,
@@ -781,6 +1107,8 @@ function GlobalChat() {
                 isAdmin: userDataRef.current.isAdmin || false,
                 adminBadge: userDataRef.current.adminBadge || null,
                 text,
+                broadcast: isBroadcast,
+                movies: recMovies.length ? recMovies : null,
                 mediaUrl,
                 mediaType,
                 status: 'sent',
@@ -788,13 +1116,16 @@ function GlobalChat() {
                 replyTo: replyTo ? {
                     id: replyTo.id,
                     nickname: replyTo.nickname,
-                    text: replyTo.text?.substring(0, 50) || ''
+                    text: replyTo.text?.substring(0, 50) || '',
+                    moviesCount: replyTo.moviesCount || 0
                 } : null
             };
 
             await newMessageRef.set(message);
 
             setMessageText('');
+            setRecMovies([]);
+            setShowRecPicker(false);
             setReplyTo(null);
             removePendingFile();
             scrollToBottom(true);
@@ -950,6 +1281,94 @@ function GlobalChat() {
         }
     };
 
+    // Auto-grow the composer textarea with its content (up to a cap), and
+    // shrink back when the message is sent/cleared.
+    useEffect(() => {
+        const el = inputRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+    }, [messageText]);
+
+    // Debounced TMDB search for the movie-recommendation picker. Same
+    // /api/search/multi endpoint the rest of the app uses. A sequence ref
+    // discards stale responses so a slow old query can never overwrite a
+    // newer one (or land after the picker closed).
+    const recSearchSeqRef = useRef(0);
+    useEffect(() => {
+        if (!showRecPicker || !recQuery.trim()) {
+            setRecResults([]);
+            setRecSearching(false);
+            return;
+        }
+        const seq = ++recSearchSeqRef.current;
+        setRecSearching(true);
+        const timer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/search/multi?query=${encodeURIComponent(recQuery.trim())}&include_adult=false&language=en-US`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if (recSearchSeqRef.current !== seq) return; // stale
+                setRecResults((data.results || []).filter(r => r.media_type === 'movie' || r.media_type === 'tv'));
+            } catch (e) {
+                if (recSearchSeqRef.current !== seq) return; // stale
+                console.error('Recommendation search failed:', e);
+                setRecResults([]);
+            } finally {
+                if (recSearchSeqRef.current === seq) setRecSearching(false);
+            }
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [recQuery, showRecPicker]);
+
+    // Close the movie picker when clicking anywhere outside it (or the
+    // toggle button, which flips it itself).
+    useEffect(() => {
+        if (!showRecPicker) return;
+        const onDocDown = (e) => {
+            if (!e.target.closest('.gc-rec-picker') && !e.target.closest('.gc-rec-btn')) {
+                setShowRecPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', onDocDown);
+        return () => document.removeEventListener('mousedown', onDocDown);
+    }, [showRecPicker]);
+
+    // Close the composer options menu when clicking anywhere outside it
+    // (or the + toggle button, which flips it itself).
+    useEffect(() => {
+        if (!showRecMenu) return;
+        const onDocDown = (e) => {
+            if (!e.target.closest('.gc-rec-menu') && !e.target.closest('.gc-rec-btn')) {
+                setShowRecMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', onDocDown);
+        return () => document.removeEventListener('mousedown', onDocDown);
+    }, [showRecMenu]);
+
+    // Toggle a search result in the recommendation list (max 10).
+    const toggleRecMovie = (r) => {
+        setRecMovies(prev => {
+            const key = `${r.media_type}-${r.id}`;
+            if (prev.some(m => `${m.type}-${m.id}` === key)) {
+                return prev.filter(m => `${m.type}-${m.id}` !== key);
+            }
+            if (prev.length >= 10) return prev;
+            return [...prev, {
+                type: r.media_type,
+                id: r.id,
+                title: r.title || r.name || 'Untitled',
+                year: (r.release_date || r.first_air_date || '').substring(0, 4),
+                poster: r.poster_path || null
+            }];
+        });
+    };
+
+    const removeRecMovie = (type, id) => {
+        setRecMovies(prev => prev.filter(m => !(m.type === type && m.id === id)));
+    };
+
     // Handle mention selection
     const handleSelectMention = (user) => {
         const before = messageText.substring(0, mentionStartIndex);
@@ -965,26 +1384,44 @@ function GlobalChat() {
         u.uid !== currentUserRef.current?.uid
     ).slice(0, 5);
 
-    // Handle message long press (mobile) / right-click (desktop)
+    // Mention options — admins also get a special "everyone" entry at the top
+    // that turns the message into an @everyone broadcast when sent.
+    const mentionOptions = userDataRef.current.isAdmin && 'everyone'.startsWith(mentionQuery)
+        ? [{ id: '__everyone__', nickname: 'everyone', isEveryone: true }, ...filteredUsers]
+        : filteredUsers;
+
+    // Handle message long press (mobile) / right-click (desktop). Both open the
+    // same custom action sheet, replacing the browser's native context menu
+    // (on Android long-press that's the menu with "Inspect").
     const handleMessageInteraction = (e, msg, type) => {
-        if (type === 'longpress') {
+        if (type === 'contextmenu') {
             e.preventDefault();
+        }
+
+        if (type === 'longpress' || type === 'contextmenu') {
             setActionSheetTarget(msg);
             setShowActionSheet(true);
-
-            // Show reaction popover position
-            const rect = e.currentTarget.getBoundingClientRect();
-            setPopoverPosition({
-                top: rect.top - 50,
-                left: rect.left + rect.width / 2 - 100
-            });
-            setShowReactionPopover(msg.id);
+            // Keep the hover action buttons out from under the sheet.
+            setHoveredMessageId(null);
+            if (type === 'longpress') {
+                // The touchend that ends a long-press fires a synthetic click,
+                // which would open e.g. the media lightbox — swallow the next one.
+                suppressClickRef.current = true;
+            }
         }
     };
 
     // Touch handlers for long press
     const handleTouchStart = (e, msg) => {
+        // Any fresh touch starts a new gesture, so a stale long-press swallow
+        // (from a release that never fired its synthetic click) must not eat
+        // this tap's click. Cleared before the badge early-return so even a
+        // badge tap resets the flag.
+        suppressClickRef.current = false;
         if (e.target.closest('.gc-reaction-badge')) return;
+
+        const touch = e.touches[0];
+        longPressStartRef.current = { x: touch.clientX, y: touch.clientY };
 
         longPressTimerRef.current = setTimeout(() => {
             if (navigator.vibrate) navigator.vibrate(50);
@@ -992,24 +1429,93 @@ function GlobalChat() {
         }, 500);
     };
 
-    const handleTouchEnd = () => {
-        clearTimeout(longPressTimerRef.current);
+    const handleTouchMove = (e) => {
+        // Cancel the long-press only when the finger actually travels (i.e. the
+        // user is scrolling). Tolerate micro-jitter so a held finger still
+        // triggers the sheet.
+        const start = longPressStartRef.current;
+        if (!start || !e.touches[0]) return;
+        const dx = e.touches[0].clientX - start.x;
+        const dy = e.touches[0].clientY - start.y;
+        if (Math.hypot(dx, dy) > 10) handleTouchEnd();
     };
 
-    // Handle reaction
+    const handleTouchEnd = () => {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = null;
+        longPressStartRef.current = null;
+    };
+
+    // Swallow exactly one synthetic click fired on long-press release, so
+    // nothing behind the sheet (e.g. the media lightbox) opens when the user
+    // lifts their finger. One-shot: the release click is always the first click
+    // after the long-press, and any later tap is a fresh gesture.
+    useEffect(() => {
+        const swallowClick = (e) => {
+            if (!suppressClickRef.current) return;
+            suppressClickRef.current = false;
+            e.preventDefault();
+            e.stopPropagation();
+        };
+        document.addEventListener('click', swallowClick, true);
+        return () => document.removeEventListener('click', swallowClick, true);
+    }, []);
+
+    // Handle reaction — one reaction per user per message (Messenger behavior):
+    // picking a different emoji REPLACES the previous one, picking the same
+    // emoji removes it. Runs as an atomic transaction on the whole reactions
+    // node so two rapid taps can never leave the user registered twice.
     const handleReaction = async (emoji) => {
         const msgId = showReactionPopover || actionSheetTarget?.id;
         if (!msgId || !currentUserRef.current || !dbRef.current) return;
 
-        try {
-            const reactionRef = dbRef.current.ref(`messages/${msgId}/reactions/${emoji}/${currentUserRef.current.uid}`);
-            const snapshot = await reactionRef.once('value');
+        const uid = currentUserRef.current.uid;
+        // RTDB cannot serialize `undefined` inside a transaction result, so fall
+        // back to the uid rather than letting a missing nickname abort the
+        // whole atomic write.
+        const nickname = userDataRef.current?.nickname ?? uid;
 
-            if (snapshot.exists()) {
-                await reactionRef.remove();
-            } else {
-                await reactionRef.set(userDataRef.current.nickname);
-            }
+        try {
+            const reactionsRef = dbRef.current.ref(`messages/${msgId}/reactions`);
+            await reactionsRef.transaction((reactions) => {
+                const next = { ...(reactions || {}) };
+                // Did the user already react with this exact emoji? If so this
+                // tap is a toggle-OFF — remove it and stop (no re-add below).
+                const hadTarget = !!(reactions && reactions[emoji]
+                    && typeof reactions[emoji] === 'object' && uid in reactions[emoji]);
+
+                if (hadTarget) {
+                    const cleaned = { ...(next[emoji] || {}) };
+                    delete cleaned[uid];
+                    if (Object.keys(cleaned).length === 0) delete next[emoji];
+                    else next[emoji] = cleaned;
+                    // An empty object would ABORT the transaction (no change),
+                    // so return null to actually delete when the last reaction
+                    // is removed.
+                    return Object.keys(next).length === 0 ? null : next;
+                }
+
+                // Replace: strip this user out of every other emoji bucket
+                // first, so the new emoji swaps in instead of stacking.
+                Object.keys(next).forEach((emojiKey) => {
+                    const bucket = next[emojiKey];
+                    if (!bucket || typeof bucket !== 'object' || !(uid in bucket)) return;
+                    const cleaned = { ...bucket };
+                    delete cleaned[uid];
+                    if (Object.keys(cleaned).length === 0) delete next[emojiKey];
+                    else next[emojiKey] = cleaned;
+                });
+
+                // Legacy/corrupt buckets can be scalars (e.g. a raw nickname);
+                // spreading a string would write char-indexed garbage keys, so
+                // start from an empty object when the bucket isn't an object.
+                const base = (next[emoji] && typeof next[emoji] === 'object') ? next[emoji] : {};
+                next[emoji] = { ...base, [uid]: nickname };
+                // The strip pass + add always leaves at least one entry, so no
+                // null-deletion is needed here — that only matters for the
+                // toggle-off branch above.
+                return next;
+            });
         } catch (e) {
             console.error('Reaction error:', e);
         }
@@ -1024,7 +1530,8 @@ function GlobalChat() {
             setReplyTo({
                 id: actionSheetTarget.id,
                 nickname: actionSheetTarget.nickname,
-                text: actionSheetTarget.text
+                text: actionSheetTarget.text,
+                moviesCount: actionSheetTarget.movies?.length || 0
             });
         }
         setShowActionSheet(false);
@@ -1041,45 +1548,101 @@ function GlobalChat() {
         setShowReactionPopover(null);
     };
 
-    // Handle delete message
+    // Handle delete message — two-tier behavior:
+    //   • ADMIN (own bubble or anyone else's): permanent hard delete straight out
+    //     of the DB. The whole message node is removed, so every connected
+    //     client's child_removed listener drops the bubble — no "unsent a
+    //     message" placeholder, no trace, for anyone.
+    //   • Regular user (own message only): soft delete — the bubble is replaced
+    //     by the "unsent a message" placeholder, the trace only an admin can
+    //     purge.
     const handleDeleteMessage = async (targetMsg = null) => {
         // Ensure targetMsg is a real message object, not a click event
-        const realTarget = (targetMsg && targetMsg.id) ? targetMsg : actionSheetTarget;
-        const target = realTarget;
+        const target = (targetMsg && targetMsg.id) ? targetMsg : actionSheetTarget;
 
         if (!target) return;
 
-        // DEBUG: Verify Logic
-        console.log('Unsend Clicked. Admin:', userDataRef.current.isAdmin, 'Target:', target.id);
-
         const isOwn = target.uid === currentUserRef.current?.uid;
-        const canDelete = isOwn || userDataRef.current.isAdmin;
+        const isAdmin = userDataRef.current.isAdmin;
+        const canDelete = isOwn || isAdmin;
 
-        if (canDelete) {
-            if (userDataRef.current.isAdmin) {
-                // Hard delete for admins
-                if (confirm('Permanently delete this message? This cannot be undone.')) {
-                    try {
-                        console.log('Attempting remove for:', target.id);
-                        await dbRef.current.ref(`messages/${target.id}`).remove();
-                        console.log('Remove SUCCEEDED for:', target.id);
-                    } catch (err) {
-                        console.error('Remove FAILED:', err);
-                        alert('Delete failed: ' + err.message);
-                    }
+        // Ask first, then close the sheet afterwards either way — an early
+        // return on cancel would leave the mobile action sheet open behind the
+        // dialog.
+        const confirmed = canDelete && (isAdmin
+            ? confirm('Delete this message permanently for everyone? No trace will remain.')
+            : confirm('Unsend this message for everyone?'));
+
+        if (confirmed) {
+            if (isAdmin) {
+                // Optimistic removal: hide the bubble immediately instead of
+                // waiting for the Firebase round-trip (child_removed) to reach
+                // this client.
+                setMessages(prev => prev.filter(m => m.id !== target.id));
+                deletedMsgIdsRef.current.add(target.id);
+
+                let removed = false;
+                try {
+                    await dbRef.current.ref(`messages/${target.id}`).remove();
+                    removed = true;
+                } catch (err) {
+                    console.error('Admin delete FAILED:', err);
+                    alert('Delete failed: ' + err.message);
+                    // Roll the optimistic removal back so the bubble reappears.
+                    setMessages(prev => [...prev, target].sort((a, b) => a.id < b.id ? -1 : 1));
+                    deletedMsgIdsRef.current.delete(target.id);
+                }
+
+                if (removed) {
+                    // True "no trace" — also clears reply pointers on other
+                    // messages and unpins it if pinned, so even clients that
+                    // connect after the deletion see nothing referencing it.
+                    await purgeMessageReferences(target.id);
                 }
             } else {
-                // Soft delete for users
-                if (confirm('Unsend this message for everyone?')) {
-                    await dbRef.current.ref(`messages/${target.id}`).update({
-                        deletedForAll: true
-                    });
-                }
+                // Soft delete for regular users — leaves the "unsent" placeholder
+                // (the trace that only admins can remove).
+                await dbRef.current.ref(`messages/${target.id}`).update({
+                    deletedForAll: true
+                });
             }
         }
 
         setShowActionSheet(false);
         setShowReactionPopover(null);
+    };
+
+    // True "no trace" cleanup for a hard-deleted message: strips replyTo
+    // pointers on every other message that referenced it (batched into one
+    // multi-path update, so clients that connect later never see a reply
+    // snippet pointing at a message that no longer exists) and unpins it if it
+    // was the pinned message. Best-effort — a failure here must never
+    // masquerade as a failed delete, so errors are only logged.
+    const purgeMessageReferences = async (id) => {
+        try {
+            const snapshot = await dbRef.current.ref('messages').once('value');
+            const updates = {};
+            snapshot.forEach(child => {
+                const val = child.val();
+                if (val && val.replyTo && val.replyTo.id === id) {
+                    updates[`messages/${child.key}/replyTo`] = null;
+                }
+            });
+            if (Object.keys(updates).length > 0) {
+                await dbRef.current.ref().update(updates);
+            }
+        } catch (err) {
+            console.warn('Reply reference cleanup failed:', err);
+        }
+
+        if (pinnedMessage?.id === id) {
+            try {
+                await dbRef.current.ref('pinnedMessage').remove();
+                setPinnedMessage(null);
+            } catch (err) {
+                console.warn('Unpin failed after delete:', err);
+            }
+        }
     };
 
     // Handle report message
@@ -1121,6 +1684,10 @@ function GlobalChat() {
         let total = 0;
 
         Object.entries(reactions).forEach(([emoji, users]) => {
+            // A bucket is normally { uid: nickname }. Skip scalar/null buckets
+            // (legacy or corrupt data) so we never count string characters or
+            // crash on Object.keys(null).
+            if (!users || typeof users !== 'object') return;
             const count = Object.keys(users).length;
             if (count > 0) {
                 counts[emoji] = count;
@@ -1130,8 +1697,15 @@ function GlobalChat() {
 
         if (total === 0) return null;
 
-        const emojis = Object.keys(counts).sort((a, b) => counts[b] - counts[a]).join('');
-        return { emojis: emojis.substring(0, 3), total };
+        // Cap by emoji COUNT, not string length — substring(0, 3) sliced UTF-16
+        // code units and split a surrogate pair in half, which rendered as a
+        // broken glyph (e.g. "❤️" + the first half of 😂). Slice the keys
+        // array instead so every emoji stays whole.
+        const emojis = Object.keys(counts)
+            .sort((a, b) => counts[b] - counts[a])
+            .slice(0, 3)
+            .join('');
+        return { emojis, total };
     };
 
     // Format time
@@ -1140,8 +1714,138 @@ function GlobalChat() {
         const date = new Date(timestamp);
         const hours = date.getHours().toString().padStart(2, '0');
         const mins = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${mins}`;
+        return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} | ${hours}:${mins}`;
     };
+
+    // Open a /watch chat link in the content detail modal (the app's own
+    // modal-content-new) through Home's openModalForContent mechanism — the
+    // same path Watch.jsx uses for direct /watch URL access. Only watch
+    // links are wired to this handler; every other URL is a plain
+    // target="_blank" anchor that opens in a new tab.
+    const handleChatLinkClick = (e, watch) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigate('/', {
+            state: {
+                openModalForContent: {
+                    type: watch.type,
+                    id: watch.id,
+                    season: watch.season || null,
+                    episode: watch.episode || null
+                }
+            }
+        });
+    };
+
+    // External links (anything that isn't a /watch link): the chat is public
+    // so this is the one place a link leaves the app. Ask once per session;
+    // after that, clicks open the new tab directly.
+    const handleExternalLinkClick = (e) => {
+        const CONFIRMED_KEY = 'sf_chat_external_links_confirmed';
+        let confirmed = false;
+        try { confirmed = sessionStorage.getItem(CONFIRMED_KEY) === '1'; } catch { /* storage unavailable */ }
+        if (confirmed) return; // default anchor behavior opens the tab
+        e.preventDefault();
+        e.stopPropagation();
+        if (window.confirm('This link opens an external website outside StreamFlix. Continue?')) {
+            try { sessionStorage.setItem(CONFIRMED_KEY, '1'); } catch { /* ignore */ }
+            window.open(e.currentTarget.href, '_blank', 'noopener,noreferrer');
+        }
+    };
+
+    // Render message text with URLs as clickable links (see splitChatLinks).
+    // /watch links render as rich preview cards (or a "▶ Watch Now" pill
+    // while they load); every other URL keeps its text + an external-site
+    // icon and opens in a new tab after the one-time guard.
+    const renderMessageText = (text) => {
+        if (!text) return null;
+        const parts = splitChatLinks(text);
+        if (parts.length === 1 && typeof parts[0] === 'string') return parts[0];
+
+        return parts.map((part, i) => {
+            if (typeof part === 'string') return part;
+            const watch = parseWatchLink(part.url);
+            if (watch) {
+                return (
+                    <ChatLinkPreview
+                        key={i}
+                        watch={watch}
+                        url={part.url}
+                        onOpen={handleChatLinkClick}
+                    />
+                );
+            }
+            return (
+                <a
+                    key={i}
+                    className="gc-chat-link gc-chat-link-external"
+                    href={part.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={handleExternalLinkClick}
+                >
+                    {part.url}
+                    <span className="gc-chat-link-external-icon" aria-hidden="true">⧉</span>
+                </a>
+            );
+        });
+    };
+
+    // Render message text as block structure: paragraphs and bullet lists
+    // (see splitMessageBlocks). Chat links are resolved per block so link
+    // previews keep working inside formatted messages.
+    const renderFormattedText = (text) => {
+        if (!text) return null;
+        return splitMessageBlocks(text).map((block, i) => {
+            if (block.type === 'ul') {
+                return (
+                    <ul key={i} className="gc-msg-list">
+                        {block.items.map((item, j) => (
+                            <li key={j}>{renderMessageText(item)}</li>
+                        ))}
+                    </ul>
+                );
+            }
+            return <p key={i} className="gc-msg-para">{renderMessageText(block.text)}</p>;
+        });
+    };
+
+    // Live preview above the input: the last /watch link in the compose text.
+    const composeLink = useMemo(() => {
+        if (!messageText) return null;
+        const parts = splitChatLinks(messageText);
+        for (let i = parts.length - 1; i >= 0; i--) {
+            const p = parts[i];
+            if (typeof p !== 'string') {
+                const w = parseWatchLink(p.url);
+                if (w) return { watch: w, url: p.url };
+            }
+        }
+        return null;
+    }, [messageText]);
+    const composeLinkKey = composeLink ? `${composeLink.watch.type}-${composeLink.watch.id}` : null;
+
+    // The FAB badge number: only unread @everyone broadcasts count. Regular
+    // messages never appear here. Broadcasts are exempt from the auto-mark-seen
+    // pass, so the count only drops when the chat is opened (or the broadcast
+    // is deleted). The admin's own broadcasts count too (no seenBy until the
+    // chat is opened again), so posting @everyone visibly confirms on the FAB.
+    const unreadBroadcastCount = useMemo(() => {
+        const me = currentUserRef.current?.uid;
+        if (!me) return 0;
+        const windowIds = new Set();
+        let windowCount = 0;
+        messages.forEach(m => {
+            if (!m.broadcast) return;
+            windowIds.add(m.id);
+            if (!m.seenBy || !m.seenBy[me]) windowCount += 1;
+        });
+        let staleCount = 0;
+        staleBroadcastIds.forEach(id => {
+            if (!windowIds.has(id)) staleCount += 1;
+        });
+        return windowCount + staleCount;
+    }, [messages, staleBroadcastIds]);
 
     // Render message
     const renderMessage = (msg) => {
@@ -1167,8 +1871,11 @@ function GlobalChat() {
                                     title="Permanently delete"
                                     onClick={async () => {
                                         if (confirm('Permanently remove this placeholder?')) {
+                                            setMessages(prev => prev.filter(m => m.id !== msg.id));
+                                            deletedMsgIdsRef.current.add(msg.id);
                                             try {
                                                 await dbRef.current.ref(`messages/${msg.id}`).remove();
+                                                await purgeMessageReferences(msg.id);
                                             } catch (err) {
                                                 console.error('Purge failed:', err);
                                                 alert('Failed to remove: ' + err.message);
@@ -1195,7 +1902,11 @@ function GlobalChat() {
                 key={msg.id}
                 id={`msg-${msg.id}`}
                 className={`gc-msg ${isOwn ? 'gc-own' : 'gc-other'} ${hasReactions ? 'has-reaction' : ''}`}
-                onMouseEnter={() => setHoveredMessageId(msg.id)}
+                onMouseEnter={() => {
+                    // Hover actions are a mouse-only affordance; touch devices
+                    // long-press for the action sheet instead.
+                    if (HOVER_MQ.matches) setHoveredMessageId(msg.id);
+                }}
                 onMouseLeave={() => {
                     setHoveredMessageId(null);
                     setMoreMenuMessageId(null);
@@ -1221,7 +1932,7 @@ function GlobalChat() {
                             )}
                         </div>
                     )}
-                    {msg.replyTo && (
+                    {msg.replyTo && !deletedMsgIdsRef.current.has(msg.replyTo.id) && (
                         <>
                             <div className="gc-reply-header">
                                 <span className="gc-reply-icon">↩</span> {isOwn ? 'You' : msg.nickname} replied to {msg.replyTo.uid === currentUserRef.current?.uid ? 'you' : msg.replyTo.nickname}
@@ -1233,23 +1944,32 @@ function GlobalChat() {
                                     scrollToRepliedMessage(msg.replyTo.id);
                                 }}
                             >
-                                <div className="gc-reply-text">{msg.replyTo.text || '📷 Media'}</div>
+                                <div className="gc-reply-text">
+                                    {msg.replyTo.text
+                                        || (msg.replyTo.moviesCount ? `🎬 ${msg.replyTo.moviesCount} movie${msg.replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media')}
+                                </div>
                             </div>
                         </>
                     )}
                     <div className="gc-bubble-wrapper">
                         <div
-                            className={`gc-msg-bubble ${isMediaOnly ? 'gc-media-bubble' : ''}`}
+                            className={`gc-msg-bubble ${isMediaOnly ? 'gc-media-bubble' : ''} ${msg.broadcast ? 'gc-broadcast' : ''}`}
                             onTouchStart={(e) => handleTouchStart(e, msg)}
                             onTouchEnd={handleTouchEnd}
-                            onTouchMove={handleTouchEnd}
+                            onTouchMove={handleTouchMove}
                             onContextMenu={(e) => handleMessageInteraction(e, msg, 'contextmenu')}
                         >
+                            {msg.broadcast && (
+                                <div className="gc-broadcast-label">📢 Announcement</div>
+                            )}
                             {msg.text && (
-                                <div>
-                                    {msg.text}
+                                <div className="gc-msg-text">
+                                    {renderFormattedText(msg.text)}
                                     {msg.isEdited && <span className="gc-edited-label"> (edited)</span>}
                                 </div>
+                            )}
+                            {msg.movies && msg.movies.length > 0 && (
+                                <MovieRecRow movies={msg.movies} onOpen={handleChatLinkClick} />
                             )}
                             {msg.mediaUrl && (
                                 <div className="gc-media-container">
@@ -1344,7 +2064,8 @@ function GlobalChat() {
                                         id: msg.id,
                                         nickname: msg.nickname,
                                         text: msg.text,
-                                        uid: msg.uid
+                                        uid: msg.uid,
+                                        moviesCount: msg.movies?.length || 0
                                     });
                                     inputRef.current?.focus();
                                 }}
@@ -1367,7 +2088,7 @@ function GlobalChat() {
                             {moreMenuMessageId === msg.id && (
                                 <div className="gc-more-menu">
                                     <button onClick={() => {
-                                        setReplyTo({ id: msg.id, nickname: msg.nickname, text: msg.text, uid: msg.uid });
+                                        setReplyTo({ id: msg.id, nickname: msg.nickname, text: msg.text, uid: msg.uid, moviesCount: msg.movies?.length || 0 });
                                         setMoreMenuMessageId(null);
                                         inputRef.current?.focus();
                                     }}>
@@ -1375,15 +2096,12 @@ function GlobalChat() {
                                     </button>
                                     {(isOwn || userDataRef.current.isAdmin) && (
                                         <button onClick={() => {
-                                            setActionSheetTarget(msg);
-                                            // Small timeout to allow state update before function runs (though handle functions usually read state, actionSheetTarget is ref or state? It is state).
-                                            // Actually, handleDeleteMessage reads actionSheetTarget.
-                                            // If I set state, it won't be available immediately in the same tick if I call the function.
-                                            // Better approach: Pass msg to handleDeleteMessage.
-                                            setTimeout(() => handleDeleteMessage(msg), 0);
                                             setMoreMenuMessageId(null);
+                                            // handleDeleteMessage reads the passed msg directly, so no
+                                            // setTimeout/state round-trip is needed.
+                                            handleDeleteMessage(msg);
                                         }}>
-                                            Unsend
+                                            {userDataRef.current.isAdmin ? 'Delete' : 'Unsend'}
                                         </button>
                                     )}
                                     {isOwn && msg.text && Date.now() - msg.createdAt < 3 * 60 * 1000 && (
@@ -1469,14 +2187,16 @@ function GlobalChat() {
 
             {/* FAB Button - hidden during loading screen */}
             {showFab && (
-                <button className="gc-fab" onClick={handleOpenChat}>
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
-                    </svg>
-                    {unreadCount > 0 && (
-                        <span className="gc-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                <div className="gc-fab-wrap">
+                    <button className="gc-fab" onClick={handleOpenChat}>
+                        <svg viewBox="0 0 24 24">
+                            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z" />
+                        </svg>
+                    </button>
+                    {unreadBroadcastCount > 0 && (
+                        <span className="gc-badge gc-badge-broadcast">{unreadBroadcastCount > 99 ? '99+' : unreadBroadcastCount}</span>
                     )}
-                </button>
+                </div>
             )}
 
             {/* Chat Panel */}
@@ -1721,7 +2441,8 @@ function GlobalChat() {
                                         Replying to <b>{replyTo.nickname}</b>
                                     </span>
                                     <span className="gc-reply-text-preview">
-                                        {replyTo.text || '📷 Media'}
+                                        {replyTo.text
+                                            || (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movie${replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media')}
                                     </span>
                                 </div>
                                 <button
@@ -1747,18 +2468,117 @@ function GlobalChat() {
                             </div>
                         )}
 
+                        {/* Live Watch-Link Preview (Messenger-style, while typing) */}
+                        {composeLink && composeLinkKey !== dismissedComposeKey && (
+                            <div className="gc-compose-preview">
+                                <ChatLinkPreview
+                                    watch={composeLink.watch}
+                                    url={composeLink.url}
+                                    variant="compose"
+                                    dismissible
+                                    onDismiss={() => setDismissedComposeKey(composeLinkKey)}
+                                />
+                            </div>
+                        )}
+
+                        {/* Selected movie recommendations (chips) */}
+                        {recMovies.length > 0 && (
+                            <div className="gc-rec-chips">
+                                {recMovies.map(m => (
+                                    <span key={`${m.type}-${m.id}`} className="gc-rec-chip">
+                                        {m.poster
+                                            ? <img src={cardPoster(m.poster)} alt="" className="gc-rec-chip-img" />
+                                            : <span className="gc-rec-chip-img gc-rec-chip-img-fallback">🎬</span>}
+                                        <span className="gc-rec-chip-title">{m.title}</span>
+                                        <button
+                                            className="gc-rec-chip-x"
+                                            onClick={() => removeRecMovie(m.type, m.id)}
+                                            aria-label="Remove from list"
+                                        >
+                                            ✕
+                                        </button>
+                                    </span>
+                                ))}
+                                <button className="gc-rec-chip-clear" onClick={() => setRecMovies([])}>Clear</button>
+                            </div>
+                        )}
+
                         {/* Footer */}
                         <div className="gc-footer">
+                            {/* Composer options menu — anchored to the footer's top,
+                                like the movie picker below it. */}
+                            {showRecMenu && (
+                                <div className="gc-rec-menu">
+                                    <button
+                                        className="gc-rec-menu-item"
+                                        onClick={() => {
+                                            setShowRecMenu(false);
+                                            setShowRecPicker(true);
+                                        }}
+                                    >
+                                        Recommend Content
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Movie picker popover */}
+                            {showRecPicker && (
+                                <div className="gc-rec-picker">
+                                    <input
+                                        className="gc-rec-search"
+                                        placeholder="Search movies & shows..."
+                                        value={recQuery}
+                                        onChange={(e) => setRecQuery(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <div className="gc-rec-results">
+                                        {recSearching && <div className="gc-rec-empty">Searching…</div>}
+                                        {!recSearching && !recQuery.trim() && (
+                                            <div className="gc-rec-empty">Search to pick movies &amp; shows to recommend.</div>
+                                        )}
+                                        {!recSearching && recQuery.trim() && recResults.length === 0 && (
+                                            <div className="gc-rec-empty">No results.</div>
+                                        )}
+                                        {!recSearching && recResults.map(r => {
+                                            const selected = recMovies.some(m => `${m.type}-${m.id}` === `${r.media_type}-${r.id}`);
+                                            return (
+                                                <button
+                                                    key={`${r.media_type}-${r.id}`}
+                                                    className={`gc-rec-result${selected ? ' selected' : ''}`}
+                                                    onClick={() => toggleRecMovie(r)}
+                                                >
+                                                    {r.poster_path
+                                                        ? <img src={cardPoster(r.poster_path)} alt="" className="gc-rec-result-img" />
+                                                        : <div className="gc-rec-result-img gc-rec-result-img-fallback">🎬</div>}
+                                                    <span className="gc-rec-result-title">{r.title || r.name || 'Untitled'}</span>
+                                                    <span className="gc-rec-result-year">
+                                                        {(r.release_date || r.first_air_date || '').substring(0, 4)} · {r.media_type}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="gc-rec-picker-foot">
+                                        <span>{recMovies.length}/10 selected</span>
+                                        <button className="gc-rec-picker-done" onClick={() => setShowRecPicker(false)}>Done</button>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Mention List */}
-                            {showMentionList && filteredUsers.length > 0 && (
+                            {showMentionList && mentionOptions.length > 0 && (
                                 <div className="gc-mention-list show">
-                                    {filteredUsers.map(user => (
+                                    {mentionOptions.map(user => (
                                         <div
-                                            key={user.uid}
-                                            className="gc-mention-item"
+                                            key={user.id || user.uid}
+                                            className={`gc-mention-item ${user.isEveryone ? 'gc-mention-everyone' : ''}`}
                                             onClick={() => handleSelectMention(user)}
                                         >
-                                            <img src={user.avatarUrl} alt="" className="gc-mention-avatar" />
+                                            {user.isEveryone ? (
+                                                <span className="gc-mention-everyone-icon">📢</span>
+                                            ) : (
+                                                <img src={user.avatarUrl} alt="" className="gc-mention-avatar" />
+                                            )}
                                             <span>{user.nickname}</span>
                                         </div>
                                     ))}
@@ -1766,15 +2586,17 @@ function GlobalChat() {
                             )}
 
                             <div className="gc-input-wrapper">
-                                <input
+                                <textarea
                                     ref={inputRef}
-                                    type="text"
                                     className="gc-msg-input"
+                                    rows="1"
                                     placeholder={isEditing ? "Edit your message..." : "Type a message..."}
                                     value={messageText}
                                     onChange={handleInputChange}
                                     onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                        // Enter inserts a new line (for paragraphs & bullets);
+                                        // Shift+Enter or Ctrl/Cmd+Enter sends the message.
+                                        if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey || e.metaKey)) {
                                             e.preventDefault();
                                             isEditing ? updateMessage() : handleSendMessage();
                                         }
@@ -1782,9 +2604,31 @@ function GlobalChat() {
                                 />
                             </div>
                             <button
+                                className={`gc-rec-btn${showRecMenu ? ' active' : ''}`}
+                                title="More options"
+                                aria-label="More options"
+                                onClick={() => {
+                                    setShowRecPicker(false);
+                                    setShowRecMenu(v => !v);
+                                }}
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="18"
+                                    height="18"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    aria-hidden="true"
+                                >
+                                    <path d="M12 5v14M5 12h14" />
+                                </svg>
+                            </button>
+                            <button
                                 className="gc-send-btn"
                                 onClick={isEditing ? updateMessage : handleSendMessage}
-                                disabled={(!messageText.trim() && !pendingFile) || isSending}
+                                disabled={(!messageText.trim() && !pendingFile && recMovies.length === 0) || isSending}
                             >
                                 {isSending ? '...' : (
                                     <svg viewBox="0 0 24 24">
@@ -1869,7 +2713,7 @@ function GlobalChat() {
                                 )}
                             {(actionSheetTarget?.uid === currentUserRef.current?.uid || userDataRef.current.isAdmin) && (
                                 <button className="gc-sheet-btn danger" onClick={() => handleDeleteMessage()}>
-                                    🗑️ Unsend
+                                    {userDataRef.current.isAdmin ? '🗑️ Delete for everyone' : '🗑️ Unsend'}
                                 </button>
                             )}
                             {actionSheetTarget?.uid !== currentUserRef.current?.uid && (
@@ -1909,7 +2753,7 @@ function GlobalChat() {
                                 </button>
                             </div>
                             <div className="gc-reaction-list">
-                                {showReactionView.reactions && Object.entries(showReactionView.reactions).map(([emoji, users]) => (
+                                {showReactionView.reactions && Object.entries(showReactionView.reactions).filter(([, users]) => users && typeof users === 'object').map(([emoji, users]) => (
                                     Object.entries(users).map(([uid, name]) => (
                                         <div key={`${emoji}-${uid}`} className="gc-reaction-item">
                                             <span className="gc-reaction-item-emoji">{emoji}</span>

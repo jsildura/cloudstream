@@ -1,0 +1,388 @@
+/* ─── Person Page ──────────────────────────────────────────────────── */
+
+.person-page {
+  min-height: 100vh;
+  background: #141414;
+  padding: 96px 4vw 64px;
+  overflow-x: hidden;      /* prevent children from stretching past viewport */
+  box-sizing: border-box;  /* padding stays inside 100vw, not added on top */
+}
+
+/* ---- Loading / Error ---- */
+
+/* Shimmer skeleton — same gradient + animation as .trending-card-skeleton so
+   the person page's loading state matches the rest of the app. */
+.person-skeleton {
+  border-radius: 8px;
+  background: linear-gradient(110deg,
+      rgba(35, 35, 40, 0.95) 0%,
+      rgba(35, 35, 40, 0.95) 40%,
+      rgba(55, 55, 65, 0.95) 50%,
+      rgba(35, 35, 40, 0.95) 60%,
+      rgba(35, 35, 40, 0.95) 100%);
+  background-size: 200% 100%;
+  animation: person-shimmer 1.5s infinite ease-in-out;
+}
+
+@keyframes person-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.person-hero-photo-skeleton {
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+}
+
+.person-hero-name-skeleton {
+  height: 36px;
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+.person-hero-line-skeleton {
+  height: 14px;
+  width: 40%;
+  margin-bottom: 8px;
+}
+
+.person-hero-line-skeleton.short {
+  width: 25%;
+}
+
+.person-hero-bio-skeleton {
+  height: 72px;
+  margin-top: 16px;
+}
+
+/* Filmography card skeleton — same 16:9 shape as the loaded cards, sized by
+   the grid cell via aspect-ratio. */
+.person-film-skeleton {
+  aspect-ratio: 16 / 9;
+}
+
+.person-page-loading,
+.person-page-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: rgba(255, 255, 255, 0.6);
+  gap: 16px;
+}
+
+.person-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #e50914;
+  border-radius: 50%;
+  animation: person-spin 0.8s linear infinite;
+}
+
+@keyframes person-spin {
+  to { transform: rotate(360deg); }
+}
+
+.person-page-error button {
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ---- Hero ---- */
+
+/* Full-width section sharing the page's 4vw padding. The old 900px centered
+   cap grew into huge side gutters between 768px and 1919px and snapped to
+   full width past 1920px — the exact padding drift this file is fixing. */
+.person-hero {
+  display: flex;
+  gap: 40px;
+  margin: 0 0 40px;
+  min-width: 0;            /* let flex children shrink below content size */
+  /* Soft panel so the hero reads as a designed section against the flat page */
+  padding: 32px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.person-hero-photo {
+  flex: 0 0 auto;
+  width: 220px;
+}
+
+.person-hero-photo img {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+.person-hero-avatar {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #2e2e33, #1c1c1f);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.person-hero-info {
+  flex: 1;
+  min-width: 0;
+  /* Cap the text column so the bio stays readable instead of spanning the
+     whole viewport once the hero is full width. */
+  max-width: 800px;
+}
+
+.person-hero-name {
+  font-size: 40px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 18px;
+  line-height: 1.1;
+}
+
+.person-hero-department {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(229, 9, 20, 0.15);
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  margin: 0 0 14px;
+}
+
+.person-hero-department svg {
+  width: 13px;
+  height: 13px;
+}
+
+.person-hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 20px;
+}
+
+.person-hero-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.person-hero-meta-chip svg {
+  width: 14px;
+  height: 14px;
+  color: #e50914;
+  flex-shrink: 0;
+}
+
+.person-hero-bio p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+  overflow-wrap: break-word;  /* long words/URLs won't push past viewport */
+  word-break: break-word;
+}
+
+.person-bio-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.person-bio-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+/* ---- Filmography ---- */
+
+/* Full width like the search/discover grids — aligns with the hero at every
+   breakpoint via the page's shared 4vw padding. */
+.person-filmography {
+  margin: 0;
+}
+
+.person-filmography-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 20px;
+  border-bottom: 2px solid #e50914;
+  display: inline-block;
+  padding-bottom: 4px;
+}
+
+.person-filmography-grid {
+  display: grid;
+  /* minmax(0, 1fr): tracks may shrink below their content's intrinsic width,
+     so a long nowrap title/role truncates instead of blowing the track out
+     and clipping the grid on narrow screens (previously masked by
+     `overflow: hidden`, which just cut the card off). */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.person-film-card {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  color: #fff;
+  /* Let the card shrink below its content's min-content so ellipsis works */
+  min-width: 0;
+  transition: transform 0.2s ease;
+}
+
+.person-film-card:hover {
+  transform: scale(1.03);
+}
+
+.person-film-poster {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  background: #1a1a1a;
+  position: relative;   /* anchors the letterboxed placeholder art */
+}
+
+.person-film-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Placeholder fallback art: the placeholder.svg is decorative, not a real
+   backdrop — keep it at a fixed 60% width, centered, aspect preserved, with
+   the dark ground showing around it (same as DiscoverGrid / HoverPreviewCard).
+   The doubled selector outranks `.person-film-poster img` (height 100% +
+   cover), so the art keeps its intrinsic ratio instead of stretching. */
+.person-film-poster img.person-film-placeholder-img {
+  width: 60%;
+  height: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.person-film-title {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.person-film-year {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 2px;
+}
+
+.person-film-role {
+  display: block;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- Responsive ---- */
+
+/* Mobile/tablet: match the navbar's 16px side inset (navbar switches to 16px
+   at this same breakpoint). The base 4vw padding is wider than the fixed
+   chrome on small screens, so the page previously read as inset relative to
+   the navbar and footer. */
+@media (max-width: 1024px) {
+  .person-page { padding: 96px 16px 64px; }
+}
+
+@media (max-width: 767px) {
+  .person-page { padding: 84px 16px 48px; }
+  .person-hero {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    padding: 24px 20px;
+  }
+  .person-hero-photo { width: 160px; }
+  .person-hero-name { font-size: 28px; }
+  .person-hero-meta { justify-content: center; }
+  .person-filmography-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1023px) and (min-width: 768px) {
+  .person-filmography-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1920px) {
+  .person-filmography-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .person-page { padding: 168px 4vw 96px; }
+}
+
+/* Mirror the search grid's gap steps so all grids stay in rhythm */
+@media (min-width: 2560px) and (max-width: 3839px) {
+  .person-filmography-grid { gap: 24px; }
+}
+
+@media (min-width: 3840px) {
+  .person-page { padding: 340px 4vw 160px; }
+  .person-filmography-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 28px;
+  }
+}

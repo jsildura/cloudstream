@@ -203,3 +203,17 @@ STREAMFLIX-DIRECT-STREAMING-IMPLEMENTATION-implementation-plan.md
 zxcstream-standalone-trial-plan.md
 zxcstream-Direct-HLS-Player-Plan.md
 zxcstream-trial/
+implementation-plan.md
+Netflix_Style_Search_Redesign_implementation_plan.md
+Netflix_Style_Search_Revision_implementation_plan.md
+Netflix_Style_Search_Revision_AUDIT.md
+People_Genre_Search_implementation_plan_reaudited.md
+People_Genre_Search_implementation_plan.md
+Person_Content_Search_implementation_plan_reviewed.md
+Person_Content_Search_implementation_plan.md
+
+# Debugging configurations
+.claude/launch.json
+.vscode/launch.json
+# Tool caches / Local folders
+.freebuff/

@@ -195,7 +195,10 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
 
     const backdropSrc = previewBackdrop(item.backdrop_path)
         ?? posterAsBackdrop(item.poster_path)
-        ?? null;
+        ?? '/icons/placeholder.svg';
+    // Decorative fallback art — render it letterboxed/contained, not stretched
+    // across the whole 16:9 media area like a real backdrop (see CSS).
+    const isPlaceholder = backdropSrc === '/icons/placeholder.svg';
 
     const year = (item.release_date || item.first_air_date || '').substring(0, 4);
 
@@ -221,12 +224,12 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
             role="dialog"
             aria-label={`Preview: ${title}`}
         >
-            <div className="hover-preview-media">
+            <div className={`hover-preview-media${isPlaceholder ? ' placeholder' : ''}`}>
                 {backdropSrc && (
                     <img
                         src={backdropSrc}
                         alt={title}
-                        className={`hover-preview-backdrop${showVideo ? ' faded' : ''}`}
+                        className={`hover-preview-backdrop${showVideo ? ' faded' : ''}${isPlaceholder ? ' placeholder' : ''}`}
                         draggable="false"
                     />
                 )}

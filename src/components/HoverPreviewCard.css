@@ -86,6 +86,23 @@
     opacity: 0;
 }
 
+/* Placeholder fallback art: keep it at 60% width, centered, aspect preserved —
+   ground shows around it instead of stretching across the media area. */
+/* Placeholder ground: muted dark gray instead of plain black. */
+.hover-preview-media.placeholder {
+    background: rgba(30, 30, 30, 0.8);
+}
+
+.hover-preview-backdrop.placeholder {
+    width: 60%;
+    height: auto;
+    object-fit: contain;
+    opacity: 0.9;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
 .hover-preview-video {
     position: absolute;
     /* Overscan the iframe to crop YouTube's letterboxing and title chrome. */
@@ -132,7 +149,7 @@
     max-width: 70%;
     z-index: 3;
     pointer-events: none;
-    font-size: 1.05rem;
+    font-size: 0.8rem;
     font-weight: 700;
     color: #fff;
     line-height: 1.2;
@@ -351,7 +368,7 @@
     }
 
     .hover-preview-title-overlay {
-        font-size: 0.9rem;
+        font-size: 0.64rem;
     }
 }
 
@@ -376,7 +393,7 @@
     .hover-preview-title-overlay {
         bottom: 18px;
         left: 24px;
-        font-size: 1.9rem;
+        font-size: 1.47rem;
     }
 
     .hover-preview-mute {
@@ -481,7 +498,7 @@
     .hover-preview-title-overlay {
         bottom: 36px;
         left: 48px;
-        font-size: 3.8rem;
+        font-size: 2.95rem;
     }
 
     .hover-preview-mute {

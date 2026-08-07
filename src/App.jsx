@@ -1,9 +1,8 @@
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 
 // Core components - always loaded (small, needed immediately)
 import Navbar from './components/Navbar';
-import Modal from './components/Modal';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
@@ -22,7 +21,6 @@ import { ViewerCountProvider } from './contexts/ViewerCountContext';
 import { HoverPreviewProvider } from './contexts/HoverPreviewContext';
 
 // Hooks - always loaded
-import { useTMDB } from './hooks/useTMDB';
 import useTVNavigation from './hooks/useTVNavigation';
 import useTVRemoteKeys from './hooks/useTVRemoteKeys';
 
@@ -105,14 +103,11 @@ const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const DataPolicy = lazy(() => import('./pages/DataPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Search = lazy(() => import('./pages/Search'));
+const PersonPage = lazy(() => import('./pages/PersonPage'));
 
 
 function App() {
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const { searchTMDB, movieGenres, tvGenres, fetchCredits, fetchContentRating } = useTMDB();
 
   const location = useLocation();
 
@@ -125,52 +120,6 @@ function App() {
   useEffect(() => {
     window.dispatchEvent(new Event('app-ready'));
   }, []);
-
-  const handleSearch = async (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    try {
-      const results = await searchTMDB(query);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleItemClick = async (item) => {
-    const type = item.media_type === "movie" || item.release_date ? "movie" : "tv";
-    const genreMap = type === 'movie' ? movieGenres : tvGenres;
-    const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
-
-    // Fetch credits and content rating in parallel
-    const [cast, contentRating] = await Promise.all([
-      fetchCredits(type, item.id),
-      fetchContentRating(type, item.id)
-    ]);
-
-    setSelectedItem({
-      ...item,
-      type,
-      genres: genreNames,
-      cast: cast.join(', ') || 'N/A',
-      contentRating
-    });
-    setIsModalOpen(true);
-    setSearchResults([]);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedItem(null);
-  };
 
   return (
     <ToastProvider>
@@ -189,12 +138,7 @@ function App() {
           {!location.pathname.startsWith('/watch') &&
             !location.pathname.includes('/iptv/watch') &&
             !location.pathname.includes('/sports/watch') && (
-              <Navbar
-                onSearch={handleSearch}
-                searchResults={searchResults}
-                onItemClick={handleItemClick}
-                isSearching={isSearching}
-              />
+              <Navbar />
             )}
 
           <main>
@@ -228,6 +172,8 @@ function App() {
                   <Route path="playlist/:id" element={<MusicPlaylist />} />
                 </Route>
                 */}
+                <Route path="/search" element={<Search />} />
+                <Route path="/person/:id" element={<PersonPage />} />
                 <Route path="*" element={<Home />} />
               </Routes>
             </Suspense>
@@ -240,10 +186,6 @@ function App() {
             !location.pathname.includes('/sports/watch') && (
               <Footer />
             )}
-
-          {isModalOpen && selectedItem && (
-            <Modal item={selectedItem} onClose={closeModal} />
-          )}
 
           {/* Global Chat - Hidden on Watch and Music pages */}
           {!location.pathname.startsWith('/watch') &&

@@ -1,16 +1,23 @@
+/* ─── My List / Watchlist ─────────────────────────────────────────── */
+
+/* Page chrome matches the rest of the app: flat #141414, 4vw side padding on
+   desktop (same as Search / Discover / Person pages), 16px on phones to match
+   the navbar. Top padding clears the fixed 68px navbar with breathing room. */
 .mylist-page {
-    padding: 24px 48px;
     min-height: 100vh;
-    margin-top: 4rem;
+    background: #141414;
+    padding: 96px 4vw 64px;
 }
+
+/* ---- Header ---- */
 
 .mylist-header {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
-    margin-bottom: 24px;
     flex-wrap: wrap;
     gap: 16px;
+    margin-bottom: 24px;
 }
 
 .mylist-title {
@@ -18,6 +25,18 @@
     font-weight: 700;
     color: #fff;
     margin: 0;
+    letter-spacing: -0.01em;
+}
+
+/* Red accent bar tying the page title to the app's section-title language */
+.mylist-title::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 3px;
+    margin-top: 10px;
+    border-radius: 2px;
+    background: #e50914;
 }
 
 .mylist-controls {
@@ -26,40 +45,53 @@
     gap: 12px;
 }
 
-/* Custom Select Dropdown */
+.mylist-count {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+/* ---- Sort dropdown ---- */
+
 .mylist-custom-select {
     position: relative;
-    min-width: 100px;
+    min-width: 140px;
     font-family: inherit;
 }
 
 .mylist-custom-select-trigger {
-    background: #1f1f1f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     color: #fff;
-    padding: 5px 8px;
+    padding: 9px 14px;
     font-size: 0.875rem;
+    font-weight: 500;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: all 0.2s ease;
+    gap: 12px;
+    transition: background 0.2s ease, border-color 0.2s ease;
     user-select: none;
 }
 
 .mylist-custom-select-trigger:hover {
-    background: #2a2a2a;
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
 .mylist-custom-select-trigger.open {
     border-color: #e50914;
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.mylist-custom-select-trigger:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
 }
 
 .mylist-select-arrow {
-    margin-left: 12px;
     color: rgba(255, 255, 255, 0.6);
     transition: transform 0.2s ease;
 }
@@ -72,26 +104,19 @@
     position: absolute;
     top: calc(100% + 8px);
     left: 0;
-    width: 100%;
+    min-width: 100%;
     background: #1f1f1f;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
     z-index: 50;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
     overflow: hidden;
-    animation: dropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: mylistDropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes dropdownSlide {
-    from {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@keyframes mylistDropdownSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .mylist-custom-option {
@@ -102,16 +127,18 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
+    white-space: nowrap;
     transition: background 0.15s ease;
 }
 
 .mylist-custom-option:hover {
-    background: #2a2a2a;
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
 }
 
 .mylist-custom-option.selected {
-    background: rgba(229, 9, 20, 0.1);
+    background: rgba(229, 9, 20, 0.12);
     color: #fff;
     font-weight: 500;
 }
@@ -120,90 +147,72 @@
     color: #e50914;
 }
 
+/* ---- Clear All ---- */
+
 .mylist-clear-btn {
-    background: rgba(229, 9, 20, 0.2);
+    background: rgba(229, 9, 20, 0.12);
     border: 1px solid rgba(229, 9, 20, 0.5);
     border-radius: 8px;
-    color: #e50914;
-    padding: 10px 16px;
+    color: #ff6b6b;
+    padding: 9px 16px;
     font-size: 0.875rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .mylist-clear-btn:hover {
-    background: rgba(229, 9, 20, 0.3);
+    background: rgba(229, 9, 20, 0.25);
     border-color: #e50914;
 }
 
-.mylist-count {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.875rem;
-    margin-bottom: 16px;
+.mylist-clear-btn:focus-visible {
+    outline: 2px solid #e50914;
+    outline-offset: 2px;
 }
 
-/* Empty State */
-.mylist-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 80px 24px;
-    color: rgba(255, 255, 255, 0.5);
-}
+/* ---- Grid ---- */
 
-.mylist-empty svg {
-    margin-bottom: 24px;
-    opacity: 0.5;
-}
-
-.mylist-empty h3 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
-    margin: 0 0 8px 0;
-}
-
-.mylist-empty p {
-    margin: 0;
-    font-size: 1rem;
-}
-
-/* Grid */
+/* Netflix-style responsive poster grid: column count is set per breakpoint
+   below (3 → 8) so cards stay tappable on phones and roomy on TV. Only the
+   default gap lives here — every width range is covered by a media query. */
 .mylist-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 16px;
 }
 
-/* Card */
+/* ---- Card ---- */
+
 .mylist-card {
     cursor: pointer;
-    transition: transform 0.2s ease;
     min-width: 0;
-    overflow: hidden;
+    transition: transform 0.25s ease;
 }
 
 .mylist-card:hover {
-    transform: scale(1.03);
+    transform: scale(1.05);
 }
 
-.mylist-card:focus {
+.mylist-card:focus-visible {
     outline: 2px solid #e50914;
     outline-offset: 4px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .mylist-card-image-container {
     position: relative;
     width: 100%;
-    padding-bottom: 150%;
-    /* 2:3 aspect ratio */
-    border-radius: 8px;
+    padding-bottom: 150%;   /* 2:3 portrait */
+    border-radius: 10px;
     overflow: hidden;
-    margin-bottom: 8px;
+    background: #1a1a1a;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    transition: box-shadow 0.25s ease;
+    margin-bottom: 10px;
+}
+
+.mylist-card:hover .mylist-card-image-container {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
 
 .mylist-card-image {
@@ -215,58 +224,68 @@
     object-fit: cover;
 }
 
-.mylist-card-overlay {
+/* Placeholder fallback art: the placeholder.svg is decorative, not a poster —
+   keep it at 60% width, centered, aspect preserved, with the dark ground
+   showing around it (same treatment as every other grid in the app). */
+.mylist-card-image-container img.mylist-card-image-placeholder {
+    width: 60%;
+    height: auto;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, transparent 40%);
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    display: flex;
-    justify-content: flex-end;
-    padding: 8px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    object-fit: contain;
+    opacity: 0.9;
 }
 
-.mylist-card:hover .mylist-card-overlay {
-    opacity: 1;
-}
-
+/* Remove button — revealed on hover on pointer devices, always visible on
+   touch screens so mobile users can actually remove items. */
 .mylist-remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
     width: 32px;
     height: 32px;
     border-radius: 50%;
     background: rgba(0, 0, 0, 0.7);
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #fff;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    opacity: 0;
+    transform: scale(0.85);
+    transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    z-index: 2;
+}
+
+.mylist-card:hover .mylist-remove-btn,
+.mylist-remove-btn:focus-visible {
+    opacity: 1;
+    transform: scale(1);
 }
 
 .mylist-remove-btn:hover {
     background: #e50914;
-    transform: scale(1.1);
 }
 
 .mylist-card-type {
     position: absolute;
     bottom: 8px;
     left: 8px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.75);
     color: #fff;
     font-size: 0.65rem;
     font-weight: 600;
-    padding: 4px 8px;
+    padding: 3px 8px;
     border-radius: 4px;
     text-transform: uppercase;
+    letter-spacing: 0.4px;
 }
 
 .mylist-card-info {
-    padding: 0 4px;
+    padding: 0 2px;
 }
 
 .mylist-card-title {
@@ -281,553 +300,178 @@
 
 .mylist-card-rating {
     font-size: 0.75rem;
+    font-weight: 600;
     color: #ffc107;
 }
 
-/* Mobile: max-width 767px */
+/* ---- Empty state ---- */
+
+.mylist-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 24px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.mylist-empty-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 24px;
+}
+
+.mylist-empty h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 8px 0;
+}
+
+.mylist-empty p {
+    margin: 0 0 24px 0;
+    font-size: 1rem;
+    max-width: 420px;
+}
+
+.mylist-empty-cta {
+    background: #e50914;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.mylist-empty-cta:hover {
+    background: #f6121d;
+    transform: translateY(-1px);
+}
+
+.mylist-empty-cta:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 3px;
+}
+
+/* ---- Responsive ---- */
+
+/* Touch devices: the remove button must always be visible (no hover) */
+@media (max-width: 1024px) {
+    .mylist-remove-btn {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Mobile: 16px side padding to match the navbar (the base 4vw inset is wider
+   than the fixed chrome on small screens). */
 @media (max-width: 767px) {
-    .mylist-page {
-        padding: 12px 16px;
-        margin-top: 3.5rem;
-    }
-
-    .mylist-header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 16px;
-        gap: 12px;
-    }
-
-    .mylist-title {
-        font-size: 1.25rem;
-        align-self: baseline;
-    }
-
-    .mylist-controls {
-        gap: 8px;
-    }
-
-    .mylist-sort-select,
-    .mylist-clear-btn {
-        padding: 8px 12px;
-        font-size: 0.75rem;
-        border-radius: 6px;
-    }
-
-    .mylist-count {
-        font-size: 0.75rem;
-        margin-bottom: 12px;
-    }
-
-    .mylist-empty {
-        padding: 48px 16px;
-    }
-
-    .mylist-empty svg {
-        width: 48px;
-        height: 48px;
-        margin-bottom: 16px;
-    }
-
-    .mylist-empty h3 {
-        font-size: 1.1rem;
-        margin: 0 0 6px 0;
-    }
-
-    .mylist-empty p {
-        font-size: 0.85rem;
-    }
-
-    .mylist-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-    }
-
-    .mylist-card-image-container {
-        border-radius: 6px;
-        margin-bottom: 6px;
-    }
-
-    .mylist-card-overlay {
-        padding: 6px;
-    }
-
-    .mylist-card-type {
-        font-size: 0.55rem;
-        padding: 3px 6px;
-        border-radius: 3px;
-        bottom: 6px;
-        left: 6px;
-    }
-
-    .mylist-card-info {
-        padding: 0 2px;
-    }
-
-    .mylist-card-title {
-        font-size: 0.7rem;
-        margin: 0 0 2px 0;
-    }
-
-    .mylist-card-rating {
-        font-size: 0.6rem;
-    }
-
-    .mylist-remove-btn {
-        width: 24px;
-        height: 24px;
-    }
-
-    .mylist-remove-btn svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .mylist-card:focus {
-        outline-width: 2px;
-        outline-offset: 3px;
-        border-radius: 6px;
-    }
+    .mylist-page { padding: 84px 16px 48px; }
+    .mylist-header { margin-bottom: 16px; gap: 12px; }
+    .mylist-title { font-size: 1.4rem; }
+    .mylist-title::after { width: 36px; margin-top: 8px; }
+    .mylist-count { font-size: 0.8rem; margin-bottom: 12px; }
+    .mylist-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .mylist-card-image-container { border-radius: 8px; margin-bottom: 6px; }
+    .mylist-card-title { font-size: 0.72rem; margin-bottom: 2px; }
+    .mylist-card-rating { font-size: 0.65rem; }
+    .mylist-card-type { font-size: 0.55rem; padding: 2px 6px; bottom: 6px; left: 6px; }
+    .mylist-remove-btn { width: 30px; height: 30px; top: 6px; right: 6px; }
+    .mylist-remove-btn svg { width: 15px; height: 15px; }
+    .mylist-empty { padding: 56px 16px; }
+    .mylist-empty-icon { width: 56px; height: 56px; margin-bottom: 16px; }
+    .mylist-empty h3 { font-size: 1.15rem; }
+    .mylist-empty p { font-size: 0.85rem; margin-bottom: 20px; }
+    .mylist-empty-cta { padding: 10px 22px; font-size: 0.9rem; }
 }
 
-/* Tablet: 768px - 1023px */
+/* Small phones: 2 columns so posters stay large enough to tap */
+@media (max-width: 419px) {
+    .mylist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+}
+
+/* Tablet: navbar is 16px here too, so keep 16px sides; 4 columns */
 @media (min-width: 768px) and (max-width: 1023px) {
-    .mylist-page {
-        padding: 20px 2%;
-        margin-top: 4rem;
-    }
-
-    .mylist-header {
-        margin-bottom: 20px;
-        gap: 16px;
-    }
-
-    .mylist-title {
-        font-size: 1.5rem;
-    }
-
-    .mylist-sort-select,
-    .mylist-clear-btn {
-        padding: 10px 16px;
-        font-size: 0.85rem;
-    }
-
-    .mylist-empty {
-        padding: 60px 24px;
-    }
-
-    .mylist-empty svg {
-        width: 56px;
-        height: 56px;
-        margin-bottom: 20px;
-    }
-
-    .mylist-empty h3 {
-        font-size: 1.3rem;
-    }
-
-    .mylist-empty p {
-        font-size: 0.95rem;
-    }
-
-    .mylist-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 12px;
-    }
+    .mylist-page { padding: 96px 16px 64px; }
+    .mylist-title { font-size: 1.75rem; }
+    .mylist-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 }
 
-/* Desktop */
-@media (min-width: 1024px) {
-    .mylist-grid {
-        grid-template-columns: repeat(7, 1fr);
-    }
+/* Small desktop */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .mylist-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 
-/* 720p (1280px - 1919px) */
+/* Laptop / 720p */
 @media (min-width: 1280px) and (max-width: 1919px) {
-    .mylist-page {
-        padding: 24px 3.8%;
-        margin-top: 4rem;
-    }
-
-    .mylist-title {
-        font-size: 1.75rem;
-    }
-
-    .mylist-header {
-        margin-bottom: 24px;
-        gap: 16px;
-    }
-
-    .mylist-controls {
-        gap: 12px;
-    }
-
-    .mylist-sort-select,
-    .mylist-clear-btn {
-        padding: 10px 18px;
-        font-size: 0.95rem;
-        border-radius: 8px;
-    }
-
-    .mylist-count {
-        font-size: 0.95rem;
-        margin-bottom: 20px;
-    }
-
-    .mylist-empty {
-        padding: 80px 36px;
-    }
-
-    .mylist-empty svg {
-        width: 64px;
-        height: 64px;
-        margin-bottom: 24px;
-    }
-
-    .mylist-empty h3 {
-        font-size: 1.5rem;
-        margin: 0 0 10px 0;
-    }
-
-    .mylist-empty p {
-        font-size: 1rem;
-    }
-
-    .mylist-grid {
-        grid-template-columns: repeat(7, 1fr);
-        gap: 16px;
-    }
-
-    .mylist-card-image-container {
-        border-radius: 8px;
-        margin-bottom: 8px;
-    }
-
-    .mylist-card-overlay {
-        padding: 8px;
-    }
-
-    .mylist-card-type {
-        font-size: 0.7rem;
-        padding: 4px 8px;
-        border-radius: 4px;
-        bottom: 8px;
-        left: 8px;
-    }
-
-    .mylist-card-info {
-        padding: 0 4px;
-    }
-
-    .mylist-card-title {
-        font-size: 0.95rem;
-        margin: 0 0 4px 0;
-    }
-
-    .mylist-card-rating {
-        font-size: 0.8rem;
-    }
-
-    .mylist-remove-btn {
-        width: 32px;
-        height: 32px;
-    }
-
-    .mylist-remove-btn svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    .mylist-card:focus {
-        outline-width: 2px;
-        outline-offset: 4px;
-        border-radius: 8px;
-    }
+    .mylist-title { font-size: 2.25rem; }
+    .mylist-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 20px; }
 }
 
-/* 1080p (2x scaling) */
-@media (min-width: 1920px) {
-    .mylist-page {
-        padding: 48px 56px;
-        margin-top: 8rem
-    }
-
-    .mylist-title {
-        font-size: 3rem;
-    }
-
-    .mylist-header {
-        margin-bottom: 48px;
-        gap: 32px;
-    }
-
-    .mylist-controls {
-        gap: 24px;
-    }
-
-    .mylist-sort-select,
-    .mylist-clear-btn {
-        padding: 20px 32px;
-        font-size: 1.75rem;
-        border-radius: 16px;
-        border-width: 2px;
-    }
-
-    .mylist-count {
-        font-size: 1.75rem;
-        margin-bottom: 32px;
-    }
-
-    .mylist-custom-select {
-        min-width: 200px;
-    }
-
-    .mylist-custom-select-trigger {
-        padding: 12px 20px;
-        font-size: 1.6rem;
-        border-radius: 12px;
-    }
-
-    .mylist-custom-select-trigger:focus-visible {
-        outline: 4px solid #e50914;
-        outline-offset: 4px;
-    }
-
-    .mylist-select-arrow {
-        width: 32px;
-        height: 32px;
-        margin-left: 20px;
-    }
-
-    .mylist-custom-select-options {
-        border-radius: 12px;
-    }
-
-    .mylist-custom-option {
-        padding: 16px 24px;
-        font-size: 1.6rem;
-    }
-    
-    .mylist-check-icon {
-        width: 24px;
-        height: 24px;
-    }
-
-    .mylist-empty {
-        padding: 160px 48px;
-    }
-
-    .mylist-empty svg {
-        width: 128px;
-        height: 128px;
-        margin-bottom: 48px;
-    }
-
-    .mylist-empty h3 {
-        font-size: 3rem;
-        margin: 0 0 16px 0;
-    }
-
-    .mylist-empty p {
-        font-size: 2rem;
-    }
-
-    .mylist-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 32px;
-    }
-
-    .mylist-card-image-container {
-        border-radius: 16px;
-        margin-bottom: 16px;
-    }
-
-    .mylist-card-overlay {
-        padding: 16px;
-    }
-
-    .mylist-card-type {
-        font-size: 1.3rem;
-        padding: 8px 16px;
-        border-radius: 8px;
-        bottom: 16px;
-        left: 16px;
-    }
-
-    .mylist-card-info {
-        padding: 0 8px;
-    }
-
-    .mylist-card-title {
-        font-size: 1.75rem;
-        margin: 0 0 8px 0;
-    }
-
-    .mylist-card-rating {
-        font-size: 1.5rem;
-    }
-
-    .mylist-remove-btn {
-        width: 64px;
-        height: 64px;
-    }
-
-    .mylist-remove-btn svg {
-        width: 40px !important;
-        height: 40px !important;
-    }
-
-    .mylist-remove-btn:focus-visible {
-        outline: 4px solid #fff;
-        outline-offset: 4px;
-        background: #e50914;
-        transform: scale(1.1);
-    }
-
-    .mylist-card:focus-visible,
-    .mylist-card:focus {
-        outline: 4px solid #e50914;
-        outline-offset: 8px;
-        border-radius: 16px;
-    }
+/* 1080p TV */
+@media (min-width: 1920px) and (max-width: 2559px) {
+    .mylist-page { padding: 168px 4vw 96px; }
+    .mylist-title { font-size: 3.5rem; }
+    .mylist-title::after { width: 72px; height: 5px; margin-top: 16px; }
+    .mylist-count { font-size: 1.4rem; margin-bottom: 28px; }
+    .mylist-custom-select { min-width: 220px; }
+    .mylist-custom-select-trigger { padding: 14px 24px; font-size: 1.5rem; border-radius: 12px; }
+    .mylist-custom-select-options { border-radius: 14px; }
+    .mylist-custom-option { padding: 18px 24px; font-size: 1.4rem; }
+    .mylist-check-icon { width: 24px; height: 24px; }
+    .mylist-clear-btn { padding: 14px 28px; font-size: 1.5rem; border-radius: 12px; }
+    .mylist-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 28px; }
+    .mylist-card-image-container { border-radius: 16px; margin-bottom: 16px; }
+    .mylist-card-title { font-size: 1.5rem; margin-bottom: 6px; }
+    .mylist-card-rating { font-size: 1.3rem; }
+    .mylist-card-type { font-size: 1.1rem; padding: 6px 12px; bottom: 12px; left: 12px; }
+    .mylist-remove-btn { width: 56px; height: 56px; top: 12px; right: 12px; }
+    .mylist-remove-btn svg { width: 32px; height: 32px; }
+    .mylist-empty { padding: 120px 48px; }
+    .mylist-empty-icon { width: 112px; height: 112px; margin-bottom: 40px; }
+    .mylist-empty h3 { font-size: 2.5rem; }
+    .mylist-empty p { font-size: 1.6rem; }
+    .mylist-empty-cta { padding: 18px 44px; font-size: 1.5rem; border-radius: 10px; }
 }
 
-/* 4K */
+/* 1440p / ultrawide */
+@media (min-width: 2560px) and (max-width: 3839px) {
+    .mylist-page { padding: 118px 4vw 96px; }
+    .mylist-title { font-size: 4rem; }
+    .mylist-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 32px; }
+    .mylist-count { font-size: 1.6rem; }
+    .mylist-card-image-container { border-radius: 20px; margin-bottom: 20px; }
+    .mylist-card-title { font-size: 1.75rem; }
+    .mylist-card-rating { font-size: 1.5rem; }
+}
+
+/* 4K TV */
 @media (min-width: 3840px) {
-    .mylist-page {
-        padding: 96px 152px;
-        margin-top: 16rem;
-    }
-
-    .mylist-title {
-        font-size: 6rem;
-    }
-
-    .mylist-header {
-        margin-bottom: 96px;
-        gap: 64px;
-    }
-
-    .mylist-controls {
-        gap: 48px;
-    }
-
-    .mylist-sort-select,
-    .mylist-clear-btn {
-        padding: 40px 64px;
-        font-size: 3.5rem;
-        border-radius: 32px;
-        border-width: 4px;
-    }
-
-    .mylist-count {
-        font-size: 3.5rem;
-        margin-bottom: 64px;
-    }
-
-    .mylist-custom-select {
-        min-width: 400px;
-    }
-
-    .mylist-custom-select-trigger {
-        padding: 24px 40px;
-        font-size: 3.2rem;
-        border-radius: 24px;
-        border-width: 4px;
-    }
-
-    .mylist-custom-select-trigger:focus-visible {
-        outline: 8px solid #e50914;
-        outline-offset: 8px;
-    }
-
-    .mylist-select-arrow {
-        width: 64px;
-        height: 64px;
-        margin-left: 40px;
-        stroke-width: 2px;
-    }
-
-    .mylist-custom-select-options {
-        border-radius: 24px;
-        border-width: 4px;
-        top: calc(100% + 16px);
-    }
-
-    .mylist-custom-option {
-        padding: 32px 48px;
-        font-size: 3.2rem;
-    }
-
-    .mylist-check-icon {
-        width: 48px;
-        height: 48px;
-    }
-
-    .mylist-empty svg {
-        width: 256px;
-        height: 256px;
-        margin-bottom: 96px;
-    }
-
-    .mylist-empty h3 {
-        font-size: 6rem;
-    }
-
-    .mylist-empty p {
-        font-size: 4rem;
-    }
-
-    .mylist-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 64px;
-    }
-
-    .mylist-card-image-container {
-        border-radius: 32px;
-        margin-bottom: 32px;
-    }
-
-    .mylist-card-overlay {
-        padding: 32px;
-    }
-
-    .mylist-card-type {
-        font-size: 2.6rem;
-        padding: 16px 32px;
-        border-radius: 16px;
-        bottom: 32px;
-        left: 32px;
-    }
-
-    .mylist-card-info {
-        padding: 0 16px;
-    }
-
-    .mylist-card-title {
-        font-size: 3.5rem;
-        margin: 0 0 16px 0;
-    }
-
-    .mylist-card-rating {
-        font-size: 3rem;
-    }
-
-    .mylist-remove-btn {
-        width: 128px;
-        height: 128px;
-    }
-
-    .mylist-remove-btn svg {
-        width: 80px;
-        height: 80px;
-    }
-
-    .mylist-card:focus {
-        outline-width: 8px;
-        outline-offset: 16px;
-        border-radius: 32px;
-    }
+    .mylist-page { padding: 340px 4vw 160px; }
+    .mylist-title { font-size: 6rem; }
+    .mylist-title::after { width: 120px; height: 8px; margin-top: 24px; }
+    .mylist-count { font-size: 2.4rem; margin-bottom: 48px; }
+    .mylist-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 40px; }
+    .mylist-card-image-container { border-radius: 28px; margin-bottom: 28px; }
+    .mylist-card-title { font-size: 2.4rem; margin-bottom: 10px; }
+    .mylist-card-rating { font-size: 2rem; }
+    .mylist-card-type { font-size: 1.6rem; padding: 10px 20px; bottom: 20px; left: 20px; }
+    .mylist-remove-btn { width: 96px; height: 96px; top: 20px; right: 20px; }
+    .mylist-remove-btn svg { width: 56px; height: 56px; }
+    .mylist-empty { padding: 200px 64px; }
+    .mylist-empty-icon { width: 192px; height: 192px; margin-bottom: 64px; }
+    .mylist-empty h3 { font-size: 4.5rem; }
+    .mylist-empty p { font-size: 2.8rem; }
+    .mylist-empty-cta { padding: 32px 80px; font-size: 2.8rem; border-radius: 16px; }
 }

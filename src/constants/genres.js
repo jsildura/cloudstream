@@ -138,3 +138,85 @@ export const MOVIE_BAR_CATEGORIES = MOVIE_BAR_ORDER.map(key => {
   return entry;
 });
 
+// ─── Genre resolver for Search ───────────────────────────────────────────────
+// Turns a user's query ("Action", "Sci-Fi", "Anime") into genre/keyword IDs
+// so the search page can show a curated catalogue instead of a text search.
+
+/**
+ * Normalize a genre name for comparison:
+ *   - lowercase
+ *   - "&" → "and" (so "Sci-Fi & Fantasy" matches "sci-fi and fantasy")
+ *   - collapse whitespace
+ */
+const normalizeGenreName = (name) =>
+  name.toLowerCase().replace(/&/g, ' and ').replace(/\s+/g, ' ').trim();
+
+/**
+ * Build a lookup map: normalized-name → { id, name, media, param }
+ * Called once (lazily) and cached forever.
+ *
+ * "media" is 'movie' or 'tv' — it tells the search hook which
+ * /discover endpoint to call.
+ *
+ * "param" is the TMDB query key: 'with_genres' for real genres,
+ * 'with_keywords' for keyword-backed categories like "Anime".
+ */
+let genreLookupCache = null;
+
+function buildGenreLookup() {
+  if (genreLookupCache) return genreLookupCache;
+
+  const map = new Map();
+
+  // Helper: add an entry, but DON'T overwrite if the name already exists.
+  // This means Movie genres take priority over TV genres when names collide
+  // (e.g. "Comedy" → movie 35 wins over tv 35, which is fine because both
+  // discover endpoints return the same catalogue).
+  const add = (id, name, media, param = 'with_genres') => {
+    const key = normalizeGenreName(name);
+    if (!map.has(key)) {
+      map.set(key, []);
+    }
+    map.get(key).push({ id, name, media, param });
+  };
+
+  // Movie genres
+  MOVIE_GENRES.forEach(g => add(g.id, g.name, 'movie'));
+  // TV genres
+  TV_GENRES.forEach(g => add(g.id, g.name, 'tv'));
+  // Movie keyword categories (Anime, Superhero, etc.)
+  MOVIE_KEYWORD_CATEGORIES.forEach(k => add(k.id, k.name, 'movie', 'with_keywords'));
+  // TV keyword categories
+  TV_KEYWORD_CATEGORIES.forEach(k => add(k.id, k.name, 'tv', 'with_keywords'));
+
+  genreLookupCache = map;
+  return map;
+}
+
+/**
+ * Try to resolve a search query as a genre/keyword name.
+ *
+ * @param {string} query  The raw search input (e.g. "Action", "Sci-Fi & Fantasy")
+ * @returns {object|null}  null if not a genre, otherwise:
+ *   {
+ *     displayName: "Action",          // the canonical name for the UI
+ *     entries: [                       // one per discover endpoint to call
+ *       { id: 28, media: 'movie', param: 'with_genres' }
+ *     ]
+ *   }
+ */
+export function resolveGenreQuery(query) {
+  if (!query || !query.trim()) return null;
+
+  const lookup = buildGenreLookup();
+  const normalized = normalizeGenreName(query);
+  const entries = lookup.get(normalized);
+
+  if (!entries || entries.length === 0) return null;
+
+  return {
+    displayName: entries[0].name,   // use the first match's canonical name
+    entries
+  };
+}
+

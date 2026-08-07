@@ -1,25 +1,18 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import InstallAppButton from './InstallAppButton';
-import SearchModal from './SearchModal';
 
-const RECENT_SEARCHES_KEY = 'streamflix_recent_searches';
-const MAX_RECENT_SEARCHES = 5;
-const MAX_TRENDING = 10;
+const SEARCH_DEBOUNCE_MS = 350;   // must match Search.jsx
+// Must match Search.jsx and the desktop @media blocks in the CSS, exactly.
+const DESKTOP_SEARCH_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: fine)';
 
-const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
+const Navbar = () => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
-  const [recentSearches, setRecentSearches] = useState([]);
-  const [trendingSearches, setTrendingSearches] = useState([]);
   const [tvDropdownOpen, setTvDropdownOpen] = useState(false);
   const [tvMenuOpen, setTvMenuOpen] = useState(false);
-  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const debounceTimerRef = useRef(null);
 
   // Bottom sheet drag state
   const [dragY, setDragY] = useState(0);
@@ -27,49 +20,23 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
   const dragStartY = useRef(0);
   const sheetRef = useRef(null);
 
-  // Load recent searches from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(RECENT_SEARCHES_KEY);
-      if (saved) {
-        setRecentSearches(JSON.parse(saved));
-      }
-    } catch (e) {
-      console.error('Error loading recent searches:', e);
-    }
-  }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Fetch trending from TMDB on mount
-  useEffect(() => {
-    const fetchTrending = async () => {
-      try {
-        const response = await fetch('/api/trending/all/week');
-        if (response.ok) {
-          const data = await response.json();
-          const trending = data.results
-            ?.slice(0, MAX_TRENDING)
-            .map(item => ({
-              id: item.id,
-              name: item.title || item.name,
-              title: item.title,
-              media_type: item.media_type,
-              type: item.media_type,
-              backdrop_path: item.backdrop_path,
-              poster_path: item.poster_path,
-              overview: item.overview,
-              vote_average: item.vote_average,
-              genre_ids: item.genre_ids,
-              release_date: item.release_date,
-              first_air_date: item.first_air_date
-            })) || [];
-          setTrendingSearches(trending);
-        }
-      } catch (e) {
-        console.error('Error fetching trending:', e);
-      }
-    };
-    fetchTrending();
-  }, []);
+  // STATE, not a ref. This value is read while rendering (it decides which icon
+  // the button shows), so React has to re-render when it changes. v3 used a ref
+  // here and the icon silently went stale on resize — see plan section 0.2.
+  const [isDesktopSearch, setIsDesktopSearch] = useState(
+    () => window.matchMedia(DESKTOP_SEARCH_MQ).matches
+  );
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [navQuery, setNavQuery] = useState('');
+
+  const navInputRef = useRef(null);
+  const inlineWrapRef = useRef(null);
+  const returnPathRef = useRef('/');   // where ✕ / Escape sends you back to
+  const keepOpenRef = useRef(false);   // survive the route change on manual clear
+
+  const onSearchPage = location.pathname === '/search';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -79,80 +46,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Function to get poster image URL
-  const getPosterUrl = (posterPath) => {
-    if (!posterPath) return null;
-    return `https://image.tmdb.org/t/p/w92${posterPath}`;
-  };
-
-  // Save a search to recent searches
-  const saveRecentSearch = useCallback((query) => {
-    if (!query || query.trim().length === 0) return;
-
-    const trimmed = query.trim();
-    const updated = [trimmed, ...recentSearches.filter(s => s !== trimmed)].slice(0, MAX_RECENT_SEARCHES);
-    setRecentSearches(updated);
-    try {
-      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Error saving recent searches:', e);
-    }
-  }, [recentSearches]);
-
-  // Remove a recent search
-  const removeRecentSearch = useCallback((query, e) => {
-    e.stopPropagation();
-    const updated = recentSearches.filter(s => s !== query);
-    setRecentSearches(updated);
-    try {
-      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Error removing recent search:', e);
-    }
-  }, [recentSearches]);
-
-  // Clear search input
-  const clearSearchInput = useCallback(() => {
-    setSearchQuery('');
-    if (onSearch) {
-      onSearch('');
-    }
-  }, [onSearch]);
-
-  // Handle suggestion click (recent or trending)
-  const handleSuggestionClick = useCallback((query) => {
-    setSearchQuery(query);
-    if (onSearch) {
-      onSearch(query);
-    }
-  }, [onSearch]);
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-
-    // Clear previous debounce timer
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // Debounce search API call by 300ms
-    debounceTimerRef.current = setTimeout(() => {
-      if (onSearch) {
-        onSearch(value);
-      }
-    }, 300);
-  };
-
-  const handleInputFocus = () => {
-    setIsSearchFocused(true);
-  };
-
-  const handleSearchBlur = () => {
-    setTimeout(() => {
-      setIsSearchFocused(false);
-    }, 200);
-  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -162,28 +55,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
     setIsMenuOpen(false);
   };
 
-  const handleItemSelect = (item) => {
-    // Save the search query to recent searches
-    if (searchQuery) {
-      saveRecentSearch(searchQuery);
-    }
-    if (onItemClick) {
-      onItemClick(item);
-    }
-    setSearchQuery('');
-    setIsSearchFocused(false);
-    setIsMobileSearchOpen(false);
-  };
-
-  const toggleMobileSearch = () => {
-    setIsMobileSearchOpen(!isMobileSearchOpen);
-    if (!isMobileSearchOpen) {
-      setTimeout(() => {
-        const input = document.querySelector('.navbar-search-input');
-        if (input) input.focus();
-      }, 100);
-    }
-  };
 
   // Bottom sheet drag handlers
   const handleTouchStart = useCallback((e) => {
@@ -227,10 +98,138 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_SEARCH_MQ);
+    const onChange = (e) => setIsDesktopSearch(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
 
-  // Show suggestions when focused and no query
-  const showSuggestions = isSearchFocused && !searchQuery && (recentSearches.length > 0 || trendingSearches.length > 0);
+  // Three rules, in order:
+  //   not a desktop  -> always collapsed (the page input is the UI there)
+  //   on /search     -> always expanded; it is the only input on that page
+  //   anywhere else  -> collapsed by default; the button opens it
+  //
+  // `keepOpenRef` is an escape hatch for one case: emptying the field by hand
+  // navigates off /search but must leave the bar open so the user can keep
+  // typing. Without it, this effect would fire on that route change and
+  // collapse the bar out from under them.
+  useEffect(() => {
+    if (!isDesktopSearch) { setIsSearchOpen(false); return; }
+    if (onSearchPage) {
+      setIsSearchOpen(true);
+      const id = setTimeout(() => navInputRef.current?.focus(), 0);
+      return () => clearTimeout(id);
+    }
+    if (keepOpenRef.current) { keepOpenRef.current = false; return; }
+    setIsSearchOpen(false);
+  }, [onSearchPage, isDesktopSearch]);
 
+  useEffect(() => {
+    if (!isDesktopSearch || !isSearchOpen) return;
+
+    const trimmed = navQuery.trim();
+    const urlQuery = onSearchPage ? (searchParams.get('q') || '') : '';
+    if (trimmed === urlQuery) return;
+
+    const timer = setTimeout(() => {
+      if (onSearchPage) {
+        // Already on /search: just rewrite ?q=. `replace`, not `push` —
+        // otherwise every debounced keystroke becomes a history entry and
+        // Back walks the query backwards one word at a time.
+        setSearchParams(trimmed ? { q: trimmed } : {}, { replace: true });
+      } else if (trimmed) {
+        // First real keystroke from another page: this is the navigation.
+        navigate(`/search?q=${encodeURIComponent(trimmed)}`);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [navQuery, isSearchOpen, isDesktopSearch, onSearchPage,
+    searchParams, setSearchParams, navigate]);
+
+  useEffect(() => {
+    if (!onSearchPage) return;
+    const urlQuery = searchParams.get('q') || '';
+    setNavQuery(prev => (prev.trim() === urlQuery ? prev : urlQuery));
+  }, [onSearchPage, searchParams]);
+
+  const openNavSearch = () => {
+    // Remember where to return to. Include the query string so, e.g.,
+    // /discover?genre=28 comes back intact.
+    if (!onSearchPage) {
+      returnPathRef.current = location.pathname + location.search;
+    }
+    setIsSearchOpen(true);
+    setTimeout(() => navInputRef.current?.focus(), 0);
+  };
+
+  const clearNavSearch = () => {
+    setNavQuery('');
+    navInputRef.current?.focus();
+  };
+
+  // Collapse first, navigate after. Both happen in the same React commit, so
+  // routing away in the same tick unmounts /search while the width transition
+  // is still running and the bar snaps shut instead of sliding. One frame of
+  // delay lets the collapsed width take effect first.
+  const exitNavSearch = () => {
+    setNavQuery('');
+    setIsSearchOpen(false);
+    const target = returnPathRef.current || '/';
+    requestAnimationFrame(() => navigate(target));
+  };
+
+  const handleNavKeyDown = (e) => {
+    if (e.key !== 'Escape') return;
+    if (navQuery) setNavQuery('');   // first press: clear
+    else exitNavSearch();            // second press: leave
+  };
+
+  // Emptying the field by hand (backspace/select-all-delete) leaves /search and
+  // discards the results, but keeps the bar OPEN and focused — the user is
+  // mid-edit. Only ✕ or an outside click collapses it. Guarded on
+  // `onSearchPage` so clearing the field elsewhere just empties it.
+  // `prevQueryRef` detects the non-empty -> empty transition; without it,
+  // landing on /search with an empty field would trigger a spurious exit.
+  const prevQueryRef = useRef(navQuery);
+  useEffect(() => {
+    if (!isDesktopSearch || !onSearchPage || !isSearchOpen) return;
+    const wasNonEmpty = prevQueryRef.current !== '';
+    prevQueryRef.current = navQuery;
+    if (!wasNonEmpty || navQuery !== '') return;
+    keepOpenRef.current = true;   // tell the route effect not to collapse
+    navigate(returnPathRef.current || '/');
+  }, [navQuery, isDesktopSearch, onSearchPage, isSearchOpen, navigate]);
+
+  // Mobile/tablet/TV only: while on /search the navbar button is a "close" control.
+  const isMobileSearchExit = !isDesktopSearch && onSearchPage;
+
+  const handleSearchBtnClick = () => {
+    if (isDesktopSearch) {
+      openNavSearch();               // expand in place — no navigation yet
+      return;
+    }
+    if (onSearchPage) {
+      exitNavSearch();               // the ✕
+      return;
+    }
+    returnPathRef.current = location.pathname + location.search;
+    navigate('/search');             // non-desktop: go to the page with the big input
+  };
+
+  // Only when: desktop, open, empty, and NOT on /search. On /search this is the
+  // page's only input, so collapsing it would leave nothing to type into.
+  useEffect(() => {
+    if (!isDesktopSearch || !isSearchOpen || navQuery || onSearchPage) return;
+    const onPointerDown = (e) => {
+      if (inlineWrapRef.current && !inlineWrapRef.current.contains(e.target)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => document.removeEventListener('pointerdown', onPointerDown);
+  }, [isDesktopSearch, isSearchOpen, navQuery, onSearchPage]);
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`} data-nav-section="navbar">
@@ -330,30 +329,49 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
         {/* PWA Install Button - Desktop View */}
         <InstallAppButton />
 
-        {/* Desktop Search Button - Opens Modal */}
+        {/* Single search control at every breakpoint: magnifier, or ✕ while on
+            /search on non-desktop devices. */}
         <button
-          className="navbar-search-btn"
-          onClick={() => setIsSearchModalOpen(true)}
-          aria-label="Search"
+          className={`navbar-search-btn ${isSearchOpen ? 'is-expanded' : ''}`}
+          onClick={handleSearchBtnClick}
+          aria-label={isMobileSearchExit ? 'Close search' : 'Search'}
+          aria-expanded={isDesktopSearch ? isSearchOpen : undefined}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <path d="m21 21-4.3-4.3"></path>
-          </svg>
+          {isMobileSearchExit ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.3-4.3"></path>
+            </svg>
+          )}
         </button>
 
-        {/* Mobile Search Button - Opens Modal */}
-        <button
-          className="mobile-search-btn"
-          onClick={() => setIsSearchModalOpen(true)}
-          aria-label="Search"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Desktop inline search bar. Hidden by default; the desktop @media block
+            in components.css is what reveals it. */}
+        <div ref={inlineWrapRef} className={`navbar-inline-search ${isSearchOpen ? 'open' : ''}`}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
           </svg>
-          <span className="mobile-search-label">Search</span>
-        </button>
+          <input
+            ref={navInputRef}
+            className="navbar-inline-input"
+            type="text"
+            placeholder="Search for a title, people or genre..."
+            value={navQuery}
+            onChange={(e) => setNavQuery(e.target.value)}
+            onKeyDown={handleNavKeyDown}
+            autoComplete="off"
+            aria-label="Search movies and TV shows"
+          />
+          {navQuery && (
+            <button className="navbar-inline-clear" onClick={clearNavSearch} aria-label="Clear search">×</button>
+          )}
+        </div>
 
         <button
           className={`menu-toggle ${isMenuOpen ? 'open' : ''}`}
@@ -504,17 +522,6 @@ const Navbar = ({ onSearch, searchResults, onItemClick, isSearching }) => {
 
       </div>
 
-      {/* Search Modal */}
-      {isSearchModalOpen && (
-        <SearchModal
-          searchResults={searchResults}
-          onSearch={onSearch}
-          onClose={() => setIsSearchModalOpen(false)}
-          onItemClick={onItemClick}
-          isSearching={isSearching}
-          trendingItems={trendingSearches}
-        />
-      )}
     </nav >
   );
 };

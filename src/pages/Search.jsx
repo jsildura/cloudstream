@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import MetaTags from '../components/MetaTags';
@@ -6,17 +6,16 @@ import DiscoverGrid from '../components/DiscoverGrid';
 import { useTMDB } from '../hooks/useTMDB';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import { useSearchFeed } from '../hooks/useSearchFeed';
-import { loadRecent, saveRecent, removeRecent, clearRecent } from '../utils/searchHistory';
+import { resolveGenreQuery } from '../constants/genres';
+import PeopleStrip from '../components/PeopleStrip';
 import '../components/TrendingSection.css';
 import './Search.css';
 
-const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 350;   // was 250. Keep in lockstep with Navbar.jsx
+// Must match Navbar.jsx and the desktop @media blocks in components.css /
+// Search.css exactly. See plan section 2.
+const DESKTOP_SEARCH_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: fine)';
 const MAX_TOP_SEARCHES = 10;
-
-// Stable identity: DiscoverGrid takes an enrichedMap, and search doesn't
-// enrich (see plan section 4.4). A literal here would be a new Map every
-// render and would defeat memoisation downstream.
-const NO_ENRICHMENT = new Map();
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -27,7 +26,6 @@ const Search = () => {
   const urlQuery = searchParams.get('q') || '';
   const [input, setInput] = useState(urlQuery);
 
-  const [recent, setRecent] = useState(loadRecent);
   const [topSearches, setTopSearches] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,9 +33,18 @@ const Search = () => {
 
   const { movieGenres, tvGenres } = useTMDB();
   const { closeNow } = useHoverPreview();
-  const feed = useSearchFeed(urlQuery);
 
-  useEffect(() => { inputRef.current?.focus(); }, []);
+  // Check if the query matches a genre name (e.g. "Action" → genre 28)
+  const genreQuery = useMemo(() => resolveGenreQuery(urlQuery), [urlQuery]);
+  const feed = useSearchFeed(urlQuery, genreQuery);
+
+  // On desktop the page input is display:none and the navbar input has focus
+  // instead, so focusing this would silently drop focus to <body>.
+  useEffect(() => {
+    if (!window.matchMedia(DESKTOP_SEARCH_MQ).matches) {
+      inputRef.current?.focus();
+    }
+  }, []);
 
   // Typing → URL, debounced. `replace` not `push`: otherwise every debounced
   // keystroke becomes a history entry and Back walks the query backwards
@@ -82,7 +89,9 @@ const Search = () => {
   const runQuery = useCallback((q) => {
     setInput(q);
     setSearchParams({ q }, { replace: true });
-    inputRef.current?.focus();
+    if (!window.matchMedia(DESKTOP_SEARCH_MQ).matches) {
+      inputRef.current?.focus();
+    }
   }, [setSearchParams]);
 
   const handleItemClick = useCallback((item) => {
@@ -91,18 +100,20 @@ const Search = () => {
     const genreMap = type === 'movie' ? movieGenres : tvGenres;
     const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
 
-    // Only now is the query worth remembering — the user acted on it.
-    if (urlQuery) setRecent(saveRecent(urlQuery));
-
     // Modal lazily loads cast + contentRating itself, so open immediately.
     setSelectedItem({ ...item, type, media_type: type, genres: genreNames });
     setIsModalOpen(true);
-  }, [closeNow, movieGenres, tvGenres, urlQuery]);
+  }, [closeNow, movieGenres, tvGenres]);
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedItem(null);
   };
+
+  const handlePersonClick = useCallback((person) => {
+    closeNow();
+    navigate(`/person/${person.id}`);
+  }, [closeNow, navigate]);
 
   const handleKeyDown = (e) => {
     if (e.key !== 'Escape') return;
@@ -125,8 +136,8 @@ const Search = () => {
 
       <div className="search-page-input-wrap">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-             fill="none" stroke="currentColor" strokeWidth="2"
-             strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.3-4.3" />
         </svg>
@@ -134,7 +145,7 @@ const Search = () => {
           ref={inputRef}
           type="text"
           className="search-page-input"
-          placeholder="Search for a show, movie, genre..."
+          placeholder="Search for a title, people or genre"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -148,74 +159,69 @@ const Search = () => {
         )}
       </div>
 
-      {showEmptyState ? (
+      {topSearches.length > 0 && (
+        <section className="search-page-section">
+          {/* Inline list, not chips: "Top Searches: a | b | c". The
+              separators are decorative, so they sit outside the buttons. */}
+          <p className="search-page-top">
+            <span className="search-page-top-label">Top Searches:</span>
+            {topSearches.map((item, i) => {
+              const label = item.title || item.name;
+              return (
+                <React.Fragment key={`${item.media_type}-${item.id}`}>
+                  {i > 0 && <span className="search-page-top-sep" aria-hidden="true">|</span>}
+                  <button className="search-page-top-link" onClick={() => runQuery(label)}>
+                    {label}
+                  </button>
+                </React.Fragment>
+              );
+            })}
+          </p>
+        </section>
+      )}
+
+      {!showEmptyState && (
         <>
-          {recent.length > 0 && (
-            <section className="search-page-section">
-              <div className="search-page-section-head">
-                {/* Our feature, not a Netflix one — Netflix hides search history. */}
-                <h2>Recent searches</h2>
-                <button
-                  className="search-page-clear-all"
-                  onClick={() => setRecent(clearRecent())}
-                >
-                  Clear all
-                </button>
-              </div>
-              <div className="search-page-chips">
-                {recent.map(term => (
-                  <span key={term} className="search-page-chip" role="button" tabIndex={0}
-                        onClick={() => runQuery(term)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); runQuery(term); }
-                        }}>
-                    {term}
-                    <span
-                      className="search-page-chip-x"
-                      role="button"
-                      tabIndex={-1}
-                      aria-label={`Remove ${term}`}
-                      onClick={(e) => { e.stopPropagation(); setRecent(removeRecent(term)); }}
-                    >
-                      ×
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </section>
+          {/* People strip: horizontal row of person cards above the grid */}
+          {feed.people && feed.people.length > 0 && (
+            <PeopleStrip people={feed.people} onSelect={handlePersonClick} />
           )}
 
-          {topSearches.length > 0 && (
-            <section className="search-page-section">
-              <div className="search-page-section-head"><h2>Top searches</h2></div>
-              <div className="search-page-chips">
-                {topSearches.map(item => {
-                  const label = item.title || item.name;
-                  return (
-                    <button key={`${item.media_type}-${item.id}`} className="search-page-chip"
-                            onClick={() => runQuery(label)}>
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
+          <DiscoverGrid
+            items={feed.items}
+            enrichedMap={feed.enrichedMap}
+            mediaType="movie"
+            loading={feed.loading}
+            error={feed.error}
+            emptyMessage={
+              feed.personMode
+                ? `No content found for ${feed.personMode.name}.`
+                : genreQuery
+                  ? `No titles in the ${genreQuery.displayName} category were found.`
+                  : feed.people && feed.people.length > 0
+                    ? `No titles found for "${urlQuery}", but check the people above.`
+                    : `No results for "${urlQuery}". Try a different spelling.`
+            }
+            isFetchingMore={feed.isFetchingMore}
+            sentinelRef={feed.sentinelRef}
+            canLoadMore={feed.canLoadMore}
+            onItemClick={handleItemClick}
+            gridClassName={`search-results-grid ${feed.isRefreshing ? 'is-refreshing' : ''}`}
+            variant="search"
+          />
+
+          {/* Lazy-enrich sentinel: while person-mode cards below the current
+              logo chunk remain, bump the chunk as the user scrolls. Keyed so
+              every bump re-observes and re-fires while in view. */}
+          {feed.personMode && feed.personEnrichCount < feed.items.length && (
+            <div
+              key={feed.personEnrichCount}
+              ref={feed.personSentinelRef}
+              className="person-enrich-sentinel"
+              aria-hidden="true"
+            />
           )}
         </>
-      ) : (
-        <DiscoverGrid
-          items={feed.items}
-          enrichedMap={NO_ENRICHMENT}
-          mediaType="movie"           /* fallback only; each item carries its own */
-          loading={feed.loading}
-          error={feed.error}
-          emptyMessage={`No results for "${urlQuery}". Try a different spelling.`}
-          isFetchingMore={feed.isFetchingMore}
-          sentinelRef={feed.sentinelRef}
-          canLoadMore={feed.canLoadMore}
-          onItemClick={handleItemClick}
-          gridClassName="search-results-grid"
-        />
       )}
 
       {isModalOpen && selectedItem && (
