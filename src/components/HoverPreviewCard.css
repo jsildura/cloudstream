@@ -264,36 +264,44 @@
     flex-wrap: wrap;
 }
 
-/* Both badges share one geometry so their heights and optical centering match
-   regardless of font-size: fixed height + line-height:1 + centered flex. A
-   line-height > 1 would leave uneven space above/below all-caps glyphs, which
-   is what makes metadata badges look vertically off. */
+/* Both badges share one geometry so their heights and optical centering match:
+   fixed height + line-height:1 + centered flex. A line-height > 1 would leave
+   uneven space above/below all-caps glyphs, which is what makes metadata badges
+   look vertically off. They also share ONE font-size and ONE tracking — an
+   adjacent pair at different type sizes reads as misaligned, not as hierarchy.
+
+   text-indent compensates for the trailing letter-space. Tracking is applied
+   after every character including the last, so the text box is one tracking unit
+   wider than the ink and centered flex leaves the ink half a unit left of true
+   center. A one-unit indent widens the box symmetrically and lands the ink dead
+   center. Being in em, it re-derives itself at every breakpoint below. */
 .hover-preview-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 19px;
+    height: 20px;
     padding: 0 7px;
-    border: 1px solid rgba(255, 255, 255, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.45);
     border-radius: 4px;
     font-size: 0.7rem;
-    font-weight: 650;
-    letter-spacing: 0.02em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-indent: 0.04em;
     color: rgba(255, 255, 255, 0.92);
     line-height: 1;
     white-space: nowrap;
     text-transform: uppercase;
+    /* Ratings are alphanumeric (PG-13, TV-14) — even digit widths. */
+    font-variant-numeric: tabular-nums;
     user-select: none;
 }
 
-/* HD is a secondary quality chip, not a peer of the rating: same frame, but a
-   soft fill instead of an outline so it recedes without looking misaligned. */
+/* HD is a secondary quality marker, not a peer of the rating. It recedes purely
+   by contrast — identical frame, dimmer stroke and text. Giving it a different
+   treatment (filled vs outlined) is what made the pair look half-designed. */
 .hover-preview-hd {
-    border-color: transparent;
-    background: rgba(255, 255, 255, 0.11);
-    font-size: 0.66rem;
-    letter-spacing: 0.06em;
-    color: rgba(255, 255, 255, 0.72);
+    border-color: rgba(255, 255, 255, 0.26);
+    color: rgba(255, 255, 255, 0.62);
 }
 
 /* Hairline rule between the badge pair and the plain-text metadata. */
@@ -446,16 +454,14 @@
         gap: 9px;
     }
 
-    /* Height scales with font-size to keep the badges from clipping. */
+    /* Height scales with font-size to keep the badges from clipping. Both badges
+       are covered by this one rule — no per-badge font-size override, so the pair
+       stays matched at every breakpoint. */
     .hover-preview-badge {
         height: 30px;
         padding: 0 12px;
         font-size: 1.2rem;
         border-radius: 6px;
-    }
-
-    .hover-preview-hd {
-        font-size: 1.13rem;
     }
 
     .hover-preview-meta-divider {
@@ -560,10 +566,6 @@
         font-size: 2.4rem;
         border-radius: 10px;
         border-width: 2px;
-    }
-
-    .hover-preview-hd {
-        font-size: 2.25rem;
     }
 
     .hover-preview-meta-divider {

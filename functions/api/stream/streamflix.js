@@ -3,9 +3,11 @@ import { routeSources } from '../../../src/api/stream/routing.js';
 
 // Best-effort resolve cache: repeat plays of the same title re-serve the last
 // result instead of re-hitting zxcstream's backend (fewer traces, faster load).
-// Successes live 10 min; failures 5 min so dead probes (e.g. S0 specials) don't
-// hammer all upstream servers on every attempt.
-const CACHE_TTL_MS = 10 * 60 * 1000;
+// Successes live 1 hour — sources rarely change that often, and the longer TTL
+// cuts repeat upstream hits (and detection surface) for back-and-forth
+// watchers; failures 5 min so dead probes (e.g. S0 specials) don't hammer all
+// upstream servers on every attempt.
+const CACHE_TTL_MS = 60 * 60 * 1000;
 const FAIL_TTL_MS = 5 * 60 * 1000;
 
 function cacheKey(meta) {

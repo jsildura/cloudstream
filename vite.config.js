@@ -16,6 +16,19 @@ const corsProxyPlugin = () => ({
     const devEnv = loadEnv('development', process.cwd(), '');
     const ZXC_SECRET = process.env.ZXC_STREAM_SECRET || devEnv.ZXC_STREAM_SECRET;
 
+    // Dev-only resolve cache, mirroring production
+    // (functions/api/stream/streamflix.js): repeat plays re-serve the last
+    // result instead of re-hitting zxcstream's backend — fewer traces, faster
+    // loads, and less chance of tripping upstream rate limits. Successes live
+    // 1 hour; failures 5 minutes so dead probes (e.g. S0 specials) don't
+    // hammer upstream on every attempt. In-memory: resets when the dev server
+    // restarts, which is fine for development.
+    const devResolveCache = new Map();
+    const DEV_CACHE_TTL_MS = 60 * 60 * 1000;
+    const DEV_FAIL_TTL_MS = 5 * 60 * 1000;
+    const devCacheKey = (meta) =>
+      `${meta.tmdbId}/${meta.mediaType}/${meta.season ?? 0}/${meta.episode ?? 0}`;
+
     // Mock visit endpoint
     server.middlewares.use('/api/visit', (req, res, _next) => {
       res.setHeader('Content-Type', 'application/json');
@@ -69,12 +82,35 @@ const corsProxyPlugin = () => ({
       req.on('end', async () => {
         try {
           const meta = JSON.parse(body || '{}');
+          // Same validation as production so the cache key is always valid.
+          if (!meta.tmdbId || !['movie', 'tv'].includes(meta.mediaType)) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: false, reason: 'bad_request' }));
+            return;
+          }
+
+          const key = devCacheKey(meta);
+          const cached = devResolveCache.get(key);
+          if (cached && Date.now() - cached.at < cached.ttl) {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.end(JSON.stringify(cached.body));
+            return;
+          }
+
           const { resolveStream } = await import('./src/api/stream/zxcstream.js');
           const { routeSources } = await import('./src/api/stream/routing.js');
           const result = await resolveStream(meta, ZXC_SECRET);
+          const routed = routeSources(result);
+          devResolveCache.set(key, {
+            body: routed,
+            at: Date.now(),
+            ttl: result.success ? DEV_CACHE_TTL_MS : DEV_FAIL_TTL_MS,
+          });
           res.setHeader('Content-Type', 'application/json');
           res.setHeader('Access-Control-Allow-Origin', '*');
-          res.end(JSON.stringify(routeSources(result)));
+          res.end(JSON.stringify(routed));
         } catch (err) {
           console.error('Stream resolve error:', err);
           res.statusCode = 500;

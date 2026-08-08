@@ -829,7 +829,6 @@ const Watch = () => {
           <>
             {servers[currentServer].directPlayer && !useIframe ? (
               <DirectPlayer
-                server="zxcstream"
                 type={type}
                 id={id}
                 season={currentSeason}

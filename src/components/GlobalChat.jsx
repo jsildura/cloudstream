@@ -462,11 +462,19 @@ function GlobalChat() {
                             setIsSetup(true);
                             setMessages([]);
                         } else if (snap.exists()) {
-                            // Keep userDataRef in sync
-                            userDataRef.current = snap.val();
+                            // Keep userDataRef in sync with the DB, but
+                            // preserve the in-memory isAdmin flag when the DB
+                            // node doesn't carry it (legacy dev path elevates
+                            // only in memory — the rules block a client-side
+                            // isAdmin:true write without the proxy).
+                            const dbData = snap.val();
+                            if (userDataRef.current.isAdmin && !dbData.isAdmin) {
+                                dbData.isAdmin = true;
+                            }
+                            userDataRef.current = dbData;
                             // Clear the admin-login guard once the real node
                             // arrives from the server.
-                            if (adminLoginGuardRef.current && snap.val().isAdmin) {
+                            if (adminLoginGuardRef.current && dbData.isAdmin) {
                                 adminLoginGuardRef.current = false;
                             }
                         }
@@ -1116,8 +1124,11 @@ function GlobalChat() {
             });
             // 404/405 = no proxy in this environment → fall back to legacy.
             if (res.status === 404 || res.status === 405) return { ok: false, unreachable: true };
-            const data = await res.json().catch(() => ({}));
-            return { ok: !!(data && data.ok), unreachable: false };
+            const data = await res.json().catch(() => null);
+            // If the response wasn't valid JSON (e.g. Vite's SPA fallback
+            // served index.html for the /api/* route), treat as unreachable.
+            if (!data) return { ok: false, unreachable: true };
+            return { ok: !!data.ok, unreachable: false };
         } catch (e) {
             // Network error = proxy not running here → legacy fallback.
             console.warn('Admin proxy unreachable, using legacy verification:', e);
@@ -1299,12 +1310,13 @@ function GlobalChat() {
             // Only the admin can broadcast to everyone. A non-admin who types
             // "@everyone" manually just sends plain text (no broadcast flag,
             // so it never triggers the FAB badge).
-            const isBroadcast = userDataRef.current.isAdmin && /\B@everyone\b/i.test(text);
+            const isBroadcast = !!(userDataRef.current.isAdmin && /\B@everyone\b/i.test(text));
 
             const message = {
                 uid: currentUserRef.current.uid,
                 nickname: userDataRef.current.nickname,
                 avatarUrl: userDataRef.current.avatarUrl,
+                isAdmin: userDataRef.current.isAdmin || false,
                 adminBadge: userDataRef.current.adminBadge || null,
                 text,
                 broadcast: isBroadcast,
@@ -1442,6 +1454,7 @@ function GlobalChat() {
                 nickname: userDataRef.current.nickname,
                 avatarUrl: userDataRef.current.avatarUrl,
                 isAdmin: userDataRef.current.isAdmin || false,
+                adminBadge: userDataRef.current.adminBadge || null,
                 text: '',
                 mediaUrl,
                 mediaType: capturedMedia.type,

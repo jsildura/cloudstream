@@ -95,7 +95,15 @@
 }
 
 .direct-player-error {
+  /* Full-bleed so it reads over the (now visible) video frame behind it. */
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-align: center;
   font-size: 1.2rem;
+  background: rgba(0, 0, 0, 0.75);
 }
 
 @media (prefers-reduced-motion: reduce) {

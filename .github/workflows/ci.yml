@@ -1,0 +1,63 @@
+name: CI
+
+# Run on every push to main and on every pull request (any target branch).
+"on":
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel an in-progress run when a newer commit lands on the same branch,
+# so superseded checks don't keep burning runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # NOTE: package-lock.json is intentionally gitignored in this repo,
+          # so the npm cache key can't be derived and installs resolve fresh
+          # versions within semver ranges. Committing the lockfile would make
+          # installs deterministic and enable `npm ci`.
+          cache: npm
+
+      - run: npm install
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Non-blocking on purpose: the repo carries 114 pre-existing eslint errors
+    # across 41 files (mostly no-unused-vars and react-hooks/exhaustive-deps),
+    # so a blocking lint would red-flag every merge until that debt is paid.
+    # This job still surfaces new lint debt in check annotations. Flip
+    # `continue-on-error: false` once the debt is cleared.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install
+
+      - run: npm run lint
