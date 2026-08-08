@@ -26,11 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          # NOTE: package-lock.json is intentionally gitignored in this repo,
-          # so the npm cache key can't be derived and installs resolve fresh
-          # versions within semver ranges. Committing the lockfile would make
-          # installs deterministic and enable `npm ci`.
-          cache: npm
+          # No `cache: npm` here: setup-node hard-errors when no lockfile is
+          # present, and package-lock.json is intentionally gitignored in this
+          # repo. Committing the lockfile would enable deterministic installs
+          # (npm ci) plus the cache.
 
       - run: npm install
 
@@ -56,7 +55,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
 
       - run: npm install
 
