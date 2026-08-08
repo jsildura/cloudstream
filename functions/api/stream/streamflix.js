@@ -31,7 +31,11 @@ async function cachePut(key, data, ttlMs) {
     await caches.default.put(
       key,
       new Response(JSON.stringify({ data, cachedAt: Date.now(), ttl: ttlMs }), {
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+        // NOT no-store: Cloudflare's Cache API silently rejects cache.put()
+        // (413) when the response instructs not to cache, which made the whole
+        // resolve cache a silent no-op in production. Our own cachedAt/ttl
+        // check enforces freshness, so a cacheable header is safe here.
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'max-age=3600' },
       })
     );
   } catch {
