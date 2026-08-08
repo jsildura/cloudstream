@@ -16,7 +16,7 @@ function getOrCreateUid() {
             localStorage.setItem(STORAGE_KEY, uid);
         }
         return uid;
-    } catch (e) {
+    } catch {
         // Fallback for SSR or localStorage unavailable
         return 'anon-' + Math.random().toString(36).substring(2, 10);
     }

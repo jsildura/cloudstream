@@ -24,7 +24,7 @@ async function checkChannel(channel) {
   const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const response = await fetch(channel.url, {
+    await fetch(channel.url, {
       method: 'HEAD',
       mode: 'no-cors',
       signal: controller.signal,
@@ -33,7 +33,7 @@ async function checkChannel(channel) {
     // In no-cors mode, response.type is 'opaque' and status is 0,
     // but a successful fetch (no throw) means the server responded.
     return { id: channel.id, status: 'online' };
-  } catch (err) {
+  } catch {
     clearTimeout(timeoutId);
     return { id: channel.id, status: 'offline' };
   }

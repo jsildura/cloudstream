@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, RefreshCw, ChevronDown, MoreHorizontal } from 'lucide-react';
 import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import './LyricsPopup.css';
@@ -16,7 +16,7 @@ import AmLyricsWrapper from './AmLyricsWrapper';
  */
 
 const LyricsPopup = ({ isOpen, onClose }) => {
-    const { currentTrack, currentTime, isPlaying, seek } = useMusicPlayer();
+    const { currentTrack } = useMusicPlayer();
 
     const [dominantColor, setDominantColor] = useState({ r: 30, g: 40, b: 60 });
     const colorCanvasRef = useRef(null);

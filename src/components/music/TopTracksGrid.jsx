@@ -41,8 +41,7 @@ const TopTracksGrid = ({
     onDownload,
     maxTracks = 10,
     title,
-    currentTrackId = null,
-    isPlaying = false
+    currentTrackId = null
 }) => {
     const displayTracks = tracks.slice(0, maxTracks);
 

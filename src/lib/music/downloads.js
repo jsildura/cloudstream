@@ -16,16 +16,6 @@ import JSZip from 'jszip';
 import { API_CONFIG } from './musicConfig';
 
 /**
- * Get proxied URL for images if needed
- */
-function getProxyUrl(url) {
-    if (API_CONFIG.useProxy && API_CONFIG.proxyUrl) {
-        return `${API_CONFIG.proxyUrl}?url=${encodeURIComponent(url)}`;
-    }
-    return url;
-}
-
-/**
  * Detect image format from binary data
  */
 function detectImageFormat(data) {
@@ -632,7 +622,7 @@ export async function downloadAlbum(album, tracks, quality, callbacks, options =
                                 coverAdded = true;
                             }
                         }
-                    } catch (e) {
+                    } catch {
                         // ignore
                     }
                 }

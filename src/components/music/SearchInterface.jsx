@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
     Search,
     X,
@@ -17,7 +17,7 @@ import { useMusicPlayer } from '../../contexts/MusicPlayerContext';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';
 import { useMusicSearch, SEARCH_TABS, TAB_CONFIG } from '../../contexts/MusicSearchContext';
 import { isTidalUrl, parseTidalUrl } from '../../lib/music/urlParser';
-import { isSupportedStreamingUrl, convertToTidal, isSpotifyPlaylistUrl } from '../../lib/music/songlink';
+import { isSupportedStreamingUrl, convertToTidal } from '../../lib/music/songlink';
 import { useDownloadContext } from '../../contexts/DownloadContext';
 
 import SettingsButton from './SettingsMenu';
@@ -78,12 +78,11 @@ const SearchInterface = ({ onNavigate }) => {
     const isQueryUrl = query.trim().length > 0 && (
         isTidalUrl(query.trim()) || isSupportedStreamingUrl(query.trim())
     );
-    const isSpotifyPlaylist = query.trim().length > 0 && isSpotifyPlaylistUrl(query.trim());
 
     /**
      * Perform search with abort capability to cancel stale requests
      */
-    const performSearch = useCallback(async (searchQuery, retryAttempt = 0) => {
+    const performSearch = useCallback(async (searchQuery) => {
         if (!searchQuery.trim()) {
             clearSearch();
             return;
@@ -276,7 +275,6 @@ const SearchInterface = ({ onNavigate }) => {
     }, []);
 
     const currentResults = results[activeTab] ?? { items: [], totalNumberOfItems: 0 };
-    const hasResults = Object.values(results).some(r => r.items.length > 0);
 
     return (
         <div className="search-interface">
@@ -344,7 +342,7 @@ const SearchInterface = ({ onNavigate }) => {
 
             {/* Tabs */}
             <div className="search-interface__tabs">
-                {TAB_CONFIG.map(({ id, label, icon: Icon }) => {
+                {TAB_CONFIG.map(({ id, label }) => {
                     const count = results[id]?.totalNumberOfItems ?? 0;
                     return (
                         <button

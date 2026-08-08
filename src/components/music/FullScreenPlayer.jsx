@@ -30,7 +30,7 @@ const formatTime = (seconds) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
+const FullScreenPlayer = ({ onClose }) => {
     const {
         currentTrack,
         isPlaying,
@@ -42,11 +42,7 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
         setCurrentTime,
         hasNext,
         hasPrevious,
-        shuffleQueue,
-        repeatMode,
-        toggleRepeat,
-        enqueue,
-        enqueueNext
+        enqueue
     } = useMusicPlayer();
 
     const navigate = useNavigate();
@@ -91,7 +87,7 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
             if (document.fullscreenElement) {
                 try {
                     document.exitFullscreen().catch(() => { });
-                } catch (e) { /* ignore */ }
+                } catch { /* ignore */ }
             }
         };
     }, []);
@@ -164,17 +160,6 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
         onClose();
     };
 
-    if (!currentTrack) return null;
-
-    const coverUrl = currentTrack.album?.cover
-        ? `https://resources.tidal.com/images/${currentTrack.album.cover.replace(/-/g, '/')}/1280x1280.jpg`
-        : currentTrack.cover
-            ? `https://resources.tidal.com/images/${currentTrack.cover.replace(/-/g, '/')}/1280x1280.jpg`
-            : null;
-
-    const artistName = currentTrack.artist?.name ?? currentTrack.artists?.[0]?.name ?? 'Unknown Artist';
-    const progress = duration > 0 ? ((isSeeking ? seekPosition : currentTime) / duration) * 100 : 0;
-
     const [showBackground, setShowBackground] = useState(false);
 
     // Defer heavy background render until animation completes
@@ -199,6 +184,17 @@ const FullScreenPlayer = ({ onClose, onLyricsOpen }) => {
             document.removeEventListener('tv:prev', onPrev);
         };
     }, [togglePlay, next, previous, hasNext, hasPrevious]);
+
+    if (!currentTrack) return null;
+
+    const coverUrl = currentTrack.album?.cover
+        ? `https://resources.tidal.com/images/${currentTrack.album.cover.replace(/-/g, '/')}/1280x1280.jpg`
+        : currentTrack.cover
+            ? `https://resources.tidal.com/images/${currentTrack.cover.replace(/-/g, '/')}/1280x1280.jpg`
+            : null;
+
+    const artistName = currentTrack.artist?.name ?? currentTrack.artists?.[0]?.name ?? 'Unknown Artist';
+    const progress = duration > 0 ? ((isSeeking ? seekPosition : currentTime) / duration) * 100 : 0;
 
     // ... (rest of component) ...
 

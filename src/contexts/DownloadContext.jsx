@@ -38,7 +38,7 @@ export const DownloadProvider = ({ children }) => {
     // Ad Modal State
     const [isAdModalOpen, setIsAdModalOpen] = useState(false);
     const [currentDownloadTrack, setCurrentDownloadTrack] = useState(null);
-    const [modalOpenTime, setModalOpenTime] = useState(null);
+    const [, setModalOpenTime] = useState(null);
 
     // Pending download - blob stored until user clicks Continue
     const [pendingDownload, setPendingDownload] = useState(null);

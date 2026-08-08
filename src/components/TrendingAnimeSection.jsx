@@ -53,7 +53,7 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
 
     // Data enrichment state (logos & backdrops)
     const [enrichedContent, setEnrichedContent] = useState([]);
-    const [isEnriching, setIsEnriching] = useState(false);
+    const [, setIsEnriching] = useState(false);
 
     // Drag state for horizontal scroll
     const carouselRef = useRef(null);

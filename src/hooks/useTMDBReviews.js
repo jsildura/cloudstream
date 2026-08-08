@@ -67,7 +67,7 @@ const useTMDBReviews = (contentId, type = 'movie') => {
 
                 setReviews(normalized);
                 setTotalResults(data.total_results ?? normalized.length);
-            } catch (err) {
+            } catch {
                 if (!cancelled) setError('Could not load reviews.');
             } finally {
                 if (!cancelled) setLoading(false);

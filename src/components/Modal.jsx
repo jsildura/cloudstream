@@ -7,10 +7,10 @@ import { useToast } from '../contexts/ToastContext';
 import SchemaMarkup from './SchemaMarkup';
 import ReviewSection from './ReviewSection';
 import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
-import { getBackdropAlt, getPosterAlt, getLogoAlt } from '../utils/altTextUtils';
+import { getBackdropAlt, getPosterAlt } from '../utils/altTextUtils';
 import { cardPoster } from '../utils/images';
 
-const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs = [], collection = [] }) => {
+const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const navigate = useNavigate();
   const {
     BACKDROP_URL,
@@ -303,9 +303,6 @@ const Modal = memo(({ item: initialItem, onClose, recommendations: externalRecs 
   // Get year from release date
   const year = item.release_date?.substring(0, 4) ||
     item.first_air_date?.substring(0, 4) || '';
-
-  // Format runtime
-  const runtime = item.runtime ? `${Math.floor(item.runtime / 60)}h ${item.runtime % 60}m` : '';
 
   // Format rating
   const rating = item.vote_average ? `${(item.vote_average).toFixed(1)}/10` : '';

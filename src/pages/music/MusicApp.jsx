@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 
 import AudioPlayer from '../../components/music/AudioPlayer';
 import DynamicBackgroundWebGL from '../../components/music/DynamicBackgroundWebGL';
@@ -32,16 +32,7 @@ const MusicAppContent = () => {
             : null;
 
     const {
-        playbackQuality,
-        setPlaybackQuality,
-        convertAacToMp3,
-        toggleConvertAacToMp3,
-        downloadCoversSeperately,
-        toggleDownloadCoversSeperately,
-        downloadMode,
-        setDownloadMode,
-        performanceMode,
-        setPerformanceMode
+        performanceMode
     } = useMusicPreferences();
 
     // Update document title based on current track or route
@@ -83,17 +74,6 @@ const MusicAppContent = () => {
             document.documentElement.removeAttribute('data-music-performance');
         };
     }, [performanceMode]);
-
-    // Queue download handlers
-    const handleQueueDownload = () => {
-        console.log('Queue download triggered');
-        alert('Queue download - will be implemented with full download system.');
-    };
-
-    const handleExportCsv = () => {
-        console.log('CSV export triggered');
-        alert('CSV export - will be implemented with full download system.');
-    };
 
     return (
         <div className="music-app">

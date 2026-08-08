@@ -16,15 +16,12 @@ const parseM3U = (content) => {
     const lines = content.split('\n');
     const channels = [];
     let pendingLicenseKey = null;
-    let pendingLicenseType = null;
     let pendingExtinf = null;
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
 
-        if (line.startsWith('#KODIPROP:inputstream.adaptive.license_type=')) {
-            pendingLicenseType = line.split('=')[1];
-        } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
+        if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
             pendingLicenseKey = line.split('=')[1];
         } else if (line.startsWith('#EXTINF:')) {
             if (line.includes('group-title="TVPass"')) {
@@ -45,7 +42,6 @@ const parseM3U = (content) => {
         } else if (line && !line.startsWith('#')) {
             if (pendingExtinf?.skip) {
                 pendingLicenseKey = null;
-                pendingLicenseType = null;
                 pendingExtinf = null;
                 continue;
             }
@@ -84,7 +80,6 @@ const parseM3U = (content) => {
             });
 
             pendingLicenseKey = null;
-            pendingLicenseType = null;
             pendingExtinf = null;
         }
     }
@@ -1105,7 +1100,7 @@ const IPTVWatch = () => {
 
     const hideControlsTimer = useRef(null);
     const keyRef = useRef(null);
-    const [latestKey, setLatestKey] = useState(null);
+    const [, setLatestKey] = useState(null);
 
     // EPG state
     const [epgData, setEpgData] = useState({});
@@ -1444,7 +1439,7 @@ const IPTVWatch = () => {
                     });
 
                     // Register 'offline' scheme to serve the harvested key
-                    shaka.net.NetworkingEngine.registerScheme('offline', (uri, request) => {
+                    shaka.net.NetworkingEngine.registerScheme('offline', (uri) => {
                         if (uri === 'offline:mapple_key') {
                             // Implement polling wait for key (max 15s)
                             return new Promise((resolve, reject) => {
@@ -1673,7 +1668,7 @@ const IPTVWatch = () => {
 
                 try {
                     await videoRef.current.play();
-                } catch (playError) {
+                } catch {
                     console.log('Autoplay blocked, user interaction required');
                 }
             } catch (err) {

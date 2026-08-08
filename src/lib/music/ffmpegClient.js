@@ -125,14 +125,12 @@ async function streamAsset(path, options, context) {
 
     const reader = response.body.getReader();
     const chunks = [];
-    let downloaded = 0;
 
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         if (value) {
             chunks.push(value);
-            downloaded += value.byteLength;
             context?.onChunk?.(value.byteLength);
         }
     }
@@ -417,8 +415,8 @@ export async function embedMetadata(audioData, inputFormat, metadata, coverData 
         await ffmpeg.exec(args);
     } catch (e) {
         // Cleanup on failure
-        try { await ffmpeg.deleteFile(inputName); } catch { }
-        if (coverName) try { await ffmpeg.deleteFile(coverName); } catch { }
+        try { await ffmpeg.deleteFile(inputName); } catch { /* cleanup is best-effort */ }
+        if (coverName) try { await ffmpeg.deleteFile(coverName); } catch { /* cleanup is best-effort */ }
         throw e;
     }
 
@@ -426,9 +424,9 @@ export async function embedMetadata(audioData, inputFormat, metadata, coverData 
     const data = await ffmpeg.readFile(outputName);
 
     // Cleanup
-    try { await ffmpeg.deleteFile(inputName); } catch { }
-    if (coverName) { try { await ffmpeg.deleteFile(coverName); } catch { } }
-    try { await ffmpeg.deleteFile(outputName); } catch { }
+    try { await ffmpeg.deleteFile(inputName); } catch { /* cleanup is best-effort */ }
+    if (coverName) { try { await ffmpeg.deleteFile(coverName); } catch { /* cleanup is best-effort */ } }
+    try { await ffmpeg.deleteFile(outputName); } catch { /* cleanup is best-effort */ }
 
     return data;
 }

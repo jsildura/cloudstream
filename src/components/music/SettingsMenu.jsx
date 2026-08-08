@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { Settings, ChevronDown, Check } from 'lucide-react';
 import { useMusicPreferences } from '../../contexts/MusicPreferencesContext';

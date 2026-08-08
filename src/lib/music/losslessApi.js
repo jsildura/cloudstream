@@ -953,7 +953,7 @@ class LosslessAPI {
 
                 // If we got here, Hi-Res lookup succeeded but no URL - try LOSSLESS explicitly
                 effectiveQuality = 'LOSSLESS';
-            } catch (hiResError) {
+            } catch {
                 // Hi-Res request failed, fall back to LOSSLESS
                 console.log(`[Stream] Hi-Res failed for track ${trackId}, falling back to CD Lossless`);
                 effectiveQuality = 'LOSSLESS';

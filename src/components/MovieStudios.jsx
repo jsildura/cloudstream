@@ -55,7 +55,6 @@ const MovieStudios = () => {
     // Momentum state
     const velX = useRef(0);
     const animationFrameId = useRef(null);
-    const lastMouseMoveTime = useRef(0);
 
     // Grid states
     const isTVMode = useTVDetect();

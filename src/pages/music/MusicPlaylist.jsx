@@ -173,7 +173,7 @@ const MusicPlaylist = () => {
 
         try {
             const result = await downloadAlbum(playlist, tracks, quality, {
-                onTrackDownloaded: (completed, total, track) => {
+                onTrackDownloaded: (completed, total) => {
                     setBulkDownload(prev => ({ ...prev, completed }));
                     updateAlbumProgress(completed, total); // Update modal counter
                 }

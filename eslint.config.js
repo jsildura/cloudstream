@@ -41,4 +41,14 @@ export default defineConfig([
       globals: globals.vitest,
     },
   },
+  {
+    // React context files export hooks + constants alongside the provider
+    // component by design — that's their whole purpose. The react-refresh
+    // rule (an HMR-dev-experience nicety, not a correctness check) doesn't
+    // apply here.
+    files: ['src/contexts/**/*.jsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])

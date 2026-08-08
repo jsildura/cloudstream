@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTMDB } from '../hooks/useTMDB';
 import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { getPosterAlt } from '../utils/altTextUtils';
@@ -19,11 +19,11 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
     // Core state
     const [focusedCardIndex, setFocusedCardIndex] = useState(0);
-    const [itemsPerView, setItemsPerView] = useState(3); // Default to fewer items for landscape
+    const [, setItemsPerView] = useState(3); // Default to fewer items for landscape
 
     // Data enrichment state
     const [enrichedContent, setEnrichedContent] = useState([]);
-    const [isEnriching, setIsEnriching] = useState(false);
+    const [, setIsEnriching] = useState(false);
 
     // Interaction state
     const [interactionState, setInteractionState] = useState({
@@ -83,7 +83,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                                 backdrop_path: backdrop_path || item.poster_path, // Fallback to poster if really no backdrop
                                 vote_average: rating
                             };
-                        } catch (error) {
+                        } catch {
                             return item;
                         }
                     })

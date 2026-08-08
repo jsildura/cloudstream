@@ -15,7 +15,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const [trailerCache, setTrailerCache] = useState({});
   const [ratingCache, setRatingCache] = useState({});
   const [runtimeCache, setRuntimeCache] = useState({});
-  const [tvDetailsCache, setTvDetailsCache] = useState({});
+  const [, setTvDetailsCache] = useState({});
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const trailerRef = useRef(null);

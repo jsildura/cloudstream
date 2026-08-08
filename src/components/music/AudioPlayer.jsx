@@ -278,7 +278,7 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                     setCurrentTime(details.seekTime);
                 }
             });
-        } catch (e) {
+        } catch {
             // seekto not supported in all browsers
         }
 
@@ -290,7 +290,7 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                 navigator.mediaSession.setActionHandler('previoustrack', null);
                 navigator.mediaSession.setActionHandler('nexttrack', null);
                 navigator.mediaSession.setActionHandler('seekto', null);
-            } catch (e) {
+            } catch {
                 // Ignore cleanup errors
             }
         };
@@ -315,7 +315,7 @@ const AudioPlayer = ({ onLyricsOpen }) => {
                 playbackRate: 1,
                 position: Math.min(currentTime, duration)
             });
-        } catch (err) {
+        } catch {
             // Some browsers don't fully support position state
         }
     }, [currentTime, duration]);

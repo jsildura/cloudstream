@@ -7,6 +7,8 @@ let adScriptPreloaded = false;
  * Prefetch the Adsterra script globally (call once on app init)
  * Uses prefetch instead of preload to avoid "not used within a few seconds" warning
  */
+// Module-level preload helper, not a component — exempt from react-refresh.
+// eslint-disable-next-line react-refresh/only-export-components
 export const preloadAdScript = () => {
     if (adScriptPreloaded || typeof window === 'undefined') return;
 

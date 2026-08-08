@@ -12,7 +12,7 @@ const Sports = () => {
     const API_BASE = 'https://streami.su/api';
 
     // State
-    const [sports, setSports] = useState([]);
+    const [, setSports] = useState([]);
     const [liveMatches, setLiveMatches] = useState([]);
     const [todayMatches, setTodayMatches] = useState([]);
     const [popularMatches, setPopularMatches] = useState([]);

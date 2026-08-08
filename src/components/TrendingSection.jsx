@@ -45,7 +45,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
 
     // Data enrichment state (logos & backdrops)
     const [enrichedContent, setEnrichedContent] = useState([]);
-    const [isEnriching, setIsEnriching] = useState(false);
+    const [, setIsEnriching] = useState(false);
 
     // Drag state for horizontal scroll
     const carouselRef = useRef(null);
@@ -115,7 +115,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
                             };
-                        } catch (error) {
+                        } catch {
                             return item;
                         }
                     })

@@ -6,7 +6,7 @@
  * so we avoid a redundant detail fetch.
  */
 import React, { useState, memo } from 'react';
-import useTMDBReviews, { resolveAvatar } from '../hooks/useTMDBReviews';
+import useTMDBReviews from '../hooks/useTMDBReviews';
 import './ReviewSection.css';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────

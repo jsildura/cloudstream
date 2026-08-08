@@ -31,16 +31,13 @@ const parseM3U = (content) => {
   const lines = content.split('\n');
   const channels = [];
   let pendingLicenseKey = null;
-  let pendingLicenseType = null;
   let pendingExtinf = null;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
 
     // Parse KODIPROP for DRM info
-    if (line.startsWith('#KODIPROP:inputstream.adaptive.license_type=')) {
-      pendingLicenseType = line.split('=')[1];
-    } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
+    if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
       pendingLicenseKey = line.split('=')[1];
     } else if (line.startsWith('#EXTINF:')) {
       // Check for TVPass group - skip these
@@ -64,7 +61,6 @@ const parseM3U = (content) => {
       // Skip if explicitly marked to skip (TVPass)
       if (pendingExtinf?.skip) {
         pendingLicenseKey = null;
-        pendingLicenseType = null;
         pendingExtinf = null;
         continue;
       }
@@ -111,7 +107,6 @@ const parseM3U = (content) => {
 
       // Reset pending values after using them
       pendingLicenseKey = null;
-      pendingLicenseType = null;
       pendingExtinf = null;
     }
   }
@@ -1460,8 +1455,6 @@ const IPTV = () => {
   }, [channels, offlineChannels]);
 
   // Count live and offline
-  const liveCount = channels.length - offlineChannels.length;
-  const offlineCount = offlineChannels.length;
 
   const formatTimeAgo = (timestamp) => {
     if (!timestamp) return 'Never';
@@ -1590,7 +1583,6 @@ const IPTV = () => {
 
     const x = e.pageX - gridRef.current.offsetLeft;
     const walk = (x - startX) * 2; // Scroll-fast factor
-    const prevScrollLeft = gridRef.current.scrollLeft;
 
     // Calculate velocity
     const now = Date.now();

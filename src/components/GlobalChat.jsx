@@ -335,16 +335,15 @@ function GlobalChat() {
     // Media states
     const [pendingFile, setPendingFile] = useState(null);
     const [pendingBlobUrl, setPendingBlobUrl] = useState(null);
-    const [showCamera, setShowCamera] = useState(false);
-    const [cameraMode, setCameraMode] = useState('photo');
-    const [capturedMedia, setCapturedMedia] = useState(null);
+    const [, setShowCamera] = useState(false);
+    const [, setCapturedMedia] = useState(null);
     const [showLightbox, setShowLightbox] = useState(null);
-    const [isRecording, setIsRecording] = useState(false);
+    const [, setIsRecording] = useState(false);
 
     // Admin states
     const [showReports, setShowReports] = useState(false);
     const [reports, setReports] = useState([]);
-    const [profileImage, setProfileImage] = useState(null);
+    const [, setProfileImage] = useState(null);
 
     // Refs
     const messagesContainerRef = useRef(null);
@@ -359,11 +358,7 @@ function GlobalChat() {
     const isLoadingHistoryRef = useRef(false);
 
     const profileInputRef = useRef(null);
-    const videoRef = useRef(null);
-    const canvasRef = useRef(null);
-    const mediaRecorderRef = useRef(null);
     const streamRef = useRef(null);
-    const chunksRef = useRef([]);
     const longPressTimerRef = useRef(null);
     const longPressStartRef = useRef(null);
     const suppressClickRef = useRef(false);
@@ -839,7 +834,7 @@ function GlobalChat() {
             let result;
             try {
                 result = JSON.parse(text);
-            } catch (e) {
+            } catch {
                 console.error('Response was not JSON:', text);
                 throw new Error('Invalid response from upload server');
             }
@@ -890,22 +885,6 @@ function GlobalChat() {
         if (file.type.startsWith('video/')) return 'video';
         if (file.type.startsWith('audio/')) return 'audio';
         return 'file';
-    };
-
-    // Handle file selection
-    const handleFileSelect = (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (file.size > MAX_FILE_SIZE) {
-            alert('File too large! Maximum size is 10MB.');
-            return;
-        }
-
-        if (pendingBlobUrl) URL.revokeObjectURL(pendingBlobUrl);
-
-        setPendingFile(file);
-        setPendingBlobUrl(URL.createObjectURL(file));
     };
 
     // Remove pending file
@@ -1355,23 +1334,6 @@ function GlobalChat() {
     };
 
     // Camera functions
-    const startCamera = async () => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment' },
-                audio: true
-            });
-            streamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-            setShowCamera(true);
-        } catch (err) {
-            console.error('Camera error:', err);
-            alert('Camera access denied or not available.');
-        }
-    };
-
     const stopCamera = () => {
         if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
@@ -1380,105 +1342,6 @@ function GlobalChat() {
         setShowCamera(false);
         setCapturedMedia(null);
         setIsRecording(false);
-    };
-
-    const capturePhoto = () => {
-        if (!videoRef.current || !canvasRef.current) return;
-
-        const video = videoRef.current;
-        const canvas = canvasRef.current;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0);
-
-        canvas.toBlob((blob) => {
-            setCapturedMedia({
-                blob,
-                type: 'image',
-                url: URL.createObjectURL(blob)
-            });
-        }, 'image/jpeg', 0.85);
-    };
-
-    const startRecording = () => {
-        if (!streamRef.current) return;
-
-        chunksRef.current = [];
-        const recorder = new MediaRecorder(streamRef.current);
-
-        recorder.ondataavailable = (e) => {
-            if (e.data.size > 0) chunksRef.current.push(e.data);
-        };
-
-        recorder.onstop = () => {
-            const blob = new Blob(chunksRef.current, { type: 'video/mp4' });
-            setCapturedMedia({
-                blob,
-                type: 'video',
-                url: URL.createObjectURL(blob)
-            });
-        };
-
-        mediaRecorderRef.current = recorder;
-        recorder.start();
-        setIsRecording(true);
-    };
-
-    const stopRecording = () => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
-            setIsRecording(false);
-        }
-    };
-
-    const sendCapturedMedia = async () => {
-        if (!capturedMedia) return;
-
-        const fileName = capturedMedia.type === 'image' ? 'photo.jpg' : 'video.mp4';
-        const file = new File([capturedMedia.blob], fileName, { type: capturedMedia.blob.type });
-
-        setPendingFile(file);
-        setPendingBlobUrl(capturedMedia.url);
-        stopCamera();
-
-        // Auto-send
-        setIsSending(true);
-        try {
-            const mediaUrl = await uploadToDrive(file);
-            const newMessageRef = dbRef.current.ref('messages').push();
-
-            await newMessageRef.set({
-                uid: currentUserRef.current.uid,
-                nickname: userDataRef.current.nickname,
-                avatarUrl: userDataRef.current.avatarUrl,
-                isAdmin: userDataRef.current.isAdmin || false,
-                adminBadge: userDataRef.current.adminBadge || null,
-                text: '',
-                mediaUrl,
-                mediaType: capturedMedia.type,
-                status: 'sent',
-                createdAt: window.firebase.database.ServerValue.TIMESTAMP,
-                replyTo: null
-            });
-
-            removePendingFile();
-            scrollToBottom(true);
-        } catch (e) {
-            console.error('Send error:', e);
-            alert('Failed to send media');
-        } finally {
-            setIsSending(false);
-        }
-    };
-
-    // Handle key press
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
     };
 
     // Handle mention detection
@@ -3186,7 +3049,7 @@ function GlobalChat() {
                                                 avatarUrl: newAvatarUrl,
                                                 adminBadge: selectedBadge?.icon || 'fa-crown'
                                             });
-                                        } catch (e) {
+                                        } catch {
                                             console.warn('DB Update failed (likely permissions), proceeding with local save.');
                                         }
 

@@ -72,7 +72,7 @@ const TrackListItem = React.memo(({
         onPlay?.(track, index);
     };
 
-    const handleDownloadClick = (e) => {
+    const handleDownloadClick = () => {
         // e.stopPropagation(); // Allow bubbling for ads
         onDownload?.(track);
     };

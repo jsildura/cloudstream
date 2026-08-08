@@ -14,12 +14,8 @@ import CarouselControls from './CarouselControls';
 
 const RecommendedForYou = memo(({ onItemClick }) => {
     const {
-        movieGenres,
-        tvGenres,
         fetchMovieRecommendations,
-        fetchTVRecommendations,
-        fetchCredits,
-        fetchContentRating
+        fetchTVRecommendations
     } = useTMDB();
     const { watchHistory, isLoaded: historyLoaded } = useWatchHistory();
     const { getPreviewProps, closeNow } = useHoverPreview();
@@ -167,7 +163,7 @@ const RecommendedForYou = memo(({ onItemClick }) => {
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
                             };
-                        } catch (error) {
+                        } catch {
                             return item;
                         }
                     })

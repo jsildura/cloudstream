@@ -43,12 +43,10 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    # Non-blocking on purpose: the repo carries 114 pre-existing eslint errors
-    # across 41 files (mostly no-unused-vars and react-hooks/exhaustive-deps),
-    # so a blocking lint would red-flag every merge until that debt is paid.
-    # This job still surfaces new lint debt in check annotations. Flip
-    # `continue-on-error: false` once the debt is cleared.
-    continue-on-error: true
+    # Blocking: the pre-existing lint debt (114 errors across 41 files) has
+    # been paid down to 0 errors. Warnings (exhaustive-deps etc.) don't fail
+    # the job. New lint errors now block merges.
+    continue-on-error: false
     steps:
       - uses: actions/checkout@v4
 

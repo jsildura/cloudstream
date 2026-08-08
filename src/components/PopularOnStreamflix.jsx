@@ -19,7 +19,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
 
     // State for enriched data (with logos)
     const [enrichedContent, setEnrichedContent] = useState([]);
-    const [isEnriching, setIsEnriching] = useState(false);
+    const [, setIsEnriching] = useState(false);
 
     // Refs
     const carouselRef = useRef(null);
@@ -87,7 +87,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                     ? item.vote_average
                                     : data.vote_average,
                             };
-                        } catch (error) {
+                        } catch {
                             return item;
                         }
                     })

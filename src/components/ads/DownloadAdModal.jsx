@@ -25,7 +25,7 @@ const DownloadAdModal = () => {
     } = useDownloadContext();
 
     const [countdown, setCountdown] = useState(5);
-    const [canClose, setCanClose] = useState(false);
+    const [, setCanClose] = useState(false);
 
     // Determine if this is an album download
     const isAlbumDownload = albumProgress?.isAlbum && albumProgress?.total > 0;
@@ -38,9 +38,6 @@ const DownloadAdModal = () => {
         : (activeTask?.progress ?? 0);
 
     const stage = activeTask?.stage ?? DOWNLOAD_STAGES.IDLE;
-    const isComplete = isAlbumDownload
-        ? (albumProgress.completed >= albumProgress.total && pendingDownload?.blob)
-        : stage === DOWNLOAD_STAGES.COMPLETE;
     const isError = stage === DOWNLOAD_STAGES.ERROR;
 
     // Download is ready when blob is stored
