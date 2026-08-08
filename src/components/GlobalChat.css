@@ -389,6 +389,38 @@
     min-height: 20px;
 }
 
+/* Nickname suggestions when the chosen name is already taken */
+.gc-name-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: -7px 0 12px;
+}
+
+.gc-name-suggestions-label {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.gc-name-suggestion {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.8rem;
+    padding: 4px 10px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.gc-name-suggestion:hover {
+    background: rgba(229, 9, 20, 0.25);
+    border-color: #e50914;
+}
+
 /* === AVATAR PICKER MODAL === */
 .gc-avatar-picker-overlay {
     position: absolute;
@@ -622,6 +654,11 @@
     position: relative;
     width: fit-content;
     max-width: 100%;
+    /* Allow the group to flex-shrink below its content's min-content size.
+       Wide messages (e.g. movie-recommendation rows) otherwise overflow the
+       message box, pushing the right-anchored hover actions past the panel's
+       right edge where they get clipped. */
+    min-width: 0;
     padding-right: 114px !important;
     /* Reserve EXTRA space for gap */
 }
@@ -654,9 +691,13 @@
     color: #fbfbfb;
     font-size: 0.95rem;
     word-break: break-word;
+    overflow-wrap: break-word;
     line-height: 1.4;
     width: fit-content;
     max-width: 100%;
+    /* Let the bubble shrink inside flex wrappers and never outgrow the
+       container, however wide its content is. */
+    min-width: 0;
     position: relative !important;
     overflow: visible !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
@@ -842,6 +883,15 @@
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
+    }
+
+    /* Touch devices use the long-press action sheet, so the hover action
+       cluster never appears — the reserved 114px action zone would only
+       steal bubble width. Release it and let messages use the full width. */
+    .gc-msg-group,
+    .gc-msg.gc-own .gc-msg-group {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
@@ -1869,6 +1919,17 @@
         border-radius: 20px;
     }
 
+    /* Nickname suggestion chips scale with the setup view */
+    .gc-name-suggestions-label {
+        font-size: 1rem;
+    }
+
+    .gc-name-suggestion {
+        font-size: 1.1rem;
+        padding: 8px 18px;
+        border-radius: 22px;
+    }
+
     /* Accessibility Focus on inputs and buttons */
     .gc-input-group input:focus-visible,
     .gc-join-btn:focus-visible,
@@ -2005,6 +2066,18 @@
         /* Match standard 2x text scale + padding */
     }
 
+    /* Nickname suggestion chips scale with the setup view */
+    .gc-name-suggestions-label {
+        font-size: 2.6rem;
+    }
+
+    .gc-name-suggestion {
+        font-size: 2.8rem;
+        padding: 20px 44px;
+        border-radius: 56px;
+        border-width: 4px;
+    }
+
     /* Accessibility Focus on inputs and buttons */
     .gc-input-group input:focus-visible,
     .gc-join-btn:focus-visible,
@@ -2039,6 +2112,12 @@
 
     .gc-media-container {
         max-width: 200px;
+    }
+
+    /* More room for messages on small phones */
+    .gc-messages-container {
+        padding: 10px;
+        gap: 8px;
     }
 }
 
@@ -3004,4 +3083,90 @@
 .gc-rec-chip-clear:hover {
     color: #fff;
     border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Composer: optional custom title + note written alongside a recommendation */
+.gc-rec-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 6px 12px 8px;
+}
+
+.gc-rec-detail-input {
+    width: 100%;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.gc-rec-detail-input:focus {
+    border-color: rgba(229, 9, 20, 0.65);
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.gc-rec-detail-input::placeholder {
+    color: #6b7280;
+}
+
+/* Bubble: recommendation layout — bold title ABOVE the poster row, muted
+   note BELOW it, exactly as the sent message is composed. */
+.gc-rec-head-title {
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    padding: 0 2px;
+    word-break: break-word;
+}
+
+.gc-rec-head-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.68);
+    line-height: 1.45;
+    margin-top: 8px;
+    padding: 0 2px;
+    word-break: break-word;
+}
+
+/* On the sender's red bubble the note needs a touch more contrast */
+.gc-msg.gc-own .gc-rec-head-text {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* === NARROW SCREENS WITH A REAL POINTER ===
+   Small hover-capable viewports (resized desktop windows, compact laptops)
+   still show the hover action cluster, so it shrinks and the reserved action
+   zone narrows too — the bubble keeps as much width as possible. Pure touch
+   devices never reach this: their actions are hidden and the zone is released
+   entirely by the (hover: none) query above. Appended last so these
+   same-specificity overrides beat the later base .gc-msg-actions /
+   .gc-action-icon rules in the HOVER ACTION BUTTONS section. */
+@media (hover: hover) and (pointer: fine) and (max-width: 480px) {
+    .gc-msg-group {
+        padding-right: 100px !important;
+    }
+
+    .gc-msg.gc-own .gc-msg-group {
+        padding-left: 100px !important;
+        padding-right: 0 !important;
+    }
+
+    .gc-msg-actions {
+        padding: 3px 6px;
+        gap: 2px;
+    }
+
+    .gc-action-icon {
+        width: 24px;
+        height: 24px;
+        font-size: 13px;
+    }
 }

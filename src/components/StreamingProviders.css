@@ -101,7 +101,6 @@
     width: auto;
     object-fit: contain;
     /* Provider brand tiles are square artwork, unlike the wide studio wordmarks */
-    border-radius: 8px;
     opacity: 0.6;
     filter: grayscale(100%) brightness(1.2);
     transition: all 0.3s ease;
@@ -501,7 +500,6 @@
     .provider-pill-logo {
         max-height: 26px;
         max-width: 90px;
-        border-radius: 6px;
     }
 
     .provider-pill-name {
@@ -592,7 +590,6 @@
     .provider-pill-logo {
         max-height: 20px;
         max-width: 90px;
-        border-radius: 5px;
     }
 }
 
@@ -636,7 +633,6 @@
     .provider-pill-logo {
         max-height: 48px;
         max-width: 180px;
-        border-radius: 16px;
     }
 
     .provider-pill-name {
@@ -814,7 +810,6 @@
     .provider-pill-logo {
         max-height: 140px;
         max-width: 500px;
-        border-radius: 32px;
     }
 
     .provider-pill-name {
@@ -909,7 +904,7 @@
         height: 192px;
         box-shadow: 0 16px 60px rgba(0, 0, 0, 0.3);
     }
-    
+
     .provider-movie-play-btn svg {
         width: 80px;
         height: 80px;
@@ -941,7 +936,7 @@
         bottom: 48px;
         right: 48px;
         font-size: 4.4rem;
-        text-shadow: 0 8px 32px rgba(0,0,0,0.8), 0 4px 12px rgba(0,0,0,0.9);
+        text-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 4px 12px rgba(0, 0, 0, 0.9);
     }
 
     .provider-movies-loading {
@@ -958,7 +953,7 @@
         border: 4px solid rgba(255, 255, 255, 0.08);
         box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
     }
-    
+
     .provider-movie-no-backdrop {
         padding: 64px;
     }
@@ -966,12 +961,13 @@
     .provider-movie-no-backdrop span {
         font-size: 3.6rem;
     }
-    
+
     .provider-movies-empty {
         padding: 96px 0;
         font-size: 3.6rem;
     }
 }
+
 /* ===== Hover-capable pointers: the Interactive Preview Card owns the click =====
    Where a real pointer exists, hovering a card opens the preview, and every
    action (Watch now / Share / My List / More info) lives inside it. Leaving this

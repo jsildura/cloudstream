@@ -1,0 +1,41 @@
+{
+  "rules": {
+    "messages": {
+      ".read": true,
+      ".write": "auth != null",
+      "$messageId": {
+        ".write": "newData.exists() ? ((newData.child('broadcast').val() === true ? root.child('users').child(newData.child('uid').val()).child('isAdmin').val() === true : true) && (newData.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)) : (data.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": true,
+        ".write": "$uid === auth.uid && (newData.child('isAdmin').val() !== true || data.child('isAdmin').val() === true)"
+      }
+    },
+    "nicknames": {
+      "$name": {
+        ".read": true,
+        ".write": "newData.exists() ? ((newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid)) || root.child('users').child(auth.uid).child('isAdmin').val() === true) : (data.exists() && (data.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true))"
+      }
+    },
+    "secrets": {
+      "admin_key": { ".read": "auth != null", ".write": false },
+      "admin_profile": { ".read": "auth != null", ".write": "auth != null" }
+    },
+    "reports": { ".read": "auth != null", ".write": "auth != null" },
+    "pinnedMessage": { ".read": true, ".write": "auth != null" },
+    "popular_this_week": {
+      ".read": true, ".write": true,
+      "$week": { ".indexOn": ["count"] }
+    },
+    "reviews": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "ratings": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}

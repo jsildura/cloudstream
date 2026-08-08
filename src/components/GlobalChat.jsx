@@ -27,6 +27,12 @@ const HOVER_MQ = window.matchMedia('(hover: hover) and (pointer: fine)');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ADMIN_NICKNAME = "StreamFlix";
 const ADMIN_AVATAR = "/logo/streamflix.png";
+// Normalize a nickname into the key used by the global `nicknames` registry:
+// trimmed, lowercased, and stripped of the characters Firebase keys can't
+// contain (., #, $, /, [, ]). The registry makes names case-insensitively
+// unique across the whole chat.
+// eslint-disable-next-line no-useless-escape -- \/ and \[ are required members here
+const nicknameKey = (name) => (name || '').trim().toLowerCase().replace(/[.#$\/\[\]]/g, '');
 // Google Apps Script URL for file uploads (same as Shakzz-TV)
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec";
 
@@ -204,12 +210,19 @@ function GlobalChat() {
     const [isOpen, setIsOpen] = useState(false);
     const [isSetup, setIsSetup] = useState(true);
     const [nickname, setNickname] = useState('');
+    // Available variants of a taken nickname (e.g. "kil" → "kil_2"), shown as
+    // tappable chips on the join screen so users can claim a similar name.
+    const [nicknameSuggestions, setNicknameSuggestions] = useState([]);
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
 
     // Movie recommendation list: selected snapshots for the message being
     // composed (max 10), plus the picker UI state.
     const [recMovies, setRecMovies] = useState([]);
+    // Optional custom title + note the sender writes alongside a
+    // recommendation; both are stored on the message when sent.
+    const [recTitle, setRecTitle] = useState('');
+    const [recText, setRecText] = useState('');
     const [showRecPicker, setShowRecPicker] = useState(false);
     const [showRecMenu, setShowRecMenu] = useState(false);
     const [recQuery, setRecQuery] = useState('');
@@ -425,6 +438,12 @@ function GlobalChat() {
                         // Use userDataRef.nickname (ref is always current, unlike state)
                         if (!snap.exists() && userDataRef.current.nickname) {
                             console.log('User profile deleted, resetting to setup...');
+                            // Profile deleted (admin force-delete): release the
+                            // nickname claim so the name frees up for others.
+                            const delKey = nicknameKey(userDataRef.current.nickname);
+                            if (delKey) {
+                                dbRef.current.ref(`nicknames/${delKey}`).remove().catch(() => {});
+                            }
                             userDataRef.current = {};
                             setIsSetup(true);
                             setMessages([]);
@@ -913,6 +932,64 @@ function GlobalChat() {
         }
     };
 
+    // Atomically claim a nickname in the global `nicknames` registry so two
+    // users can never hold the same name (case-insensitive). The RTDB
+    // transaction is the source of truth: if the name is already owned by a
+    // different uid, the write aborts — so even a cache-cleared client with a
+    // brand-new anonymous uid can never re-take an existing user's name.
+    // Returns { ok: true } on success or { ok: false, reason } if taken.
+    const claimNickname = async (name, uid) => {
+        const display = name.trim();
+        const key = nicknameKey(display);
+        if (!key) return { ok: false, reason: 'This nickname is not allowed' };
+        const result = await dbRef.current.ref(`nicknames/${key}`).transaction((current) => {
+            if (current && typeof current === 'object' && current.uid && current.uid !== uid) {
+                return; // abort — already owned by someone else
+            }
+            return {
+                uid,
+                nickname: display,
+                claimedAt: window.firebase.database.ServerValue.TIMESTAMP
+            };
+        });
+        return result.committed
+            ? { ok: true, key }
+            : { ok: false, reason: 'This nickname is already taken — try another' };
+    };
+
+    // Suggest available variants of a taken name (e.g. "kil" → "kil_2", "kil_3")
+    // by checking the existing registry in a single read. Variants stay within
+    // the 15-char join limit. Returns [] if the registry is unreachable.
+    const suggestNicknameVariants = async (name, count = 3) => {
+        const baseKey = nicknameKey(name).slice(0, 12);
+        const baseDisplay = name.trim().slice(0, 12);
+        if (!baseKey) return [];
+        try {
+            const snap = await dbRef.current.ref('nicknames').once('value');
+            const taken = new Set(snap.exists() ? Object.keys(snap.val()) : []);
+            const variants = [];
+            // Hard cap on attempts: with a nearly-full registry a long run of
+            // taken suffixes could otherwise scan a huge range for 3 free ones.
+            const MAX_ATTEMPTS = 100;
+            for (let i = 2; variants.length < count && i < MAX_ATTEMPTS; i++) {
+                const key = `${baseKey}_${i}`;
+                if (taken.has(key)) continue;
+                variants.push({ key, display: `${baseDisplay}_${i}` });
+            }
+            return variants;
+        } catch {
+            return [];
+        }
+    };
+
+    // Reject a join with a friendly "taken" error plus available variants.
+    // The reason passed through (e.g. the transaction's abort message) is
+    // shown verbatim when it carries more detail than the generic fallback.
+    const rejectNickname = async (name, reason = 'This nickname is already taken') => {
+        setError(reason);
+        setNicknameSuggestions(await suggestNicknameVariants(name));
+    };
+
     // Handle join chat
     const handleJoinChat = async () => {
         if (!nickname.trim() || nickname.length < 2) {
@@ -936,17 +1013,53 @@ function GlobalChat() {
         try {
             // Use DiceBear generated avatar URL
             const avatarUrl = getAvatarUrl(avatarStyle, avatarSeed);
+            const displayName = nickname.trim();
+            const uid = currentUserRef.current.uid;
 
-            await dbRef.current.ref(`users/${currentUserRef.current.uid}`).set({
-                uid: currentUserRef.current.uid,
-                nickname: nickname.trim(),
+            // Quick pre-check for a friendly error; the atomic claim below is
+            // still the source of truth for the "already taken" verdict. A
+            // missing registry (rules not deployed) degrades to the legacy
+            // flow so the chat keeps working either way.
+            const key = nicknameKey(displayName);
+            if (!key) {
+                setError('This nickname is not allowed');
+                return;
+            }
+            const existing = await dbRef.current.ref(`nicknames/${key}`).once('value').catch(() => null);
+            if (existing && existing.exists() && existing.val()?.uid && existing.val().uid !== uid) {
+                await rejectNickname(displayName);
+                return;
+            }
+
+            // Write the profile first (keyed by uid — uniqueness lives in the
+            // nickname registry, not here).
+            await dbRef.current.ref(`users/${uid}`).set({
+                uid,
+                nickname: displayName,
                 avatarUrl,
                 isAdmin: false,
                 joinedAt: window.firebase.database.ServerValue.TIMESTAMP
             });
 
+            // Claim the name atomically; if a racer grabbed it in between,
+            // roll the profile back and let the user pick another name.
+            let claim = null;
+            try {
+                claim = await claimNickname(displayName, uid);
+            } catch (e) {
+                // Registry unavailable (rules not deployed) — join without
+                // uniqueness so the chat still works.
+                console.warn('Nickname registry unavailable, joining without uniqueness:', e);
+            }
+            if (claim && !claim.ok) {
+                await dbRef.current.ref(`users/${uid}`).remove().catch(() => {});
+                await rejectNickname(displayName, claim.reason);
+                return;
+            }
+
+            setNicknameSuggestions([]);
             userDataRef.current = {
-                nickname: nickname.trim(),
+                nickname: displayName,
                 avatarUrl,
                 isAdmin: false
             };
@@ -961,27 +1074,58 @@ function GlobalChat() {
         }
     };
 
+    // Admin verification lives on the Cloudflare proxy (functions/api/admin-login.js)
+    // so the password is never checked against a client-readable hash in
+    // production. The proxy is tried FIRST (it also works under `wrangler pages
+    // dev`); the legacy Firebase-hash comparison only runs when the proxy is
+    // unreachable (plain `npm run dev` on localhost, no proxy serving).
+    const verifyAdminViaProxy = async (password) => {
+        try {
+            const res = await fetch('/api/admin-login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password, uid: currentUserRef.current?.uid })
+            });
+            // 404/405 = no proxy in this environment → fall back to legacy.
+            if (res.status === 404 || res.status === 405) return { ok: false, unreachable: true };
+            const data = await res.json().catch(() => ({}));
+            return { ok: !!(data && data.ok), unreachable: false };
+        } catch (e) {
+            // Network error = proxy not running here → legacy fallback.
+            console.warn('Admin proxy unreachable, using legacy verification:', e);
+            return { ok: false, unreachable: true };
+        }
+    };
+
     // Handle admin login
     const handleAdminLogin = async () => {
         const password = prompt('Enter Admin Password:');
         if (!password) return;
 
         try {
-            const snapshot = await dbRef.current.ref('secrets/admin_key').once('value');
-            if (!snapshot.exists()) {
-                alert('Admin configuration missing. Please set up admin key in Firebase.');
-                return;
+            // 1) Try the server-side proxy (verifies + elevates isAdmin via the
+            //    database secret, bypassing rules).
+            const viaProxy = await verifyAdminViaProxy(password);
+            let passwordOk = viaProxy.ok;
+
+            // 2) Legacy dev fallback — only when the proxy is unreachable.
+            if (!passwordOk && viaProxy.unreachable) {
+                const snapshot = await dbRef.current.ref('secrets/admin_key').once('value');
+                if (!snapshot.exists()) {
+                    alert('Admin configuration missing. Please set up admin key in Firebase.');
+                    return;
+                }
+                const storedHash = snapshot.val();
+                const msgBuffer = new TextEncoder().encode(password);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                passwordOk = inputHash === storedHash;
+                // Dev only: rules deny the isAdmin:true write, so the local
+                // session is elevated in memory; the DB flag is not persisted.
             }
 
-            const storedHash = snapshot.val();
-
-            // Hash the input password
-            const msgBuffer = new TextEncoder().encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-
-            if (inputHash === storedHash) {
+            if (passwordOk) {
                 // Fetch persistent admin profile from Firebase (cross-device sync)
                 let savedNickname = null;
                 let savedAvatar = null;
@@ -1033,17 +1177,30 @@ function GlobalChat() {
                 // Show welcome message
                 alert('Welcome Admin!');
 
-                // Then attempt DB update (non-blocking for UI)
+                // Then attempt DB update (non-blocking for UI). The proxy
+                // already elevated isAdmin via the database secret, so the
+                // client never writes the flag itself — the rules deny
+                // self-elevation, and the update only touches profile fields.
                 try {
                     await dbRef.current.ref(`users/${currentUserRef.current.uid}`).update({
                         nickname: finalNickname,
                         avatarUrl: finalAvatarUrl,
-                        adminBadge: finalBadge,
-                        isAdmin: true
+                        adminBadge: finalBadge
                     });
                 } catch (dbErr) {
                     console.error('DB Update failed (Permissions?):', dbErr);
                     // Do not revert UI, allow local admin session to continue
+                }
+
+                // Claim the admin display name in the registry (overwrites any
+                // squatter) so regular users can never register it.
+                const adminKey = nicknameKey(finalNickname);
+                if (adminKey) {
+                    dbRef.current.ref(`nicknames/${adminKey}`).set({
+                        uid: currentUserRef.current.uid,
+                        nickname: finalNickname,
+                        claimedAt: window.firebase.database.ServerValue.TIMESTAMP
+                    }).catch((e) => console.warn('Admin nickname claim failed:', e));
                 }
             } else {
                 alert('Incorrect Password');
@@ -1104,11 +1261,12 @@ function GlobalChat() {
                 uid: currentUserRef.current.uid,
                 nickname: userDataRef.current.nickname,
                 avatarUrl: userDataRef.current.avatarUrl,
-                isAdmin: userDataRef.current.isAdmin || false,
                 adminBadge: userDataRef.current.adminBadge || null,
                 text,
                 broadcast: isBroadcast,
                 movies: recMovies.length ? recMovies : null,
+                recTitle: recTitle.trim() || null,
+                recText: recText.trim() || null,
                 mediaUrl,
                 mediaType,
                 status: 'sent',
@@ -1117,7 +1275,8 @@ function GlobalChat() {
                     id: replyTo.id,
                     nickname: replyTo.nickname,
                     text: replyTo.text?.substring(0, 50) || '',
-                    moviesCount: replyTo.moviesCount || 0
+                    moviesCount: replyTo.moviesCount || 0,
+                    recTitle: replyTo.recTitle?.substring(0, 50) || null
                 } : null
             };
 
@@ -1125,6 +1284,8 @@ function GlobalChat() {
 
             setMessageText('');
             setRecMovies([]);
+            setRecTitle('');
+            setRecText('');
             setShowRecPicker(false);
             setReplyTo(null);
             removePendingFile();
@@ -1366,7 +1527,14 @@ function GlobalChat() {
     };
 
     const removeRecMovie = (type, id) => {
+        const isLast = recMovies.length === 1 && recMovies[0].type === type && recMovies[0].id === id;
         setRecMovies(prev => prev.filter(m => !(m.type === type && m.id === id)));
+        // Removing the last picked title also drops any draft title/note so a
+        // fresh recommendation starts clean.
+        if (isLast) {
+            setRecTitle('');
+            setRecText('');
+        }
     };
 
     // Handle mention selection
@@ -1531,7 +1699,8 @@ function GlobalChat() {
                 id: actionSheetTarget.id,
                 nickname: actionSheetTarget.nickname,
                 text: actionSheetTarget.text,
-                moviesCount: actionSheetTarget.movies?.length || 0
+                moviesCount: actionSheetTarget.movies?.length || 0,
+                recTitle: actionSheetTarget.recTitle || null
             });
         }
         setShowActionSheet(false);
@@ -1945,8 +2114,10 @@ function GlobalChat() {
                                 }}
                             >
                                 <div className="gc-reply-text">
-                                    {msg.replyTo.text
-                                        || (msg.replyTo.moviesCount ? `🎬 ${msg.replyTo.moviesCount} movie${msg.replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media')}
+                                    {msg.replyTo.recTitle
+                                        ? `🎬 ${msg.replyTo.recTitle}`
+                                        : (msg.replyTo.text
+                                            || (msg.replyTo.moviesCount ? `🎬 ${msg.replyTo.moviesCount} movie${msg.replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media'))}
                                 </div>
                             </div>
                         </>
@@ -1969,7 +2140,11 @@ function GlobalChat() {
                                 </div>
                             )}
                             {msg.movies && msg.movies.length > 0 && (
-                                <MovieRecRow movies={msg.movies} onOpen={handleChatLinkClick} />
+                                <>
+                                    {msg.recTitle && <div className="gc-rec-head-title">{msg.recTitle}</div>}
+                                    <MovieRecRow movies={msg.movies} onOpen={handleChatLinkClick} />
+                                    {msg.recText && <div className="gc-rec-head-text">{msg.recText}</div>}
+                                </>
                             )}
                             {msg.mediaUrl && (
                                 <div className="gc-media-container">
@@ -2065,7 +2240,8 @@ function GlobalChat() {
                                         nickname: msg.nickname,
                                         text: msg.text,
                                         uid: msg.uid,
-                                        moviesCount: msg.movies?.length || 0
+                                        moviesCount: msg.movies?.length || 0,
+                                        recTitle: msg.recTitle || null
                                     });
                                     inputRef.current?.focus();
                                 }}
@@ -2088,7 +2264,7 @@ function GlobalChat() {
                             {moreMenuMessageId === msg.id && (
                                 <div className="gc-more-menu">
                                     <button onClick={() => {
-                                        setReplyTo({ id: msg.id, nickname: msg.nickname, text: msg.text, uid: msg.uid, moviesCount: msg.movies?.length || 0 });
+                                        setReplyTo({ id: msg.id, nickname: msg.nickname, text: msg.text, uid: msg.uid, moviesCount: msg.movies?.length || 0, recTitle: msg.recTitle || null });
                                         setMoreMenuMessageId(null);
                                         inputRef.current?.focus();
                                     }}>
@@ -2310,12 +2486,34 @@ function GlobalChat() {
                                     type="text"
                                     placeholder="Enter Nickname"
                                     value={nickname}
-                                    onChange={(e) => setNickname(e.target.value.slice(0, 15))}
+                                    onChange={(e) => {
+                                        setNickname(e.target.value.slice(0, 15));
+                                        setNicknameSuggestions([]);
+                                    }}
                                     maxLength={15}
                                     onKeyDown={(e) => e.key === 'Enter' && handleJoinChat()}
                                 />
                             </div>
                             {error && <p className="gc-error-msg">{error}</p>}
+                            {nicknameSuggestions.length > 0 && (
+                                <div className="gc-name-suggestions">
+                                    <span className="gc-name-suggestions-label">Try:</span>
+                                    {nicknameSuggestions.map(s => (
+                                        <button
+                                            key={s.key}
+                                            className="gc-name-suggestion"
+                                            onClick={() => {
+                                                setNickname(s.display);
+                                                setError('');
+                                                setNicknameSuggestions([]);
+                                                document.querySelector('.gc-setup-view input')?.focus();
+                                            }}
+                                        >
+                                            {s.display}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                             <button
                                 className="gc-join-btn"
                                 disabled={nickname.trim().length < 2 || isJoining}
@@ -2441,8 +2639,10 @@ function GlobalChat() {
                                         Replying to <b>{replyTo.nickname}</b>
                                     </span>
                                     <span className="gc-reply-text-preview">
-                                        {replyTo.text
-                                            || (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movie${replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media')}
+                                        {replyTo.recTitle
+                                            ? `🎬 ${replyTo.recTitle}`
+                                            : (replyTo.text
+                                                || (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movie${replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media'))}
                                     </span>
                                 </div>
                                 <button
@@ -2483,6 +2683,7 @@ function GlobalChat() {
 
                         {/* Selected movie recommendations (chips) */}
                         {recMovies.length > 0 && (
+                            <>
                             <div className="gc-rec-chips">
                                 {recMovies.map(m => (
                                     <span key={`${m.type}-${m.id}`} className="gc-rec-chip">
@@ -2499,8 +2700,26 @@ function GlobalChat() {
                                         </button>
                                     </span>
                                 ))}
-                                <button className="gc-rec-chip-clear" onClick={() => setRecMovies([])}>Clear</button>
+                                <button className="gc-rec-chip-clear" onClick={() => { setRecMovies([]); setRecTitle(''); setRecText(''); }}>Clear</button>
                             </div>
+                            {/* Optional custom title + note attached to the recommendation */}
+                            <div className="gc-rec-details">
+                                <input
+                                    className="gc-rec-detail-input"
+                                    placeholder="Add a title to your recommendation…"
+                                    value={recTitle}
+                                    onChange={(e) => setRecTitle(e.target.value)}
+                                    maxLength={60}
+                                />
+                                <input
+                                    className="gc-rec-detail-input"
+                                    placeholder="Add a note — why should they watch it?…"
+                                    value={recText}
+                                    onChange={(e) => setRecText(e.target.value)}
+                                    maxLength={200}
+                                />
+                            </div>
+                            </>
                         )}
 
                         {/* Footer */}
@@ -2930,9 +3149,25 @@ function GlobalChat() {
                                             console.warn('Failed to save admin profile to Firebase:', e);
                                         }
 
+                                        // Keep the nickname registry in sync with a rename:
+                                        // free the old key, claim the new one.
+                                        const oldAdminKey = nicknameKey(userDataRef.current.nickname);
+                                        const newAdminNickname = adminNickname.trim() || ADMIN_NICKNAME;
+                                        const newAdminKey = nicknameKey(newAdminNickname);
+                                        if (oldAdminKey && oldAdminKey !== newAdminKey) {
+                                            dbRef.current.ref(`nicknames/${oldAdminKey}`).remove().catch(() => {});
+                                        }
+                                        if (newAdminKey) {
+                                            dbRef.current.ref(`nicknames/${newAdminKey}`).set({
+                                                uid: currentUserRef.current.uid,
+                                                nickname: newAdminNickname,
+                                                claimedAt: window.firebase.database.ServerValue.TIMESTAMP
+                                            }).catch(() => {});
+                                        }
+
                                         userDataRef.current = {
                                             ...userDataRef.current,
-                                            nickname: adminNickname.trim() || ADMIN_NICKNAME,
+                                            nickname: newAdminNickname,
                                             avatarUrl: newAvatarUrl,
                                             adminBadge: selectedBadge?.icon || 'fa-crown'
                                         };
