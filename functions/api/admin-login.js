@@ -68,6 +68,11 @@ export async function onRequest(context) {
         const body = await request.json();
         const password = typeof body.password === 'string' ? body.password : '';
         const uid = typeof body.uid === 'string' ? body.uid : '';
+        // Optional admin profile fields — when provided the proxy writes
+        // the full user node in a single PATCH so the client never needs a
+        // follow-up .update() (which can race and be rejected by the
+        // self-elevation rule).
+        const profile = typeof body.profile === 'object' && body.profile ? body.profile : {};
 
         if (!password || !uid) {
             return new Response(JSON.stringify({ ok: false, error: 'Missing password or uid' }), {
@@ -98,12 +103,19 @@ export async function onRequest(context) {
 
         // Elevate via the database secret — this write bypasses security rules
         // (the client's own attempt is denied by rules, see database.rules).
+        // Merge profile fields so the node is complete in one atomic write.
         if (env.FIREBASE_DATABASE_URL && env.FIREBASE_DATABASE_SECRET) {
+            const writeData = { isAdmin: true };
+            if (uid) writeData.uid = uid;
+            if (profile.nickname)   writeData.nickname   = String(profile.nickname);
+            if (profile.avatarUrl)  writeData.avatarUrl  = String(profile.avatarUrl);
+            if (profile.adminBadge) writeData.adminBadge = String(profile.adminBadge);
+
             const url = `${env.FIREBASE_DATABASE_URL.replace(/\/+$/, '')}/users/${encodeURIComponent(uid)}.json?auth=${encodeURIComponent(env.FIREBASE_DATABASE_SECRET)}`;
             const res = await fetch(url, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isAdmin: true })
+                body: JSON.stringify(writeData)
             });
 
             if (!res.ok) {

@@ -367,6 +367,10 @@ function GlobalChat() {
     const longPressTimerRef = useRef(null);
     const longPressStartRef = useRef(null);
     const suppressClickRef = useRef(false);
+    // Guards the profile value-listener against false-positive "deleted"
+    // events caused by Firebase SDK optimistic write rollbacks during
+    // admin login.  Cleared once the listener sees isAdmin: true.
+    const adminLoginGuardRef = useRef(false);
     // Set the first time the chat is opened after setup — the broadcast
     // backfill uses it to avoid resurrecting the badge with broadcasts the
     // user has already read.
@@ -437,6 +441,16 @@ function GlobalChat() {
                     const profileListener = userProfileRef.on('value', (snap) => {
                         // Use userDataRef.nickname (ref is always current, unlike state)
                         if (!snap.exists() && userDataRef.current.nickname) {
+                            // During admin login the proxy writes via REST while
+                            // the WebSocket SDK hasn't received the push yet. A
+                            // client .update() that races against it can cause
+                            // an optimistic-rollback where the node briefly
+                            // appears non-existent locally. Skip the reset
+                            // while the guard is active.
+                            if (adminLoginGuardRef.current) {
+                                console.log('Profile listener: node absent but admin login in progress — skipping reset');
+                                return;
+                            }
                             console.log('User profile deleted, resetting to setup...');
                             // Profile deleted (admin force-delete): release the
                             // nickname claim so the name frees up for others.
@@ -450,6 +464,11 @@ function GlobalChat() {
                         } else if (snap.exists()) {
                             // Keep userDataRef in sync
                             userDataRef.current = snap.val();
+                            // Clear the admin-login guard once the real node
+                            // arrives from the server.
+                            if (adminLoginGuardRef.current && snap.val().isAdmin) {
+                                adminLoginGuardRef.current = false;
+                            }
                         }
                     });
                     listenersRef.current.push(() => userProfileRef.off('value', profileListener));
@@ -1079,12 +1098,21 @@ function GlobalChat() {
     // production. The proxy is tried FIRST (it also works under `wrangler pages
     // dev`); the legacy Firebase-hash comparison only runs when the proxy is
     // unreachable (plain `npm run dev` on localhost, no proxy serving).
-    const verifyAdminViaProxy = async (password) => {
+    //
+    // `profile` is an optional { nickname, avatarUrl, adminBadge } object.
+    // When provided the proxy writes the full admin profile atomically so the
+    // client never needs a follow-up `.update()` (which can race with the
+    // proxy's REST write and be rejected by the self-elevation rule).
+    const verifyAdminViaProxy = async (password, profile) => {
         try {
             const res = await fetch('/api/admin-login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password, uid: currentUserRef.current?.uid })
+                body: JSON.stringify({
+                    password,
+                    uid: currentUserRef.current?.uid,
+                    profile: profile || undefined
+                })
             });
             // 404/405 = no proxy in this environment → fall back to legacy.
             if (res.status === 404 || res.status === 405) return { ok: false, unreachable: true };
@@ -1103,9 +1131,45 @@ function GlobalChat() {
         if (!password) return;
 
         try {
-            // 1) Try the server-side proxy (verifies + elevates isAdmin via the
-            //    database secret, bypassing rules).
-            const viaProxy = await verifyAdminViaProxy(password);
+            // ── Read admin profile FIRST ──────────────────────────────────
+            // We need the profile fields before calling the proxy so the
+            // proxy can write the full user node in one atomic REST PATCH.
+            let savedNickname = null;
+            let savedAvatar = null;
+            let savedBadge = null;
+
+            try {
+                const profileSnapshot = await dbRef.current.ref('secrets/admin_profile').once('value');
+                if (profileSnapshot.exists()) {
+                    const profile = profileSnapshot.val();
+                    savedNickname = profile.nickname;
+                    savedAvatar = profile.avatarUrl;
+                    savedBadge = profile.adminBadge;
+                    if (savedNickname) localStorage.setItem('sf_admin_nickname', savedNickname);
+                    if (savedAvatar) localStorage.setItem('sf_admin_avatar', savedAvatar);
+                    if (savedBadge) localStorage.setItem('sf_admin_badge', savedBadge);
+                }
+            } catch (e) {
+                console.warn('Firebase admin profile read failed, using localStorage fallback:', e);
+                savedNickname = localStorage.getItem('sf_admin_nickname');
+                savedAvatar = localStorage.getItem('sf_admin_avatar');
+                savedBadge = localStorage.getItem('sf_admin_badge');
+            }
+
+            const finalNickname = savedNickname || ADMIN_NICKNAME;
+            const finalAvatarUrl = savedAvatar || ADMIN_AVATAR;
+            const finalBadge = savedBadge || 'fa-crown';
+
+            // ── Verify password ───────────────────────────────────────────
+            // 1) Server-side proxy — verifies + writes the complete admin
+            //    profile (isAdmin + nickname + avatar + badge) in a single
+            //    REST PATCH that bypasses security rules.
+            const adminProfile = {
+                nickname: finalNickname,
+                avatarUrl: finalAvatarUrl,
+                adminBadge: finalBadge
+            };
+            const viaProxy = await verifyAdminViaProxy(password, adminProfile);
             let passwordOk = viaProxy.ok;
 
             // 2) Legacy dev fallback — only when the proxy is unreachable.
@@ -1126,33 +1190,10 @@ function GlobalChat() {
             }
 
             if (passwordOk) {
-                // Fetch persistent admin profile from Firebase (cross-device sync)
-                let savedNickname = null;
-                let savedAvatar = null;
-                let savedBadge = null;
-
-                try {
-                    const profileSnapshot = await dbRef.current.ref('secrets/admin_profile').once('value');
-                    if (profileSnapshot.exists()) {
-                        const profile = profileSnapshot.val();
-                        savedNickname = profile.nickname;
-                        savedAvatar = profile.avatarUrl;
-                        savedBadge = profile.adminBadge;
-                        // Cache to localStorage for offline access
-                        if (savedNickname) localStorage.setItem('sf_admin_nickname', savedNickname);
-                        if (savedAvatar) localStorage.setItem('sf_admin_avatar', savedAvatar);
-                        if (savedBadge) localStorage.setItem('sf_admin_badge', savedBadge);
-                    }
-                } catch (e) {
-                    console.warn('Firebase admin profile read failed, using localStorage fallback:', e);
-                    savedNickname = localStorage.getItem('sf_admin_nickname');
-                    savedAvatar = localStorage.getItem('sf_admin_avatar');
-                    savedBadge = localStorage.getItem('sf_admin_badge');
-                }
-
-                const finalNickname = savedNickname || ADMIN_NICKNAME;
-                const finalAvatarUrl = savedAvatar || ADMIN_AVATAR;
-                const finalBadge = savedBadge || 'fa-crown';
+                // Arm the guard so the profile value-listener doesn't
+                // misinterpret a transient !snap.exists() (SDK rollback /
+                // propagation delay) as a profile deletion.
+                adminLoginGuardRef.current = true;
 
                 // Optimistic Update: Set local state immediately
                 userDataRef.current = {
@@ -1177,19 +1218,22 @@ function GlobalChat() {
                 // Show welcome message
                 alert('Welcome Admin!');
 
-                // Then attempt DB update (non-blocking for UI). The proxy
-                // already elevated isAdmin via the database secret, so the
-                // client never writes the flag itself — the rules deny
-                // self-elevation, and the update only touches profile fields.
-                try {
-                    await dbRef.current.ref(`users/${currentUserRef.current.uid}`).update({
-                        nickname: finalNickname,
-                        avatarUrl: finalAvatarUrl,
-                        adminBadge: finalBadge
-                    });
-                } catch (dbErr) {
-                    console.error('DB Update failed (Permissions?):', dbErr);
-                    // Do not revert UI, allow local admin session to continue
+                // The proxy already wrote the full admin profile (isAdmin +
+                // nickname + avatarUrl + adminBadge) in a single REST PATCH
+                // that bypasses security rules — no client-side .update()
+                // needed.  The legacy (dev) path didn't write to the DB, so
+                // attempt a non-critical profile write there.
+                if (viaProxy.unreachable) {
+                    try {
+                        await dbRef.current.ref(`users/${currentUserRef.current.uid}`).update({
+                            nickname: finalNickname,
+                            avatarUrl: finalAvatarUrl,
+                            adminBadge: finalBadge
+                        });
+                    } catch (dbErr) {
+                        console.error('DB Update failed (Permissions?):', dbErr);
+                        // Non-critical — admin session continues in memory.
+                    }
                 }
 
                 // Claim the admin display name in the registry (overwrites any
