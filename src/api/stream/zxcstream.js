@@ -47,8 +47,19 @@ const TOKEN_DELAY_MS = 1200;
 // CDNs occasionally hang a connection; without this a single stuck fetch would
 // stall the whole resolve loop forever.
 const FETCH_TIMEOUT_MS = 8000;
-const fetchT = (url, opts = {}) =>
-  fetch(url, { ...opts, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
+// Budget for the WHOLE resolve. Per-fetch timeouts alone aren't enough: 7
+// servers × (8s + sleeps) can exceed Cloudflare Pages Functions' wall-clock
+// limit (observed as a dead request ~21s in under upstream throttling). A
+// shared deadline threads through every fetch and the server loop, capping
+// total resolve time and degrading gracefully to whatever sources were
+// already verified instead of hanging.
+const RESOLVE_TIMEOUT_MS = 15000;
+
+const fetchT = (url, opts = {}, deadline = 0) => {
+  const remaining = deadline ? Math.max(1, deadline - Date.now()) : FETCH_TIMEOUT_MS;
+  return fetch(url, { ...opts, signal: AbortSignal.timeout(Math.min(FETCH_TIMEOUT_MS, remaining)) });
+};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -68,7 +79,7 @@ async function generateFrontendToken(id, secret) {
 
 // === STEP 2: swap our signature for a server-issued token ===================
 // POST /backend/token__  →  { <token>, <serverTs> }
-async function getServerToken(id, secret) {
+async function getServerToken(id, secret, deadline) {
   const { xt, rt } = await generateFrontendToken(id, secret);
   const body = {
     [FIELD_MAP.id]: id,
@@ -79,15 +90,15 @@ async function getServerToken(id, secret) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...BROWSER_HEADERS },
     body: JSON.stringify(body),
-  });
+  }, deadline);
   if (!res.ok) throw new Error(`token__ HTTP ${res.status}`);
   const data = await res.json();
   return { token: data[FIELD_MAP.token], serverTs: data[FIELD_MAP.ts], xt };
 }
 
 // === STEP 3: ask one upstream server for its stream links ===================
-async function fetchServerSources(server, meta, secret) {
-  const { token, serverTs, xt } = await getServerToken(meta.tmdbId, secret);
+async function fetchServerSources(server, meta, secret, deadline) {
+  const { token, serverTs, xt } = await getServerToken(meta.tmdbId, secret, deadline);
 
   const params = new URLSearchParams({
     [FIELD_MAP.id]: String(meta.tmdbId),
@@ -109,7 +120,7 @@ async function fetchServerSources(server, meta, secret) {
 
   const res = await fetchT(`${BASE}/backend_/servers/${server}?${params.toString()}`, {
     headers: BROWSER_HEADERS,
-  });
+  }, deadline);
   if (!res.ok) throw new Error(`servers/${server} HTTP ${res.status}`);
   await sleep(TOKEN_DELAY_MS);
   return res.json();
@@ -131,9 +142,9 @@ function verifyMp4(link, expectedBytes) {
 
 // For HLS we fetch the playlist and add up segment durations. A master playlist
 // (#EXT-X-STREAM-INF) points at variant playlists — we follow the first one.
-async function verifyHls(url, runtimeSec) {
+async function verifyHls(url, runtimeSec, deadline) {
   try {
-    const res = await fetchT(url, { headers: BROWSER_HEADERS });
+    const res = await fetchT(url, { headers: BROWSER_HEADERS }, deadline);
     if (!res.ok) return { ok: false, corsOk: false };
     // A header being "present" is NOT enough — CDNs can pin it to one specific
     // origin (e.g. ACAO: https://s1.devcorp.me), which the browser still blocks.
@@ -146,7 +157,7 @@ async function verifyHls(url, runtimeSec) {
       const variant = text.split('\n').find((l) => l.trim() && !l.startsWith('#'));
       if (variant) {
         const variantUrl = new URL(variant.trim(), url).toString();
-        const vRes = await fetchT(variantUrl, { headers: BROWSER_HEADERS });
+        const vRes = await fetchT(variantUrl, { headers: BROWSER_HEADERS }, deadline);
         if (vRes.ok) text = await vRes.text();
       }
     }
@@ -165,7 +176,7 @@ async function verifyHls(url, runtimeSec) {
 }
 
 // === STEP 5: turn one server's raw response into verified sources ===========
-async function verifyResponse(raw, meta) {
+async function verifyResponse(raw, meta, deadline) {
   const links = Array.isArray(raw?.links) ? raw.links : [];
   const runtimeSec = (meta.runtime || 0) * 60;
   const expectedBytes = runtimeSec * (3.6e6 / 8); // ~3.6 Mbps @ 1080p
@@ -175,7 +186,7 @@ async function verifyResponse(raw, meta) {
     const url = link.link || link.url;
     if (!url) continue;
     if (isHls(url, link.type)) {
-      const v = await verifyHls(url, runtimeSec);
+      const v = await verifyHls(url, runtimeSec, deadline);
       if (v.ok) out.push({ kind: 'hls', url, resolution: String(link.resolution || ''), corsOk: v.corsOk, measuredSec: v.measuredSec });
     } else if (verifyMp4(link, expectedBytes)) {
       out.push({ kind: 'mp4', url, resolution: String(link.resolution || ''), sizeBytes: link.size });
@@ -192,15 +203,17 @@ function rank(s) {
 }
 
 // === STEP 6: try servers in order, collect the best 3 verified sources ======
-export async function resolveStream(meta, secret) {
+export async function resolveStream(meta, secret, { timeoutMs = RESOLVE_TIMEOUT_MS } = {}) {
   if (!secret) throw new Error('missing ZXC_STREAM_SECRET');
+  const deadline = Date.now() + timeoutMs;
   const attempts = []; // per-server status, for telemetry/debugging
   const verified = [];
 
   for (const server of SERVERS) {
+    if (Date.now() >= deadline) break; // resolve budget exhausted — return what we have
     try {
-      const raw = await fetchServerSources(server, meta, secret);
-      const sources = await verifyResponse(raw, meta);
+      const raw = await fetchServerSources(server, meta, secret, deadline);
+      const sources = await verifyResponse(raw, meta, deadline);
       attempts.push({ server, ok: sources.length > 0, count: sources.length });
       for (const s of sources) verified.push({ server, host: s.url ? new URL(s.url).hostname : null, ...s });
       // Stop early once we have a healthy pool.
