@@ -53,6 +53,22 @@ export const buildMessageReport = (msg, reporter) => {
     };
 };
 
+// Condense a raw user-agent into a short "Browser on OS" line so the admin
+// panel shows device context at a glance instead of a wall of text.
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
+export const summarizeUA = (ua) => {
+    if (!ua) return '';
+    const os = ['Android', 'iPhone', 'iPad', 'Windows', 'Mac OS X', 'Linux', 'CrOS']
+        .find(o => ua.includes(o)) || 'Unknown OS';
+    let browser = 'Unknown browser';
+    if (/Edg\//.test(ua)) browser = 'Edge';
+    else if (/Firefox\//.test(ua)) browser = 'Firefox';
+    else if (/SamsungBrowser\//.test(ua)) browser = 'Samsung Internet';
+    else if (/Chrome\//.test(ua)) browser = 'Chrome';
+    else if (/Safari\//.test(ua)) browser = 'Safari';
+    return `${browser} on ${os}`;
+};
+
 // Hover action buttons (React/Reply/⋮) are a mouse-only affordance. Touch
 // devices long-press for the action sheet instead, so only track hover when
 // the primary pointer actually hovers.
@@ -1589,6 +1605,7 @@ function GlobalChat() {
                 category: reportCategory,
                 description: (reportDesc || '').trim(),
                 reportedBy: currentUserRef.current?.uid || null,
+                reportedByNickname: userDataRef.current?.nickname || 'Unknown',
                 timestamp: Date.now(),
                 context: {
                     route: ctx.route || '',
@@ -3421,6 +3438,42 @@ function GlobalChat() {
                                                                     ? <>On page: {report.context.route}</>
                                                                     : 'While browsing the app')}
                                                         </div>
+                                                        {report.context && (report.context.mediaType || report.context.route || report.context.fromServer || report.context.ua || report.context.playback) && (
+                                                            <div className="gc-report-details">
+                                                                {report.context.mediaType && (
+                                                                    <div className="gc-report-detail">
+                                                                        <span className="gc-report-detail-label">Content</span>
+                                                                        {report.context.mediaType === 'movie' ? 'Movie' : 'TV'}
+                                                                        {report.context.season != null && ` · S${report.context.season}E${report.context.episode ?? '?'}`}
+                                                                        {report.context.tmdbId && ` · TMDB ${report.context.tmdbId}`}
+                                                                    </div>
+                                                                )}
+                                                                {report.context.route && (
+                                                                    <div className="gc-report-detail">
+                                                                        <span className="gc-report-detail-label">Page</span>
+                                                                        <span className="gc-report-detail-route">{report.context.route}</span>
+                                                                    </div>
+                                                                )}
+                                                                {report.context.fromServer && (
+                                                                    <div className="gc-report-detail">
+                                                                        <span className="gc-report-detail-label">Server</span>
+                                                                        {report.context.fromServer}{report.context.toServer ? ` → ${report.context.toServer}` : ''}
+                                                                    </div>
+                                                                )}
+                                                                {report.context.ua && (
+                                                                    <div className="gc-report-detail">
+                                                                        <span className="gc-report-detail-label">Device</span>
+                                                                        {summarizeUA(report.context.ua)}
+                                                                    </div>
+                                                                )}
+                                                                {report.context.playback && (
+                                                                    <div className="gc-report-detail">
+                                                                        <span className="gc-report-detail-label">Playback</span>
+                                                                        Issue while playing (auto server fallback)
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </>
                                                 ) : (
                                                     <>

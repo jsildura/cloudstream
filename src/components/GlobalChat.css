@@ -2360,6 +2360,37 @@
     color: #fff;
 }
 
+.gc-report-details {
+    margin-top: 6px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gc-report-detail {
+    color: #c6ccd6;
+    font-size: 0.75rem;
+    word-break: break-word;
+}
+
+.gc-report-detail-label {
+    display: inline-block;
+    min-width: 52px;
+    color: #8a919e;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-right: 4px;
+}
+
+.gc-report-detail-route {
+    font-family: monospace;
+    color: #94a3b8;
+}
+
 .gc-report-msg-text {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 8px;
