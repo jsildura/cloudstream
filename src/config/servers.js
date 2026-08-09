@@ -15,8 +15,8 @@
 
 export const serverConfig = [
     {
-        name: 'Server 1',
-        description: 'Main Server',
+        name: 'Direct Play',
+        description: 'StreamFlix Default',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en?autoplay=true',
         isRecommended: true,
@@ -28,6 +28,16 @@ export const serverConfig = [
     {
         name: 'Server 2',
         description: 'Reliable Server',
+        baseUrl: 'https://zxcstream.xyz/player/',
+        suffix: '/en?autoplay=true',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 3',
+        description: 'Reliable Server',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
         isRecommended: true,
@@ -36,7 +46,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 3',
+        name: 'Server 4',
         description: 'Reliable Server',
         baseUrl: 'https://anyembed.xyz/embed/',
         suffix: '',
@@ -46,7 +56,7 @@ export const serverConfig = [
         pattern: 'anyembed',
     },
     {
-        name: 'Server 4',
+        name: 'Server 5',
         description: 'Reliable Server',
         baseUrl: 'https://vaplayer.ru/embed/',
         suffix: '',
@@ -56,7 +66,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 5',
+        name: 'Server 6',
         description: 'Reliable Server',
         baseUrl: 'https://www.vidking.net/embed/',
         suffix: '?autoPlay=true',
@@ -66,7 +76,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 6',
+        name: 'Server 7',
         description: 'Reliable Server',
         baseUrl: 'https://web.nxsha.app/embed/',
         suffix: '',
@@ -76,7 +86,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 7',
+        name: 'Server 8',
         description: 'Reliable Server',
         baseUrl: 'https://vidsync.xyz/embed/',
         suffix: '',
@@ -86,7 +96,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 8',
+        name: 'Server 9',
         description: 'Reliable Server',
         baseUrl: 'https://mapple.uk/watch/',
         suffix: '',
@@ -94,12 +104,9 @@ export const serverConfig = [
         sandboxSupport: false,
         hasAds: true,
         pattern: 'default',
-        // To disable password protection, remove 'locked' and 'password' properties
-        locked: false,
-        password: 'c3RyZWFtZmxpeEBfMTU=', // Base64 encoded
     },
     {
-        name: 'Server 9',
+        name: 'Server 10',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
@@ -109,7 +116,7 @@ export const serverConfig = [
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 10',
+        name: 'Server 11',
         description: 'Backup Server',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
@@ -119,7 +126,7 @@ export const serverConfig = [
         pattern: 'primesrc',
     },
     {
-        name: 'Server 11',
+        name: 'Server 12',
         description: 'Backup Server',
         baseUrl: 'https://vidlink.pro/',
         suffix: '',
@@ -129,7 +136,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 12',
+        name: 'Server 13',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
@@ -139,7 +146,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 13',
+        name: 'Server 14',
         description: 'Backup Server',
         baseUrl: 'https://vixsrc.to/',
         suffix: '',
@@ -148,9 +155,8 @@ export const serverConfig = [
         hasAds: true,
         pattern: 'default',
     },
-
     {
-        name: 'Server 14',
+        name: 'Server 15',
         description: 'Backup Server',
         baseUrl: 'https://player.videasy.net/',
         suffix: '',
@@ -158,12 +164,9 @@ export const serverConfig = [
         sandboxSupport: false,
         hasAds: true,
         pattern: 'default',
-        // To disable password protection, remove 'locked' and 'password' properties
-        locked: false,
-        password: 'c3RyZWFtZmxpeEBfMTQ=', // Base64 encoded
     },
     {
-        name: 'Server 15',
+        name: 'Server 16',
         description: 'Backup Server',
         baseUrl: 'https://www.zxcstream.xyz/embed/',
         suffix: '?autoPlay=true',
@@ -173,7 +176,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 16',
+        name: 'Server 17',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.vc/',
         suffix: '',
@@ -183,7 +186,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 17',
+        name: 'Server 18',
         description: 'Backup Server',
         baseUrl: 'https://vidnest.fun/',
         suffix: '',
@@ -193,7 +196,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 18',
+        name: 'Server 19',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc.to/embed/',
         suffix: '?autoPlay=1',

@@ -20,6 +20,39 @@ const firebaseConfig = {
 // Constants
 const REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
+// Report Issue categories — plain language for non-technical users. Short and
+// distinct so reports stay sortable without a taxonomy.
+const REPORT_CATEGORIES = [
+    "Video won't play",
+    'Buffers or stops',
+    'Wrong info (title, poster, etc.)',
+    'Search not working',
+    'Something else'
+];
+// One report per user per 2 minutes (per device; stored in localStorage so it
+// survives reloads). Keeps spam from drowning out real reports.
+const ISSUE_COOLDOWN_MS = 2 * 60 * 1000;
+const ISSUE_COOLDOWN_KEY = 'gc_last_issue_report';
+
+// Snapshot a reported message's visible content into the report payload. The
+// admin moderation panel renders this snippet directly, so a report stays
+// useful even if the message is later edited, deleted, or purged — the report
+// carries its own copy of what was said.
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
+export const buildMessageReport = (msg, reporter) => {
+    const text = (msg?.text || '').trim();
+    return {
+        kind: 'message',
+        msgId: msg?.id || null,
+        messageText: text ? (text.length > 200 ? text.slice(0, 200) + '…' : text) : '',
+        messageNickname: msg?.nickname || 'Unknown',
+        messageMedia: msg?.mediaUrl ? (msg.mediaType || 'media') : null,
+        reportedBy: reporter?.uid || null,
+        reportedByNickname: reporter?.nickname || 'Unknown',
+        timestamp: Date.now()
+    };
+};
+
 // Hover action buttons (React/Reply/⋮) are a mouse-only affordance. Touch
 // devices long-press for the action sheet instead, so only track hover when
 // the primary pointer actually hovers.
@@ -228,6 +261,18 @@ function GlobalChat() {
     const [recQuery, setRecQuery] = useState('');
     const [recResults, setRecResults] = useState([]);
     const [recSearching, setRecSearching] = useState(false);
+
+    // Report Issue: plain-language form in the composer menu. What the user
+    // was doing is captured automatically and attached to the report payload —
+    // the form itself stays non-technical.
+    const [showReport, setShowReport] = useState(false);
+    const [reportCategory, setReportCategory] = useState('');
+    const [reportDesc, setReportDesc] = useState('');
+    const [reportSending, setReportSending] = useState(false);
+    const [reportSent, setReportSent] = useState(false);
+    const [reportBlocked, setReportBlocked] = useState(false);
+    const [reportContext, setReportContext] = useState(null); // auto-attached context
+    const lastPlaybackIssueRef = useRef(null); // most recent DirectPlayer fallback
     // Ids of unread @everyone broadcasts that sit outside the loaded
     // 30-message window (backfilled once at setup). The FAB badge number is
     // the sum of unread broadcasts in the window plus these stale ids.
@@ -1257,6 +1302,25 @@ function GlobalChat() {
                     id,
                     ...report
                 }));
+                // Reports written before the message-snapshot fields existed only
+                // carry a msgId. Pull the message's current content so admins
+                // still see what was reported (best-effort — the message may be
+                // gone, in which case the id alone stays).
+                await Promise.all(reportsList.map(async (report) => {
+                    if (report.msgId && !report.messageText) {
+                        try {
+                            const msgSnap = await dbRef.current.ref(`messages/${report.msgId}`).once('value');
+                            const msg = msgSnap.val();
+                            if (msg) {
+                                report.messageText = (msg.text || '').trim().slice(0, 200);
+                                report.messageNickname = msg.nickname || 'Unknown';
+                                report.messageMedia = msg.mediaUrl ? (msg.mediaType || 'media') : null;
+                            }
+                        } catch {
+                            /* best-effort: leave the report as-is */
+                        }
+                    }
+                }));
                 setReports(reportsList.reverse());
             } else {
                 setReports([]);
@@ -1427,6 +1491,130 @@ function GlobalChat() {
         document.addEventListener('mousedown', onDocDown);
         return () => document.removeEventListener('mousedown', onDocDown);
     }, [showRecMenu]);
+
+    // Cache the most recent DirectPlayer fallback (playback → iframe switch)
+    // so a Report Issue opened right after auto-attaches what the user was
+    // watching, without them having to type anything technical.
+    useEffect(() => {
+        const onPlaybackIssue = (e) => {
+            lastPlaybackIssueRef.current = { ...(e.detail || {}), at: Date.now() };
+        };
+        window.addEventListener('streamflix:playback-issue', onPlaybackIssue);
+        return () => window.removeEventListener('streamflix:playback-issue', onPlaybackIssue);
+    }, []);
+
+    // Close the Report Issue form when clicking anywhere outside it.
+    useEffect(() => {
+        if (!showReport) return;
+        const onDocDown = (e) => {
+            if (!e.target.closest('.gc-report') && !e.target.closest('.gc-rec-btn')) {
+                setShowReport(false);
+            }
+        };
+        document.addEventListener('mousedown', onDocDown);
+        return () => document.removeEventListener('mousedown', onDocDown);
+    }, [showReport]);
+
+    // Open the Report Issue form: reset fields, check the 2-minute cooldown,
+    // and capture friendly + raw context (route, UA, and whatever the user was
+    // watching — from the playback event, or the /watch URL as a fallback).
+    const openReport = async () => {
+        setShowRecMenu(false);
+        const last = Number(localStorage.getItem(ISSUE_COOLDOWN_KEY) || 0);
+        setReportBlocked(Date.now() - last < ISSUE_COOLDOWN_MS);
+
+        const ctx = {
+            route: window.location.pathname + window.location.search,
+            ua: navigator.userAgent,
+            title: '',
+            tmdbId: null,
+            mediaType: null,
+            season: null,
+            episode: null,
+            fromServer: '',
+            toServer: '',
+            playback: false,
+        };
+        const pb = lastPlaybackIssueRef.current;
+        if (pb && Date.now() - pb.at < 15 * 60 * 1000) {
+            Object.assign(ctx, {
+                title: pb.title || '',
+                tmdbId: pb.tmdbId ?? null,
+                mediaType: pb.mediaType || null,
+                season: pb.season ?? null,
+                episode: pb.episode ?? null,
+                fromServer: pb.fromServer || '',
+                toServer: pb.toServer || '',
+                playback: true,
+            });
+        }
+        // No event (or it expired) but still on the watch page — pull the title
+        // from the URL so the friendly line still names what they were watching.
+        if (!ctx.title && window.location.pathname === '/watch') {
+            const params = new URLSearchParams(window.location.search);
+            const t = params.get('type');
+            const i = params.get('id');
+            if (t && i) {
+                ctx.tmdbId = i;
+                ctx.mediaType = t;
+                try {
+                    const res = await fetch(`/api/${t === 'tv' ? 'tv' : 'movie'}/${i}?language=en-US`);
+                    const data = await res.json();
+                    ctx.title = data?.title || data?.name || '';
+                } catch { /* title lookup is best-effort */ }
+            }
+        }
+        setReportContext(ctx);
+        setReportCategory('');
+        setReportDesc('');
+        setReportSent(false);
+        setShowReport(true);
+    };
+
+    // Send the issue report to the same `reports` node used by message
+    // moderation, tagged kind: 'issue' so admins can filter. Category is
+    // required; description optional; context is auto-attached.
+    const submitReport = async () => {
+        if (reportSending || !dbRef.current || !reportCategory) return;
+        const last = Number(localStorage.getItem(ISSUE_COOLDOWN_KEY) || 0);
+        if (Date.now() - last < ISSUE_COOLDOWN_MS) {
+            setReportBlocked(true);
+            return;
+        }
+        setReportSending(true);
+        try {
+            const ctx = reportContext || {};
+            await dbRef.current.ref('reports').push({
+                kind: 'issue',
+                category: reportCategory,
+                description: (reportDesc || '').trim(),
+                reportedBy: currentUserRef.current?.uid || null,
+                timestamp: Date.now(),
+                context: {
+                    route: ctx.route || '',
+                    ua: ctx.ua || '',
+                    title: ctx.title || '',
+                    tmdbId: ctx.tmdbId ? String(ctx.tmdbId) : null,
+                    mediaType: ctx.mediaType || null,
+                    season: ctx.season ?? null,
+                    episode: ctx.episode ?? null,
+                    fromServer: ctx.fromServer || '',
+                    toServer: ctx.toServer || '',
+                    playback: !!ctx.playback,
+                },
+            });
+            localStorage.setItem(ISSUE_COOLDOWN_KEY, String(Date.now()));
+            setReportSent(true);
+            setTimeout(() => {
+                setShowReport(false);
+                setReportSending(false);
+            }, 1400);
+        } catch (err) {
+            console.error('Report issue failed:', err);
+            setReportSending(false);
+            alert('Could not send report. Please try again.');
+        }
+    };
 
     // Toggle a search result in the recommendation list (max 10).
     const toggleRecMovie = (r) => {
@@ -1738,11 +1926,10 @@ function GlobalChat() {
     const handleReportMessage = async () => {
         if (!actionSheetTarget || !dbRef.current) return;
 
-        await dbRef.current.ref('reports').push({
-            msgId: actionSheetTarget.id,
-            reportedBy: currentUserRef.current.uid,
-            timestamp: Date.now()
-        });
+        await dbRef.current.ref('reports').push(buildMessageReport(actionSheetTarget, {
+            uid: currentUserRef.current?.uid,
+            nickname: userDataRef.current?.nickname
+        }));
 
         alert('Message reported.');
         setShowActionSheet(false);
@@ -2210,11 +2397,10 @@ function GlobalChat() {
                                     )}
                                     {!isOwn && (
                                         <button onClick={async () => {
-                                            await dbRef.current.ref('reports').push({
-                                                msgId: msg.id,
-                                                reportedBy: currentUserRef.current.uid,
-                                                timestamp: Date.now()
-                                            });
+                                            await dbRef.current.ref('reports').push(buildMessageReport(msg, {
+                                                uid: currentUserRef.current?.uid,
+                                                nickname: userDataRef.current?.nickname
+                                            }));
                                             alert('Message reported.');
                                             setMoreMenuMessageId(null);
                                         }}>
@@ -2657,6 +2843,82 @@ function GlobalChat() {
                                     >
                                         Recommend Content
                                     </button>
+                                    <button
+                                        className="gc-rec-menu-item"
+                                        onClick={openReport}
+                                    >
+                                        Report Issue
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Report Issue form — plain language only; technical
+                                context rides along silently in the payload. */}
+                            {showReport && (
+                                <div className="gc-report">
+                                    {reportSent ? (
+                                        <div className="gc-report-sent">Report sent. Thanks! 🙏</div>
+                                    ) : (
+                                        <>
+                                            <div className="gc-report-head">
+                                                <b>Report an Issue</b>
+                                                <button
+                                                    className="gc-report-close"
+                                                    onClick={() => setShowReport(false)}
+                                                    aria-label="Close"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
+                                            {reportBlocked && (
+                                                <div className="gc-report-blocked">
+                                                    You can send one report every 2 minutes. Please wait a moment.
+                                                </div>
+                                            )}
+                                            <div className="gc-report-cats">
+                                                {REPORT_CATEGORIES.map((c) => (
+                                                    <button
+                                                        key={c}
+                                                        className={`gc-report-cat${reportCategory === c ? ' selected' : ''}`}
+                                                        onClick={() => setReportCategory(c)}
+                                                    >
+                                                        {c}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            <textarea
+                                                className="gc-report-desc"
+                                                placeholder="What went wrong? (optional)"
+                                                value={reportDesc}
+                                                onChange={(e) => setReportDesc(e.target.value)}
+                                                maxLength={500}
+                                                rows={3}
+                                            />
+                                            <div className="gc-report-ctx">
+                                                {reportContext?.title
+                                                    ? <>While watching: <b>{reportContext.title}</b></>
+                                                    : 'While browsing the app'}
+                                            </div>
+                                            <div className="gc-report-micro">
+                                                Details about what you were doing are attached automatically — no need to explain them.
+                                            </div>
+                                            <div className="gc-report-actions">
+                                                <button
+                                                    className="gc-report-cancel"
+                                                    onClick={() => setShowReport(false)}
+                                                >
+                                                    Cancel
+                                                </button>
+                                                <button
+                                                    className="gc-report-send"
+                                                    disabled={!reportCategory || reportSending || reportBlocked}
+                                                    onClick={submitReport}
+                                                >
+                                                    {reportSending ? 'Sending…' : 'Send Report'}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -3134,36 +3396,78 @@ function GlobalChat() {
                                 {reports.length === 0 ? (
                                     <p className="gc-no-reports">No reports found.</p>
                                 ) : (
-                                    reports.map(report => (
-                                        <div key={report.id} className="gc-report-item">
-                                            <div className="gc-report-time">
-                                                {new Date(report.timestamp).toLocaleString()}
+                                    reports.map(report => {
+                                        const isIssue = report.kind === 'issue';
+                                        const mediaLabel = report.messageMedia === 'image' ? '📷 Image'
+                                            : report.messageMedia === 'video' ? '🎥 Video'
+                                            : report.messageMedia === 'audio' ? '🎵 Audio'
+                                            : report.messageMedia ? '📎 Media' : null;
+                                        return (
+                                            <div key={report.id} className="gc-report-item">
+                                                <div className="gc-report-time">
+                                                    {new Date(report.timestamp).toLocaleString()}
+                                                </div>
+                                                {isIssue ? (
+                                                    <>
+                                                        <div className="gc-report-kind gc-report-kind-issue">Issue report</div>
+                                                        <div className="gc-report-category">{report.category}</div>
+                                                        {report.description && (
+                                                            <div className="gc-report-desc-text">“{report.description}”</div>
+                                                        )}
+                                                        <div className="gc-report-context">
+                                                            {report.context?.title
+                                                                ? <>While watching: <b>{report.context.title}</b></>
+                                                                : (report.context?.route
+                                                                    ? <>On page: {report.context.route}</>
+                                                                    : 'While browsing the app')}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="gc-report-kind gc-report-kind-message">Message report</div>
+                                                        <div className="gc-report-msg-text">
+                                                            {report.messageText ? (
+                                                                <span className="gc-report-quote">“{report.messageText}”</span>
+                                                            ) : (
+                                                                <span className="gc-report-media">{mediaLabel || 'Content no longer available'}</span>
+                                                            )}
+                                                            <span className="gc-report-from">— {report.messageNickname}</span>
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {report.msgId && (
+                                                    <div className="gc-report-msgid">
+                                                        Message ID: <code>{report.msgId}</code>
+                                                    </div>
+                                                )}
+                                                <div className="gc-report-reporter">
+                                                    Reported by: {report.reportedByNickname || report.reportedBy || 'Unknown'}
+                                                </div>
+                                                <div className="gc-report-actions">
+                                                    {report.msgId && (
+                                                        <button
+                                                            className="gc-report-locate"
+                                                            onClick={() => {
+                                                                scrollToRepliedMessage(report.msgId);
+                                                                setShowReports(false);
+                                                            }}
+                                                        >
+                                                            Locate
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className="gc-report-resolve"
+                                                        onClick={async () => {
+                                                            await dbRef.current.ref(`reports/${report.id}`).remove();
+                                                            setReports(prev => prev.filter(r => r.id !== report.id));
+                                                        }}
+                                                    >
+                                                        Resolve
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="gc-report-msgid">
-                                                Message ID: <code>{report.msgId}</code>
-                                            </div>
-                                            <div className="gc-report-actions">
-                                                <button
-                                                    className="gc-report-locate"
-                                                    onClick={() => {
-                                                        scrollToRepliedMessage(report.msgId);
-                                                        setShowReports(false);
-                                                    }}
-                                                >
-                                                    Locate
-                                                </button>
-                                                <button
-                                                    className="gc-report-resolve"
-                                                    onClick={async () => {
-                                                        await dbRef.current.ref(`reports/${report.id}`).remove();
-                                                        setReports(prev => prev.filter(r => r.id !== report.id));
-                                                    }}
-                                                >
-                                                    Resolve
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </div>
                         </div>

@@ -217,3 +217,4 @@ Person_Content_Search_implementation_plan.md
 .vscode/launch.json
 # Tool caches / Local folders
 .freebuff/
+src/components/GlobalChat.test.js

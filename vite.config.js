@@ -93,10 +93,19 @@ const corsProxyPlugin = () => ({
           const key = devCacheKey(meta);
           const cached = devResolveCache.get(key);
           if (cached && Date.now() - cached.at < cached.ttl) {
-            res.setHeader('Content-Type', 'application/json');
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.end(JSON.stringify(cached.body));
-            return;
+            // Mirror production (functions/api/stream/streamflix.js): serve a
+            // cached success only while its top source still answers — CDN
+            // data tokens expire in minutes, long before the 1h TTL, and a
+            // stale cached URL fails in the player. Re-resolve when dead.
+            const { isSourceAlive } = await import('./src/api/stream/zxcstream.js');
+            const alive = !cached.body?.success || !cached.body.sources?.[0]?.url ||
+              await isSourceAlive(cached.body.sources[0].url);
+            if (alive) {
+              res.setHeader('Content-Type', 'application/json');
+              res.setHeader('Access-Control-Allow-Origin', '*');
+              res.end(JSON.stringify(cached.body));
+              return;
+            }
           }
 
           const { resolveStream } = await import('./src/api/stream/zxcstream.js');

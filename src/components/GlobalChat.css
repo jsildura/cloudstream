@@ -2326,6 +2326,72 @@
     font-size: 0.75rem;
 }
 
+.gc-report-kind {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+
+.gc-report-kind-issue {
+    color: #f59e0b;
+}
+
+.gc-report-kind-message {
+    color: #ef4444;
+}
+
+.gc-report-category {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.gc-report-desc-text,
+.gc-report-context {
+    color: #c6ccd6;
+    font-size: 0.8rem;
+    margin-bottom: 6px;
+    word-break: break-word;
+}
+
+.gc-report-context b {
+    color: #fff;
+}
+
+.gc-report-msg-text {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+}
+
+.gc-report-quote {
+    color: #fff;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.gc-report-media {
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.gc-report-from {
+    display: block;
+    color: #6b7280;
+    font-size: 0.75rem;
+    margin-top: 4px;
+}
+
+.gc-report-reporter {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-bottom: 4px;
+}
+
 .gc-report-actions {
     display: flex;
     gap: 8px;
@@ -3169,4 +3235,172 @@
         height: 24px;
         font-size: 13px;
     }
+}
+
+/* === REPORT ISSUE ===
+   Plain-language bug report form in the composer menu. Context (route, UA,
+   what was being watched) rides along in the payload, not the UI. */
+.gc-report {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 12px;
+    right: 12px;
+    padding: 12px;
+    background: #1d1f24;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.55);
+    z-index: 50;
+}
+
+.gc-report-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.gc-report-head b {
+    color: #fff;
+    font-size: 0.92rem;
+}
+
+.gc-report-close {
+    background: none;
+    border: none;
+    color: #8a919e;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 6px;
+    line-height: 1;
+}
+
+.gc-report-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.gc-report-blocked {
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(229, 9, 20, 0.15);
+    border: 1px solid rgba(229, 9, 20, 0.35);
+    color: #ff9b9b;
+    font-size: 0.8rem;
+}
+
+.gc-report-cats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.gc-report-cat {
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: none;
+    color: #c6ccd6;
+    font-family: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.gc-report-cat:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.gc-report-cat.selected {
+    background: #e50914;
+    border-color: #e50914;
+    color: #fff;
+}
+
+.gc-report-desc {
+    width: 100%;
+    box-sizing: border-box;
+    resize: none;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+.gc-report-desc::placeholder {
+    color: #8a919e;
+}
+
+.gc-report-ctx {
+    color: #c6ccd6;
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+
+.gc-report-ctx b {
+    color: #fff;
+}
+
+.gc-report-micro {
+    color: #8a919e;
+    font-size: 0.72rem;
+    margin-bottom: 10px;
+}
+
+.gc-report-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.gc-report-cancel {
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 8px;
+    background: none;
+    color: #c6ccd6;
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.gc-report-cancel:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.gc-report-send {
+    padding: 7px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #e50914;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.gc-report-send:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.gc-report-send:not(:disabled):hover {
+    opacity: 0.9;
+}
+
+.gc-report-sent {
+    padding: 14px;
+    text-align: center;
+    color: #7ee2a8;
+    font-size: 0.9rem;
 }

@@ -23,7 +23,12 @@
       "admin_key": { ".read": "auth != null", ".write": false },
       "admin_profile": { ".read": "auth != null", ".write": "auth != null" }
     },
-    "reports": { ".read": "auth != null", ".write": "auth != null" },
+    "reports": {
+      ".read": "root.child('users').child(auth.uid).child('isAdmin').val() === true",
+      "$reportId": {
+        ".write": "(!data.exists() && newData.exists()) || root.child('users').child(auth.uid).child('isAdmin').val() === true"
+      }
+    },
     "pinnedMessage": { ".read": true, ".write": "auth != null" },
     "popular_this_week": {
       ".read": true, ".write": true,

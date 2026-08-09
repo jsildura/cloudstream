@@ -1,12 +1,14 @@
-import { resolveStream } from '../../../src/api/stream/zxcstream.js';
+import { resolveStream, isSourceAlive } from '../../../src/api/stream/zxcstream.js';
 import { routeSources } from '../../../src/api/stream/routing.js';
 
 // Best-effort resolve cache: repeat plays of the same title re-serve the last
 // result instead of re-hitting zxcstream's backend (fewer traces, faster load).
-// Successes live 1 hour — sources rarely change that often, and the longer TTL
-// cuts repeat upstream hits (and detection surface) for back-and-forth
-// watchers; failures 5 min so dead probes (e.g. S0 specials) don't hammer all
-// upstream servers on every attempt.
+// Successes live 1 hour BUT the CDN tokens inside source URLs expire in
+// minutes, so a cached success is re-verified (isSourceAlive) before serving —
+// dead cached links are re-resolved fresh instead of failing in the player
+// (the "direct play missing a title the iframe plays" bug). Failures live
+// 5 min so dead probes (e.g. S0 specials) don't hammer all upstream servers on
+// every attempt.
 const CACHE_TTL_MS = 60 * 60 * 1000;
 const FAIL_TTL_MS = 5 * 60 * 1000;
 
@@ -69,7 +71,13 @@ export async function onRequestPost(context) {
     const key = cacheKey(meta);
     const hit = await cacheGet(key);
     if (hit) {
-      return Response.json(hit, { headers: cors });
+      // Success cache: only serve while the top source still answers — a stale
+      // data token makes every cached URL dead (403/427) even though the
+      // resolve itself succeeded. Failures have no URLs, so serve those as-is.
+      if (!hit.success || !hit.sources?.[0]?.url || await isSourceAlive(hit.sources[0].url)) {
+        return Response.json(hit, { headers: cors });
+      }
+      // else: cached sources are dead — fall through to a fresh resolve.
     }
 
     const result = await resolveStream(meta, context.env.ZXC_STREAM_SECRET);

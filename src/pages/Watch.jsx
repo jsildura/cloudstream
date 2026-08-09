@@ -13,11 +13,6 @@ import { generateContentMeta } from '../utils/metaUtils';
 import { episodeStill } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
 
-// Chance (0-1) that a Server 1 load plays through the direct player instead
-// of the site's own iframe. 0.5 = random per load; only applies to servers
-// with `directPlayer: true` in src/config/servers.js.
-const DIRECT_STREAM_CHANCE = 0.5;
-
 const Watch = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,17 +47,6 @@ const Watch = () => {
   const [loading, setLoading] = useState(true);
 
   const [playerLoaded, setPlayerLoaded] = useState(false);
-  // Server 1 mode is rolled ONCE at mount (a true per-session dice roll):
-  // Math.random() < 0.5 → direct player, otherwise the site's own iframe.
-  // currentServer always starts at 0, which is the only direct-capable
-  // server, so serverConfig[0] is read directly here.
-  const [useIframe, setUseIframe] = useState(() => {
-    return !(serverConfig[0].directPlayer && Math.random() < DIRECT_STREAM_CHANCE);
-  });
-  // Guards the effect below: the mount roll already happened in the state
-  // initializer, so the first effect run must NOT re-roll (it would override
-  // the initializer and waste the decision).
-  const hasRolledRef = useRef(false);
 
   const [serverDrawerOpen, setServerDrawerOpen] = useState(false);
   const [sandboxEnabled, setSandboxEnabled] = useState(true);
@@ -82,20 +66,6 @@ const Watch = () => {
   const [episodeDrawerOpen, setEpisodeDrawerOpen] = useState(false);
   const [episodeSearchQuery, setEpisodeSearchQuery] = useState('');
   const [episodeDrawerTranslateY, setEpisodeDrawerTranslateY] = useState(0);
-
-  // Password protection state
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [pendingServerIndex, setPendingServerIndex] = useState(null);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [unlockedServers, setUnlockedServers] = useState(() => {
-    try {
-      const stored = localStorage.getItem('unlockedServers');
-      return stored ? JSON.parse(stored) : {};
-    } catch {
-      return {};
-    }
-  });
 
   const watchContainerRef = useRef(null);
   const dragStartY = useRef(0);
@@ -427,8 +397,6 @@ const Watch = () => {
     isRecommended: s.isRecommended,
     sandboxSupport: s.sandboxSupport,
     hasAds: s.hasAds || false,
-    isLocked: s.locked || false,
-    password: s.password || null,
     directPlayer: s.directPlayer || false,
     getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
   })), [type, id]);
@@ -460,17 +428,12 @@ const Watch = () => {
     setSandboxEnabled(servers[currentServer].sandboxSupport);
   }, [currentServer, servers]);
 
-  // Any change that forces a fresh load re-rolls the player mode for
-  // direct-capable servers (Server 1): a dice roll picks the direct player
-  // or the site's own iframe. Servers without `directPlayer` always embed.
+  // Any change that forces a fresh load resets the player to the lazy overlay.
+  // Player mode is derived from the server config: `directPlayer` servers
+  // render DirectPlayer, everything else embeds an iframe.
   useEffect(() => {
     setPlayerLoaded(false);
-    if (!hasRolledRef.current) {
-      hasRolledRef.current = true;
-      return; // keep the roll decided in the useState initializer
-    }
-    setUseIframe(!(servers[currentServer].directPlayer && Math.random() < DIRECT_STREAM_CHANCE));
-  }, [currentServer, servers, currentSeason, currentEpisode, type, id]);
+  }, [currentServer, currentSeason, currentEpisode, type, id]);
 
   const fetchContentData = async () => {
     try {
@@ -589,45 +552,9 @@ const Watch = () => {
 
   const handleServerSelect = (index) => {
     const server = servers[index];
-
-    if (server.isLocked && !unlockedServers[server.name]) {
-      setPendingServerIndex(index);
-      setPasswordInput('');
-      setPasswordError('');
-      setPasswordModalOpen(true);
-      return;
-    }
-
     setCurrentServer(index);
     setSandboxEnabled(server.sandboxSupport);
     setServerDrawerOpen(false);
-  };
-
-  const handlePasswordSubmit = () => {
-    if (pendingServerIndex === null) return;
-
-    const server = servers[pendingServerIndex];
-    const correctPassword = atob(server.password);
-
-    if (passwordInput === correctPassword) {
-      const newUnlocked = { ...unlockedServers, [server.name]: true };
-      localStorage.setItem('unlockedServers', JSON.stringify(newUnlocked));
-      setUnlockedServers(newUnlocked);
-      setPasswordModalOpen(false);
-      setCurrentServer(pendingServerIndex);
-      setSandboxEnabled(server.sandboxSupport);
-      setServerDrawerOpen(false);
-      setPendingServerIndex(null);
-    } else {
-      setPasswordError('Incorrect password');
-    }
-  };
-
-  const handlePasswordCancel = () => {
-    setPasswordModalOpen(false);
-    setPendingServerIndex(null);
-    setPasswordInput('');
-    setPasswordError('');
   };
 
   const handleBack = () => {
@@ -827,7 +754,7 @@ const Watch = () => {
         {/* Video Player - Lazy Loaded */}
         {playerLoaded ? (
           <>
-            {servers[currentServer].directPlayer && !useIframe ? (
+            {servers[currentServer].directPlayer ? (
               <DirectPlayer
                 type={type}
                 id={id}
@@ -838,13 +765,26 @@ const Watch = () => {
                 date={contentInfo?.release_date || contentInfo?.first_air_date}
                 runtime={contentInfo?.runtime || contentInfo?.episode_run_time?.[0]}
                 onFallback={() => {
-                  setUseIframe(true);
-                  // Direct resolution failed (e.g. S0 specials are not hosted
-                  // on zxcstream at all). Falling back to Server 1's own iframe
-                  // would hit the same dead backend — skip to the next server,
-                  // whose embed aggregates from different sources.
+                  // Direct resolution failed (e.g. the zxcstream backend is
+                  // rate-limiting our resolver). Fall back to Server 2 — the
+                  // zxcstream iframe — which plays from the browser's own IP
+                  // and usually still works when the direct path is throttled.
                   const nextServer = currentServer + 1;
                   if (nextServer < servers.length) {
+                    // Let GlobalChat's Report Issue auto-attach what the user
+                    // was watching and which server failed — the user only has
+                    // to pick a category and describe what happened.
+                    window.dispatchEvent(new CustomEvent('streamflix:playback-issue', {
+                      detail: {
+                        title: contentInfo?.title || contentInfo?.name || '',
+                        tmdbId: id,
+                        mediaType: type,
+                        season: currentSeason,
+                        episode: currentEpisode,
+                        fromServer: servers[currentServer]?.name || '',
+                        toServer: servers[nextServer]?.name || '',
+                      },
+                    }));
                     setCurrentServer(nextServer);
                   }
                 }}
@@ -893,7 +833,7 @@ const Watch = () => {
             {/* Streamflix-side overlay (title badge) belongs to the native
                 DirectPlayer only — iframe servers render their own
                 title/player UI, so they must not be covered by ours. */}
-            {servers[currentServer].directPlayer && !useIframe && (
+            {servers[currentServer].directPlayer && (
               <>
                 {controlsVisible && (
                   <div className="watch-title-badge" aria-hidden="true">
@@ -1234,14 +1174,6 @@ const Watch = () => {
                           clipRule="evenodd"
                         />
                       </svg>
-                      {server.isLocked && !unlockedServers[server.name] && (
-                        <span className="watch-server-lock-badge">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" fill="none" stroke="currentColor" strokeWidth="2" />
-                          </svg>
-                        </span>
-                      )}
                     </div>
                     <div className="watch-server-details">
                       <p className="watch-server-name">
@@ -1263,47 +1195,6 @@ const Watch = () => {
               <button className="watch-drawer-close" onClick={() => setServerDrawerOpen(false)}>
                 Close
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Password Modal */}
-        {passwordModalOpen && (
-          <div className="watch-password-overlay" onClick={handlePasswordCancel} data-nav-trap>
-            <div className="watch-password-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="watch-password-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-              <h3 className="watch-password-title">Beta Server</h3>
-              <p className="watch-password-desc">This server is in beta testing. Password available to early supporters only.</p>
-              <input
-                type="password"
-                className="watch-password-input"
-                placeholder="Enter password"
-                value={passwordInput}
-                onChange={(e) => {
-                  setPasswordInput(e.target.value);
-                  setPasswordError('');
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handlePasswordSubmit();
-                }}
-                autoFocus
-              />
-              {passwordError && (
-                <p className="watch-password-error">{passwordError}</p>
-              )}
-              <div className="watch-password-buttons">
-                <button className="watch-password-btn cancel" onClick={handlePasswordCancel}>
-                  Cancel
-                </button>
-                <button className="watch-password-btn submit" onClick={handlePasswordSubmit}>
-                  Unlock
-                </button>
-              </div>
             </div>
           </div>
         )}
