@@ -34,6 +34,10 @@ const REPORT_CATEGORIES = [
 const ISSUE_COOLDOWN_MS = 2 * 60 * 1000;
 const ISSUE_COOLDOWN_KEY = 'gc_last_issue_report';
 
+// Short human-readable ticket number for a report — unique enough for a
+// moderation queue without a counter (derived from the push timestamp).
+const makeTicketNo = () => String(Date.now()).slice(-6);
+
 // Snapshot a reported message's visible content into the report payload. The
 // admin moderation panel renders this snippet directly, so a report stays
 // useful even if the message is later edited, deleted, or purged — the report
@@ -49,6 +53,7 @@ export const buildMessageReport = (msg, reporter) => {
         messageMedia: msg?.mediaUrl ? (msg.mediaType || 'media') : null,
         reportedBy: reporter?.uid || null,
         reportedByNickname: reporter?.nickname || 'Unknown',
+        ticketNo: makeTicketNo(),
         timestamp: Date.now()
     };
 };
@@ -439,6 +444,9 @@ function GlobalChat() {
     // Broadcasts already alerted (Notification + chime) this session, so a
     // duplicate child_added event can never double-fire the alert.
     const notifiedBroadcastIdsRef = useRef(new Set());
+    // Report ids currently being resolved — guards against a double-click on
+    // the Resolve button posting two notifications.
+    const resolvingReportsRef = useRef(new Set());
 
     // Delay FAB visibility until loading screen is gone (4s + 0.5s fade)
     useEffect(() => {
@@ -1600,12 +1608,14 @@ function GlobalChat() {
         setReportSending(true);
         try {
             const ctx = reportContext || {};
+            const ticketNo = makeTicketNo();
             await dbRef.current.ref('reports').push({
                 kind: 'issue',
                 category: reportCategory,
                 description: (reportDesc || '').trim(),
                 reportedBy: currentUserRef.current?.uid || null,
                 reportedByNickname: userDataRef.current?.nickname || 'Unknown',
+                ticketNo,
                 timestamp: Date.now(),
                 context: {
                     route: ctx.route || '',
@@ -1621,6 +1631,15 @@ function GlobalChat() {
                 },
             });
             localStorage.setItem(ISSUE_COOLDOWN_KEY, String(Date.now()));
+            // Announce the new ticket in the global chat so everyone can see a
+            // report was filed and by whom.
+            await pushTicketEvent({
+                action: 'created',
+                ticketNo,
+                reporterNickname: userDataRef.current?.nickname || 'Unknown',
+                reporterUid: currentUserRef.current?.uid || null,
+                category: reportCategory
+            });
             setReportSent(true);
             setTimeout(() => {
                 setShowReport(false);
@@ -1939,14 +1958,49 @@ function GlobalChat() {
         }
     };
 
+    // Post a ticket event into the global chat feed — visible to everyone. Used
+    // to announce when a report/ticket is created and when an admin resolves it,
+    // so the reporter (and the whole chat) can see the ticket's lifecycle.
+    // Best-effort: a failed event must never masquerade as a failed report.
+    const pushTicketEvent = async ({ action, ticketNo, reporterNickname, reporterUid, category }) => {
+        if (!dbRef.current) return;
+        try {
+            await dbRef.current.ref('messages').push({
+                uid: 'system',
+                nickname: 'StreamFlix',
+                avatarUrl: ADMIN_AVATAR,
+                system: true,
+                ticket: true,
+                ticketAction: action,
+                ticketNo: ticketNo || null,
+                reporterNickname: reporterNickname || null,
+                reporterUid: reporterUid || null,
+                category: category || null,
+                createdAt: Date.now()
+            });
+        } catch (err) {
+            console.warn('Failed to post ticket event:', err);
+        }
+    };
+
     // Handle report message
     const handleReportMessage = async () => {
         if (!actionSheetTarget || !dbRef.current) return;
 
-        await dbRef.current.ref('reports').push(buildMessageReport(actionSheetTarget, {
+        const report = buildMessageReport(actionSheetTarget, {
             uid: currentUserRef.current?.uid,
             nickname: userDataRef.current?.nickname
-        }));
+        });
+        await dbRef.current.ref('reports').push(report);
+
+        // Announce the new ticket in the global chat feed.
+        await pushTicketEvent({
+            action: 'created',
+            ticketNo: report.ticketNo,
+            reporterNickname: userDataRef.current?.nickname || 'Unknown',
+            reporterUid: currentUserRef.current?.uid || null,
+            category: null
+        });
 
         alert('Message reported.');
         setShowActionSheet(false);
@@ -2142,6 +2196,49 @@ function GlobalChat() {
 
     // Render message
     const renderMessage = (msg) => {
+        // Targeted system notices (legacy report confirmations / resolutions)
+        // are only visible to their recipient and to admins.
+        if (msg.toUid && msg.toUid !== currentUserRef.current?.uid && !userDataRef.current?.isAdmin) {
+            return null;
+        }
+
+        // Ticket events (report created / resolved) render as a distinct bubble
+        // in the feed — visible to everyone, styled unlike a normal message so
+        // the ticket's lifecycle stands out.
+        if (msg.ticket) {
+            const isResolved = msg.ticketAction === 'resolved';
+            return (
+                <div key={msg.id} className="gc-msg gc-msg-ticket">
+                    <div className="gc-msg-group">
+                        <div className={`gc-msg-bubble gc-ticket-bubble ${isResolved ? 'gc-ticket-bubble-resolved' : 'gc-ticket-bubble-created'}`}>
+                            <div className="gc-ticket-head">
+                                <span className="gc-ticket-icon">{isResolved ? '✅' : '🎫'}</span>
+                                <span className="gc-ticket-title">{isResolved ? 'Ticket Resolved' : 'Ticket Created'}</span>
+                                {msg.ticketNo && <span className="gc-ticket-no">#{msg.ticketNo}</span>}
+                            </div>
+                            <div className="gc-ticket-text">
+                                {isResolved ? (
+                                    <>{(msg.reporterNickname ? `${msg.reporterNickname}'s` : 'A')} report was resolved — thanks for helping keep the chat safe!</>
+                                ) : (
+                                    <>{msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}</>
+                                )}
+                            </div>
+                            <div className="gc-ticket-time">{formatTime(msg.createdAt)}</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (msg.system) {
+            return (
+                <div key={msg.id} className="gc-msg-system">
+                    <span className="gc-msg-system-text">{msg.text}</span>
+                    <span className="gc-msg-system-time">{formatTime(msg.createdAt)}</span>
+                </div>
+            );
+        }
+
         if (msg.deletedForAll) {
             const isOwn = msg.uid === currentUserRef.current?.uid;
             return (
@@ -2414,10 +2511,19 @@ function GlobalChat() {
                                     )}
                                     {!isOwn && (
                                         <button onClick={async () => {
-                                            await dbRef.current.ref('reports').push(buildMessageReport(msg, {
+                                            const report = buildMessageReport(msg, {
                                                 uid: currentUserRef.current?.uid,
                                                 nickname: userDataRef.current?.nickname
-                                            }));
+                                            });
+                                            await dbRef.current.ref('reports').push(report);
+                                            // Announce the new ticket in the global chat feed.
+                                            await pushTicketEvent({
+                                                action: 'created',
+                                                ticketNo: report.ticketNo,
+                                                reporterNickname: userDataRef.current?.nickname || 'Unknown',
+                                                reporterUid: currentUserRef.current?.uid || null,
+                                                category: null
+                                            });
                                             alert('Message reported.');
                                             setMoreMenuMessageId(null);
                                         }}>
@@ -3448,7 +3554,7 @@ function GlobalChat() {
                                                                         {report.context.tmdbId && ` · TMDB ${report.context.tmdbId}`}
                                                                     </div>
                                                                 )}
-                                                                {report.context.route && (
+                                                                {report.context.route && report.context.route !== '/' && (
                                                                     <div className="gc-report-detail">
                                                                         <span className="gc-report-detail-label">Page</span>
                                                                         <span className="gc-report-detail-route">{report.context.route}</span>
@@ -3511,8 +3617,22 @@ function GlobalChat() {
                                                     <button
                                                         className="gc-report-resolve"
                                                         onClick={async () => {
-                                                            await dbRef.current.ref(`reports/${report.id}`).remove();
-                                                            setReports(prev => prev.filter(r => r.id !== report.id));
+                                                            if (resolvingReportsRef.current.has(report.id)) return;
+                                                            resolvingReportsRef.current.add(report.id);
+                                                            try {
+                                                                await dbRef.current.ref(`reports/${report.id}`).remove();
+                                                                setReports(prev => prev.filter(r => r.id !== report.id));
+                                                                // Announce the resolution in the chat feed so the reporter (and
+                                                                // everyone else) sees their ticket was closed.
+                                                                await pushTicketEvent({
+                                                                    action: 'resolved',
+                                                                    ticketNo: report.ticketNo,
+                                                                    reporterNickname: report.reportedByNickname,
+                                                                    reporterUid: report.reportedBy || null
+                                                                });
+                                                            } finally {
+                                                                resolvingReportsRef.current.delete(report.id);
+                                                            }
                                                         }}
                                                     >
                                                         Resolve
