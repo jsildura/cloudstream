@@ -3,6 +3,7 @@
     "messages": {
       ".read": true,
       ".write": "auth != null",
+      ".indexOn": ["broadcast", "ticketNo"],
       "$messageId": {
         ".write": "newData.exists() ? ((newData.child('broadcast').val() === true ? root.child('users').child(newData.child('uid').val()).child('isAdmin').val() === true : true) && (newData.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)) : (data.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)"
       }

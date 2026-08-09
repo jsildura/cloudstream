@@ -958,88 +958,111 @@
 }
 
 /* === TICKET EVENTS (report created / resolved) ===
-   Report/ticket messages get their own bubble look so they never read as a
-   regular chat message: dashed amber border, ticket-style header with an icon,
-   a pill for the ticket number, and a green variant once resolved. */
+   A created ticket renders as a centered, ticket-stub-shaped notice — never a
+   regular chat bubble. A semicircular notch is punched out of each side edge
+   and a short dashed perforation sits just inside each end, so the card reads
+   as a tear-off ticket. The header line always carries the ticket number.
+   When an admin resolves the ticket, the SAME message flips into a regular
+   chat bubble with the admin avatar (see the resolved branch in renderMessage),
+   so it reads as the admin replying to the ticket. Admins can delete a ticket
+   via the hover ⋮ menu like any other message. */
+.gc-msg.gc-msg-ticket {
+    justify-content: center;
+}
+
 .gc-msg.gc-msg-ticket .gc-msg-group {
-    /* No hover actions on ticket bubbles, so drop the reserved padding that
-       normal message rows keep for the React/Reply/⋮ buttons. */
+    /* Centered notice — no reserved space for left/right hover actions. */
+    width: 100%;
+    align-items: center;
     padding-right: 0 !important;
 }
 
-.gc-msg-bubble.gc-ticket-bubble {
-    background: linear-gradient(135deg, #332c1d, #262215);
-    border: 1px dashed rgba(255, 193, 7, 0.55);
-    border-radius: 14px 14px 14px 4px;
-    color: #f5e9c9;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+.gc-ticket-stub {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 250px;
+    max-width: 88%;
+    padding: 10px 20px 9px;
+    background: #262626;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    color: #e6e6e6;
     cursor: default;
-    min-width: 230px;
-    padding: 10px 14px;
+    /* Ticket silhouette: punch a semicircular notch out of each side edge. */
+    -webkit-mask-image:
+        radial-gradient(circle 9px at 0 50%, transparent 97%, #000 100%),
+        radial-gradient(circle 9px at 100% 50%, transparent 97%, #000 100%);
+    -webkit-mask-composite: source-in;
+    -webkit-mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask-image:
+        radial-gradient(circle 9px at 0 50%, transparent 97%, #000 100%),
+        radial-gradient(circle 9px at 100% 50%, transparent 97%, #000 100%);
+    mask-composite: intersect;
+    mask-size: 100% 100%;
+    mask-repeat: no-repeat;
 }
 
-.gc-msg-bubble.gc-ticket-bubble:hover {
-    /* Keep the ticket look on hover instead of the normal gray bubble hover. */
-    background: linear-gradient(135deg, #3a3220, #2b2617);
+.gc-ticket-stub:hover {
+    background: #2c2c2c;
 }
 
-.gc-ticket-bubble .gc-ticket-head {
+/* Perforation lines just inside each notch, like a tear-off stub. */
+.gc-ticket-stub::before,
+.gc-ticket-stub::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 64%;
+    border-left: 2px dashed rgba(255, 255, 255, 0.2);
+    pointer-events: none;
+}
+
+.gc-ticket-stub::before {
+    left: 15px;
+}
+
+.gc-ticket-stub::after {
+    right: 15px;
+}
+
+.gc-ticket-stub .gc-ticket-line {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 4px;
+    gap: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #d9d9d9;
 }
 
-.gc-ticket-bubble .gc-ticket-icon {
+.gc-ticket-stub .gc-ticket-icon {
     font-size: 0.95rem;
     line-height: 1;
+    flex-shrink: 0;
 }
 
-.gc-ticket-bubble .gc-ticket-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #ffd76a;
-}
-
-.gc-ticket-bubble .gc-ticket-no {
+.gc-ticket-stub .gc-ticket-no {
     margin-left: auto;
-    font-size: 0.7rem;
+    font-family: ui-monospace, 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+    font-size: 0.74rem;
     font-weight: 700;
-    background: rgba(255, 193, 7, 0.16);
-    border: 1px solid rgba(255, 193, 7, 0.4);
-    color: #ffd76a;
-    padding: 1px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
+    color: #ffcf5c;
+    letter-spacing: 0.02em;
 }
 
-.gc-ticket-bubble .gc-ticket-text {
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: #f5e9c9;
+.gc-ticket-stub .gc-ticket-text {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #d5d5d5;
 }
 
-.gc-ticket-bubble .gc-ticket-time {
-    margin-top: 4px;
+.gc-ticket-stub .gc-ticket-time {
     font-size: 0.62rem;
-    color: rgba(245, 233, 201, 0.45);
-}
-
-/* Resolved variant: green accents instead of amber. */
-.gc-ticket-bubble.gc-ticket-bubble-resolved {
-    border-color: rgba(76, 217, 100, 0.55);
-}
-
-.gc-ticket-bubble.gc-ticket-bubble-resolved .gc-ticket-title {
-    color: #7ce69b;
-}
-
-.gc-ticket-bubble.gc-ticket-bubble-resolved .gc-ticket-no {
-    background: rgba(76, 217, 100, 0.15);
-    border-color: rgba(76, 217, 100, 0.45);
-    color: #7ce69b;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 /* === MESSAGE TIMESTAMP === */

@@ -1609,6 +1609,10 @@ function GlobalChat() {
         try {
             const ctx = reportContext || {};
             const ticketNo = makeTicketNo();
+            // Allocate the feed bubble's key up-front so the report can carry it
+            // (ticketMsgId): resolving later flips the SAME bubble in place
+            // instead of posting a second message.
+            const ticketMsgRef = dbRef.current.ref('messages').push();
             await dbRef.current.ref('reports').push({
                 kind: 'issue',
                 category: reportCategory,
@@ -1616,6 +1620,7 @@ function GlobalChat() {
                 reportedBy: currentUserRef.current?.uid || null,
                 reportedByNickname: userDataRef.current?.nickname || 'Unknown',
                 ticketNo,
+                ticketMsgId: ticketMsgRef.key,
                 timestamp: Date.now(),
                 context: {
                     route: ctx.route || '',
@@ -1638,7 +1643,8 @@ function GlobalChat() {
                 ticketNo,
                 reporterNickname: userDataRef.current?.nickname || 'Unknown',
                 reporterUid: currentUserRef.current?.uid || null,
-                category: reportCategory
+                category: reportCategory,
+                atKey: ticketMsgRef.key
             });
             setReportSent(true);
             setTimeout(() => {
@@ -1959,13 +1965,18 @@ function GlobalChat() {
     };
 
     // Post a ticket event into the global chat feed — visible to everyone. Used
-    // to announce when a report/ticket is created and when an admin resolves it,
-    // so the reporter (and the whole chat) can see the ticket's lifecycle.
-    // Best-effort: a failed event must never masquerade as a failed report.
-    const pushTicketEvent = async ({ action, ticketNo, reporterNickname, reporterUid, category }) => {
-        if (!dbRef.current) return;
+    // to announce when a report/ticket is created (and once, by admins, to
+    // confirm a resolution). Best-effort: a failed event must never masquerade
+    // as a failed report. Returns the message key so callers can store it on the
+    // report (ticketMsgId) and later flip the same bubble to "resolved" instead
+    // of posting a second one.
+    const pushTicketEvent = async ({ action, ticketNo, reporterNickname, reporterUid, category, atKey = null }) => {
+        if (!dbRef.current) return null;
         try {
-            await dbRef.current.ref('messages').push({
+            const ref = atKey
+                ? dbRef.current.ref(`messages/${atKey}`)
+                : dbRef.current.ref('messages').push();
+            await ref.set({
                 uid: 'system',
                 nickname: 'StreamFlix',
                 avatarUrl: ADMIN_AVATAR,
@@ -1978,8 +1989,47 @@ function GlobalChat() {
                 category: category || null,
                 createdAt: Date.now()
             });
+            return ref.key;
         } catch (err) {
             console.warn('Failed to post ticket event:', err);
+            return null;
+        }
+    };
+
+    // Flip a ticket's "created" bubble to "resolved" IN PLACE — the feed shows
+    // one bubble per ticket that changes state, never a second message. Newer
+    // reports carry the ticket message key (ticketMsgId); legacy reports (no
+    // key) fall back to matching their created event by ticket number.
+    const resolveTicketMessage = async (report) => {
+        if (!dbRef.current) return;
+        const updates = { ticketAction: 'resolved', resolvedAt: Date.now() };
+
+        if (report.ticketMsgId) {
+            try {
+                // Only flip a message that actually exists as a ticket — updating
+                // a deleted message would silently create a broken stub.
+                const existing = await dbRef.current.ref(`messages/${report.ticketMsgId}`).once('value');
+                if (existing.exists() && existing.val()?.ticket) {
+                    await existing.ref.update(updates);
+                }
+                return;
+            } catch (err) {
+                console.warn('Ticket message update failed, falling back to ticket-number match:', err);
+            }
+        }
+
+        // Legacy path: match created ticket events by ticket number.
+        try {
+            const snap = await dbRef.current.ref('messages')
+                .orderByChild('ticketNo').equalTo(report.ticketNo).once('value');
+            snap.forEach(child => {
+                const v = child.val();
+                if (v && v.ticket && v.ticketAction === 'created') {
+                    child.ref.update(updates);
+                }
+            });
+        } catch (err) {
+            console.warn('Failed to locate ticket message for resolution:', err);
         }
     };
 
@@ -1991,6 +2041,10 @@ function GlobalChat() {
             uid: currentUserRef.current?.uid,
             nickname: userDataRef.current?.nickname
         });
+        // Allocate the feed bubble's key so the report carries it (ticketMsgId)
+        // and resolution can flip the same bubble instead of posting a second.
+        const ticketMsgRef = dbRef.current.ref('messages').push();
+        report.ticketMsgId = ticketMsgRef.key;
         await dbRef.current.ref('reports').push(report);
 
         // Announce the new ticket in the global chat feed.
@@ -1999,7 +2053,8 @@ function GlobalChat() {
             ticketNo: report.ticketNo,
             reporterNickname: userDataRef.current?.nickname || 'Unknown',
             reporterUid: currentUserRef.current?.uid || null,
-            category: null
+            category: null,
+            atKey: ticketMsgRef.key
         });
 
         alert('Message reported.');
@@ -2202,30 +2257,95 @@ function GlobalChat() {
             return null;
         }
 
-        // Ticket events (report created / resolved) render as a distinct bubble
-        // in the feed — visible to everyone, styled unlike a normal message so
-        // the ticket's lifecycle stands out.
+        // Ticket events render as a centered, ticket-stub-shaped notice when
+        // created (system card, never a user bubble), but once an admin resolves
+        // the ticket the SAME message flips into a regular chat bubble with the
+        // admin avatar — so it reads as the admin replying to the ticket.
+        // Admins can delete either state via the hover ⋮ menu.
         if (msg.ticket) {
             const isResolved = msg.ticketAction === 'resolved';
             return (
-                <div key={msg.id} className="gc-msg gc-msg-ticket">
+                <div
+                    key={msg.id}
+                    id={`msg-${msg.id}`}
+                    className={`gc-msg ${isResolved ? 'gc-other' : 'gc-msg-ticket'}`}
+                    onMouseEnter={() => {
+                        if (HOVER_MQ.matches) setHoveredMessageId(msg.id);
+                    }}
+                    onMouseLeave={() => {
+                        setHoveredMessageId(null);
+                        setMoreMenuMessageId(null);
+                    }}
+                >
+                    {isResolved && (
+                        <img
+                            src={msg.avatarUrl || ADMIN_AVATAR}
+                            alt=""
+                            className="gc-avatar"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = ADMIN_AVATAR;
+                            }}
+                        />
+                    )}
                     <div className="gc-msg-group">
-                        <div className={`gc-msg-bubble gc-ticket-bubble ${isResolved ? 'gc-ticket-bubble-resolved' : 'gc-ticket-bubble-created'}`}>
-                            <div className="gc-ticket-head">
-                                <span className="gc-ticket-icon">{isResolved ? '✅' : '🎫'}</span>
-                                <span className="gc-ticket-title">{isResolved ? 'Ticket Resolved' : 'Ticket Created'}</span>
-                                {msg.ticketNo && <span className="gc-ticket-no">#{msg.ticketNo}</span>}
+                        {isResolved ? (
+                            <>
+                                <div className="gc-sender-name">
+                                    {msg.nickname || 'StreamFlix'}
+                                    <span className="gc-admin-badge">
+                                        <i className="fa-solid fa-shield-halved"></i>
+                                    </span>
+                                </div>
+                                <div className="gc-bubble-wrapper">
+                                    <div className="gc-msg-bubble">
+                                        <div className="gc-msg-text">
+                                            ✅ Ticket {msg.ticketNo ? `#${msg.ticketNo} ` : ''}resolved
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="gc-msg-time">{formatTime(msg.createdAt)}</div>
+                            </>
+                        ) : (
+                            <div className="gc-ticket-stub">
+                                <div className="gc-ticket-line">
+                                    <span className="gc-ticket-icon">🎫</span>
+                                    <span className="gc-ticket-label">Ticket created</span>
+                                    {msg.ticketNo && <span className="gc-ticket-no">#{msg.ticketNo}</span>}
+                                </div>
+                                <div className="gc-ticket-text">
+                                    {msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}
+                                </div>
+                                <div className="gc-ticket-time">{formatTime(msg.createdAt)}</div>
                             </div>
-                            <div className="gc-ticket-text">
-                                {isResolved ? (
-                                    <>{(msg.reporterNickname ? `${msg.reporterNickname}'s` : 'A')} report was resolved — thanks for helping keep the chat safe!</>
-                                ) : (
-                                    <>{msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}</>
-                                )}
-                            </div>
-                            <div className="gc-ticket-time">{formatTime(msg.createdAt)}</div>
-                        </div>
+                        )}
                     </div>
+                    {userDataRef.current.isAdmin && hoveredMessageId === msg.id && (
+                        <div className="gc-msg-actions">
+                            <button
+                                className="gc-action-icon"
+                                title="More"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setMoreMenuMessageId(moreMenuMessageId === msg.id ? null : msg.id);
+                                }}
+                            >
+                                ⋮
+                            </button>
+                            {moreMenuMessageId === msg.id && (
+                                <div className="gc-more-menu">
+                                    <button
+                                        onClick={() => {
+                                            setMoreMenuMessageId(null);
+                                            handleDeleteMessage(msg);
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             );
         }
@@ -2515,6 +2635,11 @@ function GlobalChat() {
                                                 uid: currentUserRef.current?.uid,
                                                 nickname: userDataRef.current?.nickname
                                             });
+                                            // Allocate the feed bubble's key so the report carries it
+                                            // (ticketMsgId) and resolution can flip the same bubble
+                                            // instead of posting a second.
+                                            const ticketMsgRef = dbRef.current.ref('messages').push();
+                                            report.ticketMsgId = ticketMsgRef.key;
                                             await dbRef.current.ref('reports').push(report);
                                             // Announce the new ticket in the global chat feed.
                                             await pushTicketEvent({
@@ -2522,7 +2647,8 @@ function GlobalChat() {
                                                 ticketNo: report.ticketNo,
                                                 reporterNickname: userDataRef.current?.nickname || 'Unknown',
                                                 reporterUid: currentUserRef.current?.uid || null,
-                                                category: null
+                                                category: null,
+                                                atKey: ticketMsgRef.key
                                             });
                                             alert('Message reported.');
                                             setMoreMenuMessageId(null);
@@ -3622,14 +3748,9 @@ function GlobalChat() {
                                                             try {
                                                                 await dbRef.current.ref(`reports/${report.id}`).remove();
                                                                 setReports(prev => prev.filter(r => r.id !== report.id));
-                                                                // Announce the resolution in the chat feed so the reporter (and
-                                                                // everyone else) sees their ticket was closed.
-                                                                await pushTicketEvent({
-                                                                    action: 'resolved',
-                                                                    ticketNo: report.ticketNo,
-                                                                    reporterNickname: report.reportedByNickname,
-                                                                    reporterUid: report.reportedBy || null
-                                                                });
+                                                                // Flip the ticket's "created" bubble to "resolved" in the feed —
+                                                                // the same bubble changes state, no second message.
+                                                                await resolveTicketMessage(report);
                                                             } finally {
                                                                 resolvingReportsRef.current.delete(report.id);
                                                             }
