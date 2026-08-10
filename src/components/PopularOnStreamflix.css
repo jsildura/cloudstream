@@ -342,8 +342,10 @@
     }
 }
 
-/* 1080p: 1920px - 2559px - Consistent with trending section scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* 1080p TV: 1920px - 2559px - Consistent with trending section scaling.
+   Remote-pointer gated: 1920x1080 is also the commonest desktop monitor, and
+   3rem row headings are a 10-foot size that dwarfs the desktop banner. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
     .popular-streamflix-section {
         padding: 48px 0;
         margin-bottom: 40px;

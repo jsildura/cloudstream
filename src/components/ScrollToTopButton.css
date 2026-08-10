@@ -70,8 +70,9 @@
     }
 }
 
-/* TV 1080p Scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* TV 1080p Scaling. Remote-pointer gated — a 72px FAB is a 10-foot target that
+   crowds a desktop 1080p viewport. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
     .scroll-to-top-btn {
         bottom: 110px;
         right: 32px;

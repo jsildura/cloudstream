@@ -183,8 +183,8 @@
     }
 }
 
-/* 1080p View - 2x scaled from base */
-@media (min-width: 1920px) {
+/* 1080p TV View - 2x scaled from base */
+@media (min-width: 1920px) and (hover: none) and (pointer: coarse) {
     .collection-hero {
         min-height: 50vh;
     }

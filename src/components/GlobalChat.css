@@ -870,28 +870,17 @@
 }
 
 /* === MESSAGE ACTIONS === */
-/* === MESSAGE ACTIONS === */
-/* Hover actions are a mouse-only affordance. Touch devices long-press for the
-   action sheet instead — never show the React/Reply/⋮ cluster there, and don't
-   let the native iOS callout/selection UI intercept the long-press. */
+/* Hover actions are a mouse-only affordance, but a touch long-press reveals
+   the same React/Reply/⋮ cluster inline (see handleMessageInteraction) instead
+   of a separate sheet — so don't hide it here. The reserved action zone in the
+   base .gc-msg-group rules stays, leaving the buttons room even when a bubble
+   fills the row. Don't let the native iOS callout/selection UI intercept the
+   long-press. */
 @media (hover: none), (pointer: coarse) {
-    .gc-msg-actions {
-        display: none !important;
-    }
-
     .gc-msg-bubble {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
         user-select: none;
-    }
-
-    /* Touch devices use the long-press action sheet, so the hover action
-       cluster never appears — the reserved 114px action zone would only
-       steal bubble width. Release it and let messages use the full width. */
-    .gc-msg-group,
-    .gc-msg.gc-own .gc-msg-group {
-        padding-left: 0 !important;
-        padding-right: 0 !important;
     }
 }
 
@@ -1957,7 +1946,7 @@
 }
 
 /* === TV 1080p RESPONSIVENESS (1920px - 2559px) === */
-@media (min-width: 1920px) and (max-width: 2559px) {
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
     /* Main Wrapper Positioning */
     .gc-wrapper {
         bottom: 30px !important;

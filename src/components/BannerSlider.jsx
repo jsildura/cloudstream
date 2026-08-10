@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../hooks/useTMDB';
 import useSwipe from '../hooks/useSwipe';
@@ -6,6 +6,29 @@ import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { getPosterAlt } from '../utils/altTextUtils';
 import useTVDetect from '../hooks/useTVDetect';
+import YouTubePlayer from './YouTubePlayer';
+
+// Matches HoverPreviewCard's VIDEO_DELAY so the banner and the hover previews
+// hold their still frame for the same beat before cutting to video.
+const TRAILER_DELAY = 1600;
+
+// Fallback hold for an auto-started trailer that never reports a duration
+// (metadata still loading, or a live stream, which reports 0 forever). Real
+// playback drives the slide instead — see handleTrailerEnded. Without any hold
+// the carousel would stop on the first slide that has a trailer.
+const TRAILER_SLIDE_FALLBACK = 30000;
+
+// Slack on the duration-based safety net, covering buffering and the gap
+// between the last position poll and ENDED firing.
+const TRAILER_END_GRACE = 2000;
+
+// Desktop only. Same query Navbar uses for its desktop search, kept identical
+// so "desktop" means one thing across the app. The pointer/hover clauses do the
+// real work: they exclude tablets that are wide enough to pass the width test
+// (iPad Pro landscape is 1366px), and remote-driven TVs, which report a coarse
+// pointer. Note this is NOT useTVDetect — that returns true for any viewport
+// ≥1920px, so gating on it would disable autoplay on ordinary 1080p monitors.
+const DESKTOP_TRAILER_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: fine)';
 
 const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const navigate = useNavigate();
@@ -17,27 +40,115 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const [runtimeCache, setRuntimeCache] = useState({});
   const [, setTvDetailsCache] = useState({});
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
+  // Whether the current trailer started on its own vs. from the toggle button.
+  // Manual playback holds the slide indefinitely (the user asked to watch it);
+  // auto playback only extends it.
+  const [trailerAutoStarted, setTrailerAutoStarted] = useState(false);
+  // Runtime of the playing trailer, in seconds, once the player reports it.
+  // Sizes the safety-net timer so it lands after the video instead of cutting it off.
+  const [trailerDuration, setTrailerDuration] = useState(null);
+
+  // Whether the banner is on screen. A trailer nobody can see shouldn't keep
+  // playing — it burns bandwidth and, unmuted, plays audio with no visible
+  // source. Starts true so the trailer isn't held back before the first
+  // observer callback, and for browsers without IntersectionObserver.
+  const [isInView, setIsInView] = useState(true);
+  const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
+  const sliderRef = useRef(null);
   const [isMuted, setIsMuted] = useState(false);
-  const trailerRef = useRef(null);
   const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchItemBundle, fetchSeasonEpisodes, movieGenres, tvGenres } = useTMDB();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const { showSuccess } = useToast();
   const isTVMode = useTVDetect();
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_TRAILER_MQ).matches
+  );
 
-  // Auto-advance slides with progress tracking (pause when trailer is playing)
+  // Declared up here because the effects below depend on it, and a `const` read
+  // from a dependency array before its declaration is a TDZ error, not a hoist.
+  const showSkeleton = loading || !movies.length;
+
+  // Tracked live so rotating a tablet or dragging a window across the
+  // breakpoint stops or starts autoplay without a reload.
   useEffect(() => {
-    // Don't auto-advance when trailer is playing
-    if (isTrailerPlaying) {
+    const mq = window.matchMedia(DESKTOP_TRAILER_MQ);
+    const onChange = (e) => setIsDesktop(e.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  // Pause the trailer once the banner has essentially left the viewport. The
+  // threshold is deliberately low rather than 0: with a full-height banner,
+  // requiring "any pixel visible" keeps it playing through a long scroll past
+  // the fold, which is the case being fixed.
+  //
+  // Runs against showSkeleton because the ref target only exists on the real
+  // render — the skeleton branch returns a different element.
+  useEffect(() => {
+    if (showSkeleton || typeof IntersectionObserver === 'undefined') return undefined;
+
+    const el = sliderRef.current;
+    if (!el) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.intersectionRatio >= 0.15),
+      { threshold: [0, 0.15, 0.5] }
+    );
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [showSkeleton]);
+
+  // Tab-away is the other way the banner stops being watched. visibilitychange
+  // is the only signal for it — IntersectionObserver reports a backgrounded tab
+  // as still intersecting.
+  useEffect(() => {
+    const onVisibility = () => setIsPageVisible(!document.hidden);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  // On screen and in a foreground tab. Gates trailer playback and, with a
+  // trailer driving the slide, the advance too.
+  const isBannerWatched = isInView && isPageVisible;
+
+  const advanceSlide = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % movies.length);
+  }, [movies.length]);
+
+  // Auto-advance slides with progress tracking.
+  //
+  // While an auto-started trailer plays, the trailer owns both the progress bar
+  // and the advance — the bar tracks real playback position and the slide turns
+  // over when the video ends. The old fixed duration here cut trailers off part
+  // way through and made the bar measure a number nothing else respected.
+  // The timer below is only a safety net for a trailer that never reports a
+  // duration, so a missing onEnded can't strand the carousel.
+  useEffect(() => {
+    // A trailer the user started by hand holds the slide until they stop it.
+    if (isTrailerPlaying && !trailerAutoStarted) {
       setProgress(0);
       return;
     }
 
-    const slideDuration = isTVMode ? 14000 : 7000;
+    const trailerDriven = isTrailerPlaying && trailerAutoStarted;
+    // Once the runtime is known, arm the net just past the end so onEnded gets
+    // first go; before that, fall back to a flat hold. Either way it must never
+    // land mid-trailer — that was the original bug.
+    const slideDuration = trailerDriven
+      ? (trailerDuration
+          ? trailerDuration * 1000 + TRAILER_END_GRACE
+          : TRAILER_SLIDE_FALLBACK)
+      : (isTVMode ? 14000 : 7000);
     const progressInterval = isTVMode ? 200 : 50;
     let progressTimer;
     let slideTimer;
 
-    const startProgress = () => {
+    // Playback position feeds the bar while a trailer is driving, so don't also
+    // tick it forward on a clock — the two would fight over the same state. Nor
+    // reset it: the duration arriving re-runs this effect mid-trailer, and a
+    // reset here would drop the bar back to zero on a slide already in progress.
+    if (!trailerDriven) {
       setProgress(0);
       progressTimer = setInterval(() => {
         setProgress((prev) => {
@@ -45,28 +156,44 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           return prev + (progressInterval / slideDuration) * 100;
         });
       }, progressInterval);
+    }
 
-      slideTimer = setTimeout(() => {
-        setCurrentSlide((prev) => (prev + 1) % movies.length);
-      }, slideDuration);
-    };
-
-    startProgress();
+    // A paused trailer makes no progress, so its safety net must not run either
+    // — otherwise the slide turns over off-screen and the user scrolls back to a
+    // trailer that skipped ahead. The net re-arms when playback resumes.
+    if (!(trailerDriven && !isBannerWatched)) {
+      slideTimer = setTimeout(advanceSlide, slideDuration);
+    }
 
     return () => {
       clearInterval(progressTimer);
       clearTimeout(slideTimer);
     };
-  }, [currentSlide, movies.length, isTrailerPlaying, isTVMode]);
+  }, [currentSlide, isTrailerPlaying, trailerAutoStarted, trailerDuration, isTVMode, isBannerWatched, advanceSlide]);
+
+  // Mirror playback position onto the progress bar. Only while the trailer is
+  // driving the slide: a manually started one holds the slide indefinitely, so
+  // a filling bar would promise an advance that isn't coming.
+  const handleTrailerProgress = useCallback((fraction, duration) => {
+    if (!trailerAutoStarted) return;
+    setProgress(Math.min(100, fraction * 100));
+    // Same value every poll, so only commit the first one — a setState with an
+    // unchanged value still costs a render.
+    setTrailerDuration((prev) => (prev === duration ? prev : duration));
+  }, [trailerAutoStarted]);
+
+  // The trailer finishing is what turns the slide over now.
+  const handleTrailerEnded = useCallback(() => {
+    if (!trailerAutoStarted) return;
+    setProgress(100);
+    advanceSlide();
+  }, [trailerAutoStarted, advanceSlide]);
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
     setProgress(0);
     setIsTrailerPlaying(false); // Stop trailer when changing slides
   };
-
-  // Determine if we should show skeleton (loading or no movies)
-  const showSkeleton = loading || !movies.length;
 
   // Safe currentMovie - use first movie or a placeholder object when no movies
   const currentMovie = movies.length > 0 ? movies[currentSlide] : { id: 0 };
@@ -171,10 +298,41 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     return () => { alive = false; };
   }, [currentMovie.id, currentLogoKey, showSkeleton, fetchItemBundle, fetchSeasonEpisodes]);
 
-  // Toggle trailer playback
+  // Auto-play the trailer once the slide settles, mirroring HoverPreviewCard:
+  // the still frame holds for TRAILER_DELAY, then the video takes over. Desktop
+  // only — on phones and tablets the backdrop stays a still image, since a
+  // background video there costs cellular data and battery for a surface the
+  // user can't mute without hunting for the control.
+  //
+  // Resetting here rather than in goToSlide is deliberate: auto-advance calls
+  // setCurrentSlide directly, so goToSlide's reset never ran on a timed change.
+  // Keying on currentLogoKey covers both paths. Stopping a trailer by hand does
+  // not re-arm the timer, since toggleTrailer touches none of these deps.
+  useEffect(() => {
+    setIsTrailerPlaying(false);
+    setTrailerAutoStarted(false);
+    setTrailerDuration(null);
+
+    if (showSkeleton || !currentTrailerKey || !isDesktop) return undefined;
+
+    const timer = setTimeout(() => {
+      setIsTrailerPlaying(true);
+      setTrailerAutoStarted(true);
+      // The bar spent TRAILER_DELAY filling against the still-image duration.
+      // Zero it as the trailer takes over so it doesn't animate backwards when
+      // the first position poll lands.
+      setProgress(0);
+    }, TRAILER_DELAY);
+
+    return () => clearTimeout(timer);
+  }, [currentLogoKey, currentTrailerKey, showSkeleton, isDesktop]);
+
+  // Toggle trailer playback. Stopping by hand clears the auto flag so the
+  // slide timer returns to its normal duration instead of the extended one.
   const toggleTrailer = () => {
     if (currentTrailerKey) {
       setIsTrailerPlaying(prev => !prev);
+      setTrailerAutoStarted(false);
     }
   };
 
@@ -307,11 +465,11 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   }
 
   return (
-    <div className="banner-slider">
+    <div className="banner-slider" ref={sliderRef}>
       {/* Progress Bar */}
       <div className="banner-progress">
         <div
-          className="banner-progress-fill"
+          className={`banner-progress-fill${isTrailerPlaying && trailerAutoStarted ? ' trailer-driven' : ''}`}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -320,14 +478,25 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
         {/* Background Image/Video with Mask */}
         {isTrailerPlaying && currentTrailerKey ? (
           <div className="banner-backdrop banner-trailer-container">
-            <iframe
-              ref={trailerRef}
+            {/* Keyed on the trailer id so each one gets a fresh player. The YT
+                API swaps the container div out for its iframe, which leaves the
+                mounted component holding a detached node — remounting avoids
+                re-initialising against it. */}
+            <YouTubePlayer
+              key={currentTrailerKey}
+              videoId={currentTrailerKey}
+              isMuted={isMuted}
+              onMuteChange={setIsMuted}
               className="banner-trailer-video"
-              src={`https://www.youtube-nocookie.com/embed/${currentTrailerKey}?autoplay=1&mute=${isMuted ? 1 : 0}&loop=1&playlist=${currentTrailerKey}&controls=0&showinfo=0&modestbranding=1&rel=0&iv_load_policy=3&disablekb=1&enablejsapi=1`}
-              title={`${currentMovie.title || currentMovie.name} Trailer`}
-              frameBorder="0"
-              allow="autoplay; encrypted-media"
-              allowFullScreen
+              host="https://www.youtube-nocookie.com"
+              // An auto-started trailer plays through once and hands off to the
+              // next slide; a manually started one loops until the user stops it.
+              loop={!trailerAutoStarted}
+              onEnded={handleTrailerEnded}
+              onProgress={handleTrailerProgress}
+              // Held rather than torn down, so scrolling back resumes where the
+              // trailer left off instead of restarting it.
+              paused={!isBannerWatched}
             />
           </div>
         ) : (

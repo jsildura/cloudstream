@@ -470,8 +470,8 @@
     }
 }
 
-/* 1080p: 1920px - 2559px (matches top-ten) */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* 1080p TV: 1920px - 2559px (matches top-ten) */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
     .continue-watching-section {
         margin: 60px 0 60px;
     }

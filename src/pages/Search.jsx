@@ -145,7 +145,7 @@ const Search = () => {
           ref={inputRef}
           type="text"
           className="search-page-input"
-          placeholder="Search for a title, people or genre"
+          placeholder="Titles, people, genres..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

@@ -381,8 +381,9 @@
     }
 }
 
-/* 1080p Display (1920px - 2559px) - 2x scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* 1080p TV Display (1920px - 2559px) - 2x scaling. Remote-pointer gated so
+   desktop 1080p monitors keep the sub-1920 sizing. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
     .trending-section {
         padding: 48px 0;
         margin-bottom: 40px;

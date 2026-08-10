@@ -1708,24 +1708,30 @@ function GlobalChat() {
         ? [{ id: '__everyone__', nickname: 'everyone', isEveryone: true }, ...filteredUsers]
         : filteredUsers;
 
-    // Handle message long press (mobile) / right-click (desktop). Both open the
-    // same custom action sheet, replacing the browser's native context menu
-    // (on Android long-press that's the menu with "Inspect").
+    // Handle message long press (mobile) / right-click (desktop).
+    //   • Long-press (touch): reveals the message's OWN inline action buttons
+    //     (the same React/Reply/⋮ gc-msg-actions desktop hover shows) instead
+    //     of a separate bottom sheet — tap elsewhere to dismiss.
+    //   • Right-click (real pointer only): opens the full action sheet,
+    //     replacing the browser's native context menu. On Android the native
+    //     long-press fires a contextmenu too, so the sheet is skipped there
+    //     (the inline actions are already up) to avoid double UI.
     const handleMessageInteraction = (e, msg, type) => {
         if (type === 'contextmenu') {
             e.preventDefault();
         }
 
-        if (type === 'longpress' || type === 'contextmenu') {
+        if (type === 'longpress') {
+            setHoveredMessageId(msg.id);
+            setMoreMenuMessageId(null);
+            // The touchend that ends a long-press fires a synthetic click,
+            // which would open e.g. the media lightbox — swallow the next one.
+            suppressClickRef.current = true;
+        } else if (type === 'contextmenu' && HOVER_MQ.matches) {
             setActionSheetTarget(msg);
             setShowActionSheet(true);
             // Keep the hover action buttons out from under the sheet.
             setHoveredMessageId(null);
-            if (type === 'longpress') {
-                // The touchend that ends a long-press fires a synthetic click,
-                // which would open e.g. the media lightbox — swallow the next one.
-                suppressClickRef.current = true;
-            }
         }
     };
 
@@ -1778,6 +1784,20 @@ function GlobalChat() {
         document.addEventListener('click', swallowClick, true);
         return () => document.removeEventListener('click', swallowClick, true);
     }, []);
+
+    // Touch long-press reveals a message's inline actions; there is no hover to
+    // clear them, so any tap that starts OUTSIDE a message row dismisses them.
+    useEffect(() => {
+        const dismissActiveActions = (e) => {
+            if (!hoveredMessageId) return;
+            if (!e.target.closest('.gc-msg')) {
+                setHoveredMessageId(null);
+                setMoreMenuMessageId(null);
+            }
+        };
+        document.addEventListener('touchstart', dismissActiveActions, true);
+        return () => document.removeEventListener('touchstart', dismissActiveActions, true);
+    }, [hoveredMessageId]);
 
     // Handle reaction — one reaction per user per message (Messenger behavior):
     // picking a different emoji REPLACES the previous one, picking the same
@@ -2000,9 +2020,23 @@ function GlobalChat() {
     // one bubble per ticket that changes state, never a second message. Newer
     // reports carry the ticket message key (ticketMsgId); legacy reports (no
     // key) fall back to matching their created event by ticket number.
+    // Flip a ticket's "created" bubble to "resolved" IN PLACE — the feed shows
+    // one bubble per ticket that changes state, never a second message. Newer
+    // reports carry the ticket message key (ticketMsgId); legacy reports (no
+    // key) fall back to matching their created event by ticket number. The
+    // resolved message is stamped with the resolving admin's OWN profile
+    // (nickname, avatar, badge), so the bubble links to the admin identity and
+    // renders as the admin replying to the ticket — not the static site logo.
     const resolveTicketMessage = async (report) => {
         if (!dbRef.current) return;
-        const updates = { ticketAction: 'resolved', resolvedAt: Date.now() };
+        const updates = {
+            ticketAction: 'resolved',
+            resolvedAt: Date.now(),
+            nickname: userDataRef.current?.nickname || 'StreamFlix',
+            avatarUrl: userDataRef.current?.avatarUrl || ADMIN_AVATAR,
+            isAdmin: true,
+            adminBadge: userDataRef.current?.adminBadge || 'fa-shield-halved'
+        };
 
         if (report.ticketMsgId) {
             try {
@@ -2294,11 +2328,16 @@ function GlobalChat() {
                                 <div className="gc-sender-name">
                                     {msg.nickname || 'StreamFlix'}
                                     <span className="gc-admin-badge">
-                                        <i className="fa-solid fa-shield-halved"></i>
+                                        <i className={`fa-solid ${msg.adminBadge || 'fa-shield-halved'}`}></i>
                                     </span>
                                 </div>
                                 <div className="gc-bubble-wrapper">
-                                    <div className="gc-msg-bubble">
+                                    <div className="gc-msg-bubble"
+                                        onTouchStart={(e) => handleTouchStart(e, msg)}
+                                        onTouchEnd={handleTouchEnd}
+                                        onTouchMove={handleTouchMove}
+                                        onContextMenu={(e) => handleMessageInteraction(e, msg, 'contextmenu')}
+                                    >
                                         <div className="gc-msg-text">
                                             ✅ Ticket {msg.ticketNo ? `#${msg.ticketNo} ` : ''}resolved
                                         </div>
@@ -2611,6 +2650,14 @@ function GlobalChat() {
                                     }}>
                                         Reply
                                     </button>
+                                    {msg.text && (
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(msg.text);
+                                            setMoreMenuMessageId(null);
+                                        }}>
+                                            Copy Text
+                                        </button>
+                                    )}
                                     {(isOwn || userDataRef.current.isAdmin) && (
                                         <button onClick={() => {
                                             setMoreMenuMessageId(null);

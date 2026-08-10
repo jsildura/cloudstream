@@ -3,7 +3,8 @@
 .search-page {
   min-height: 100vh;
   background: #141414;
-  padding: 96px 4vw 64px;   /* 68px navbar + 28px breathing room */
+  padding: 96px 4vw 64px;
+  /* 68px navbar + 28px breathing room */
 }
 
 /* ---- Input ---- */
@@ -53,7 +54,9 @@
   line-height: 1;
 }
 
-.search-page-clear:hover { color: #fff; }
+.search-page-clear:hover {
+  color: #fff;
+}
 
 /* ---- Results grid ----
    Same 16:9 cards as /discover. `.trending-card` is `width: 380px` for the
@@ -67,8 +70,14 @@
   padding: 4px 0 24px;
 }
 
-.search-results-grid .trending-card { width: 100%; flex: initial; }
-.search-results-grid .trending-card-skeleton { width: 100%; }
+.search-results-grid .trending-card {
+  width: 100%;
+  flex: initial;
+}
+
+.search-results-grid .trending-card-skeleton {
+  width: 100%;
+}
 
 /* Stale-while-revalidate: old results stay put and dim while the new query
    loads. This is what replaced the full-grid skeleton blank. */
@@ -79,40 +88,81 @@
 }
 
 @media (max-width: 1023px) {
-  .search-results-grid { grid-template-columns: repeat(3, 1fr); }
-  .search-results-grid .trending-card { width: 100%; }
+  .search-results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .search-results-grid .trending-card {
+    width: 100%;
+  }
 }
 
 /* Same query string as components.css, Navbar.jsx and Search.jsx.
    Excluding touch/TV is deliberate — see plan section 5.2. */
 @media (min-width: 1025px) and (hover: hover) and (pointer: fine) {
-  .search-page-input-wrap { display: none; }
+  .search-page-input-wrap {
+    display: none;
+  }
 }
 
 @media (max-width: 767px) {
-  .search-page { padding: 84px 4vw 48px; }   /* 68px navbar + 16px */
-  .search-page-input { font-size: 22px; }
-  .search-results-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .search-page {
+    padding: 84px 4vw 48px;
+  }
+
+  /* 68px navbar + 16px */
+  .search-page-input {
+    font-size: 22px;
+  }
+
+  .search-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
 }
 
 /* Big-screen TV: more columns rather than giant cards. */
 @media (min-width: 1920px) {
-  .search-results-grid { grid-template-columns: repeat(5, 1fr); gap: 20px; }
+  .search-results-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+  }
 }
 
 @media (min-width: 1920px) and (max-width: 2559px) {
-  .search-page { padding: 168px 4vw 96px; }    /* 136px navbar + 32px */
+  .search-page {
+    padding: 168px 4vw 96px;
+  }
+
+  /* 136px navbar + 32px */
 }
 
 @media (min-width: 2560px) and (max-width: 3839px) {
-  .search-page { padding: 118px 4vw 96px; }    /* 90px navbar + 28px */
-  .search-results-grid { grid-template-columns: repeat(5, 1fr); gap: 24px; }
+  .search-page {
+    padding: 118px 4vw 96px;
+  }
+
+  /* 90px navbar + 28px */
+  .search-results-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 24px;
+  }
 }
 
 @media (min-width: 3840px) {
-  .search-page { padding: 340px 4vw 160px; }   /* 300px navbar + 40px */
-  .search-results-grid { grid-template-columns: repeat(6, 1fr); gap: 28px; }
-  .search-page-input { font-size: 48px; }
+  .search-page {
+    padding: 340px 4vw 160px;
+  }
+
+  /* 300px navbar + 40px */
+  .search-results-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 28px;
+  }
+
+  .search-page-input {
+    font-size: 48px;
+  }
 }
 
 /* Person-mode lazy-enrich sentinel — invisible, just a scroll target */
@@ -122,7 +172,10 @@
 
 /* ---- Empty state ---- */
 
-.search-page-section { max-width: none; margin: 0 0 36px; }
+.search-page-section {
+  max-width: none;
+  margin: 0 0 36px;
+}
 
 .search-page-top {
   margin: 0 0 24px;
@@ -133,13 +186,13 @@
 
 .search-page-top-label {
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(181, 181, 181, 0.85);
   margin-right: 8px;
 }
 
 .search-page-top-sep {
   margin: 0 10px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgb(134, 0, 0);
 }
 
 .search-page-top-link {

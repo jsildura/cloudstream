@@ -107,9 +107,12 @@
 }
 
 /* 1080p Android TV (1920x1080) - 2x scaled from 720p */
-@media (min-width: 1920px) and (max-width: 3839px) {
+/* 1080p+ TV scaling. Gated on a remote-like pointer: 1920px catches ordinary
+   desktop monitors too, and this block doubles the card and its play pill
+   (36px -> 72px tall, 14px -> 28px text) to 10-foot size. Desktops keep base. */
+@media (min-width: 1920px) and (max-width: 3839px) and (hover: none) and (pointer: coarse) {
   .collection-card {
-    height: 320px;
+    height: 210px;
     /* 160px × 2 */
     border-radius: 24px;
     /* 12px × 2 */
@@ -121,12 +124,12 @@
   }
 
   .collection-card-title {
-    font-size: 2.25rem;
+    font-size: 1.25rem;
     /* 1.125rem × 2 */
   }
 
   .collection-card-count {
-    font-size: 1.75rem;
+    font-size: 0.75rem;
     /* 0.875rem × 2 */
     margin-top: 8px;
     /* 4px × 2 */

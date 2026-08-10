@@ -361,7 +361,7 @@ const Navbar = () => {
             ref={navInputRef}
             className="navbar-inline-input"
             type="text"
-            placeholder="Search for a title, people or genre..."
+            placeholder="titles, people, genres..."
             value={navQuery}
             onChange={(e) => setNavQuery(e.target.value)}
             onKeyDown={handleNavKeyDown}

@@ -145,11 +145,17 @@ const ContinueWatching = ({ onItemClick }) => {
                 const res = await fetch(`/api/${item.type}/${item.id}`);
                 const fullData = await res.json();
 
+                // Modal renders genres with .join(', '), so it needs names, not
+                // TMDB's raw [{id, name}] objects. genre_ids still comes off the
+                // original objects on fullData.
+                const genreNames = fullData.genres?.map(g => g.name) || [];
+
                 const enrichedItem = {
                     ...fullData,
                     id: item.id,
                     type: item.type,
                     media_type: item.type,
+                    genres: genreNames,
                     genre_ids: fullData.genres?.map(g => g.id) || [],
                     ...(item.type === 'tv' && item.lastSeason && item.lastEpisode && {
                         lastSeason: item.lastSeason,

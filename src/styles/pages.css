@@ -6,17 +6,30 @@
   margin-top: 0;
 }
 
+/* Bridges the banner into the page background. The slide's own overlay runs
+   left-to-right and is fully transparent on the right, so down that edge a
+   full-brightness backdrop meets #141414 with only this to blend them — 50px
+   over an ~880px banner read as a hard band.
+
+   Height is a share of the banner, not of the viewport: the banner's own height
+   varies from 60vh to 98vh across breakpoints, and a vh-based fade would cover a
+   far bigger fraction of the short mobile banner than of the tall desktop one —
+   washing out the mobile text. The curve keeps a long transparent toe, so the
+   ramp lands below the buttons and description rather than dimming them. The
+   indicators sit inside this range but are z-index 20, so they stay above it. */
 .banner-slider::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 50px;
+  height: clamp(80px, 20%, 240px);
   background: linear-gradient(to bottom,
       rgba(20, 20, 20, 0) 0%,
-      rgba(20, 20, 20, 0.5) 40%,
-      rgba(20, 20, 20, 0.85) 70%,
+      rgba(20, 20, 20, 0.06) 45%,
+      rgba(20, 20, 20, 0.22) 62%,
+      rgba(20, 20, 20, 0.48) 76%,
+      rgba(20, 20, 20, 0.76) 88%,
       #141414 100%);
   pointer-events: none;
   z-index: 1;
@@ -540,6 +553,12 @@
   transition: width 0.05s linear;
 }
 
+/* Trailer-driven: position arrives from the player every 250ms rather than from
+   a 50ms tick, so the transition has to span the gap or the bar visibly steps. */
+.banner-progress-fill.trailer-driven {
+  transition: width 0.25s linear;
+}
+
 /* Backdrop with Mask Gradient */
 .banner-backdrop {
   position: absolute;
@@ -678,14 +697,32 @@
   height: 100%;
   overflow: hidden;
   background: #000;
+  /* Sizing context for the cover math below. `size`, not `inline-size`: the
+     iframe has to read the container's height too. Safe because the container's
+     own size is definite (absolute, 100%/100%) and never depends on the iframe. */
+  container-type: size;
 }
 
 .banner-trailer-video {
   position: absolute;
   top: 50%;
   left: 50%;
+  /* Fallback for browsers without container query units — the old fixed
+     overscan, correct only while the banner happens to sit near 16:9. */
   width: 130%;
   height: 130%;
+  /* The banner is 98vh, so its aspect ratio moves with the viewport: ~1.81 at
+     1920x1080 but ~1.27 at 1025x821. A fixed percentage can't track that, and
+     once the container is narrower than 16:9 YouTube letterboxes *inside* the
+     iframe — the black bands top and bottom.
+
+     So size the iframe like object-fit: cover instead: keep it exactly 16:9 and
+     take whichever of "fill the width" / "fill the height" is larger. Both
+     max() branches agree on the ratio, so the iframe is never letterboxed and
+     overflow: hidden crops the excess. 177.7778 = 16/9, 56.25 = 9/16, each
+     scaled by 1.3 to keep the overscan that hides YouTube's edge chrome. */
+  width: max(130cqw, 231.1111cqh);
+  height: max(73.125cqw, 130cqh);
   transform: translate(-50%, -50%);
   pointer-events: none;
   border: none;
@@ -1377,8 +1414,8 @@
   }
 
   .banner-age-badge {
-    font-size: 0.95rem;
-    padding: 0.45rem 0.9rem;
+    font-size: 1.1rem;
+    padding: 0.58rem 1.1rem;
     border-radius: 20px;
   }
 
@@ -3571,8 +3608,11 @@ select.filter-dropdown {
   }
 }
 
-/* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch) */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch)
+
+   Watch page + banner + navbar TV scaling. Gated on a remote-like pointer so
+   desktop monitors at 1920×1080 keep moderate sizing rather than 10-foot layout. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
 
   .watch-header-content {
     max-width: 2559px;
@@ -7492,8 +7532,13 @@ select.filter-dropdown {
   }
 }
 
-/* ===== 1080p Display (1920px - 2559px) - Banner Content 2x Scaling ===== */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* ===== 1080p Display (1920px - 2559px) - Banner Content 2x Scaling =====
+
+   TV-only. 1920px catches both 10-foot TVs and the most common desktop monitor
+   size (1920x1080), and this block doubles the entire banner — text, buttons,
+   controls. Gated on a remote-like pointer so desktop users keep the moderate
+   720p-tier sizing. CSS now matches src/utils/platform.js's isTVDevice() logic. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
 
   /* Banner Desktop Content Container */
   .banner-content.banner-desktop-content {

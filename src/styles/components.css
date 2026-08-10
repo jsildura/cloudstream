@@ -36,7 +36,7 @@
 
 .navbar-logo img,
 .logo-image {
-  height: 32px;
+  height: 34px;
   width: auto;
 }
 
@@ -126,7 +126,7 @@
 .nav-link {
   color: #e5e5e5;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 400;
   transition: color 0.3s ease;
   display: flex;
@@ -547,7 +547,7 @@
 }
 
 /* TV 1080p Scaling for Mega Dropdown */
-@media (min-width: 1920px) and (max-width: 2559px) {
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
   .nav-link {
     font-size: 22px;
     padding: 16px 20px;
@@ -903,8 +903,8 @@
 }
 
 .navbar-search-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 .navbar-search-btn:focus-visible {
@@ -926,13 +926,13 @@
   opacity: 0;
   overflow: hidden;
   transition: width 0.35s cubic-bezier(0.22, 0.61, 0.36, 1),
-              opacity 0.25s ease;
+    opacity 0.25s ease;
 }
 
 .navbar-inline-search svg {
   flex: 0 0 auto;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   color: rgba(255, 255, 255, 0.6);
 }
 
@@ -942,13 +942,15 @@
   border: none;
   background: transparent;
   color: #fff;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 400;
   outline: none;
   padding: 10px 0;
 }
 
-.navbar-inline-input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.navbar-inline-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
 
 .navbar-inline-input:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.8);
@@ -972,7 +974,10 @@
   transition: color 0.2s ease, background 0.2s ease;
 }
 
-.navbar-inline-clear:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+.navbar-inline-clear:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
 
 /* ===== Desktop only: mouse-driven screens 1025px and up =====
    This exact query string also appears in Navbar.jsx, Search.jsx, and
@@ -987,19 +992,48 @@
   .navbar-inline-search.open {
     width: min(340px, 24vw);
     opacity: 1;
-    /* When the bar is open, the button hides, so the bar takes over the auto margin */
-    margin-left: auto;
   }
 
-  .navbar-inline-search:focus-within { border-bottom-color: #e50914; }
+  .navbar-inline-search:focus-within {
+    border-bottom-color: #e50914;
+  }
 
   /* The bar visually replaces the button while expanded. Scoped to desktop
-     so it can never hide the ONLY search control on a touch device. */
-  .navbar-search-btn.is-expanded { display: none; }
+     so it can never hide the ONLY search control on a touch device.
+
+     Collapsed by animating width, not by `display: none`. The display flip
+     landed in the same frame the bar began shrinking: the button reclaimed
+     its 40px and its auto margin instantly, so the bar lost the `margin-left:
+     auto` it had borrowed and snapped left while still mid-width-transition.
+     Keeping the button in flow leaves the auto margin on one element that
+     never toggles, so the pair stays right-aligned throughout and the two
+     halves of the swap run on one timeline. Width shares the bar's curve and
+     duration; opacity leads slightly so the icon is gone before it clips. */
+  .navbar-search-btn {
+    flex: 0 0 auto;
+    overflow: hidden;
+    transition: width 0.35s cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 0.2s ease, visibility 0s, background 0.2s ease, color 0.2s ease;
+  }
+
+  .navbar-search-btn.is-expanded {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+    /* `display: none` used to drop the button from the tab order for free.
+       Width/opacity alone would leave an invisible but focusable control, so
+       visibility takes over that job — delayed by the width duration on the
+       way out (the button must stay painted while it shrinks) and restored
+       with no delay on the way back in. */
+    visibility: hidden;
+    transition: width 0.35s cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 0.2s ease, visibility 0s linear 0.35s;
+  }
 }
 
-/* TV 1080p Scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* TV 1080p Scaling - navbar search button. Gated so desktop 1920×1080 monitors
+   don't get an 80px button in a 68px navbar. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
   .navbar-search-btn {
     width: 80px;
     height: 80px;
@@ -1012,11 +1046,29 @@
   }
 
   /* add inside the existing block at line 916 — navbar is 136px here */
-  .navbar-inline-search.open { width: 560px; }
-  .navbar-inline-search { border-bottom-width: 4px; }
-  .navbar-inline-search svg { width: 40px; height: 40px; }
-  .navbar-inline-input { font-size: 2rem; padding: 20px 0; }
-  .navbar-inline-clear { width: 56px; height: 56px; font-size: 40px; }
+  .navbar-inline-search.open {
+    width: 560px;
+  }
+
+  .navbar-inline-search {
+    border-bottom-width: 4px;
+  }
+
+  .navbar-inline-search svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .navbar-inline-input {
+    font-size: 2rem;
+    padding: 20px 0;
+  }
+
+  .navbar-inline-clear {
+    width: 56px;
+    height: 56px;
+    font-size: 40px;
+  }
 }
 
 /* TV 4K Scaling */
@@ -1033,11 +1085,29 @@
   }
 
   /* add inside the existing block at line 929 — navbar is 300px here */
-  .navbar-inline-search.open { width: 1120px; }
-  .navbar-inline-search { border-bottom-width: 8px; }
-  .navbar-inline-search svg { width: 80px; height: 80px; }
-  .navbar-inline-input { font-size: 4rem; padding: 40px 0; }
-  .navbar-inline-clear { width: 112px; height: 112px; font-size: 80px; }
+  .navbar-inline-search.open {
+    width: 1120px;
+  }
+
+  .navbar-inline-search {
+    border-bottom-width: 8px;
+  }
+
+  .navbar-inline-search svg {
+    width: 80px;
+    height: 80px;
+  }
+
+  .navbar-inline-input {
+    font-size: 4rem;
+    padding: 40px 0;
+  }
+
+  .navbar-inline-clear {
+    width: 112px;
+    height: 112px;
+    font-size: 80px;
+  }
 }
 
 
@@ -3136,7 +3206,7 @@
   }
 
   .footer-legal-link {
-    font-size: 1.6rem;
+    font-size: 1rem;
     padding: 8px 16px;
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -3224,13 +3294,13 @@
   }
 
   .viewer-dot {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     box-shadow: 0 0 14px rgba(34, 197, 94, 0.6);
   }
 
   .viewer-text {
-    font-size: 1.5rem;
+    font-size: 1rem;
   }
 }
 
@@ -4580,8 +4650,15 @@
   }
 }
 
-/* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch) */
-@media (min-width: 1920px) and (max-width: 2559px) {
+/* 1080p Android TV (1920x1080) - Medium TVs (40-55 inch)
+
+   Gated on a remote-like pointer, not width alone. 1920x1080 is the most common
+   desktop monitor size as well as the most common TV size, and this block is a
+   10-foot layout: doubling it onto a mouse-driven desktop left the navbar at
+   136px and swallowed the page. `(hover: none) and (pointer: coarse)` is the
+   same test isTVDevice() uses in src/utils/platform.js, so CSS and JS now agree
+   on what counts as a TV. Desktops at this width keep the 720p-tier sizing. */
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
 
   /* Navbar - 2x scaled from 720p */
   .navbar {
@@ -6278,7 +6355,7 @@
 /* ========================================
    TV / Large Screen Adjustments (Media Toggle)
    ======================================== */
-@media (min-width: 1920px) {
+@media (min-width: 1920px) and (hover: none) and (pointer: coarse) {
   .media-type-toggle {
     gap: 16px;
     padding: 8px;
@@ -6464,7 +6541,7 @@
 }
 
 /* 1080p Display (1920px - 2559px) - 2x scaling */
-@media (min-width: 1920px) and (max-width: 2559px) {
+@media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
   .streaming-media-btn {
     gap: 12px;
     padding: 16px 32px;

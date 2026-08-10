@@ -29,15 +29,18 @@ const VIEWPORT_MARGIN = 12;
  */
 const previewWidthFor = (vw) => {
     if (vw >= 3840) return 1120;
-    if (vw >= 1920) return 620;
+    if (vw >= 1920) return 560;
     if (vw >= 1024) return 420;
     return 360;
 };
 
-/** Media (16:9) plus the info panel, which grows with the breakpoint. */
+/** Media (16:9) plus the info panel, which grows with the breakpoint.
+ *  The 1920 tier's chrome is only ~1.15x the 1024 tier (see HoverPreviewCard.css
+ *  — it deliberately does NOT use the 10-foot TV scale the other 1920 blocks do),
+ *  so the panel is sized just above the 1024 value, not doubled. */
 const bodyHeightFor = (vw) => {
     if (vw >= 3840) return 360;
-    if (vw >= 1920) return 210;
+    if (vw >= 1920) return 152;
     return 132;
 };
 

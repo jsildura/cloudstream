@@ -80,8 +80,9 @@
     }
 }
 
-/* 1080p Android TV (1920x1080) - 2x scaled */
-@media (min-width: 1920px) and (max-width: 3839px) {
+/* 1080p+ Android TV - 2x scaled. Remote-pointer gated so desktop monitors at
+   these widths keep the base sizing. */
+@media (min-width: 1920px) and (max-width: 3839px) and (hover: none) and (pointer: coarse) {
     .popular-collections {
         padding: 48px 0;
         margin-bottom: 40px;
