@@ -218,3 +218,4 @@ Person_Content_Search_implementation_plan.md
 # Tool caches / Local folders
 .freebuff/
 src/components/GlobalChat.test.js
+src/api/stream/zxcstream.test.js
