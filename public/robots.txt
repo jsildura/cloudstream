@@ -1,7 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /watch
 Crawl-delay: 2
 
 Sitemap: https://streamflix.stream/sitemap.xml

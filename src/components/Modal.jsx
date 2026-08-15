@@ -10,6 +10,17 @@ import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtil
 import { getBackdropAlt, getPosterAlt } from '../utils/altTextUtils';
 import { cardPoster } from '../utils/images';
 
+// Maps TMDB's full genre names → the short names the app's search resolver
+// recognises (see constants/genres.js). Any genre not listed here is passed
+// through as-is (which already works for "Action", "Drama", etc.).
+const GENRE_SEARCH_ALIASES = {
+  'Science Fiction':    'Sci-Fi',
+  'Sci-Fi & Fantasy':  'Sci-Fi & Fantasy',
+  'Action & Adventure': 'Action & Adventure',
+  'War & Politics':    'War & Politics',
+  'TV Movie':          'TV Movie',
+};
+
 const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const navigate = useNavigate();
   const {
@@ -565,11 +576,67 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                 <div className="modal-right-col">
                   <div className="modal-info-item">
                     <span className="modal-info-label">Genres:</span>
-                    <span className="modal-info-value">{item.genres?.join(', ') || 'N/A'}</span>
+                    <span className="modal-info-value">
+                      {item.genres && item.genres.length > 0 ? item.genres.map((genre, i) => {
+                        const searchGenre = GENRE_SEARCH_ALIASES[genre] || genre;
+                        return (
+                          <React.Fragment key={genre}>
+                            <span
+                              className="modal-cast-link"
+                              role="link"
+                              tabIndex={0}
+                              onClick={() => {
+                                handleClose();
+                                navigate(`/search?q=${encodeURIComponent(searchGenre)}`);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleClose();
+                                  navigate(`/search?q=${encodeURIComponent(searchGenre)}`);
+                                }
+                              }}
+                            >
+                              {genre}
+                            </span>
+                            {i < item.genres.length - 1 && ', '}
+                          </React.Fragment>
+                        );
+                      }) : 'N/A'}
+                    </span>
                   </div>
                   <div className="modal-info-item">
                     <span className="modal-info-label">Cast:</span>
-                    <span className="modal-info-value">{cast || item.cast || 'N/A'}</span>
+                    <span className="modal-info-value">
+                      {(() => {
+                        const castStr = cast || item.cast || '';
+                        if (!castStr) return 'N/A';
+                        const names = castStr.split(',').map(n => n.trim()).filter(Boolean);
+                        return names.map((name, i) => (
+                          <React.Fragment key={name}>
+                            <span
+                              className="modal-cast-link"
+                              role="link"
+                              tabIndex={0}
+                              onClick={() => {
+                                handleClose();
+                                navigate(`/search?q=${encodeURIComponent(name)}`);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  handleClose();
+                                  navigate(`/search?q=${encodeURIComponent(name)}`);
+                                }
+                              }}
+                            >
+                              {name}
+                            </span>
+                            {i < names.length - 1 && ', '}
+                          </React.Fragment>
+                        ));
+                      })()}
+                    </span>
                   </div>
                   <div className="modal-info-item">
                     <span className="modal-info-label">Status:</span>

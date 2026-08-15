@@ -68,6 +68,14 @@ const Home = lazy(() => import('./pages/Home'));
 const Watch = lazy(() => import('./pages/Watch'));
 const MyList = lazy(() => import('./pages/MyList'));
 
+// Watch is keyed by URL so navigating watch → watch (movie auto-next) mounts
+// a fresh instance. Without a key React reuses the mounted component and the
+// old movie's player/progress/recommendations leak into the next one.
+const KeyedWatch = () => {
+  const location = useLocation();
+  return <Watch key={location.pathname + location.search} />;
+};
+
 // Movie category pages
 const Discover = lazy(() => import('./pages/Discover'));
 
@@ -105,6 +113,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Contact = lazy(() => import('./pages/Contact'));
 const Search = lazy(() => import('./pages/Search'));
 const PersonPage = lazy(() => import('./pages/PersonPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 
 function App() {
@@ -149,7 +158,7 @@ function App() {
                 <Route path="/my-list" element={<MyList />} />
                 <Route path="/tv-shows" element={<TVShows />} />
                 <Route path="/discover" element={<Discover />} />
-                <Route path="/watch" element={<Watch />} />
+                <Route path="/watch" element={<KeyedWatch />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/disclaimer" element={<Disclaimer />} />
                 <Route path="/privacy" element={<DataPolicy />} />
@@ -174,7 +183,7 @@ function App() {
                 */}
                 <Route path="/search" element={<Search />} />
                 <Route path="/person/:id" element={<PersonPage />} />
-                <Route path="*" element={<Home />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
           </main>

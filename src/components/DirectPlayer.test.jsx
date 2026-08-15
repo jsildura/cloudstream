@@ -190,6 +190,8 @@ describe('fatal HLS error retry budgets', () => {
     emitError(first, netFatal());
     emitError(first, netFatal());
     emitError(first, netFatal());
+    // B constructs its Hls asynchronously (hls.js is lazy-loaded).
+    await flush();
     expect(hlsInstances).toHaveLength(2);
     expect(first.destroyed).toBe(true);
 
@@ -211,8 +213,10 @@ describe('advanced/ready guards', () => {
     renderPlayer();
     await flush();
 
-    // First attempt is the mp4; it errors → advances to HLS.
+    // First attempt is the mp4; it errors → advances to HLS (constructed
+    // asynchronously because hls.js is lazy-loaded).
     fireVideoEvent('error');
+    await flush();
     expect(hlsInstances).toHaveLength(1);
 
     // A late error on the shared element (leftover from the mp4 attempt)
@@ -246,6 +250,8 @@ describe('advanced/ready guards', () => {
       first.emit(Hls.Events.ERROR, otherFatal());
       first.emit(Hls.Events.ERROR, otherFatal());
     });
+    // The next Hls instance is constructed asynchronously (lazy-loaded).
+    await flush();
     expect(hlsInstances).toHaveLength(2);
   });
 
@@ -295,6 +301,35 @@ describe('resume behavior', () => {
     act(() => hlsInstances[0].emit(Hls.Events.MANIFEST_PARSED, {}));
 
     expect(video.currentTime).toBe(99);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Play-state reporting (credits countdown support)
+// ---------------------------------------------------------------------------
+
+describe('play-state reporting', () => {
+  it('reports play, pause, and ended via onPlayStateChange', async () => {
+    const onPlayStateChange = vi.fn();
+    renderPlayer({ onPlayStateChange });
+    await flush();
+
+    fireVideoEvent('play');
+    expect(onPlayStateChange).toHaveBeenLastCalledWith(true);
+
+    fireVideoEvent('pause');
+    expect(onPlayStateChange).toHaveBeenLastCalledWith(false);
+
+    fireVideoEvent('ended');
+    expect(onPlayStateChange).toHaveBeenLastCalledWith(false);
+    expect(onPlayStateChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not require onPlayStateChange (optional prop)', async () => {
+    renderPlayer();
+    await flush();
+    expect(() => fireVideoEvent('play')).not.toThrow();
+    expect(() => fireVideoEvent('ended')).not.toThrow();
   });
 });
 

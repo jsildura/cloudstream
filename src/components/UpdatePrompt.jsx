@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import './UpdatePrompt.css';
 
@@ -6,6 +7,10 @@ import './UpdatePrompt.css';
  * Clicking "Update" activates the new SW and refreshes the page.
  */
 export default function UpdatePrompt() {
+  const intervalRef = useRef(null);
+  const timeoutRef = useRef(null);
+  const controllerHandlerRef = useRef(null);
+
   const {
     needRefresh: [needRefresh, setNeedRefresh],
     updateServiceWorker,
@@ -13,7 +18,7 @@ export default function UpdatePrompt() {
     onRegisteredSW(swUrl, registration) {
       // Check for updates every hour while the app stays open.
       if (registration) {
-        setInterval(() => registration.update(), 60 * 60 * 1000);
+        intervalRef.current = setInterval(() => registration.update(), 60 * 60 * 1000);
       }
     },
     onRegisterError(error) {
@@ -21,10 +26,55 @@ export default function UpdatePrompt() {
     },
   });
 
+  // Clean up interval, timeout, and event listener on unmount.
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (controllerHandlerRef.current) {
+        navigator.serviceWorker?.removeEventListener(
+          'controllerchange', controllerHandlerRef.current
+        );
+      }
+    };
+  }, []);
+
+  // The bundled useRegisterSW reloads the page only when the new service
+  // worker takes control (workbox-window `controlling` + isUpdate), which can
+  // silently fail and leave this toast stuck with a dead Update button.
+  // Instead of a blind timeout, listen for `controllerchange` directly — it
+  // fires the instant the new SW takes control, regardless of `isUpdate`.
+  // A longer timeout (4 s) acts as a true last-resort fallback if the
+  // controllerchange event never arrives.
+  const reloadedRef = useRef(false);
+
   if (!needRefresh) return null;
 
   const close = () => {
     setNeedRefresh(false);
+  };
+
+  const handleUpdate = () => {
+    if (reloadedRef.current) return;
+
+    // Reload the moment the new SW actually takes control (bypasses isUpdate).
+    controllerHandlerRef.current = () => {
+      if (!reloadedRef.current) {
+        reloadedRef.current = true;
+        window.location.reload();
+      }
+    };
+    navigator.serviceWorker?.addEventListener('controllerchange', controllerHandlerRef.current);
+
+    updateServiceWorker(true);
+
+    // True last-resort fallback: only fires if controllerchange never comes.
+    timeoutRef.current = setTimeout(() => {
+      if (!reloadedRef.current) {
+        reloadedRef.current = true;
+        window.location.reload();
+      }
+    }, 4000);
   };
 
   return (
@@ -44,7 +94,7 @@ export default function UpdatePrompt() {
 
       <button
         className="update-prompt-reload"
-        onClick={() => updateServiceWorker(true)}
+        onClick={handleUpdate}
       >
         Update
       </button>
@@ -59,3 +109,4 @@ export default function UpdatePrompt() {
     </div>
   );
 }
+

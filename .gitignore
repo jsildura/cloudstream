@@ -219,3 +219,10 @@ Person_Content_Search_implementation_plan.md
 .freebuff/
 src/components/GlobalChat.test.js
 src/api/stream/zxcstream.test.js
+.claude/settings.local.json
+Netflix-Style Episode Preview in Auto-Advance Overlay Plan.md
+src/components/UpdatePrompt.test.jsx
+src/test/mocks/
+public/control-bar-test.html
+Mood_Tags_AI_implementation_plan.md
+mood_tags_plan_audit.md

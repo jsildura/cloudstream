@@ -2280,8 +2280,8 @@
   overflow: hidden;
 }
 
-/* Bottom fade gradient - blends hero into body (only when backdrop is showing, not trailer) */
-.modal-scroll-container:not(.trailer-playing) .modal-hero::after {
+/* Bottom fade gradient - blends hero into body */
+.modal-hero::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -2290,7 +2290,7 @@
   height: 50px;
   background: linear-gradient(to bottom, transparent 0%, var(--netflix-dark-gray, #1a1a1a) 100%);
   pointer-events: none;
-  z-index: 40;
+  z-index: 50;
 }
 
 .modal-backdrop-container {
@@ -2671,6 +2671,21 @@
   color: rgba(255, 255, 255, 0.9);
 }
 
+/* Clickable cast member names */
+.modal-cast-link {
+  cursor: pointer;
+  transition: color 0.2s ease, text-decoration 0.2s ease;
+  border-radius: 2px;
+}
+
+.modal-cast-link:hover,
+.modal-cast-link:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  outline: none;
+}
+
 /* Section Styling */
 .modal-section {
   margin-top: 32px;
@@ -2781,6 +2796,8 @@
 }
 
 .modal-recommendation-img {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2790,6 +2807,22 @@
 .modal-recommendation-item.clickable {
   position: relative;
   cursor: pointer;
+}
+
+/* Skeleton shimmer behind the poster while it loads - same gradient/animation
+   as .trending-card-skeleton for uniformity. Hidden once the poster covers it. */
+.modal-recommendation-item.clickable::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg,
+      rgba(35, 35, 40, 0.95) 0%,
+      rgba(35, 35, 40, 0.95) 40%,
+      rgba(55, 55, 65, 0.95) 50%,
+      rgba(35, 35, 40, 0.95) 60%,
+      rgba(35, 35, 40, 0.95) 100%);
+  background-size: 200% 100%;
+  animation: trending-shimmer 1.5s infinite ease-in-out;
 }
 
 .modal-recommendation-item.clickable:hover {
@@ -2812,6 +2845,7 @@
   padding: 24px 8px 8px;
   opacity: 0;
   transition: opacity 0.2s ease;
+  z-index: 2;
 }
 
 .modal-recommendation-item.clickable:hover .modal-recommendation-overlay {
@@ -2830,27 +2864,23 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Skeleton loading state */
+/* Skeleton loading state - same gradient/animation as .trending-card-skeleton */
 .modal-recommendation-item.skeleton {
-  background: #27272a;
+  background: rgba(35, 35, 40, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .modal-recommendation-skeleton {
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, #27272a 0%, #3f3f46 50%, #27272a 100%);
+  background: linear-gradient(110deg,
+      rgba(35, 35, 40, 0.95) 0%,
+      rgba(35, 35, 40, 0.95) 40%,
+      rgba(55, 55, 65, 0.95) 50%,
+      rgba(35, 35, 40, 0.95) 60%,
+      rgba(35, 35, 40, 0.95) 100%);
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
-  }
+  animation: trending-shimmer 1.5s infinite ease-in-out;
 }
 
 /* TV 1080p Scaling for Details Modal */

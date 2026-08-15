@@ -10,8 +10,14 @@ import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
 import { generateVideoObjectSchema } from '../utils/schemaUtils';
 import { generateContentMeta } from '../utils/metaUtils';
-import { episodeStill } from '../utils/images';
+import { episodeStill, cardBackdrop, posterAsBackdrop } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
+
+// Adsterra smartlink — same monetization used by the Watch Now / Play buttons
+// (Modal, BannerSlider, HoverPreviewCard): open the ad in a new tab with a
+// first-click grace period and a 2-minute cooldown between popups.
+const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
 const Watch = () => {
   const location = useLocation();
@@ -25,6 +31,9 @@ const Watch = () => {
 
   // Check if we came from modal navigation (has fromModal flag in state)
   const cameFromModal = location.state?.fromModal === true;
+  // True when auto-next handed off to this movie — skip the lazy-load overlay
+  // and start with the player loaded so it streams immediately.
+  const autoPlayNext = location.state?.autoPlay === true;
 
   // Redirect direct URL access to homepage with modal
   useEffect(() => {
@@ -38,7 +47,16 @@ const Watch = () => {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: redirect runs once on mount
 
-  const [currentServer, setCurrentServer] = useState(0);
+  const [currentServer, setCurrentServer] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`server-${id}`);
+      if (saved !== null) {
+        const idx = parseInt(saved, 10);
+        if (Number.isFinite(idx) && idx >= 0 && idx < serverConfig.length) return idx;
+      }
+    } catch { /* localStorage unavailable */ }
+    return 0;
+  });
   const [currentSeason, setCurrentSeason] = useState(urlSeason ? parseInt(urlSeason) : 1);
   const [currentEpisode, setCurrentEpisode] = useState(urlEpisode ? parseInt(urlEpisode) : 1);
   const [seasons, setSeasons] = useState([]);
@@ -46,7 +64,10 @@ const Watch = () => {
   const [contentInfo, setContentInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [playerLoaded, setPlayerLoaded] = useState(false);
+  const [playerLoaded, setPlayerLoaded] = useState(autoPlayNext);
+  // Consumed on first render: lets an auto-play handoff keep the player
+  // mounted once, then behaves like any other watch page.
+  const autoPlayHandledRef = useRef(autoPlayNext);
 
   const [serverDrawerOpen, setServerDrawerOpen] = useState(false);
   const [sandboxEnabled, setSandboxEnabled] = useState(true);
@@ -55,6 +76,31 @@ const Watch = () => {
   const [controlsVisible, setControlsVisible] = useState(true);
   const [controlsLocked, setControlsLocked] = useState(false);
   const lockOverlayRef = useRef(null);
+
+  // Auto-advance: "Up Next" card with countdown. Triggered either when
+  // DirectPlayer fires onEnded (TV/movie) or, via the end-credits heuristic,
+  // when playback enters the title's final minutes. TMDB has no credit-start
+  // timestamps, so this is the fallback: 2 minutes for episodes (their credits
+  // are short), 5 minutes for movies (their end-credit roll runs much longer).
+  const CREDIT_WINDOW_SECONDS = type === 'movie' ? 300 : 120;
+  const [autoAdvanceActive, setAutoAdvanceActive] = useState(false);
+  const [autoAdvanceCountdown, setAutoAdvanceCountdown] = useState(10);
+  const [autoAdvanceTotal, setAutoAdvanceTotal] = useState(10);
+  const autoAdvanceTimerRef = useRef(null);
+  // Mirrors autoAdvanceActive so interval/event callbacks can read it synchronously.
+  const autoAdvanceActiveRef = useRef(false);
+  // True while the running countdown came from the credits window — it freezes
+  // while paused. The on-ended countdown always ticks (playback is over).
+  const creditsCountdownRef = useRef(false);
+  // True when the user canceled the card during the credits: don't re-show it
+  // when the episode actually ends.
+  const creditsOverlayDismissedRef = useRef(false);
+  // Guards against the credits countdown and the ended event double-advancing.
+  const advancingRef = useRef(false);
+  const isPlayingRef = useRef(false);
+  // Set before skipping to the next episode so the player stays mounted and
+  // plays it directly instead of dropping to the lazy-load overlay.
+  const keepPlayerLoadedRef = useRef(false);
 
   useEffect(() => {
     if (controlsLocked && lockOverlayRef.current) {
@@ -246,7 +292,27 @@ const Watch = () => {
   const handlePlayerProgress = useCallback((data) => {
     if (!contentInfo) return;
     updateProgress(contentInfo.id, data.timestamp, data.duration);
-  }, [contentInfo, updateProgress]);
+    if (type === 'tv' || type === 'movie') {
+      // Keep the live position so the credits heuristic can fire mid-title.
+      setPlayerProgress({
+        id: data.id,
+        type: data.type,
+        season: data.season,
+        episode: data.episode,
+        timestamp: data.timestamp,
+        duration: data.duration,
+      });
+    }
+  }, [contentInfo, updateProgress, type]);
+
+  // Live playback position for the current episode (drives the credits
+  // heuristic). Gated on season/episode so stale progress from a previous
+  // episode can never trigger the overlay.
+  const [playerProgress, setPlayerProgress] = useState(null);
+
+  const handlePlayStateChange = useCallback((playing) => {
+    isPlayingRef.current = playing;
+  }, []);
 
   // Resume position: captured once per title/episode so live progress
   // updates can't re-seek mid-playback. TV resumes only when the saved
@@ -432,8 +498,58 @@ const Watch = () => {
   // Player mode is derived from the server config: `directPlayer` servers
   // render DirectPlayer, everything else embeds an iframe.
   useEffect(() => {
-    setPlayerLoaded(false);
+    // Skipping straight into the next episode keeps the player mounted; an
+    // auto-play handoff (movie auto-next) keeps it loaded on first mount.
+    // Every other change (manual nav, server switch, fresh load) drops to the
+    // lazy-load overlay.
+    if (!keepPlayerLoadedRef.current && !autoPlayHandledRef.current) {
+      setPlayerLoaded(false);
+    }
+    keepPlayerLoadedRef.current = false;
+    autoPlayHandledRef.current = false;
+    setAutoAdvanceActive(false);
+    autoAdvanceActiveRef.current = false;
+    setAutoAdvanceCountdown(10);
+    setAutoAdvanceTotal(10);
+    creditsCountdownRef.current = false;
+    creditsOverlayDismissedRef.current = false;
+    advancingRef.current = false;
+    if (autoAdvanceTimerRef.current) {
+      clearInterval(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
   }, [currentServer, currentSeason, currentEpisode, type, id]);
+
+  // The "next" movie for auto-next: first recommendation with card art,
+  // falling back to /similar when TMDB returns nothing useful.
+  const [nextMovie, setNextMovie] = useState(null);
+
+  useEffect(() => {
+    if (type !== 'movie') return;
+    let active = true;
+    setNextMovie(null);
+    const pickNext = (results) => {
+      const list = (results || [])
+        .filter((m) => m.id !== Number(id) && (m.backdrop_path || m.poster_path));
+      return list[0] || null;
+    };
+    (async () => {
+      try {
+        const res = await fetch(`/api/movie/${id}/recommendations`);
+        const data = await res.json();
+        let pick = pickNext(data.results);
+        if (!pick) {
+          const similarRes = await fetch(`/api/movie/${id}/similar`);
+          const similarData = await similarRes.json();
+          pick = pickNext(similarData.results);
+        }
+        if (active) setNextMovie(pick);
+      } catch (error) {
+        console.error('Failed to fetch next-movie recommendation:', error);
+      }
+    })();
+    return () => { active = false; };
+  }, [type, id]);
 
   const fetchContentData = async () => {
     try {
@@ -477,7 +593,7 @@ const Watch = () => {
     }
   };
 
-  const fetchEpisodes = async (seasonNumber) => {
+  const fetchEpisodes = useCallback(async (seasonNumber) => {
     try {
       const res = await fetch(`/api/tv/${id}/season/${seasonNumber}`);
       const data = await res.json();
@@ -490,7 +606,7 @@ const Watch = () => {
     } catch (error) {
       console.error('Failed to fetch episodes:', error);
     }
-  };
+  }, [id, urlEpisode, urlSeason]);
 
   const handleSeasonChange = async (seasonNumber) => {
     setCurrentSeason(seasonNumber);
@@ -520,8 +636,17 @@ const Watch = () => {
     }
   };
 
-  // Navigate to next episode (with cross-season support)
-  const handleNextEpisode = async () => {
+  // Navigate to next episode (with cross-season support), or to the next
+  // recommended movie for movies (auto-next). The receiving movie page gets
+  // an autoPlay flag so it streams without the lazy-load overlay.
+  const handleNextEpisode = useCallback(async () => {
+    if (type === 'movie') {
+      if (!nextMovie) return;
+      navigate(`/watch?type=movie&id=${nextMovie.id}`, {
+        state: { fromModal: true, autoPlay: true },
+      });
+      return;
+    }
     if (currentEpisode < episodes.length) {
       setCurrentEpisode(currentEpisode + 1);
     } else if (seasons.length > 0) {
@@ -529,22 +654,188 @@ const Watch = () => {
       const currentSeasonIndex = seasons.findIndex(s => s.season_number === currentSeason);
       if (currentSeasonIndex < seasons.length - 1) {
         const nextSeason = seasons[currentSeasonIndex + 1];
+        // Set season + episode together (batched) so a player kept mounted for
+        // direct play never transiently loads the old episode number of the
+        // new season.
         setCurrentSeason(nextSeason.season_number);
-        await fetchEpisodes(nextSeason.season_number);
         setCurrentEpisode(1);
+        await fetchEpisodes(nextSeason.season_number);
       }
     }
-  };
+  }, [type, nextMovie, navigate, currentEpisode, episodes, seasons, currentSeason, fetchEpisodes]);
 
   // Derived: can navigate prev/next?
   const canGoPrev = type === 'tv' && (
     currentEpisode > 1 ||
     seasons.findIndex(s => s.season_number === currentSeason) > 0
   );
-  const canGoNext = type === 'tv' && (
-    currentEpisode < episodes.length ||
-    seasons.findIndex(s => s.season_number === currentSeason) < seasons.length - 1
-  );
+  // Derived: can navigate prev/next? TV advances in-page to the next episode;
+  // movies navigate to the next recommended movie (when one exists).
+  const canGoNext = type === 'tv'
+    ? (currentEpisode < episodes.length ||
+       seasons.findIndex(s => s.season_number === currentSeason) < seasons.length - 1)
+    : type === 'movie'
+      ? !!nextMovie
+      : false;
+
+  // TMDB runtime of the current title in minutes (includes credits) — used by
+  // the credits heuristic only when the stream's real duration isn't known.
+  const currentEpisodeRuntime = useMemo(() => {
+    if (type === 'movie') return contentInfo?.runtime || 0;
+    if (type !== 'tv') return 0;
+    const ep = episodes.find((e) => e.episode_number === currentEpisode);
+    return ep?.runtime || contentInfo?.episode_run_time?.[0] || 0;
+  }, [type, episodes, currentEpisode, contentInfo]);
+
+  const clearAutoAdvanceTimer = useCallback(() => {
+    if (autoAdvanceTimerRef.current) {
+      clearInterval(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+  }, []);
+
+  // Shared countdown engine. `initialSeconds` is the full countdown length
+  // (10s after onEnded, up to 120s for the credits window). Reaching zero
+  // advances to the next episode via the effect below.
+  const startAutoAdvanceCountdown = useCallback((initialSeconds) => {
+    clearAutoAdvanceTimer();
+    setAutoAdvanceActive(true);
+    autoAdvanceActiveRef.current = true;
+    setAutoAdvanceCountdown(initialSeconds);
+    setAutoAdvanceTotal(initialSeconds);
+    autoAdvanceTimerRef.current = setInterval(() => {
+      // The credits-window countdown freezes while paused (Netflix-style);
+      // the on-ended countdown always runs because playback is over.
+      if (creditsCountdownRef.current && !isPlayingRef.current) return;
+      setAutoAdvanceCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+  }, [clearAutoAdvanceTimer]);
+
+  // Countdown reaching zero → advance to the next episode / movie. Auto
+  // advances play directly (no lazy-load overlay); only a manual skip shows
+  // the ad.
+  useEffect(() => {
+    if (autoAdvanceActive && autoAdvanceCountdown <= 0 && !advancingRef.current) {
+      advancingRef.current = true;
+      clearAutoAdvanceTimer();
+      setAutoAdvanceActive(false);
+      autoAdvanceActiveRef.current = false;
+      creditsCountdownRef.current = false;
+      keepPlayerLoadedRef.current = true;
+      handleNextEpisode();
+    }
+  }, [autoAdvanceActive, autoAdvanceCountdown, clearAutoAdvanceTimer, handleNextEpisode]);
+
+  // Auto-advance: only for TV/movies on the direct player, only if there's a
+  // next episode or next movie.
+  const handleVideoEnded = useCallback(() => {
+    if ((type !== 'tv' && type !== 'movie') || !canGoNext) return;
+    if (!servers[currentServer]?.directPlayer) return;
+    // The Up Next card may already be showing (credits window) — the video is
+    // truly over now, so advance immediately instead of a fresh countdown.
+    if (autoAdvanceActiveRef.current && !advancingRef.current) {
+      advancingRef.current = true;
+      clearAutoAdvanceTimer();
+      setAutoAdvanceActive(false);
+      autoAdvanceActiveRef.current = false;
+      creditsCountdownRef.current = false;
+      keepPlayerLoadedRef.current = true;
+      handleNextEpisode();
+      return;
+    }
+    creditsCountdownRef.current = false;
+    startAutoAdvanceCountdown(10);
+  }, [type, canGoNext, currentServer, servers, handleNextEpisode, clearAutoAdvanceTimer, startAutoAdvanceCountdown]);
+
+  const cancelAutoAdvance = useCallback(() => {
+    clearAutoAdvanceTimer();
+    setAutoAdvanceActive(false);
+    autoAdvanceActiveRef.current = false;
+    setAutoAdvanceCountdown(10);
+    setAutoAdvanceTotal(10);
+    // Canceled during the credits: don't re-pop the card at the real end —
+    // the user has already declined the next episode.
+    if (creditsCountdownRef.current) {
+      creditsOverlayDismissedRef.current = true;
+    }
+    creditsCountdownRef.current = false;
+  }, [clearAutoAdvanceTimer]);
+
+  const skipAutoAdvance = useCallback(() => {
+    // Ad popup: first ever click is a grace period (no ad), then the smartlink
+    // opens in a new tab at most once per cooldown window. Same as the Watch
+    // Now / Play buttons elsewhere in the app.
+    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
+    if (!hasClickedBefore) {
+      localStorage.setItem('hasClickedWatch', 'true');
+    } else {
+      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
+      const now = Date.now();
+      if (now - lastAdTime >= AD_COOLDOWN_MS) {
+        window.open(AD_URL, '_blank');
+        localStorage.setItem('lastAdTrigger', now.toString());
+      }
+    }
+
+    clearAutoAdvanceTimer();
+    setAutoAdvanceActive(false);
+    autoAdvanceActiveRef.current = false;
+    setAutoAdvanceCountdown(10);
+    setAutoAdvanceTotal(10);
+    creditsCountdownRef.current = false;
+    // Play the next episode directly instead of dropping to the lazy overlay.
+    keepPlayerLoadedRef.current = true;
+    handleNextEpisode();
+  }, [clearAutoAdvanceTimer, handleNextEpisode]);
+
+  // End-credits heuristic fallback: TMDB has no credit-start timestamps, so
+  // assume the credits begin in the final CREDIT_WINDOW_SECONDS of the title
+  // (TMDB runtime includes the credits; the stream's real duration wins when
+  // known). Once playback crosses that point on the direct player, show the
+  // Up Next card with a countdown capped at that window.
+  useEffect(() => {
+    if ((type !== 'tv' && type !== 'movie') || !canGoNext) return;
+    if (!servers[currentServer]?.directPlayer) return;
+    if (!playerProgress) return;
+    // Gate on the exact content being watched so stale progress from a
+    // previous episode/movie can never trigger the overlay.
+    if (type === 'tv') {
+      if (playerProgress.season !== currentSeason || playerProgress.episode !== currentEpisode) return;
+    } else if (playerProgress.type !== 'movie' || String(playerProgress.id) !== String(id)) {
+      return;
+    }
+    if (creditsOverlayDismissedRef.current) return;
+
+    const durationSec = playerProgress.duration > 0
+      ? playerProgress.duration
+      : currentEpisodeRuntime * 60;
+    if (!durationSec || durationSec <= CREDIT_WINDOW_SECONDS) return;
+
+    const creditsStart = durationSec - CREDIT_WINDOW_SECONDS;
+    const inCredits = playerProgress.timestamp > 0 && playerProgress.timestamp >= creditsStart;
+
+    if (autoAdvanceActiveRef.current) {
+      // Scrubbed back before the credits: hide the card, stop the countdown.
+      if (!inCredits) {
+        clearAutoAdvanceTimer();
+        setAutoAdvanceActive(false);
+        autoAdvanceActiveRef.current = false;
+        creditsCountdownRef.current = false;
+        setAutoAdvanceCountdown(10);
+        setAutoAdvanceTotal(10);
+      }
+      return;
+    }
+
+    if (!inCredits) return;
+
+    const remaining = Math.max(1, Math.min(
+      CREDIT_WINDOW_SECONDS,
+      Math.round(durationSec - playerProgress.timestamp)
+    ));
+    creditsCountdownRef.current = true;
+    startAutoAdvanceCountdown(remaining);
+  }, [playerProgress, type, id, canGoNext, currentServer, servers, currentSeason, currentEpisode, currentEpisodeRuntime, CREDIT_WINDOW_SECONDS, clearAutoAdvanceTimer, startAutoAdvanceCountdown]);
 
   const getVideoUrl = () => {
     return servers[currentServer].getUrl(currentSeason, currentEpisode);
@@ -555,6 +846,7 @@ const Watch = () => {
     setCurrentServer(index);
     setSandboxEnabled(server.sandboxSupport);
     setServerDrawerOpen(false);
+    try { localStorage.setItem(`server-${id}`, index); } catch { /* noop */ }
   };
 
   const handleBack = () => {
@@ -746,6 +1038,15 @@ const Watch = () => {
     );
   }
 
+  const formatCountdown = (seconds) => {
+    const s = Math.max(0, seconds);
+    if (s >= 60) {
+      const m = Math.floor(s / 60);
+      return `${m}:${String(s % 60).padStart(2, '0')}`;
+    }
+    return `${s}s`;
+  };
+
   return (
     <>
       <MetaTags {...metaData} />
@@ -786,12 +1087,15 @@ const Watch = () => {
                       },
                     }));
                     setCurrentServer(nextServer);
+                    try { localStorage.setItem(`server-${id}`, nextServer); } catch { /* noop */ }
                   }
                 }}
                 showControls={!controlsLocked}
                 backdrop={getBackdropUrl()}
                 onProgress={handlePlayerProgress}
                 resumeTime={resumeTime}
+                onEnded={handleVideoEnded}
+                onPlayStateChange={handlePlayStateChange}
               />
             ) : (
               <iframe
@@ -850,6 +1154,147 @@ const Watch = () => {
                 )}
               </>
             )}
+            {/* Auto-advance overlay: shown when the title ends (or its credits
+                begin) on DirectPlayer — TV shows the next episode, movies the
+                next recommended movie. */}
+            {autoAdvanceActive && (type === 'tv' || type === 'movie') && (
+              <div className="watch-auto-advance-overlay">
+                <div className="watch-auto-advance-card">
+                  {(() => {
+                    if (type === 'movie') {
+                      if (!nextMovie) return null;
+                      const movieTitle = nextMovie.title || nextMovie.name || 'Up Next';
+                      const movieMeta = [
+                        nextMovie.release_date ? nextMovie.release_date.slice(0, 4) : null,
+                        nextMovie.runtime ? `${nextMovie.runtime} min` : null,
+                      ].filter(Boolean).join(' · ');
+                      return (
+                        <>
+                          <p className="watch-auto-advance-label">Up Next</p>
+                          <div className="watch-auto-advance-body">
+                            <div className="watch-auto-advance-thumbnail">
+                              {nextMovie.backdrop_path ? (
+                                <img
+                                  src={cardBackdrop(nextMovie.backdrop_path)}
+                                  alt={movieTitle}
+                                  loading="lazy"
+                                />
+                              ) : nextMovie.poster_path ? (
+                                <img
+                                  src={posterAsBackdrop(nextMovie.poster_path)}
+                                  alt={movieTitle}
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="watch-auto-advance-thumbnail-placeholder" aria-hidden="true">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                                    <path d="M8 21h8" />
+                                    <path d="M12 17v4" />
+                                    <path d="m10 9 4 2.5L10 14V9z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="watch-auto-advance-info">
+                              <p className="watch-auto-advance-ep-title">{movieTitle}</p>
+                              <p className="watch-auto-advance-overview">
+                                {nextMovie.overview || 'No synopsis available.'}
+                              </p>
+                              {movieMeta && (
+                                <p className="watch-auto-advance-meta">{movieMeta}</p>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+                    const nextEp = currentEpisode < episodes.length
+                      ? episodes.find(e => e.episode_number === currentEpisode + 1)
+                      : null;
+                    if (nextEp) {
+                      return (
+                        <>
+                          <p className="watch-auto-advance-label">Up Next</p>
+                          <div className="watch-auto-advance-body">
+                            <div className="watch-auto-advance-thumbnail">
+                              {nextEp.still_path ? (
+                                <img
+                                  src={episodeStill(nextEp.still_path)}
+                                  alt={nextEp.name || `Episode ${nextEp.episode_number}`}
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="watch-auto-advance-thumbnail-placeholder" aria-hidden="true">
+                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                                    <path d="M8 21h8" />
+                                    <path d="M12 17v4" />
+                                    <path d="m10 9 4 2.5L10 14V9z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="watch-auto-advance-info">
+                              <p className="watch-auto-advance-ep-title">
+                                E{nextEp.episode_number} · {nextEp.name || `Episode ${nextEp.episode_number}`}
+                              </p>
+                              <p className="watch-auto-advance-overview">
+                                {nextEp.overview || 'No synopsis available.'}
+                              </p>
+                              {nextEp.runtime > 0 && (
+                                <p className="watch-auto-advance-meta">{nextEp.runtime} min</p>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <p className="watch-auto-advance-label">Up Next</p>
+                        <div className="watch-auto-advance-body">
+                          <div className="watch-auto-advance-thumbnail watch-auto-advance-thumbnail--season" aria-hidden="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="4" width="18" height="17" rx="2" />
+                              <path d="M8 2v4" />
+                              <path d="M16 2v4" />
+                              <path d="M3 9h18" />
+                            </svg>
+                          </div>
+                          <div className="watch-auto-advance-info">
+                            <p className="watch-auto-advance-ep-title">Next Season</p>
+                            <p className="watch-auto-advance-overview">
+                              The next season of {contentInfo?.title || contentInfo?.name || 'this show'} is coming up.
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()}
+                  <div className="watch-auto-advance-actions">
+                    <button className="watch-auto-advance-skip" onClick={skipAutoAdvance}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                      Play Now
+                    </button>
+                    <button className="watch-auto-advance-cancel" onClick={cancelAutoAdvance}>
+                      Cancel
+                    </button>
+                  </div>
+                  <div className="watch-auto-advance-bar-row">
+                    <div className="watch-auto-advance-bar">
+                      <div
+                        className="watch-auto-advance-bar-fill"
+                        style={{ width: `${(autoAdvanceCountdown / Math.max(1, autoAdvanceTotal)) * 100}%` }}
+                      />
+                    </div>
+                    <span className="watch-auto-advance-seconds">{formatCountdown(autoAdvanceCountdown)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div
@@ -889,7 +1334,7 @@ const Watch = () => {
         )}
 
         {/* Vertical Control Bar */}
-        <div className={`watch-control-bar${controlsVisible ? ' visible' : ''}`}>
+        <div className={`watch-control-bar${type === 'tv' ? ' watch-control-bar-tv' : ''}${controlsVisible ? ' visible' : ''}`}>
           {/* Back Button */}
           <div className="watch-control-bar-item">
             <button

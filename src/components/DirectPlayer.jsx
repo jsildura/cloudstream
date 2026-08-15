@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import Hls from 'hls.js';
 import './DirectPlayer.css';
 
 const LOADING_MESSAGES = [
@@ -11,7 +10,7 @@ const LOADING_MESSAGES = [
 ];
 
 export default function DirectPlayer({
-  type, id, season, episode, title, year, date, runtime, onFallback, showControls = true, backdrop, onProgress, resumeTime = 0
+  type, id, season, episode, title, year, date, runtime, onFallback, showControls = true, backdrop, onProgress, resumeTime = 0, onEnded, onPlayStateChange
 }) {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
@@ -19,6 +18,10 @@ export default function DirectPlayer({
   onFallbackRef.current = onFallback;
   const onProgressRef = useRef(onProgress);
   onProgressRef.current = onProgress;
+  const onEndedRef = useRef(onEnded);
+  onEndedRef.current = onEnded;
+  const onPlayStateChangeRef = useRef(onPlayStateChange);
+  onPlayStateChangeRef.current = onPlayStateChange;
   // resumeTime is a seek target, not part of the stream's identity. Reading it
   // live from a ref (instead of listing it in the main effect's deps) means a
   // 0 → saved-position flip can't tear down and re-resolve the stream.
@@ -64,22 +67,38 @@ export default function DirectPlayer({
 
     const flush = () => sendProgress(true);
     const onTimeUpdate = () => sendProgress(false);
+    // Report play state so the host can freeze a credits-window countdown
+    // while the user pauses (Netflix-style) without pausing on stalls.
+    const notifyPlayState = (playing) => onPlayStateChangeRef.current?.(playing);
+    const handlePlay = () => {
+      flush();
+      notifyPlayState(true);
+    };
+    const handlePause = () => {
+      flush();
+      notifyPlayState(false);
+    };
+    const handleEnded = () => {
+      flush();
+      notifyPlayState(false);
+      onEndedRef.current?.();
+    };
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') flush();
     };
 
     video.addEventListener('timeupdate', onTimeUpdate);
-    video.addEventListener('play', flush);
-    video.addEventListener('pause', flush);
-    video.addEventListener('ended', flush);
+    video.addEventListener('play', handlePlay);
+    video.addEventListener('pause', handlePause);
+    video.addEventListener('ended', handleEnded);
     video.addEventListener('seeked', flush);
     window.addEventListener('pagehide', flush);
     document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       video.removeEventListener('timeupdate', onTimeUpdate);
-      video.removeEventListener('play', flush);
-      video.removeEventListener('pause', flush);
-      video.removeEventListener('ended', flush);
+      video.removeEventListener('play', handlePlay);
+      video.removeEventListener('pause', handlePause);
+      video.removeEventListener('ended', handleEnded);
       video.removeEventListener('seeked', flush);
       window.removeEventListener('pagehide', flush);
       document.removeEventListener('visibilitychange', onVisibilityChange);
@@ -178,7 +197,7 @@ export default function DirectPlayer({
     // the cleanup path aborts too, so no handler outlives its attempt.
     let attemptAbort = null;
 
-    const playSources = (sources, index) => {
+    const playSources = async (sources, index) => {
       if (!active) return;
       if (index >= sources.length) {
         fallback('All sources failed, switching to another server...');
@@ -229,6 +248,19 @@ export default function DirectPlayer({
         video.addEventListener('loadedmetadata', onReady, { signal: attemptSignal });
         video.addEventListener('error', onElementError, { signal: attemptSignal });
       } else if (source.kind === 'hls') {
+        // hls.js is large (~400 KB), so it's loaded on demand — only when a
+        // source actually needs it — instead of with the Watch page. The
+        // bundler caches the module, so a second play resolves instantly.
+        let Hls;
+        try {
+          ({ default: Hls } = await import('hls.js'));
+        } catch {
+          if (advanced) return;
+          advanced = true;
+          tryNext();
+          return;
+        }
+        if (!active || advanced) return;
         if (Hls.isSupported()) {
           const hls = new Hls({
             fetchSetup: (context, initParams) => {
@@ -304,6 +336,18 @@ export default function DirectPlayer({
 
   return (
     <div className="direct-player-container">
+      {/* Hidden SVG filter for backdrop sharpening */}
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+        <defs>
+          <filter id="sharpen-backdrop">
+            <feConvolveMatrix
+              order="3"
+              preserveAlpha="true"
+              kernelMatrix="0 -1 0  -1 5 -1  0 -1 0"
+            />
+          </filter>
+        </defs>
+      </svg>
       {loading && backdrop && (
         <div
           className="direct-player-backdrop"

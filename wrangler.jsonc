@@ -17,6 +17,13 @@
 		{
 			"binding": "VISITOR_STATS",
 			"id": "12b87ad5668f4714a4b87829926baf29"
+		},
+		{
+			// Mood-tag cache for /api/ai (see Mood_Tags_AI_implementation_plan.md).
+			// Create the namespace in the Cloudflare dashboard (Workers & Pages ->
+			// KV) and REPLACE this id — the placeholder only keeps the config valid.
+			"binding": "MOOD_TAGS",
+			"id": "1f50e39d1298499bb3aded13cfe05689"
 		}
 	]
 }

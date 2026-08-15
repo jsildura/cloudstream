@@ -2,7 +2,6 @@ import { defineConfig, loadEnv } from 'vite'
 import path from "path"
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa';
-import Sitemap from 'vite-plugin-sitemap'
 import http from 'http';
 import https from 'https';
 import { Readable } from 'node:stream';
@@ -258,37 +257,6 @@ export default defineConfig(({ mode }) => {
             }
           ]
         }
-      }),
-      Sitemap({
-        hostname: 'https://streamflix.stream/',
-        dynamicRoutes: [
-          // Main content pages
-          '/tv-shows',
-          '/discover',
-          // Streaming providers
-          '/netflix',
-          '/disney',
-          '/prime-video',
-          '/hbo',
-          '/apple-tv',
-          '/viu',
-          '/crunchyroll',
-          '/peacock',
-          // Live content
-          '/iptv',
-          '/sports',
-          '/music',
-          // User pages
-          '/my-list',
-          // Legal/info pages
-          '/about',
-          '/disclaimer',
-          '/privacy',
-          '/terms',
-          '/contact'
-        ],
-        readable: true,
-        generateRobotsTxt: false
       }),
     ],
     resolve: {
