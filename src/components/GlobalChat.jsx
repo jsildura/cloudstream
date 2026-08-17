@@ -2384,7 +2384,14 @@ function GlobalChat() {
                             />
                         </div>
                         <div className="gc-header-info">
-                            <span className="gc-header-name">StreamFlix Community</span>
+                            <span className="gc-header-name">
+                                StreamFlix Community
+                                {isGlobalChatAdmin && (
+                                    <span className="gc-admin-header-badge" title="You are a GlobalChat Admin">
+                                        <i className="fa-solid fa-crown"></i> Admin
+                                    </span>
+                                )}
+                            </span>
                             <span className="gc-header-status">{sessionState === 'ready' ? 'Live Chat' : 'Sign In'}</span>
                         </div>
                     </div>
@@ -2392,12 +2399,13 @@ function GlobalChat() {
                         {/* Reports button (admin only) */}
                         {isGlobalChatAdmin && (
                             <button
-                                className="gc-icon-btn"
+                                className={`gc-icon-btn gc-reports-btn ${reports.length > 0 ? 'has-unresolved' : ''}`}
                                 onClick={() => {
                                     loadReports();
                                     setShowReports(true);
                                 }}
                                 title="Reports"
+                                aria-label="Reports"
                             >
                                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
