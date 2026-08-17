@@ -3409,15 +3409,6 @@
     color: #e50914;
 }
 
-.globalchat-signin-sparkle-icon {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 18px;
-    height: 18px;
-    color: #ffb340;
-}
-
 .globalchat-signin-badge {
     font-size: 0.65rem;
     font-weight: 700;
