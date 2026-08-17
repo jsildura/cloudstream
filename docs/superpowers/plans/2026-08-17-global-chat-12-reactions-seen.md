@@ -53,7 +53,7 @@ rg -n "status.*seen|reactionsRef.*transaction|reactions\]\[" src/components/Glob
 git diff --check
 ```
 
-- [ ] Commit:
+- [x] Commit:
 
 ```powershell
 git add src/components/GlobalChat.jsx src/components/GlobalChat.test.js src/components/GlobalChat.css
