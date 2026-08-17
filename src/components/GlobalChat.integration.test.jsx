@@ -309,7 +309,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Sign in in Settings to participate in GlobalChat')).toBeInTheDocument();
+            expect(screen.getByText('Sign in to take part in GlobalChat')).toBeInTheDocument();
         });
 
         // Retains header & close control
@@ -416,7 +416,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Sign in in Settings to participate in GlobalChat')).toBeInTheDocument();
+            expect(screen.getByText('Sign in to take part in GlobalChat')).toBeInTheDocument();
         });
     });
 

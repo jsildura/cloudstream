@@ -178,8 +178,8 @@ pnpm-lock.yaml
 **/*.bak
 **/*.orig
 
-# Lock files (optional for team consistency)
-# Uncomment one if your team uses multiple package managers
+# Lock files
+package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
 
@@ -230,6 +230,7 @@ mood_tags_plan_audit.md
 !src/contexts/AuthContext.test.jsx
 Google Auth + Multi-Profile System for Streamflix.md
 Google Auth System for Streamflix.md
+Multi-Profile System and Kids Mode for Streamflix.md
 
 # Firebase / Service Account Secrets
 *serviceAccountKey*.json

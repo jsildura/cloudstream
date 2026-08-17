@@ -9,7 +9,7 @@ export default function GlobalChatSignInWall() {
           <MessageSquare className="globalchat-signin-hero-icon" />
         </div>
         <span className="globalchat-signin-badge">COMMUNITY CHAT</span>
-        <h2 className="globalchat-signin-title">Sign in to chat with the GlobalChat community</h2>
+        <h2 className="globalchat-signin-title">Sign in to take part in GlobalChat</h2>
         <p className="globalchat-signin-desc">
           Share what you're watching, recommend your favorites, report playback issues, and chat with the community.
         </p>

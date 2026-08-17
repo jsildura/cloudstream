@@ -5,8 +5,8 @@ import GlobalChatSignInWall from './GlobalChatSignInWall';
 describe('GlobalChatSignInWall Component (Passive Participation Wall)', () => {
   it('renders passive participation notice directing users to Settings', () => {
     render(<GlobalChatSignInWall />);
-    expect(screen.getByRole('heading', { name: /sign in in settings to participate in globalchat/i })).toBeInTheDocument();
-    expect(screen.getByText(/chat with the community, share recommendations/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /sign in to take part in globalchat/i })).toBeInTheDocument();
+    expect(screen.getByText(/share what you're watching/i)).toBeInTheDocument();
   });
 
   it('contains no Google sign-in button or interactive authentication controls', () => {
