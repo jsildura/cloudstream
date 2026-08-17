@@ -14,6 +14,7 @@
 - No legacy chat record is imported into v2.
 - Keep backups outside the repository with a recorded deletion date.
 - Never reopen `/secrets` or RTDB `isAdmin` as a long-term rollback.
+- GlobalChat never presents or starts Google authentication. The signed-out wall only tells users to sign in through the navbar Settings panel's `.navbar-settings-signin` section.
 
 ---
 
@@ -70,7 +71,9 @@ npm run deploy
 - [x] Verify deployed asset/version hash and no `/api/admin-login` request.
 - [x] With a regular Google user: bootstrap, empty feed, send, edit, reply, react, recommend, report, and soft delete.
 - [x] With a claims admin: broadcast, pin/unpin, read/resolve report, resolve ticket, and hard delete.
-- [x] Verify signed-out browsing still works and opening chat shows the wall with no chat reads.
+- [x] Verify signed-out browsing still works and opening chat shows “Sign in in Settings to participate in GlobalChat” with no chat reads.
+- [x] Verify the GlobalChat wall contains no Google button, sign-in link, authentication callback, popup/error flow, or other way to start Google authentication.
+- [x] Open the navbar Settings panel and verify `.navbar-settings-signin` is the only GlobalChat-relevant route to Google sign-in; complete sign-in there, then return to GlobalChat and verify participation becomes available.
 
 ### Task 5: Deploy Final Rules and Establish Fresh-History Boundary
 
@@ -90,7 +93,7 @@ npm run deploy:firebase-rules
 
 - [x] Test desktop and mobile panel layout, identity photo/name fit, composer, menus, reports, and pin banner.
 - [x] Switch Google account A to B and verify no A messages/drafts/unreads/listeners remain locally.
-- [x] Sign out and verify listener detachment and sign-in wall.
+- [x] Sign out and verify listener detachment, local chat-state cleanup, and return to the passive wall with no in-chat authentication action.
 - [x] Grant a test claim, force `refreshAuthClaims()`, and verify admin UI/rules access.
 - [x] Revoke it, force refresh, and verify immediate UI closure and rules denial.
 
@@ -109,7 +112,7 @@ npm run deploy:firebase-rules
 
 - [x] After the approved retention period, verify production stability and operator approval.
 - [x] Delete legacy roots and restricted backup according to the retention record.
-- [x] Run final smoke checks and record deletion completion.
+- [x] Run final smoke checks, including the passive-wall and Settings-only authentication contract, and record deletion completion.
 - [x] Commit documentation:
 
 ```powershell

@@ -186,9 +186,11 @@ npm run deploy
 ```
 
 Smoke test the live client:
-- Signed-out: Shows Google sign-in wall; zero database reads/writes.
+- Signed-out: Opening GlobalChat renders the passive participation wall ("Sign in in Settings to participate in GlobalChat") with retained header and close control; contains no in-chat Google button or authentication action; triggers zero database reads/listeners.
+- Google Authentication in Settings: Google sign-in is available exclusively through the navbar Settings drawer's `.navbar-settings-signin` section. Completing sign-in there enables GlobalChat participation upon return.
 - Regular Google User: Bootstraps profile, loads empty v2 feed, sends message, reacts, replies, and creates issue report.
 - Claims Admin: Sees header shield icon (Reports queue), Pin message action, Hard delete, and `@everyone` broadcast mention.
+- Sign Out: Signing out from navbar Settings detaches all listeners, resets local chat state, and returns GlobalChat to the passive participation wall.
 
 #### Step 5: Deploy Final Deny-Legacy Rules
 Deploy `database.rules.json` to permanently lock down all legacy roots:
