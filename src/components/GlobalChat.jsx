@@ -11,6 +11,7 @@ import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, MAX_T
 import './GlobalChat.css';
 
 // Constants
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
 export const REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
 // Reaction data helper — groups counts by emoji, sorts top 3, and resolves caller reaction
@@ -52,6 +53,7 @@ export const isMessageSeen = (msg) => {
 
 // Report Issue categories — plain language for non-technical users. Short and
 // distinct so reports stay sortable without a taxonomy.
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
 export const REPORT_CATEGORIES = [
     "Video won't play",
     'Buffers or stops',
@@ -67,6 +69,8 @@ const ISSUE_COOLDOWN_KEY = 'gc_last_issue_report';
 // Short human-readable ticket number for a report — unique enough for a
 // moderation queue without a counter (derived from the push timestamp).
 const makeTicketNo = () => String(Date.now()).slice(-6);
+
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec';
 
 // Snapshot a reported message's visible content into the report payload. The
 // admin moderation panel renders this snippet directly, so a report stays
@@ -303,7 +307,7 @@ const notifyBroadcast = (msg) => {
 function GlobalChat() {
     const isTVMode = useTVDetect();
     const navigate = useNavigate();
-    const { chatIdentity, isSignedIn, isAuthLoading, isGlobalChatAdmin } = useAuth();
+    const { chatIdentity, isSignedIn, isGlobalChatAdmin } = useAuth();
     // State
     const [sessionState, setSessionState] = useState('signed-out'); // 'signed-out' | 'bootstrapping' | 'ready' | 'error'
     const [showFab, setShowFab] = useState(false); // Delay FAB until loading screen finishes
@@ -340,7 +344,7 @@ function GlobalChat() {
     // 30-message window (backfilled once at setup). The FAB badge number is
     // the sum of unread broadcasts in the window plus these stale ids.
     const [staleBroadcastIds, setStaleBroadcastIds] = useState(new Set());
-    const [error, setError] = useState('');
+    const [, setError] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [replyTo, setReplyTo] = useState(null);
     const [showActionSheet, setShowActionSheet] = useState(false);
@@ -356,12 +360,7 @@ function GlobalChat() {
     const [isEditing, setIsEditing] = useState(false);
     const [hoveredMessageId, setHoveredMessageId] = useState(null);
     const [moreMenuMessageId, setMoreMenuMessageId] = useState(null);
-    const [showAdminMenu, setShowAdminMenu] = useState(false);
     const [dismissedComposeKey, setDismissedComposeKey] = useState(null); // which live link preview the user dismissed
-
-    // Avatar customization states
-    const [avatarStyle, setAvatarStyle] = useState('adventurer');
-    const [avatarSeed, setAvatarSeed] = useState(() => Math.random().toString(36).substring(7));
 
     const [pinnedMessage, setPinnedMessage] = useState(null);
     // Edit Message Handler
@@ -415,7 +414,6 @@ function GlobalChat() {
     // Admin states
     const [showReports, setShowReports] = useState(false);
     const [reports, setReports] = useState([]);
-    const [, setProfileImage] = useState(null);
 
     // Refs
     const messagesContainerRef = useRef(null);
@@ -429,8 +427,6 @@ function GlobalChat() {
     const oldestKeyRef = useRef(null);
     const isLoadingHistoryRef = useRef(false);
     const loadMessagesRef = useRef(null);
-
-    const profileInputRef = useRef(null);
     const streamRef = useRef(null);
     const longPressTimerRef = useRef(null);
     const longPressStartRef = useRef(null);

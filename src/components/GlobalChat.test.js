@@ -1435,13 +1435,6 @@ describe('GlobalChat v2 Reports and Tickets', () => {
         isGoogle: true
     };
 
-    const fakeAdmin = {
-        uid: 'user-google-admin',
-        displayName: 'Admin User',
-        photoURL: 'https://lh3.googleusercontent.com/a/admin',
-        isGoogle: true
-    };
-
     const createMockRef = (path) => {
         const refObj = {
             path,
@@ -1981,7 +1974,7 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
             signInWithGoogle: vi.fn()
         };
 
-        const authSpy = vi.spyOn(AuthContextModule, 'useAuth').mockImplementation(() => authState);
+        vi.spyOn(AuthContextModule, 'useAuth').mockImplementation(() => authState);
 
         const { rerender } = render(React.createElement(GlobalChat));
 

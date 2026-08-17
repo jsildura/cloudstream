@@ -31,10 +31,18 @@ jobs:
           # repo. Committing the lockfile would enable deterministic installs
           # (npm ci) plus the cache.
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - run: npm install
 
       - name: Run unit tests
         run: npm test
+
+      - name: Run Realtime Database rules tests
+        run: npm run test:rules:transitional && npm run test:rules
 
       - name: Build production bundle
         run: npm run build
