@@ -3281,24 +3281,6 @@
     overflow-y: auto;
 }
 
-.globalchat-signin-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
-}
-
-.globalchat-signin-spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: #e50914;
-    border-radius: 50%;
-    animation: gc-border-spin 0.8s linear infinite;
-}
-
 .globalchat-signin-hero {
     display: flex;
     flex-direction: column;
@@ -3369,7 +3351,7 @@
     gap: 8px;
     width: 100%;
     max-width: 300px;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
 }
 
 .globalchat-signin-perk {
@@ -3390,80 +3372,4 @@
     height: 16px;
     color: #4ade80;
     flex-shrink: 0;
-}
-
-.globalchat-signin-error {
-    width: 100%;
-    max-width: 300px;
-    padding: 10px 14px;
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    border-radius: 8px;
-    color: #fca5a5;
-    font-size: 0.82rem;
-    margin-bottom: 16px;
-    text-align: center;
-}
-
-.globalchat-signin-tv-notice {
-    padding: 14px;
-    background: #1c1c1e;
-    border-radius: 8px;
-    border: 1px solid #333;
-    color: #ffb340;
-    font-size: 0.82rem;
-    text-align: center;
-    line-height: 1.4;
-    width: 100%;
-    max-width: 300px;
-    margin-bottom: 16px;
-}
-
-.globalchat-signin-google-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 100%;
-    max-width: 300px;
-    height: 44px;
-    padding: 0 20px;
-    background: #fff;
-    color: #1f1f1f;
-    border: none;
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 0.92rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
-    margin-bottom: 16px;
-}
-
-.globalchat-signin-google-btn:hover:not(:disabled) {
-    background: #f1f1f1;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-}
-
-.globalchat-signin-google-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.globalchat-signin-google-btn:disabled {
-    opacity: 0.65;
-    cursor: wait;
-}
-
-.globalchat-signin-google-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-}
-
-.globalchat-signin-footer {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.4);
-    margin: 0;
 }

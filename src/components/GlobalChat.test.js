@@ -208,8 +208,8 @@ describe('GlobalChat Session Gating and Lifecycle', () => {
             window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
         });
 
-        expect(screen.getByText(/sign in with google to join globalchat/i)).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /sign in with google/i })).toBeInTheDocument();
+        expect(screen.getByText(/sign in in settings to participate in globalchat/i)).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /sign in with google/i })).toBeNull();
     });
 
     it('bootstraps v2 Google profile before attaching listeners when signed in', async () => {

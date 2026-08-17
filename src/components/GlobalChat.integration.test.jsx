@@ -308,7 +308,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Sign in with Google to join GlobalChat')).toBeInTheDocument();
+            expect(screen.getByText('Sign in in Settings to participate in GlobalChat')).toBeInTheDocument();
         });
 
         // Strict assertion: zero reads/writes to globalChat/v2
@@ -406,7 +406,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Sign in with Google to join GlobalChat')).toBeInTheDocument();
+            expect(screen.getByText('Sign in in Settings to participate in GlobalChat')).toBeInTheDocument();
         });
     });
 
