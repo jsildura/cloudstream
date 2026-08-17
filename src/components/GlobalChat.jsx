@@ -4,21 +4,51 @@ import useTVDetect from '../hooks/useTVDetect';
 import ChatLinkPreview from './ChatLinkPreview';
 import MovieRecRow from './MovieRecRow';
 import { cardPoster } from '../utils/images';
+import { initFirebase } from '../lib/firebase';
+import { useAuth } from '../contexts/AuthContext';
+import GlobalChatSignInWall from './GlobalChatSignInWall';
+import { chatPath, buildChatProfile, buildChatMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
 import './GlobalChat.css';
 
-// Firebase configuration for StreamFlix Chat
-const firebaseConfig = {
-    apiKey: "AIzaSyA-VQT6muzrgv12mQ9_Afdgx-OtWR8eun0",
-    authDomain: "streamflix-chat.firebaseapp.com",
-    databaseURL: "https://streamflix-chat-default-rtdb.firebaseio.com",
-    projectId: "streamflix-chat",
-    storageBucket: "streamflix-chat.firebasestorage.app",
-    messagingSenderId: "234688078034",
-    appId: "1:234688078034:web:4d3f94dc91426252410d0b"
+// Constants
+export const REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+
+// Reaction data helper — groups counts by emoji, sorts top 3, and resolves caller reaction
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
+export const getReactionData = (reactions, currentUid) => {
+    if (!reactions || typeof reactions !== 'object') return null;
+
+    const counts = {};
+    let total = 0;
+    let userReacted = false;
+    let userReaction = null;
+
+    Object.entries(reactions).forEach(([uid, emoji]) => {
+        if (!emoji || typeof emoji !== 'string' || !REACTIONS.includes(emoji)) return;
+        counts[emoji] = (counts[emoji] || 0) + 1;
+        total += 1;
+        if (currentUid && uid === currentUid) {
+            userReacted = true;
+            userReaction = emoji;
+        }
+    });
+
+    if (total === 0) return null;
+
+    const emojis = Object.keys(counts)
+        .sort((a, b) => counts[b] - counts[a])
+        .slice(0, 3)
+        .join('');
+
+    return { emojis, total, counts, userReacted, userReaction };
 };
 
-// Constants
-const REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+// Check if message was seen by at least one user other than author
+// eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
+export const isMessageSeen = (msg) => {
+    if (!msg || !msg.seenBy || typeof msg.seenBy !== 'object') return false;
+    return Object.keys(msg.seenBy).some(uid => uid !== msg.uid);
+};
 
 // Report Issue categories — plain language for non-technical users. Short and
 // distinct so reports stay sortable without a taxonomy.
@@ -49,10 +79,12 @@ export const buildMessageReport = (msg, reporter) => {
         kind: 'message',
         msgId: msg?.id || null,
         messageText: text ? (text.length > 200 ? text.slice(0, 200) + '…' : text) : '',
-        messageNickname: msg?.nickname || 'Unknown',
+        messageSenderName: msg?.senderName || msg?.displayName || msg?.nickname || 'Unknown',
+        messageNickname: msg?.senderName || msg?.displayName || msg?.nickname || 'Unknown',
         messageMedia: msg?.mediaUrl ? (msg.mediaType || 'media') : null,
         reportedBy: reporter?.uid || null,
-        reportedByNickname: reporter?.nickname || 'Unknown',
+        reportedByName: reporter?.displayName || reporter?.nickname || 'Unknown',
+        reportedByNickname: reporter?.displayName || reporter?.nickname || 'Unknown',
         ticketNo: makeTicketNo(),
         timestamp: Date.now()
     };
@@ -244,9 +276,11 @@ const notifyBroadcast = (msg) => {
             const body = msg.text
                 ? (msg.text.length > 120 ? msg.text.slice(0, 120) + '…' : msg.text)
                 : 'A new announcement has been posted';
+            const sender = msg.senderName || msg.displayName || msg.nickname || 'Admin';
+            const icon = msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png';
             const n = new Notification('📢 Announcement — StreamFlix Chat', {
-                body: `${msg.nickname || 'Admin'}: ${body}`,
-                icon: msg.avatarUrl || '/logo/streamflix.png',
+                body: `${sender}: ${body}`,
+                icon,
                 tag: `sf-broadcast-${msg.id}`,
                 silent: true // we play our own chime so the OS doesn't double up
             });
@@ -259,14 +293,12 @@ const notifyBroadcast = (msg) => {
 function GlobalChat() {
     const isTVMode = useTVDetect();
     const navigate = useNavigate();
+    const { chatIdentity, isSignedIn, isAuthLoading, isGlobalChatAdmin } = useAuth();
     // State
+    const [sessionState, setSessionState] = useState('signed-out'); // 'signed-out' | 'bootstrapping' | 'ready' | 'error'
     const [showFab, setShowFab] = useState(false); // Delay FAB until loading screen finishes
     const [isOpen, setIsOpen] = useState(false);
-    const [isSetup, setIsSetup] = useState(true);
-    const [nickname, setNickname] = useState('');
-    // Available variants of a taken nickname (e.g. "kil" → "kil_2"), shown as
-    // tappable chips on the join screen so users can claim a similar name.
-    const [nicknameSuggestions, setNicknameSuggestions] = useState([]);
+    const openChatRef = useRef(null);
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
 
@@ -299,7 +331,6 @@ function GlobalChat() {
     // the sum of unread broadcasts in the window plus these stale ids.
     const [staleBroadcastIds, setStaleBroadcastIds] = useState(new Set());
     const [error, setError] = useState('');
-    const [isJoining, setIsJoining] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [replyTo, setReplyTo] = useState(null);
     const [showActionSheet, setShowActionSheet] = useState(false);
@@ -321,7 +352,6 @@ function GlobalChat() {
     // Avatar customization states
     const [avatarStyle, setAvatarStyle] = useState('adventurer');
     const [avatarSeed, setAvatarSeed] = useState(() => Math.random().toString(36).substring(7));
-    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
     // Available DiceBear avatar styles
     const AVATAR_STYLES = [
@@ -364,7 +394,7 @@ function GlobalChat() {
     // Edit Message Handler
     const handleEditMessage = (msg) => {
         const now = Date.now();
-        const msgTime = msg.createdAt;
+        const msgTime = msg.createdAt || msg.timestamp || 0;
         if (now - msgTime > 3 * 60 * 1000) {
             alert('You can only edit messages within 3 minutes of sending.');
             return;
@@ -384,12 +414,15 @@ function GlobalChat() {
 
     // Update Message Function
     const updateMessage = async () => {
-        if (!editingMessageId || !messageText.trim()) return;
+        if (!editingMessageId || !messageText.trim() || !dbRef.current || !currentUserRef.current) return;
 
+        const now = Date.now();
+        const trimmed = messageText.trim().slice(0, MAX_TEXT_LENGTH);
         try {
-            await dbRef.current.ref(`messages/${editingMessageId}`).update({
-                text: messageText,
-                isEdited: true
+            await dbRef.current.ref(chatPath('messages', editingMessageId)).update({
+                text: trimmed,
+                isEdited: true,
+                editedAt: now
             });
             cancelEdit();
         } catch (e) {
@@ -422,6 +455,7 @@ function GlobalChat() {
     const listenersRef = useRef([]);
     const oldestKeyRef = useRef(null);
     const isLoadingHistoryRef = useRef(false);
+    const loadMessagesRef = useRef(null);
 
     const profileInputRef = useRef(null);
     const streamRef = useRef(null);
@@ -470,117 +504,146 @@ function GlobalChat() {
         };
     }, []);
 
-    // Initialize Firebase
-    useEffect(() => {
-        if (isTVMode) return;
-        if (typeof window.firebase === 'undefined') {
-            console.warn('Firebase SDK not loaded');
-            return;
-        }
-
+    // Initialize or get Firebase services
+    const getDb = useCallback(() => {
+        if (dbRef.current) return dbRef.current;
         try {
-            if (!window.firebase.apps.length) {
-                window.firebase.initializeApp(firebaseConfig);
-            }
-            authRef.current = window.firebase.auth();
-            dbRef.current = window.firebase.database();
-            storageRef.current = window.firebase.storage();
-            console.log('🔥 Firebase Connected for StreamFlix Chat!');
-
-            const unsubscribe = authRef.current.onAuthStateChanged(async (user) => {
-                if (user) {
-                    currentUserRef.current = user;
-                    const snapshot = await dbRef.current.ref(`users/${user.uid}`).once('value');
-                    if (snapshot.exists()) {
-                        const userData = snapshot.val();
-                        userDataRef.current = userData;
-                        if (userData.nickname) {
-                            setIsSetup(false);
-                            loadMessages();
-                        }
-                    }
-
-                    // Listen for profile deletion (Admin forcefully deletes user)
-                    const userProfileRef = dbRef.current.ref(`users/${user.uid}`);
-                    const profileListener = userProfileRef.on('value', (snap) => {
-                        // Use userDataRef.nickname (ref is always current, unlike state)
-                        if (!snap.exists() && userDataRef.current.nickname) {
-                            // During admin login the proxy writes via REST while
-                            // the WebSocket SDK hasn't received the push yet. A
-                            // client .update() that races against it can cause
-                            // an optimistic-rollback where the node briefly
-                            // appears non-existent locally. Skip the reset
-                            // while the guard is active.
-                            if (adminLoginGuardRef.current) {
-                                console.log('Profile listener: node absent but admin login in progress — skipping reset');
-                                return;
-                            }
-                            console.log('User profile deleted, resetting to setup...');
-                            // Profile deleted (admin force-delete): release the
-                            // nickname claim so the name frees up for others.
-                            const delKey = nicknameKey(userDataRef.current.nickname);
-                            if (delKey) {
-                                dbRef.current.ref(`nicknames/${delKey}`).remove().catch(() => {});
-                            }
-                            userDataRef.current = {};
-                            setIsSetup(true);
-                            setMessages([]);
-                        } else if (snap.exists()) {
-                            // Keep userDataRef in sync with the DB, but
-                            // preserve the in-memory isAdmin flag when the DB
-                            // node doesn't carry it (legacy dev path elevates
-                            // only in memory — the rules block a client-side
-                            // isAdmin:true write without the proxy).
-                            const dbData = snap.val();
-                            if (userDataRef.current.isAdmin && !dbData.isAdmin) {
-                                dbData.isAdmin = true;
-                            }
-                            userDataRef.current = dbData;
-                            // Clear the admin-login guard once the real node
-                            // arrives from the server.
-                            if (adminLoginGuardRef.current && dbData.isAdmin) {
-                                adminLoginGuardRef.current = false;
-                            }
-                        }
-                    });
-                    listenersRef.current.push(() => userProfileRef.off('value', profileListener));
-                } else {
-                    authRef.current.signInAnonymously().catch(console.error);
-                }
-            });
-
-            return () => {
-                unsubscribe();
-                listenersRef.current.forEach(unsub => unsub());
-            };
+            const fb = initFirebase();
+            authRef.current = fb.auth;
+            dbRef.current = fb.db;
+            storageRef.current = fb.storage;
+            return dbRef.current;
         } catch (e) {
-            console.error('Firebase init error:', e);
+            console.warn('Firebase init error in GlobalChat:', e);
+            return null;
         }
     }, []);
 
-    // Load users cache
     useEffect(() => {
-        if (!dbRef.current || isSetup) return;
+        if (isTVMode) return;
+        getDb();
+    }, [isTVMode, getDb]);
 
-        const usersRef = dbRef.current.ref('users');
+    // Helper to cleanup all active DB listeners
+    const cleanupListeners = useCallback(() => {
+        if (listenersRef.current && listenersRef.current.length > 0) {
+            listenersRef.current.forEach(cleanup => {
+                try { cleanup(); } catch (e) { console.warn('Listener cleanup error:', e); }
+            });
+            listenersRef.current = [];
+        }
+    }, []);
+
+    // Session lifecycle effect: reacts to chatIdentity and dbRef changes
+    useEffect(() => {
+        if (isTVMode) return;
+
+        // If not signed in or no Google chat identity, reset to signed-out
+        if (!isSignedIn || !chatIdentity || !chatIdentity.uid) {
+            cleanupListeners();
+            currentUserRef.current = null;
+            userDataRef.current = { uid: '', displayName: '', photoURL: null, isAdmin: false };
+            setSessionState('signed-out');
+            setMessages([]);
+            setAllUsers([]);
+            setPinnedMessage(null);
+            setStaleBroadcastIds(new Set());
+            setReplyTo(null);
+            setRecMovies([]);
+            setRecTitle('');
+            setRecText('');
+            deletedMsgIdsRef.current = new Set();
+            notifiedBroadcastIdsRef.current = new Set();
+            return;
+        }
+
+        const db = getDb();
+        if (!db) return;
+
+        let active = true;
+        setSessionState('bootstrapping');
+        cleanupListeners();
+
+        // Reset state for new principal
+        setMessages([]);
+        setAllUsers([]);
+        setPinnedMessage(null);
+        setStaleBroadcastIds(new Set());
+        setReplyTo(null);
+        setRecMovies([]);
+        setRecTitle('');
+        setRecText('');
+        deletedMsgIdsRef.current = new Set();
+        notifiedBroadcastIdsRef.current = new Set();
+
+        (async () => {
+            try {
+                const profilePath = chatPath('profiles', chatIdentity.uid);
+                const snapshot = await db.ref(profilePath).once('value');
+                if (!active) return;
+
+                const existingProfile = snapshot.val();
+                const existingJoinedAt = existingProfile?.joinedAt;
+                const now = Date.now();
+                const profileData = buildChatProfile(chatIdentity, now, existingJoinedAt);
+
+                await db.ref(profilePath).set(profileData);
+                if (!active) return;
+
+                currentUserRef.current = chatIdentity;
+                userDataRef.current = {
+                    uid: chatIdentity.uid,
+                    displayName: profileData.displayName,
+                    photoURL: profileData.photoURL || null,
+                    isAdmin: isGlobalChatAdmin === true
+                };
+
+                setSessionState('ready');
+                loadMessagesRef.current?.();
+            } catch (err) {
+                console.error('Failed to bootstrap GlobalChat v2 profile:', err);
+                if (active) {
+                    setSessionState('error');
+                    setError('Failed to initialize chat profile.');
+                }
+            }
+        })();
+
+        return () => {
+            active = false;
+            cleanupListeners();
+        };
+    }, [chatIdentity, isSignedIn, isGlobalChatAdmin, isTVMode, cleanupListeners, getDb]);
+
+    // Load users cache (profiles)
+    useEffect(() => {
+        if (!dbRef.current || sessionState !== 'ready') return;
+
+        const profilesRef = dbRef.current.ref(chatPath('profiles'));
         const callback = (snapshot) => {
             const users = [];
             snapshot.forEach(child => {
                 const val = child.val();
-                if (val.nickname) users.push(val);
+                if (val && val.displayName) {
+                    users.push({
+                        uid: child.key,
+                        displayName: val.displayName,
+                        photoURL: val.photoURL || null
+                    });
+                }
             });
             setAllUsers(users);
         };
 
-        usersRef.on('value', callback);
-        listenersRef.current.push(() => usersRef.off('value', callback));
-    }, [isSetup]);
+        profilesRef.on('value', callback);
+        listenersRef.current.push(() => profilesRef.off('value', callback));
+    }, [sessionState]);
 
     // Load pinned message
     useEffect(() => {
-        if (!dbRef.current || isSetup) return;
+        if (!dbRef.current || sessionState !== 'ready') return;
 
-        const pinnedRef = dbRef.current.ref('pinnedMessage');
+        const pinnedRef = dbRef.current.ref(chatPath('pinnedMessage'));
         const callback = (snapshot) => {
             if (snapshot.exists()) {
                 setPinnedMessage(snapshot.val());
@@ -590,90 +653,71 @@ function GlobalChat() {
         };
 
         pinnedRef.on('value', callback);
+        listenersRef.current.push(() => pinnedRef.off('value', callback));
+    }, [sessionState]);
 
-        // Cleanup function
-        return () => {
-            pinnedRef.off('value', callback);
-        };
-    }, [isSetup]);
-
-    // Backfill unread @everyone broadcasts that are older than the loaded
-    // 30-message window (so they never enter `messages`), so the FAB badge
-    // still counts them. Requires a Firebase rule of
-    // `"messages": { ".indexOn": ["broadcast"] }`; if the query is rejected
-    // the badge falls back to the loaded window + live arrivals, which covers
-    // every realistic case.
+    // Backfill unread @everyone broadcasts
     useEffect(() => {
-        if (!dbRef.current || isSetup || !currentUserRef.current) return;
+        if (!dbRef.current || sessionState !== 'ready' || !currentUserRef.current) return;
         let cancelled = false;
         (async () => {
             try {
                 const me = currentUserRef.current.uid;
-                const snap = await dbRef.current.ref('messages')
+                const snap = await dbRef.current.ref(chatPath('messages'))
                     .orderByChild('broadcast').equalTo(true).once('value');
                 if (cancelled || !snap.exists()) return;
                 const unread = [];
                 snap.forEach(child => {
                     const v = child.val();
                     if (!v) return;
-                    // Admins' own broadcasts count too — they have no seenBy
-                    // until the chat is opened again.
                     if (!v.seenBy || !v.seenBy[me]) unread.push(child.key);
                 });
-                // If the chat was already opened, the user has caught up —
-                // re-adding these ids would resurrect the badge.
                 if (unread.length > 0 && !chatOpenedRef.current) {
                     setStaleBroadcastIds(prev => new Set([...prev, ...unread]));
                 }
             } catch (err) {
-                console.warn('Broadcast backfill query failed (add ".indexOn": ["broadcast"] to rules):', err);
+                console.warn('Broadcast backfill query failed:', err);
             }
         })();
         return () => { cancelled = true; };
-    }, [isSetup]);
+    }, [sessionState]);
 
-    // Load messages function
-    const loadMessages = useCallback(() => {
+    // Mark @everyone broadcasts as seen (seenBy).
+    const markBroadcastsSeen = useCallback((msgs) => {
         if (!dbRef.current || !currentUserRef.current) return;
 
-        const messagesRef = dbRef.current.ref('messages');
-        const query = messagesRef.orderByKey().limitToLast(30);
-
-        query.once('value', (snapshot) => {
-            const data = snapshot.val();
-            if (!data) {
-                startLiveListener();
-                return;
-            }
-
-            const keys = Object.keys(data).sort();
-            oldestKeyRef.current = keys[0];
-
-            const msgs = keys.map(key => ({ id: key, ...data[key] }));
-            setMessages(msgs);
-            scrollToBottom(true);
-            startLiveListener();
-            markMessagesAsSeen(msgs);
-        });
-    }, []);
-
-    // Mark @everyone broadcasts as seen (seenBy). The FAB badge only counts
-    // broadcasts, so only opening the chat — or a broadcast arriving while it
-    // is open — clears it. Includes the admin's own broadcasts, so the badge
-    // the admin sees after posting clears the moment the chat is opened again.
-    // Declared above startLiveListener/loadOlderMessages because their
-    // dependency arrays reference it during render.
-    const markBroadcastsSeen = useCallback((msgs) => {
-        if (!dbRef.current || !currentUserRef.current || !userDataRef.current.nickname) return;
-
+        const uid = currentUserRef.current.uid;
         const updates = {};
         let hasUpdates = false;
 
         msgs.forEach(msg => {
-            if (msg.broadcast) {
-                if (!msg.seenBy || !msg.seenBy[currentUserRef.current.uid]) {
-                    updates[`messages/${msg.id}/seenBy/${currentUserRef.current.uid}`] = userDataRef.current.nickname;
-                    updates[`messages/${msg.id}/status`] = 'seen';
+            if (msg.broadcast && !msg.deletedForAll) {
+                if (!msg.seenBy || !msg.seenBy[uid]) {
+                    updates[`${chatPath('messages', msg.id, 'seenBy', uid)}`] = true;
+                    hasUpdates = true;
+                }
+            }
+        });
+
+        if (hasUpdates) {
+            dbRef.current.ref().update(updates);
+        }
+    }, []);
+
+    // Mark messages as seen (seenBy).
+    const markMessagesAsSeen = useCallback((msgs) => {
+        if (!dbRef.current || !currentUserRef.current) return;
+
+        const uid = currentUserRef.current.uid;
+        const updates = {};
+        let hasUpdates = false;
+
+        msgs.forEach(msg => {
+            if (msg.uid !== uid &&
+                !msg.deletedForAll &&
+                !msg.broadcast) {
+                if (!msg.seenBy || !msg.seenBy[uid]) {
+                    updates[`${chatPath('messages', msg.id, 'seenBy', uid)}`] = true;
                     hasUpdates = true;
                 }
             }
@@ -688,7 +732,7 @@ function GlobalChat() {
     const startLiveListener = useCallback(() => {
         if (!dbRef.current) return;
 
-        const messagesRef = dbRef.current.ref('messages');
+        const messagesRef = dbRef.current.ref(chatPath('messages'));
 
         const addedCallback = (snapshot) => {
             const newMsg = { id: snapshot.key, ...snapshot.val() };
@@ -714,7 +758,7 @@ function GlobalChat() {
                     // Mark straight away so an @everyone broadcast arriving
                     // while the chat is open never leaves the FAB badge up.
                     if (newMsg.broadcast) markBroadcastsSeen([newMsg]);
-                    else updateMessageStatus(snapshot.key, 'seen');
+                    else markMessagesAsSeen([newMsg]);
                 }
             }
         };
@@ -749,7 +793,34 @@ function GlobalChat() {
             () => messagesRef.off('child_changed', changedCallback),
             () => messagesRef.off('child_removed', removedCallback)
         );
-    }, [isOpen, markBroadcastsSeen]);
+    }, [isOpen, markBroadcastsSeen, markMessagesAsSeen]);
+
+    // Load messages function
+    const loadMessages = useCallback(() => {
+        if (!dbRef.current || !currentUserRef.current) return;
+
+        const messagesRef = dbRef.current.ref(chatPath('messages'));
+        const query = messagesRef.orderByKey().limitToLast(30);
+
+        query.once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) {
+                startLiveListener();
+                return;
+            }
+
+            const keys = Object.keys(data).sort();
+            oldestKeyRef.current = keys[0];
+
+            const msgs = keys.map(key => ({ id: key, ...data[key] }));
+            setMessages(msgs);
+            scrollToBottom(true);
+            startLiveListener();
+            markMessagesAsSeen(msgs);
+            markBroadcastsSeen(msgs);
+        });
+    }, [startLiveListener, markMessagesAsSeen, markBroadcastsSeen]);
+    loadMessagesRef.current = loadMessages;
 
     // Load older messages on scroll
     const loadOlderMessages = useCallback(async () => {
@@ -759,7 +830,7 @@ function GlobalChat() {
         const container = messagesContainerRef.current;
         const oldHeight = container?.scrollHeight || 0;
 
-        const query = dbRef.current.ref('messages')
+        const query = dbRef.current.ref(chatPath('messages'))
             .orderByKey()
             .endAt(oldestKeyRef.current)
             .limitToLast(21);
@@ -784,11 +855,10 @@ function GlobalChat() {
 
         setMessages(prev => [...olderMsgs, ...prev]);
 
-        // Broadcasts loaded via scroll-pagination were seen by the reader
-        // (scrolling up only happens with the chat open), so mark them seen —
-        // otherwise they'd count toward the badge after the chat closes.
+        // Broadcasts & messages loaded via scroll-pagination were seen by the reader
         if (isOpen) {
             markBroadcastsSeen(olderMsgs);
+            markMessagesAsSeen(olderMsgs);
         }
 
         requestAnimationFrame(() => {
@@ -797,7 +867,7 @@ function GlobalChat() {
             }
             isLoadingHistoryRef.current = false;
         });
-    }, [isOpen, markBroadcastsSeen]);
+    }, [isOpen, markBroadcastsSeen, markMessagesAsSeen]);
 
     // Handle scroll for loading history
     useEffect(() => {
@@ -827,44 +897,6 @@ function GlobalChat() {
             }, 100);
         }
     };
-
-    // Update message status
-    const updateMessageStatus = async (msgId, status) => {
-        if (!dbRef.current) return;
-        try {
-            await dbRef.current.ref(`messages/${msgId}`).update({ status });
-        } catch (e) {
-            console.error('Status update error:', e);
-        }
-    };
-
-    // Mark messages as seen
-    const markMessagesAsSeen = useCallback((msgs) => {
-        if (!dbRef.current || !currentUserRef.current || !userDataRef.current.nickname) return;
-
-        const updates = {};
-        let hasUpdates = false;
-
-        msgs.forEach(msg => {
-            // @everyone broadcasts are exempt here: they must stay unread until
-            // the chat is actually opened, because only they drive the FAB
-            // badge. Regular messages are auto-seen on load as before.
-            if (msg.uid !== currentUserRef.current.uid &&
-                msg.status === 'sent' &&
-                !msg.deletedForAll &&
-                !msg.broadcast) {
-                if (!msg.seenBy || !msg.seenBy[currentUserRef.current.uid]) {
-                    updates[`messages/${msg.id}/seenBy/${currentUserRef.current.uid}`] = userDataRef.current.nickname;
-                    updates[`messages/${msg.id}/status`] = 'seen';
-                    hasUpdates = true;
-                }
-            }
-        });
-
-        if (hasUpdates) {
-            dbRef.current.ref().update(updates);
-        }
-    }, []);
 
     // Convert file to base64
     const fileToBase64 = (file) => {
@@ -978,16 +1010,21 @@ function GlobalChat() {
         }
         // Mark any backfilled (older-than-window) broadcasts as seen too, so
         // the badge clears the moment the chat is actually opened.
-        const myNickname = userDataRef.current.nickname;
-        if (staleBroadcastIds.size > 0 && currentUserRef.current && myNickname) {
+        if (staleBroadcastIds.size > 0 && currentUserRef.current) {
             const updates = {};
             staleBroadcastIds.forEach(id => {
-                updates[`messages/${id}/seenBy/${currentUserRef.current.uid}`] = myNickname;
+                updates[`${chatPath('messages', id)}/seenBy/${currentUserRef.current.uid}`] = true;
             });
             dbRef.current.ref().update(updates);
             setStaleBroadcastIds(new Set());
         }
     };
+
+    useEffect(() => {
+        const openChat = () => openChatRef.current?.();
+        window.addEventListener('streamflix:open-global-chat', openChat);
+        return () => window.removeEventListener('streamflix:open-global-chat', openChat);
+    }, []);
 
     // Handle chat close
     const handleCloseChat = () => {
@@ -997,156 +1034,6 @@ function GlobalChat() {
         setShowCamera(false);
         setShowReports(false);
         stopCamera();
-    };
-
-    // Handle profile image selection
-    const handleProfileImageSelect = (e) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setProfileImage(file);
-        }
-    };
-
-    // Atomically claim a nickname in the global `nicknames` registry so two
-    // users can never hold the same name (case-insensitive). The RTDB
-    // transaction is the source of truth: if the name is already owned by a
-    // different uid, the write aborts — so even a cache-cleared client with a
-    // brand-new anonymous uid can never re-take an existing user's name.
-    // Returns { ok: true } on success or { ok: false, reason } if taken.
-    const claimNickname = async (name, uid) => {
-        const display = name.trim();
-        const key = nicknameKey(display);
-        if (!key) return { ok: false, reason: 'This nickname is not allowed' };
-        const result = await dbRef.current.ref(`nicknames/${key}`).transaction((current) => {
-            if (current && typeof current === 'object' && current.uid && current.uid !== uid) {
-                return; // abort — already owned by someone else
-            }
-            return {
-                uid,
-                nickname: display,
-                claimedAt: window.firebase.database.ServerValue.TIMESTAMP
-            };
-        });
-        return result.committed
-            ? { ok: true, key }
-            : { ok: false, reason: 'This nickname is already taken — try another' };
-    };
-
-    // Suggest available variants of a taken name (e.g. "kil" → "kil_2", "kil_3")
-    // by checking the existing registry in a single read. Variants stay within
-    // the 15-char join limit. Returns [] if the registry is unreachable.
-    const suggestNicknameVariants = async (name, count = 3) => {
-        const baseKey = nicknameKey(name).slice(0, 12);
-        const baseDisplay = name.trim().slice(0, 12);
-        if (!baseKey) return [];
-        try {
-            const snap = await dbRef.current.ref('nicknames').once('value');
-            const taken = new Set(snap.exists() ? Object.keys(snap.val()) : []);
-            const variants = [];
-            // Hard cap on attempts: with a nearly-full registry a long run of
-            // taken suffixes could otherwise scan a huge range for 3 free ones.
-            const MAX_ATTEMPTS = 100;
-            for (let i = 2; variants.length < count && i < MAX_ATTEMPTS; i++) {
-                const key = `${baseKey}_${i}`;
-                if (taken.has(key)) continue;
-                variants.push({ key, display: `${baseDisplay}_${i}` });
-            }
-            return variants;
-        } catch {
-            return [];
-        }
-    };
-
-    // Reject a join with a friendly "taken" error plus available variants.
-    // The reason passed through (e.g. the transaction's abort message) is
-    // shown verbatim when it carries more detail than the generic fallback.
-    const rejectNickname = async (name, reason = 'This nickname is already taken') => {
-        setError(reason);
-        setNicknameSuggestions(await suggestNicknameVariants(name));
-    };
-
-    // Handle join chat
-    const handleJoinChat = async () => {
-        if (!nickname.trim() || nickname.length < 2) {
-            setError('Nickname must be at least 2 characters');
-            return;
-        }
-
-        if (nickname.toLowerCase() === ADMIN_NICKNAME.toLowerCase()) {
-            setError('This nickname is reserved');
-            return;
-        }
-
-        if (!currentUserRef.current || !dbRef.current) {
-            setError('Connection failed. Please try again.');
-            return;
-        }
-
-        setIsJoining(true);
-        setError('');
-
-        try {
-            // Use DiceBear generated avatar URL
-            const avatarUrl = getAvatarUrl(avatarStyle, avatarSeed);
-            const displayName = nickname.trim();
-            const uid = currentUserRef.current.uid;
-
-            // Quick pre-check for a friendly error; the atomic claim below is
-            // still the source of truth for the "already taken" verdict. A
-            // missing registry (rules not deployed) degrades to the legacy
-            // flow so the chat keeps working either way.
-            const key = nicknameKey(displayName);
-            if (!key) {
-                setError('This nickname is not allowed');
-                return;
-            }
-            const existing = await dbRef.current.ref(`nicknames/${key}`).once('value').catch(() => null);
-            if (existing && existing.exists() && existing.val()?.uid && existing.val().uid !== uid) {
-                await rejectNickname(displayName);
-                return;
-            }
-
-            // Write the profile first (keyed by uid — uniqueness lives in the
-            // nickname registry, not here).
-            await dbRef.current.ref(`users/${uid}`).set({
-                uid,
-                nickname: displayName,
-                avatarUrl,
-                isAdmin: false,
-                joinedAt: window.firebase.database.ServerValue.TIMESTAMP
-            });
-
-            // Claim the name atomically; if a racer grabbed it in between,
-            // roll the profile back and let the user pick another name.
-            let claim = null;
-            try {
-                claim = await claimNickname(displayName, uid);
-            } catch (e) {
-                // Registry unavailable (rules not deployed) — join without
-                // uniqueness so the chat still works.
-                console.warn('Nickname registry unavailable, joining without uniqueness:', e);
-            }
-            if (claim && !claim.ok) {
-                await dbRef.current.ref(`users/${uid}`).remove().catch(() => {});
-                await rejectNickname(displayName, claim.reason);
-                return;
-            }
-
-            setNicknameSuggestions([]);
-            userDataRef.current = {
-                nickname: displayName,
-                avatarUrl,
-                isAdmin: false
-            };
-
-            setIsSetup(false);
-            loadMessages();
-        } catch (err) {
-            console.error('Join error:', err);
-            setError('Failed to join. Please try again.');
-        } finally {
-            setIsJoining(false);
-        }
     };
 
     // Admin verification lives on the Cloudflare proxy (functions/api/admin-login.js)
@@ -1333,11 +1220,11 @@ function GlobalChat() {
                 await Promise.all(reportsList.map(async (report) => {
                     if (report.msgId && !report.messageText) {
                         try {
-                            const msgSnap = await dbRef.current.ref(`messages/${report.msgId}`).once('value');
+                            const msgSnap = await dbRef.current.ref(chatPath('messages', report.msgId)).once('value');
                             const msg = msgSnap.val();
                             if (msg) {
                                 report.messageText = (msg.text || '').trim().slice(0, 200);
-                                report.messageNickname = msg.nickname || 'Unknown';
+                                report.messageNickname = msg.senderName || msg.displayName || msg.nickname || 'Unknown';
                                 report.messageMedia = msg.mediaUrl ? (msg.mediaType || 'media') : null;
                             }
                         } catch {
@@ -1358,7 +1245,7 @@ function GlobalChat() {
     const handleSendMessage = async () => {
         if (isSending) return;
         const text = messageText.trim();
-        if (!text && !pendingFile && recMovies.length === 0) return;
+        if (!text && !pendingFile && recMovies.length === 0 && !recTitle.trim() && !recText.trim()) return;
         if (!currentUserRef.current || !dbRef.current) return;
 
         setIsSending(true);
@@ -1372,37 +1259,25 @@ function GlobalChat() {
                 mediaUrl = await uploadToDrive(pendingFile);
             }
 
-            const newMessageRef = dbRef.current.ref('messages').push();
-
-            // Only the admin can broadcast to everyone. A non-admin who types
-            // "@everyone" manually just sends plain text (no broadcast flag,
-            // so it never triggers the FAB badge).
-            const isBroadcast = !!(userDataRef.current.isAdmin && /\B@everyone\b/i.test(text));
-
-            const message = {
-                uid: currentUserRef.current.uid,
-                nickname: userDataRef.current.nickname,
-                avatarUrl: userDataRef.current.avatarUrl,
-                isAdmin: userDataRef.current.isAdmin || false,
-                adminBadge: userDataRef.current.adminBadge || null,
+            const now = Date.now();
+            const message = buildChatMessage({
+                identity: currentUserRef.current,
+                isAdmin: isGlobalChatAdmin === true,
                 text,
-                broadcast: isBroadcast,
-                movies: recMovies.length ? recMovies : null,
-                recTitle: recTitle.trim() || null,
-                recText: recText.trim() || null,
-                mediaUrl,
-                mediaType,
-                status: 'sent',
-                createdAt: window.firebase.database.ServerValue.TIMESTAMP,
+                timestamp: now,
+                movies: recMovies.length ? recMovies : undefined,
+                recTitle: recTitle.trim() || undefined,
+                recText: recText.trim() || undefined,
+                mediaUrl: mediaUrl || undefined,
+                mediaType: mediaType || undefined,
                 replyTo: replyTo ? {
-                    id: replyTo.id,
-                    nickname: replyTo.nickname,
-                    text: replyTo.text?.substring(0, 50) || '',
-                    moviesCount: replyTo.moviesCount || 0,
-                    recTitle: replyTo.recTitle?.substring(0, 50) || null
-                } : null
-            };
+                    messageId: replyTo.messageId || replyTo.id,
+                    senderName: replyTo.senderName || replyTo.nickname || replyTo.displayName || 'Google User',
+                    text: (replyTo.text || (replyTo.recTitle ? `🎬 ${replyTo.recTitle}` : (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movies` : (replyTo.mediaUrl ? '📷 Media' : '')))).slice(0, MAX_REPLY_PREVIEW_LENGTH)
+                } : undefined
+            });
 
+            const newMessageRef = dbRef.current.ref(chatPath('messages')).push();
             await newMessageRef.set(message);
 
             setMessageText('');
@@ -1612,8 +1487,8 @@ function GlobalChat() {
             // Allocate the feed bubble's key up-front so the report can carry it
             // (ticketMsgId): resolving later flips the SAME bubble in place
             // instead of posting a second message.
-            const ticketMsgRef = dbRef.current.ref('messages').push();
-            await dbRef.current.ref('reports').push({
+            const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
+            await dbRef.current.ref(chatPath('reports')).push({
                 kind: 'issue',
                 category: reportCategory,
                 description: (reportDesc || '').trim(),
@@ -1691,21 +1566,22 @@ function GlobalChat() {
     const handleSelectMention = (user) => {
         const before = messageText.substring(0, mentionStartIndex);
         const after = messageText.substring(inputRef.current?.selectionStart || messageText.length);
-        setMessageText(`${before}@${user.nickname} ${after}`);
+        const nameToInsert = user.isEveryone ? 'everyone' : (user.displayName || 'Google User');
+        setMessageText(`${before}@${nameToInsert} ${after}`);
         setShowMentionList(false);
         inputRef.current?.focus();
     };
 
     // Filter users for mentions
     const filteredUsers = allUsers.filter(u =>
-        u.nickname.toLowerCase().startsWith(mentionQuery) &&
+        (u.displayName || '').toLowerCase().includes(mentionQuery.toLowerCase()) &&
         u.uid !== currentUserRef.current?.uid
     ).slice(0, 5);
 
     // Mention options — admins also get a special "everyone" entry at the top
     // that turns the message into an @everyone broadcast when sent.
-    const mentionOptions = userDataRef.current.isAdmin && 'everyone'.startsWith(mentionQuery)
-        ? [{ id: '__everyone__', nickname: 'everyone', isEveryone: true }, ...filteredUsers]
+    const mentionOptions = userDataRef.current.isAdmin && 'everyone'.includes(mentionQuery.toLowerCase())
+        ? [{ uid: '__everyone__', displayName: 'everyone', isEveryone: true }, ...filteredUsers]
         : filteredUsers;
 
     // Handle message long press (mobile) / right-click (desktop).
@@ -1799,61 +1675,25 @@ function GlobalChat() {
         return () => document.removeEventListener('touchstart', dismissActiveActions, true);
     }, [hoveredMessageId]);
 
-    // Handle reaction — one reaction per user per message (Messenger behavior):
+    // Handle reaction — one reaction per user per message:
     // picking a different emoji REPLACES the previous one, picking the same
-    // emoji removes it. Runs as an atomic transaction on the whole reactions
-    // node so two rapid taps can never leave the user registered twice.
+    // emoji removes it (toggle-off). Writes directly to caller's child path.
     const handleReaction = async (emoji) => {
+        if (!REACTIONS.includes(emoji)) return;
         const msgId = showReactionPopover || actionSheetTarget?.id;
         if (!msgId || !currentUserRef.current || !dbRef.current) return;
 
         const uid = currentUserRef.current.uid;
-        // RTDB cannot serialize `undefined` inside a transaction result, so fall
-        // back to the uid rather than letting a missing nickname abort the
-        // whole atomic write.
-        const nickname = userDataRef.current?.nickname ?? uid;
+        const targetMsg = messages.find(m => m.id === msgId) || (actionSheetTarget?.id === msgId ? actionSheetTarget : null);
+        const currentReaction = targetMsg?.reactions?.[uid];
 
         try {
-            const reactionsRef = dbRef.current.ref(`messages/${msgId}/reactions`);
-            await reactionsRef.transaction((reactions) => {
-                const next = { ...(reactions || {}) };
-                // Did the user already react with this exact emoji? If so this
-                // tap is a toggle-OFF — remove it and stop (no re-add below).
-                const hadTarget = !!(reactions && reactions[emoji]
-                    && typeof reactions[emoji] === 'object' && uid in reactions[emoji]);
-
-                if (hadTarget) {
-                    const cleaned = { ...(next[emoji] || {}) };
-                    delete cleaned[uid];
-                    if (Object.keys(cleaned).length === 0) delete next[emoji];
-                    else next[emoji] = cleaned;
-                    // An empty object would ABORT the transaction (no change),
-                    // so return null to actually delete when the last reaction
-                    // is removed.
-                    return Object.keys(next).length === 0 ? null : next;
-                }
-
-                // Replace: strip this user out of every other emoji bucket
-                // first, so the new emoji swaps in instead of stacking.
-                Object.keys(next).forEach((emojiKey) => {
-                    const bucket = next[emojiKey];
-                    if (!bucket || typeof bucket !== 'object' || !(uid in bucket)) return;
-                    const cleaned = { ...bucket };
-                    delete cleaned[uid];
-                    if (Object.keys(cleaned).length === 0) delete next[emojiKey];
-                    else next[emojiKey] = cleaned;
-                });
-
-                // Legacy/corrupt buckets can be scalars (e.g. a raw nickname);
-                // spreading a string would write char-indexed garbage keys, so
-                // start from an empty object when the bucket isn't an object.
-                const base = (next[emoji] && typeof next[emoji] === 'object') ? next[emoji] : {};
-                next[emoji] = { ...base, [uid]: nickname };
-                // The strip pass + add always leaves at least one entry, so no
-                // null-deletion is needed here — that only matters for the
-                // toggle-off branch above.
-                return next;
-            });
+            const reactionRef = dbRef.current.ref(chatPath('messages', msgId, 'reactions', uid));
+            if (currentReaction === emoji) {
+                await reactionRef.remove();
+            } else {
+                await reactionRef.set(emoji);
+            }
         } catch (e) {
             console.error('Reaction error:', e);
         }
@@ -1867,7 +1707,10 @@ function GlobalChat() {
         if (actionSheetTarget) {
             setReplyTo({
                 id: actionSheetTarget.id,
-                nickname: actionSheetTarget.nickname,
+                messageId: actionSheetTarget.id,
+                senderName: actionSheetTarget.senderName || actionSheetTarget.displayName || actionSheetTarget.nickname || 'Google User',
+                nickname: actionSheetTarget.senderName || actionSheetTarget.displayName || actionSheetTarget.nickname || 'Google User',
+                uid: actionSheetTarget.uid,
                 text: actionSheetTarget.text,
                 moviesCount: actionSheetTarget.movies?.length || 0,
                 recTitle: actionSheetTarget.recTitle || null
@@ -1901,8 +1744,8 @@ function GlobalChat() {
 
         if (!target) return;
 
-        const isOwn = target.uid === currentUserRef.current?.uid;
-        const isAdmin = userDataRef.current.isAdmin;
+        const isOwn = currentUserRef.current?.uid && target.uid === currentUserRef.current.uid;
+        const isAdmin = Boolean(userDataRef.current.isAdmin);
         const canDelete = isOwn || isAdmin;
 
         // Ask first, then close the sheet afterwards either way — an early
@@ -1922,7 +1765,7 @@ function GlobalChat() {
 
                 let removed = false;
                 try {
-                    await dbRef.current.ref(`messages/${target.id}`).remove();
+                    await dbRef.current.ref(chatPath('messages', target.id)).remove();
                     removed = true;
                 } catch (err) {
                     console.error('Admin delete FAILED:', err);
@@ -1941,8 +1784,9 @@ function GlobalChat() {
             } else {
                 // Soft delete for regular users — leaves the "unsent" placeholder
                 // (the trace that only admins can remove).
-                await dbRef.current.ref(`messages/${target.id}`).update({
-                    deletedForAll: true
+                await dbRef.current.ref(chatPath('messages', target.id)).update({
+                    deletedForAll: true,
+                    deletedAt: Date.now()
                 });
             }
         }
@@ -1959,12 +1803,12 @@ function GlobalChat() {
     // masquerade as a failed delete, so errors are only logged.
     const purgeMessageReferences = async (id) => {
         try {
-            const snapshot = await dbRef.current.ref('messages').once('value');
+            const snapshot = await dbRef.current.ref(chatPath('messages')).once('value');
             const updates = {};
             snapshot.forEach(child => {
                 const val = child.val();
-                if (val && val.replyTo && val.replyTo.id === id) {
-                    updates[`messages/${child.key}/replyTo`] = null;
+                if (val && val.replyTo && (val.replyTo.messageId === id || val.replyTo.id === id)) {
+                    updates[`${chatPath('messages', child.key)}/replyTo`] = null;
                 }
             });
             if (Object.keys(updates).length > 0) {
@@ -1976,7 +1820,7 @@ function GlobalChat() {
 
         if (pinnedMessage?.id === id) {
             try {
-                await dbRef.current.ref('pinnedMessage').remove();
+                await dbRef.current.ref(chatPath('pinnedMessage')).remove();
                 setPinnedMessage(null);
             } catch (err) {
                 console.warn('Unpin failed after delete:', err);
@@ -1994,8 +1838,8 @@ function GlobalChat() {
         if (!dbRef.current) return null;
         try {
             const ref = atKey
-                ? dbRef.current.ref(`messages/${atKey}`)
-                : dbRef.current.ref('messages').push();
+                ? dbRef.current.ref(chatPath('messages', atKey))
+                : dbRef.current.ref(chatPath('messages')).push();
             await ref.set({
                 uid: 'system',
                 nickname: 'StreamFlix',
@@ -2019,10 +1863,6 @@ function GlobalChat() {
     // Flip a ticket's "created" bubble to "resolved" IN PLACE — the feed shows
     // one bubble per ticket that changes state, never a second message. Newer
     // reports carry the ticket message key (ticketMsgId); legacy reports (no
-    // key) fall back to matching their created event by ticket number.
-    // Flip a ticket's "created" bubble to "resolved" IN PLACE — the feed shows
-    // one bubble per ticket that changes state, never a second message. Newer
-    // reports carry the ticket message key (ticketMsgId); legacy reports (no
     // key) fall back to matching their created event by ticket number. The
     // resolved message is stamped with the resolving admin's OWN profile
     // (nickname, avatar, badge), so the bubble links to the admin identity and
@@ -2042,7 +1882,7 @@ function GlobalChat() {
             try {
                 // Only flip a message that actually exists as a ticket — updating
                 // a deleted message would silently create a broken stub.
-                const existing = await dbRef.current.ref(`messages/${report.ticketMsgId}`).once('value');
+                const existing = await dbRef.current.ref(chatPath('messages', report.ticketMsgId)).once('value');
                 if (existing.exists() && existing.val()?.ticket) {
                     await existing.ref.update(updates);
                 }
@@ -2054,7 +1894,7 @@ function GlobalChat() {
 
         // Legacy path: match created ticket events by ticket number.
         try {
-            const snap = await dbRef.current.ref('messages')
+            const snap = await dbRef.current.ref(chatPath('messages'))
                 .orderByChild('ticketNo').equalTo(report.ticketNo).once('value');
             snap.forEach(child => {
                 const v = child.val();
@@ -2077,9 +1917,9 @@ function GlobalChat() {
         });
         // Allocate the feed bubble's key so the report carries it (ticketMsgId)
         // and resolution can flip the same bubble instead of posting a second.
-        const ticketMsgRef = dbRef.current.ref('messages').push();
+        const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
         report.ticketMsgId = ticketMsgRef.key;
-        await dbRef.current.ref('reports').push(report);
+        await dbRef.current.ref(chatPath('reports')).push(report);
 
         // Announce the new ticket in the global chat feed.
         await pushTicketEvent({
@@ -2112,37 +1952,6 @@ function GlobalChat() {
         }
     };
 
-    // Get reaction count for a message
-    const getReactionData = (reactions) => {
-        if (!reactions) return null;
-
-        const counts = {};
-        let total = 0;
-
-        Object.entries(reactions).forEach(([emoji, users]) => {
-            // A bucket is normally { uid: nickname }. Skip scalar/null buckets
-            // (legacy or corrupt data) so we never count string characters or
-            // crash on Object.keys(null).
-            if (!users || typeof users !== 'object') return;
-            const count = Object.keys(users).length;
-            if (count > 0) {
-                counts[emoji] = count;
-                total += count;
-            }
-        });
-
-        if (total === 0) return null;
-
-        // Cap by emoji COUNT, not string length — substring(0, 3) sliced UTF-16
-        // code units and split a surrogate pair in half, which rendered as a
-        // broken glyph (e.g. "❤️" + the first half of 😂). Slice the keys
-        // array instead so every emoji stays whole.
-        const emojis = Object.keys(counts)
-            .sort((a, b) => counts[b] - counts[a])
-            .slice(0, 3)
-            .join('');
-        return { emojis, total };
-    };
 
     // Format time
     const formatTime = (timestamp) => {
@@ -2283,6 +2092,14 @@ function GlobalChat() {
         return windowCount + staleCount;
     }, [messages, staleBroadcastIds]);
 
+    openChatRef.current = handleOpenChat;
+
+    useEffect(() => {
+        window.dispatchEvent(new CustomEvent('streamflix:global-chat-state', {
+            detail: { isOpen, unreadCount: unreadBroadcastCount }
+        }));
+    }, [isOpen, unreadBroadcastCount]);
+
     // Render message
     const renderMessage = (msg) => {
         // Targeted system notices (legacy report confirmations / resolutions)
@@ -2313,8 +2130,8 @@ function GlobalChat() {
                 >
                     {isResolved && (
                         <img
-                            src={msg.avatarUrl || ADMIN_AVATAR}
-                            alt=""
+                            src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || ADMIN_AVATAR}
+                            alt={msg.senderName || msg.displayName || msg.nickname || 'StreamFlix'}
                             className="gc-avatar"
                             onError={(e) => {
                                 e.target.onerror = null;
@@ -2326,7 +2143,7 @@ function GlobalChat() {
                         {isResolved ? (
                             <>
                                 <div className="gc-sender-name">
-                                    {msg.nickname || 'StreamFlix'}
+                                    {msg.senderName || msg.displayName || msg.nickname || 'StreamFlix'}
                                     <span className="gc-admin-badge">
                                         <i className={`fa-solid ${msg.adminBadge || 'fa-shield-halved'}`}></i>
                                     </span>
@@ -2353,7 +2170,7 @@ function GlobalChat() {
                                     {msg.ticketNo && <span className="gc-ticket-no">#{msg.ticketNo}</span>}
                                 </div>
                                 <div className="gc-ticket-text">
-                                    {msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}
+                                    {msg.reporterName || msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}
                                 </div>
                                 <div className="gc-ticket-time">{formatTime(msg.createdAt)}</div>
                             </div>
@@ -2403,17 +2220,17 @@ function GlobalChat() {
             return (
                 <div key={msg.id} className={`gc-msg ${isOwn ? 'gc-own' : 'gc-other'}`}>
                     <img
-                        src={msg.avatarUrl}
-                        alt=""
+                        src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
+                        alt={msg.senderName || msg.displayName || msg.nickname || 'Google User'}
                         className="gc-avatar"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.nickname || 'User')}&background=random`;
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || msg.nickname || 'Google User')}&background=random`;
                         }}
                     />
                     <div className="gc-msg-group">
                         <div className="gc-msg-bubble gc-unsent">
-                            <em>{isOwn ? 'You unsent a message' : `${msg.nickname || 'Someone'} unsent a message`}</em>
+                            <em>{isOwn ? 'You unsent a message' : `${msg.senderName || msg.displayName || msg.nickname || 'Someone'} unsent a message`}</em>
                             {userDataRef.current.isAdmin && (
                                 <button
                                     className="gc-admin-purge-btn"
@@ -2423,7 +2240,7 @@ function GlobalChat() {
                                             setMessages(prev => prev.filter(m => m.id !== msg.id));
                                             deletedMsgIdsRef.current.add(msg.id);
                                             try {
-                                                await dbRef.current.ref(`messages/${msg.id}`).remove();
+                                                await dbRef.current.ref(chatPath('messages', msg.id)).remove();
                                                 await purgeMessageReferences(msg.id);
                                             } catch (err) {
                                                 console.error('Purge failed:', err);
@@ -2441,8 +2258,8 @@ function GlobalChat() {
             );
         }
 
-        const isOwn = msg.uid === currentUserRef.current?.uid || (msg.isAdmin && userDataRef.current?.isAdmin);
-        const reactionData = getReactionData(msg.reactions);
+        const isOwn = currentUserRef.current?.uid && msg.uid === currentUserRef.current.uid;
+        const reactionData = getReactionData(msg.reactions, currentUserRef.current?.uid);
         const hasReactions = !!reactionData;
         const isMediaOnly = msg.mediaUrl && !msg.text;
 
@@ -2462,35 +2279,35 @@ function GlobalChat() {
                 }}
             >
                 <img
-                    src={msg.avatarUrl}
-                    alt=""
+                    src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
+                    alt={msg.senderName || msg.displayName || msg.nickname || 'Google User'}
                     className="gc-avatar"
                     onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.nickname || 'User')}&background=random`;
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || msg.nickname || 'Google User')}&background=random`;
                     }}
                 />
                 <div className="gc-msg-group">
                     {!isOwn && (
                         <div className="gc-sender-name">
-                            {msg.nickname}
-                            {msg.isAdmin && (
+                            {msg.senderName || msg.displayName || msg.nickname || 'Google User'}
+                            {(msg.senderIsAdmin || msg.isAdmin) && (
                                 <span className="gc-admin-badge">
                                     <i className={`fa-solid ${msg.adminBadge || 'fa-crown'}`}></i>
                                 </span>
                             )}
                         </div>
                     )}
-                    {msg.replyTo && !deletedMsgIdsRef.current.has(msg.replyTo.id) && (
+                    {msg.replyTo && !deletedMsgIdsRef.current.has(msg.replyTo.messageId || msg.replyTo.id) && (
                         <>
                             <div className="gc-reply-header">
-                                <span className="gc-reply-icon">↩</span> {isOwn ? 'You' : msg.nickname} replied to {msg.replyTo.uid === currentUserRef.current?.uid ? 'you' : msg.replyTo.nickname}
+                                <span className="gc-reply-icon">↩</span> {isOwn ? 'You' : (msg.senderName || msg.displayName || msg.nickname || 'Google User')} replied to {msg.replyTo.uid === currentUserRef.current?.uid ? 'you' : (msg.replyTo.senderName || msg.replyTo.nickname || 'Google User')}
                             </div>
                             <div
                                 className="gc-reply-preview"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    scrollToRepliedMessage(msg.replyTo.id);
+                                    scrollToRepliedMessage(msg.replyTo.messageId || msg.replyTo.id);
                                 }}
                             >
                                 <div className="gc-reply-text">
@@ -2567,18 +2384,12 @@ function GlobalChat() {
                             )}
                             {hasReactions && (
                                 <div
-                                    className="gc-reaction-badge"
+                                    className={`gc-reaction-badge ${reactionData.userReacted ? 'user-reacted' : ''}`}
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        const panel = document.querySelector('.gc-panel');
-                                        const panelRect = panel ? panel.getBoundingClientRect() : { left: 0, width: window.innerWidth };
-                                        setPopoverPosition({
-                                            top: rect.top - 50,
-                                            left: panelRect.left + (panelRect.width / 2)
-                                        });
-                                        setShowReactionPopover(showReactionPopover === msg.id ? null : msg.id);
+                                        setShowReactionView(msg);
                                     }}
+                                    title="View reactions"
                                 >
                                     <span>{reactionData.emojis}</span>
                                     <span>{reactionData.total}</span>
@@ -2617,8 +2428,10 @@ function GlobalChat() {
                                     e.stopPropagation();
                                     setReplyTo({
                                         id: msg.id,
-                                        nickname: msg.nickname,
-                                        text: msg.text,
+                                        messageId: msg.id,
+                                        senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                        nickname: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                        text: msg.text || '',
                                         uid: msg.uid,
                                         moviesCount: msg.movies?.length || 0,
                                         recTitle: msg.recTitle || null
@@ -2644,7 +2457,16 @@ function GlobalChat() {
                             {moreMenuMessageId === msg.id && (
                                 <div className="gc-more-menu">
                                     <button onClick={() => {
-                                        setReplyTo({ id: msg.id, nickname: msg.nickname, text: msg.text, uid: msg.uid, moviesCount: msg.movies?.length || 0, recTitle: msg.recTitle || null });
+                                        setReplyTo({
+                                            id: msg.id,
+                                            messageId: msg.id,
+                                            senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                            nickname: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                            text: msg.text || '',
+                                            uid: msg.uid,
+                                            moviesCount: msg.movies?.length || 0,
+                                            recTitle: msg.recTitle || null
+                                        });
                                         setMoreMenuMessageId(null);
                                         inputRef.current?.focus();
                                     }}>
@@ -2685,9 +2507,9 @@ function GlobalChat() {
                                             // Allocate the feed bubble's key so the report carries it
                                             // (ticketMsgId) and resolution can flip the same bubble
                                             // instead of posting a second.
-                                            const ticketMsgRef = dbRef.current.ref('messages').push();
+                                            const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
                                             report.ticketMsgId = ticketMsgRef.key;
-                                            await dbRef.current.ref('reports').push(report);
+                                            await dbRef.current.ref(chatPath('reports')).push(report);
                                             // Announce the new ticket in the global chat feed.
                                             await pushTicketEvent({
                                                 action: 'created',
@@ -2709,17 +2531,18 @@ function GlobalChat() {
                                             try {
                                                 const isPinned = pinnedMessage?.id === msg.id;
                                                 if (isPinned) {
-                                                    await dbRef.current.ref('pinnedMessage').remove();
+                                                    await dbRef.current.ref(chatPath('pinnedMessage')).remove();
                                                     setPinnedMessage(null);
                                                 } else {
                                                     const pinData = {
                                                         id: msg.id,
                                                         text: msg.text || '[Media]',
-                                                        nickname: msg.nickname,
+                                                        senderName: msg.senderName || msg.displayName || msg.nickname || 'Admin',
+                                                        senderPhotoURL: msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || null,
                                                         pinnedAt: Date.now(),
                                                         pinnedBy: currentUserRef.current.uid
                                                     };
-                                                    await dbRef.current.ref('pinnedMessage').set(pinData);
+                                                    await dbRef.current.ref(chatPath('pinnedMessage')).set(pinData);
                                                     setPinnedMessage(pinData);
                                                 }
                                                 setMoreMenuMessageId(null);
@@ -2738,13 +2561,18 @@ function GlobalChat() {
 
                     <div className="gc-msg-time">
                         {formatTime(msg.createdAt)}
-                        {isOwn && (
-                            <span className={`gc-status-icon ${msg.status}`}>
-                                {msg.status === 'sending' && ' ○'}
-                                {msg.status === 'sent' && ' ✓'}
-                                {msg.status === 'seen' && ' ✓✓'}
-                            </span>
-                        )}
+                        {isOwn && (() => {
+                            const delivery = (msg?.status === 'sending' || msg?._sending)
+                                ? 'sending'
+                                : (isMessageSeen(msg) ? 'seen' : 'sent');
+                            return (
+                                <span className={`gc-status-icon ${delivery}`}>
+                                    {delivery === 'sending' && ' ○'}
+                                    {delivery === 'sent' && ' ✓'}
+                                    {delivery === 'seen' && ' ✓✓'}
+                                </span>
+                            );
+                        })()}
                     </div>
                 </div >
             </div >
@@ -2753,16 +2581,6 @@ function GlobalChat() {
 
     return (
         <div className={`gc-wrapper ${isOpen ? 'chat-open' : ''}`}>
-            {/* Hidden file inputs */}
-
-            <input
-                type="file"
-                ref={profileInputRef}
-                accept="image/*"
-                onChange={handleProfileImageSelect}
-                style={{ display: 'none' }}
-            />
-
             {/* FAB Button - hidden during loading screen */}
             {showFab && (
                 <div className="gc-fab-wrap">
@@ -2784,7 +2602,7 @@ function GlobalChat() {
                     <div className="gc-header-user">
                         <div className="gc-avatar-wrapper">
                             <img
-                                src="/logo/streamflix.png"
+                                src={userDataRef.current.photoURL || '/logo/streamflix.png'}
                                 alt="StreamFlix"
                                 className={`gc-header-avatar ${userDataRef.current.isAdmin ? 'clickable' : ''}`}
                                 onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=SF&background=e50914&color=fff'; }}
@@ -2799,9 +2617,9 @@ function GlobalChat() {
                                 <div className="gc-admin-menu">
                                     <button onClick={() => {
                                         setShowAdminSettings(true);
-                                        setAdminNickname(userDataRef.current.nickname || ADMIN_NICKNAME);
+                                        setAdminNickname(userDataRef.current.displayName || ADMIN_NICKNAME);
 
-                                        const currentAvatar = userDataRef.current.avatarUrl || '';
+                                        const currentAvatar = userDataRef.current.photoURL || '';
                                         if (currentAvatar && !currentAvatar.includes('dicebear') && !currentAvatar.includes('ui-avatars')) {
                                             setAdminAvatarMode('upload');
                                         } else {
@@ -2825,27 +2643,12 @@ function GlobalChat() {
                                         </svg>
                                         View Reports
                                     </button>
-                                    <button onClick={async () => {
-                                        if (confirm('Logout from chat?')) {
-                                            await authRef.current?.signOut();
-                                            setIsSetup(true);
-                                            setMessages([]);
-                                            userDataRef.current = { nickname: '', avatarUrl: '', isAdmin: false };
-                                            currentUserRef.current = null;
-                                        }
-                                        setShowAdminMenu(false);
-                                    }}>
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" />
-                                        </svg>
-                                        Logout
-                                    </button>
                                 </div>
                             )}
                         </div>
                         <div className="gc-header-info">
                             <span className="gc-header-name">StreamFlix Community</span>
-                            <span className="gc-header-status">Live Chat</span>
+                            <span className="gc-header-status">{sessionState === 'ready' ? 'Live Chat' : 'Sign In'}</span>
                         </div>
                     </div>
                     <div className="gc-header-actions">
@@ -2865,113 +2668,9 @@ function GlobalChat() {
                     </div>
                 </div>
 
-                {/* Setup View */}
-                {isSetup ? (
-                    <div className="gc-setup-view">
-                        <div className="gc-setup-content">
-                            {/* Avatar Preview */}
-                            <div
-                                className="gc-avatar-circle"
-                                onClick={() => setShowAvatarPicker(true)}
-                                style={{ cursor: 'pointer' }}
-                                title="Click to customize avatar"
-                            >
-                                <img
-                                    src={getAvatarUrl(avatarStyle, avatarSeed)}
-                                    alt="Avatar preview"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }}
-                                />
-                            </div>
-                            <p className="gc-upload-hint">Choose your own avatar</p>
-                            <div className="gc-input-group">
-                                <input
-                                    type="text"
-                                    placeholder="Enter Nickname"
-                                    value={nickname}
-                                    onChange={(e) => {
-                                        setNickname(e.target.value.slice(0, 15));
-                                        setNicknameSuggestions([]);
-                                    }}
-                                    maxLength={15}
-                                    onKeyDown={(e) => e.key === 'Enter' && handleJoinChat()}
-                                />
-                            </div>
-                            {error && <p className="gc-error-msg">{error}</p>}
-                            {nicknameSuggestions.length > 0 && (
-                                <div className="gc-name-suggestions">
-                                    <span className="gc-name-suggestions-label">Try:</span>
-                                    {nicknameSuggestions.map(s => (
-                                        <button
-                                            key={s.key}
-                                            className="gc-name-suggestion"
-                                            onClick={() => {
-                                                setNickname(s.display);
-                                                setError('');
-                                                setNicknameSuggestions([]);
-                                                document.querySelector('.gc-setup-view input')?.focus();
-                                            }}
-                                        >
-                                            {s.display}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                            <button
-                                className="gc-join-btn"
-                                disabled={nickname.trim().length < 2 || isJoining}
-                                onClick={handleJoinChat}
-                            >
-                                {isJoining ? 'Joining...' : 'Start Chatting'}
-                            </button>
-                        </div>
-
-                        {/* Avatar Picker Modal */}
-                        {showAvatarPicker && (
-                            <div className="gc-avatar-picker-overlay" onClick={() => setShowAvatarPicker(false)} data-nav-trap>
-                                <div className="gc-avatar-picker" onClick={e => e.stopPropagation()}>
-                                    <div className="gc-avatar-picker-header">
-                                        <h3>Choose Avatar Style</h3>
-                                        <button onClick={() => setShowAvatarPicker(false)}>✕</button>
-                                    </div>
-                                    <div className="gc-avatar-picker-preview">
-                                        <img
-                                            src={getAvatarUrl(avatarStyle, avatarSeed)}
-                                            alt="Current avatar"
-                                        />
-                                    </div>
-                                    <div className="gc-avatar-grid">
-                                        {AVATAR_STYLES.map(style => (
-                                            <div
-                                                key={style.id}
-                                                className={`gc-avatar-option ${avatarStyle === style.id ? 'selected' : ''}`}
-                                                onClick={() => setAvatarStyle(style.id)}
-                                            >
-                                                <img
-                                                    src={getAvatarUrl(style.id, avatarSeed)}
-                                                    alt={style.name}
-                                                />
-                                                <span>{style.name}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="gc-avatar-picker-actions">
-                                        <button
-                                            className="gc-randomize-btn"
-                                            onClick={() => setAvatarSeed(Math.random().toString(36).substring(7))}
-                                        >
-                                            🎲 Randomize
-                                        </button>
-                                        <button
-                                            className="gc-confirm-btn"
-                                            onClick={() => setShowAvatarPicker(false)}
-                                        >
-                                            ✓ Confirm
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                {/* Panel Body: Sign-In Wall or Chat View */}
+                {sessionState !== 'ready' ? (
+                    <GlobalChatSignInWall />
                 ) : (
                     /* Chat View */
                     <div className="gc-chat-view">
@@ -2982,7 +2681,7 @@ function GlobalChat() {
                                     <i className="fa-solid fa-thumbtack"></i>
                                 </div>
                                 <div className="gc-pinned-content">
-                                    <span className="gc-pinned-label">Pinned by {pinnedMessage.nickname}</span>
+                                    <span className="gc-pinned-label">Pinned by {pinnedMessage.senderName || pinnedMessage.displayName || pinnedMessage.nickname || 'Admin'}</span>
                                     <span className="gc-pinned-text">{pinnedMessage.text}</span>
                                 </div>
                                 {userDataRef.current.isAdmin && (
@@ -2990,7 +2689,7 @@ function GlobalChat() {
                                         className="gc-unpin-btn"
                                         onClick={async (e) => {
                                             e.stopPropagation();
-                                            await dbRef.current.ref('pinnedMessage').remove();
+                                            await dbRef.current.ref(chatPath('pinnedMessage')).remove();
                                             setPinnedMessage(null);
                                         }}
                                     >
@@ -3038,7 +2737,7 @@ function GlobalChat() {
                             <div className="gc-reply-bar">
                                 <div className="gc-reply-content">
                                     <span className="gc-reply-label">
-                                        Replying to <b>{replyTo.nickname}</b>
+                                        Replying to <b>{replyTo.senderName || replyTo.nickname || replyTo.displayName || 'Google User'}</b>
                                     </span>
                                     <span className="gc-reply-text-preview">
                                         {replyTo.recTitle
@@ -3267,16 +2966,24 @@ function GlobalChat() {
                                 <div className="gc-mention-list show">
                                     {mentionOptions.map(user => (
                                         <div
-                                            key={user.id || user.uid}
+                                            key={user.uid}
                                             className={`gc-mention-item ${user.isEveryone ? 'gc-mention-everyone' : ''}`}
                                             onClick={() => handleSelectMention(user)}
                                         >
                                             {user.isEveryone ? (
                                                 <span className="gc-mention-everyone-icon">📢</span>
                                             ) : (
-                                                <img src={user.avatarUrl} alt="" className="gc-mention-avatar" />
+                                                <img
+                                                    src={user.photoURL || '/logo/streamflix.png'}
+                                                    alt={user.displayName || 'Google User'}
+                                                    className="gc-mention-avatar"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=random`;
+                                                    }}
+                                                />
                                             )}
-                                            <span>{user.nickname}</span>
+                                            <span>{user.displayName}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -3342,29 +3049,34 @@ function GlobalChat() {
 
             {/* Reaction Popover (Desktop) */}
             {
-                showReactionPopover && (
-                    <>
-                        {/* Invisible overlay to close popover on click outside */}
-                        <div
-                            className="gc-popover-overlay"
-                            onClick={() => setShowReactionPopover(null)}
-                        />
-                        <div
-                            className="gc-reaction-popover show"
-                            style={{ top: popoverPosition.top, left: popoverPosition.left }}
-                        >
-                            {REACTIONS.map(emoji => (
-                                <span
-                                    key={emoji}
-                                    className="gc-reaction-icon"
-                                    onClick={() => handleReaction(emoji)}
-                                >
-                                    {emoji}
-                                </span>
-                            ))}
-                        </div>
-                    </>
-                )
+                showReactionPopover && (() => {
+                    const targetMsg = messages.find(m => m.id === showReactionPopover) ||
+                        (actionSheetTarget?.id === showReactionPopover ? actionSheetTarget : null);
+                    const currentReaction = targetMsg?.reactions?.[currentUserRef.current?.uid];
+                    return (
+                        <>
+                            {/* Invisible overlay to close popover on click outside */}
+                            <div
+                                className="gc-popover-overlay"
+                                onClick={() => setShowReactionPopover(null)}
+                            />
+                            <div
+                                className="gc-reaction-popover show"
+                                style={{ top: popoverPosition.top, left: popoverPosition.left }}
+                            >
+                                {REACTIONS.map(emoji => (
+                                    <span
+                                        key={emoji}
+                                        className={`gc-reaction-icon ${currentReaction === emoji ? 'selected' : ''}`}
+                                        onClick={() => handleReaction(emoji)}
+                                    >
+                                        {emoji}
+                                    </span>
+                                ))}
+                            </div>
+                        </>
+                    );
+                })()
             }
 
             {/* Action Sheet (Mobile) */}
@@ -3379,15 +3091,18 @@ function GlobalChat() {
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="gc-reaction-row">
-                                {REACTIONS.map(emoji => (
-                                    <span
-                                        key={emoji}
-                                        className="gc-reaction-icon"
-                                        onClick={() => handleReaction(emoji)}
-                                    >
-                                        {emoji}
-                                    </span>
-                                ))}
+                                {(() => {
+                                    const currentReaction = actionSheetTarget?.reactions?.[currentUserRef.current?.uid];
+                                    return REACTIONS.map(emoji => (
+                                        <span
+                                            key={emoji}
+                                            className={`gc-reaction-icon ${currentReaction === emoji ? 'selected' : ''}`}
+                                            onClick={() => handleReaction(emoji)}
+                                        >
+                                            {emoji}
+                                        </span>
+                                    ));
+                                })()}
                             </div>
                             <button className="gc-sheet-btn" onClick={handleReply}>
                                 ↩️ Reply
@@ -3450,14 +3165,30 @@ function GlobalChat() {
                                 </button>
                             </div>
                             <div className="gc-reaction-list">
-                                {showReactionView.reactions && Object.entries(showReactionView.reactions).filter(([, users]) => users && typeof users === 'object').map(([emoji, users]) => (
-                                    Object.entries(users).map(([uid, name]) => (
-                                        <div key={`${emoji}-${uid}`} className="gc-reaction-item">
-                                            <span className="gc-reaction-item-emoji">{emoji}</span>
-                                            <span className="gc-reaction-item-name">{name}</span>
-                                        </div>
-                                    ))
-                                ))}
+                                {showReactionView.reactions && typeof showReactionView.reactions === 'object' &&
+                                    Object.entries(showReactionView.reactions)
+                                        .filter(([uid, emoji]) => uid && emoji && REACTIONS.includes(emoji))
+                                        .map(([uid, emoji]) => {
+                                            const profile = allUsers.find(u => u.uid === uid);
+                                            const name = profile?.displayName || 'Google User';
+                                            const avatarUrl = profile?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                                            return (
+                                                <div key={`${uid}-${emoji}`} className="gc-reaction-item">
+                                                    <img
+                                                        src={avatarUrl}
+                                                        alt={name}
+                                                        className="gc-reaction-item-avatar"
+                                                        onError={(e) => {
+                                                            e.currentTarget.onerror = null;
+                                                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                                                        }}
+                                                    />
+                                                    <span className="gc-reaction-item-name">{name}</span>
+                                                    <span className="gc-reaction-item-emoji">{emoji}</span>
+                                                </div>
+                                            );
+                                        })
+                                }
                             </div>
                         </div>
                     </div>
