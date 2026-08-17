@@ -9,6 +9,8 @@ import DiscoverGrid from '../components/DiscoverGrid';
 import { useTMDB } from '../hooks/useTMDB';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import { useDiscoverFeed } from '../hooks/useDiscoverFeed';
+import { useProfiles } from '../contexts/ProfileContext';
+import { buildKidsCatalog } from '../lib/kidsCatalog';
 import { MOVIE_BAR_CATEGORIES } from '../constants/genres';
 import '../components/TrendingSection.css';
 
@@ -21,6 +23,7 @@ const PANEL_DEFAULTS = {
 const splitIds = (value) => value ? String(value).split(/[,|]/).filter(Boolean) : [];
 
 const Discover = () => {
+  const { isKidsMode } = useProfiles();
   const [bannerMovies, setBannerMovies] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,22 +53,42 @@ const Discover = () => {
   }, [filters, setSearchParams]);
 
   useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
     const fetchTopMovies = async () => {
       try {
-        const res = await fetch('/api/movie/popular');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const top10 = (data.results || []).slice(0, 10).map(item => ({
-          ...item,
-          media_type: 'movie'
-        }));
-        setBannerMovies(top10);
+        if (isKidsMode) {
+          setBannerMovies([]);
+          const catalog = await buildKidsCatalog({ signal: controller.signal });
+          if (isMounted) {
+            setBannerMovies(catalog.bannerItems || []);
+          }
+        } else {
+          const res = await fetch('/api/movie/popular', { signal: controller.signal });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          const top10 = (data.results || []).slice(0, 10).map(item => ({
+            ...item,
+            media_type: 'movie'
+          }));
+          if (isMounted) {
+            setBannerMovies(top10);
+          }
+        }
       } catch (err) {
-        console.error('Failed to fetch popular movies:', err);
+        if (isMounted && err?.name !== 'AbortError') {
+          console.error('Failed to fetch popular movies:', err);
+        }
       }
     };
     fetchTopMovies();
-  }, []);
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [isKidsMode]);
 
   const extraParams = useMemo(() => ({}), []);
   const feed = useDiscoverFeed({ mediaType: 'movie', filters, extraParams });

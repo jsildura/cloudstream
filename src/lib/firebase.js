@@ -1,12 +1,12 @@
 /**
- * Shared Firebase configuration for Streamflix
- * Used by GlobalChat and Popular tracking
+ * Shared Firebase configuration and singleton initialization for Streamflix.
+ * Used by AuthProvider, GlobalChat, and Popular tracking.
  */
 
 // Firebase configuration for StreamFlix
 export const firebaseConfig = {
     apiKey: "AIzaSyA-VQT6muzrgv12mQ9_Afdgx-OtWR8eun0",
-    authDomain: "streamflix-chat.firebaseapp.com",
+    authDomain: "auth.streamflix.stream",
     databaseURL: "https://streamflix-chat-default-rtdb.firebaseio.com",
     projectId: "streamflix-chat",
     storageBucket: "streamflix-chat.firebasestorage.app",
@@ -14,26 +14,85 @@ export const firebaseConfig = {
     appId: "1:234688078034:web:4d3f94dc91426252410d0b"
 };
 
+export class FirebaseInitializationError extends Error {
+    constructor(code, message, originalError = null) {
+        super(message);
+        this.name = 'FirebaseInitializationError';
+        this.code = code;
+        this.originalError = originalError;
+    }
+}
+
 /**
- * Initialize Firebase if not already initialized
- * @returns {{ db: object, auth: object } | null}
+ * Checks if a user is authenticated with a non-anonymous Google account.
+ * @param {object|null} user Firebase user object
+ * @returns {boolean}
  */
-export const initFirebase = () => {
+export function isGoogleAccount(user) {
+    if (!user || user.isAnonymous) return false;
+    if (!Array.isArray(user.providerData)) return false;
+    return user.providerData.some(p => p && p.providerId === 'google.com');
+}
+
+/**
+ * Creates and configures a GoogleAuthProvider instance.
+ * @returns {object} GoogleAuthProvider instance
+ */
+export function createGoogleProvider() {
+    if (typeof window === 'undefined' || !window.firebase?.auth?.GoogleAuthProvider) {
+        throw new FirebaseInitializationError('sdk-unavailable', 'Firebase Auth SDK is not available on window');
+    }
+    const provider = new window.firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return provider;
+}
+
+let emulatorConnected = false;
+
+/**
+ * Initialize Firebase singleton if not already initialized.
+ * @returns {{ firebase: object, app: object, auth: object, db: object, storage: object }}
+ */
+export function initFirebase() {
     if (typeof window === 'undefined' || typeof window.firebase === 'undefined') {
-        console.warn('Firebase SDK not loaded');
-        return null;
+        throw new FirebaseInitializationError('sdk-unavailable', 'Firebase SDK not loaded on window');
     }
 
     try {
-        if (!window.firebase.apps.length) {
-            window.firebase.initializeApp(firebaseConfig);
+        let app;
+        if (!window.firebase.apps || !window.firebase.apps.length) {
+            app = window.firebase.initializeApp(firebaseConfig);
+        } else {
+            app = window.firebase.app();
         }
+
+        const auth = window.firebase.auth();
+        const db = window.firebase.database();
+        const storage = window.firebase.storage();
+
+        if (import.meta.env?.VITE_USE_FIREBASE_EMULATORS === 'true' && !emulatorConnected) {
+            try {
+                auth.useEmulator('http://127.0.0.1:9099');
+            } catch {
+                // Ignore if already connected
+            }
+            try {
+                db.useEmulator('127.0.0.1', 9000);
+            } catch {
+                // Ignore if already connected
+            }
+            emulatorConnected = true;
+        }
+
         return {
-            db: window.firebase.database(),
-            auth: window.firebase.auth()
+            firebase: window.firebase,
+            app,
+            auth,
+            db,
+            storage
         };
     } catch (e) {
-        console.error('Firebase init error:', e);
-        return null;
+        if (e instanceof FirebaseInitializationError) throw e;
+        throw new FirebaseInitializationError('init-failed', e.message || 'Firebase initialization failed', e);
     }
-};
+}

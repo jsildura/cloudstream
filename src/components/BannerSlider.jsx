@@ -58,7 +58,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const [isMuted, setIsMuted] = useState(false);
   const { BACKDROP_URL, POSTER_URL, LOGO_URL, fetchItemBundle, fetchSeasonEpisodes, movieGenres, tvGenres } = useTMDB();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
   const isTVMode = useTVDetect();
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== 'undefined' && window.matchMedia(DESKTOP_TRAILER_MQ).matches
@@ -125,10 +125,15 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   // The timer below is only a safety net for a trailer that never reports a
   // duration, so a missing onEnded can't strand the carousel.
   useEffect(() => {
+    if (showSkeleton) {
+      setProgress(0);
+      return undefined;
+    }
+
     // A trailer the user started by hand holds the slide until they stop it.
     if (isTrailerPlaying && !trailerAutoStarted) {
       setProgress(0);
-      return;
+      return undefined;
     }
 
     const trailerDriven = isTrailerPlaying && trailerAutoStarted;
@@ -169,7 +174,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
       clearInterval(progressTimer);
       clearTimeout(slideTimer);
     };
-  }, [currentSlide, isTrailerPlaying, trailerAutoStarted, trailerDuration, isTVMode, isBannerWatched, advanceSlide]);
+  }, [currentSlide, isTrailerPlaying, trailerAutoStarted, trailerDuration, isTVMode, isBannerWatched, advanceSlide, showSkeleton]);
 
   // Mirror playback position onto the progress bar. Only while the trailer is
   // driving the slide: a manually started one holds the slide indefinitely, so
@@ -195,8 +200,19 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     setIsTrailerPlaying(false); // Stop trailer when changing slides
   };
 
-  // Safe currentMovie - use first movie or a placeholder object when no movies
-  const currentMovie = movies.length > 0 ? movies[currentSlide] : { id: 0 };
+  // The data source can be replaced while the carousel is on a later slide
+  // (for example when profile data loads after sign-in). Render a valid slide
+  // immediately, then synchronize the stored index after the render.
+  const activeSlide = Number.isInteger(currentSlide) && currentSlide >= 0 && currentSlide < movies.length
+    ? currentSlide
+    : 0;
+  const currentMovie = movies[activeSlide] || { id: 0 };
+
+  useEffect(() => {
+    if (movies.length > 0 && currentSlide !== activeSlide) {
+      setCurrentSlide(activeSlide);
+    }
+  }, [activeSlide, currentSlide, movies.length]);
   const currentLogoKey = `${currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv')}_${currentMovie.id}`;
   const currentLogoPath = logoCache[currentLogoKey];
   const currentTrailerKey = trailerCache[currentLogoKey];
@@ -336,16 +352,6 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     }
   };
 
-  // Handle add to watchlist with toast notification
-  const handleToggleWatchlist = () => {
-    const wasInWatchlist = isInWatchlist(currentMovie.id);
-    toggleWatchlist(currentMovie);
-    if (!wasInWatchlist) {
-      showSuccess('Added to Watchlist');
-    } else {
-      showSuccess('Removed from Watchlist');
-    }
-  };
 
   // Handle share button click
   const handleShare = async () => {
@@ -434,13 +440,13 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
 
   // Get adjacent slides for 3D card effect
   const getSlideIndex = (offset) => {
-    return (currentSlide + offset + movies.length) % movies.length;
+    return (activeSlide + offset + movies.length) % movies.length;
   };
 
   // Swipe handlers with momentum - longer swipes move more slides
   const swipeHandlers = useSwipe({
     onSwipe: (itemsToMove) => {
-      let newIndex = currentSlide + itemsToMove;
+      let newIndex = activeSlide + itemsToMove;
       // Wrap around for banner slides
       newIndex = ((newIndex % movies.length) + movies.length) % movies.length;
       goToSlide(newIndex);
@@ -448,6 +454,34 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     threshold: 50,
     maxItems: 3 // Max slides to move per swipe on banner
   });
+
+  const handleToggleWatchlist = async () => {
+    if (!currentMovie) return;
+    const type = currentMovie.type || currentMovie.media_type || (currentMovie.first_air_date || (currentMovie.name && !currentMovie.title) ? 'tv' : 'movie');
+    const res = await toggleWatchlist({
+      id: currentMovie.id,
+      type,
+      title: currentMovie.title || currentMovie.name,
+      poster_path: currentMovie.poster_path,
+      backdrop_path: currentMovie.backdrop_path,
+      overview: currentMovie.overview,
+      vote_average: currentMovie.vote_average,
+      release_date: currentMovie.release_date || currentMovie.first_air_date,
+      genres: currentMovie.genre_ids || currentMovie.genres
+    });
+
+    if (res?.ok) {
+      showSuccess(res.action === 'added' ? 'Added to Watchlist' : 'Removed from Watchlist');
+    } else if (res?.reason === 'sign-in-required') {
+      showError('Sign in with Google to add to Watchlist');
+    } else if (res?.message) {
+      showError(res.message);
+    }
+  };
+
+  const isCurrentInWatchlist = Boolean(
+    currentMovie && isInWatchlist(currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv'), currentMovie.id)
+  );
 
   // Skeleton loading - shown when loading or no movies
   if (showSkeleton) {
@@ -500,7 +534,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             />
           </div>
         ) : (
-          <div className="banner-backdrop" key={currentSlide}>
+          <div className="banner-backdrop" key={activeSlide}>
             <img
               srcSet={`https://image.tmdb.org/t/p/w780${currentMovie.backdrop_path} 780w, https://image.tmdb.org/t/p/w1280${currentMovie.backdrop_path} 1280w`}
               sizes="(max-width: 768px) 780px, 1280px"
@@ -517,7 +551,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
         <div className="banner-content banner-desktop-content">
           {/* Title - Logo Image or Text Fallback */}
           {currentLogoPath ? (
-            <div className="banner-logo-container" key={`logo-${currentSlide}`}>
+            <div className="banner-logo-container" key={`logo-${activeSlide}`}>
               <img
                 src={`${LOGO_URL}${currentLogoPath}`}
                 alt={`${currentMovie.title || currentMovie.name} logo`}
@@ -533,13 +567,13 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
               </h2>
             </div>
           ) : (
-            <h2 className="banner-title-new" key={`title-${currentSlide}`}>
+            <h2 className="banner-title-new" key={`title-${activeSlide}`}>
               {titleMain} <span className="title-highlight">{titleHighlight}</span>
             </h2>
           )}
 
           {/* IMDb + Metadata Row */}
-          <div className="banner-meta-row" key={`meta-${currentSlide}`}>
+          <div className="banner-meta-row" key={`meta-${activeSlide}`}>
             <span className="imdb-badge">IMDb</span>
             <span className="meta-rating">{currentMovie.vote_average?.toFixed(1) || '8.5'}</span>
             <span className="meta-separator">·</span>
@@ -569,7 +603,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </div>
 
           {/* Description */}
-          <p className="banner-description-new" key={`desc-${currentSlide}`}>
+          <p className="banner-description-new" key={`desc-${activeSlide}`}>
             {currentMovie.overview?.length > 200
               ? `${currentMovie.overview.substring(0, 200)}...`
               : currentMovie.overview
@@ -577,7 +611,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </p>
 
           {/* Action Buttons Row */}
-          <div className="banner-actions-row" key={`actions-${currentSlide}`}>
+          <div className="banner-actions-row" key={`actions-${activeSlide}`}>
             {/* Play Trailer Button */}
             <button
               className={`banner-action-icon ${isTrailerPlaying ? 'active' : ''} ${!currentTrailerKey ? 'disabled' : ''}`}
@@ -633,12 +667,12 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
 
             {/* Add to List Button */}
             <button
-              className={`banner-action-icon ${isInWatchlist(currentMovie.id) ? 'in-watchlist' : ''}`}
-              aria-label={isInWatchlist(currentMovie.id) ? "Remove from My List" : "Add to My List"}
-              title={isInWatchlist(currentMovie.id) ? "Remove from My List" : "Add to My List"}
+              className={`banner-action-icon ${isCurrentInWatchlist ? 'in-watchlist' : ''}`}
+              aria-label={isCurrentInWatchlist ? "Remove from My List" : "Add to My List"}
+              title={isCurrentInWatchlist ? "Remove from My List" : "Add to My List"}
               onClick={handleToggleWatchlist}
             >
-              {isInWatchlist(currentMovie.id) ? (
+              {isCurrentInWatchlist ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
@@ -654,7 +688,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             <button
               className="banner-action-icon"
               aria-label="Previous"
-              onClick={() => goToSlide((currentSlide - 1 + movies.length) % movies.length)}
+              onClick={() => goToSlide((activeSlide - 1 + movies.length) % movies.length)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="19 4 9 12 19 20 19 4"></polygon>
@@ -666,7 +700,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             <button
               className="banner-action-icon"
               aria-label="Next"
-              onClick={() => goToSlide((currentSlide + 1) % movies.length)}
+              onClick={() => goToSlide((activeSlide + 1) % movies.length)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 4 15 12 5 20 5 4"></polygon>
@@ -676,7 +710,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           </div>
 
           {/* Genre Tags - Dynamic based on movie data */}
-          <div className="banner-genre-tags" key={`genres-${currentSlide}`}>
+          <div className="banner-genre-tags" key={`genres-${activeSlide}`}>
             {(() => {
               const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
               const genreMap = type === 'movie' ? movieGenres : tvGenres;
@@ -785,7 +819,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
           {movies.map((_, index) => (
             <button
               key={index}
-              className={`banner-indicator${index === currentSlide ? ' active' : ''}`}
+              className={`banner-indicator${index === activeSlide ? ' active' : ''}`}
               onClick={() => goToSlide(index)}
               aria-label={`Go to slide ${index + 1}`}
             />

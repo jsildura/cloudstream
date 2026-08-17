@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'zxcstream-trial', 'key_rotation_watcher_project']),
+  globalIgnores(['dist', '.wrangler', 'zxcstream-trial', 'key_rotation_watcher_project']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [
@@ -27,9 +27,8 @@ export default defineConfig([
     },
   },
   {
-    // Node-runtime config files (vite.config.js runs in Node at dev/build time,
-    // so `process`, `__dirname`, etc. are legit globals there).
-    files: ['*.config.js', 'vite.config.js'],
+    // Node-runtime config files & test helpers (vite.config.js, tests/database/helpers.js run in Node)
+    files: ['*.config.js', 'vite.config.js', 'tests/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },

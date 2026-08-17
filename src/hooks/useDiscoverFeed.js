@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useProfiles } from '../contexts/ProfileContext';
+import { filterKidsCandidates } from '../lib/tmdbClient';
 
 // TMDB refuses `page` above 500 regardless of what `total_pages` reports.
 const MAX_TMDB_PAGE = 500;
@@ -35,6 +37,7 @@ const waitForPaint = () => new Promise(resolve => {
 export const REVEAL_STEP = 10;
 
 export function useDiscoverFeed({ mediaType, filters, extraParams }) {
+  const { isKidsMode } = useProfiles();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -45,6 +48,14 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
   // How many of the fetched pool are on screen. Grows a REVEAL_STEP at a time so
   // a 20-item TMDB page lands as two scrolls.
   const [visibleCount, setVisibleCount] = useState(REVEAL_STEP);
+
+  const filtersRef = useRef(filters);
+  const extraParamsRef = useRef(extraParams);
+  filtersRef.current = filters;
+  extraParamsRef.current = extraParams;
+
+  const filtersKey = JSON.stringify(filters || {});
+  const extraParamsKey = JSON.stringify(extraParams || {});
 
   const sentinelRef = useRef(null);
   const enrichedMapRef = useRef(new Map());
@@ -67,7 +78,7 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
     enrichInFlightRef.current.clear();
     enrichFailuresRef.current.clear();
     setEnrichedMap(new Map());
-  }, [mediaType]);
+  }, [mediaType, isKidsMode]);
 
   const fetchItems = useCallback(async (page = 1, append = false) => {
     // Supersede whatever is in flight; its response must not be applied.
@@ -85,11 +96,29 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
       setError(null);
     }
 
+    const currentFilters = filtersRef.current || {};
+    const currentExtra = extraParamsRef.current;
+
     try {
       const url = new URL(`/api/discover/${mediaType}`, window.location.origin);
-      const scopedExtra = extraParams && typeof extraParams === 'object' && !Array.isArray(extraParams)
-        && (mediaType in extraParams) ? extraParams[mediaType] : extraParams;
-      Object.entries({ ...filters, ...scopedExtra, page }).forEach(([k, v]) => {
+      const scopedExtra = currentExtra && typeof currentExtra === 'object' && !Array.isArray(currentExtra)
+        && (mediaType in currentExtra) ? currentExtra[mediaType] : currentExtra;
+
+      const kidsParams = isKidsMode
+        ? (mediaType === 'movie'
+            ? {
+                certification_country: 'US',
+                'certification.lte': 'PG',
+                include_adult: 'false',
+                ...(!currentFilters.with_genres && { with_genres: '10751,16' })
+              }
+            : {
+                include_adult: 'false',
+                ...(!currentFilters.with_genres && { with_genres: '10762,10751,16' })
+              })
+        : {};
+
+      Object.entries({ ...currentFilters, ...scopedExtra, ...kidsParams, page }).forEach(([k, v]) => {
         if (v !== undefined && v !== null && v !== '') {
           url.searchParams.set(k, v);
         }
@@ -101,15 +130,23 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
 
       if (generation !== generationRef.current) return;
 
-      const newResults = data.results || [];
+      let newResults = (data.results || []).map(r => ({ ...r, media_type: mediaType }));
+      if (isKidsMode) {
+        const filtered = await filterKidsCandidates(newResults, { signal: controller.signal });
+        newResults = Array.isArray(filtered) ? filtered : [];
+      }
+
+      if (generation !== generationRef.current) return;
+
       setTotalPages(Math.min(data.total_pages || 1, MAX_TMDB_PAGE));
       setTotalResults(data.total_results || 0);
       setCurrentPage(page);
 
       if (append) {
         setItems(prev => {
-          const existingIds = new Set(prev.map(s => s.id));
-          const merged = [...prev, ...newResults.filter(s => !existingIds.has(s.id))];
+          const list = Array.isArray(prev) ? prev : [];
+          const existingIds = new Set(list.map(s => s.id));
+          const merged = [...list, ...newResults.filter(s => !existingIds.has(s.id))];
           // Reveal one step into the pool we just grew, clamped to what actually
           // arrived: TMDB pages can overlap, so dedupe may yield fewer than
           // REVEAL_STEP new items and visibleCount must not outrun the array.
@@ -153,7 +190,7 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
         }
       }
     }
-  }, [mediaType, filters, extraParams]);
+  }, [mediaType, filtersKey, extraParamsKey, isKidsMode]);
 
   useEffect(() => {
     fetchItems(1, false);
@@ -255,11 +292,11 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
   const hasMorePages = currentPage < totalPages;
   // What the grid actually renders: the revealed slice of the fetched pool.
   const visibleItems = useMemo(
-    () => items.slice(0, visibleCount),
+    () => (items || []).slice(0, visibleCount),
     [items, visibleCount]
   );
   // Items already fetched but not yet revealed — the next scroll is free.
-  const hasBufferedItems = visibleCount < items.length;
+  const hasBufferedItems = visibleCount < (items?.length || 0);
   const canLoadMore = hasBufferedItems || hasMorePages;
 
   useEffect(() => {

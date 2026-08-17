@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import BannerSlider from '../components/BannerSlider';
-import MovieRow from '../components/MovieRow';
 import Modal from '../components/Modal';
 import PopularCollections from '../components/PopularCollections';
 import ContinueWatching from '../components/ContinueWatching';
@@ -18,7 +17,9 @@ import NativeAd from '../components/NativeAd';
 import SpreadTheWordModal from '../components/SpreadTheWordModal';
 import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
+import { useProfiles } from '../contexts/ProfileContext';
 import { useToast } from '../contexts/ToastContext';
+import { buildKidsCatalog } from '../lib/kidsCatalog';
 import './Home.css';
 
 // Timezone to country code mapping for popular regions
@@ -64,8 +65,10 @@ const getCountryFromTimezone = () => {
 
 const Home = () => {
   const location = useLocation();
+  const { isKidsMode } = useProfiles();
   const [nowPlayingMovies, setNowPlayingMovies] = useState([]);
   const [topTenMovies, setTopTenMovies] = useState([]);
+  const [kidsCatalog, setKidsCatalog] = useState(null);
   const [userCountry, setUserCountry] = useState({ code: 'US', name: 'Your Country' });
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,8 +85,41 @@ const Home = () => {
   const { showError } = useToast();
 
   useEffect(() => {
-    initializeData();
-  }, []);
+    let isMounted = true;
+    const controller = new AbortController();
+
+    if (isKidsMode) {
+      // Clear normal feed synchronously when switching to Kids mode
+      setNowPlayingMovies([]);
+      setTopTenMovies([]);
+      setLoading(true);
+
+      async function loadKidsData() {
+        try {
+          const catalog = await buildKidsCatalog({ signal: controller.signal });
+          if (isMounted) {
+            setKidsCatalog(catalog);
+            setLoading(false);
+          }
+        } catch (err) {
+          if (isMounted && err?.name !== 'AbortError') {
+            console.error('Failed to initialize Kids catalog:', err);
+            setLoading(false);
+          }
+        }
+      }
+
+      loadKidsData();
+    } else {
+      setKidsCatalog(null);
+      initializeData();
+    }
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [isKidsMode]);
 
   // Handle incoming modal request from Watch redirect
   useEffect(() => {
@@ -101,10 +137,6 @@ const Home = () => {
       const res = await fetch(`/api/${type}/${id}`);
       const contentData = await res.json();
 
-      // The API proxies can return an error body with HTTP 200. A shared
-      // /watch link or recommendation may point at a title that no longer
-      // exists, so treat a payload without an id as "not found" too — the
-      // toast below is the graceful failure for stale ids.
       if (!contentData || typeof contentData.id === 'undefined') {
         throw new Error('Content not found');
       }
@@ -122,7 +154,6 @@ const Home = () => {
         genres: genreNames,
         cast: cast.join(', ') || 'N/A',
         contentRating,
-        // Pass season/episode for TV shows
         ...(type === 'tv' && season && episode && {
           lastSeason: parseInt(season),
           lastEpisode: parseInt(episode)
@@ -134,8 +165,6 @@ const Home = () => {
       showError('This title is no longer available');
     }
   };
-
-
 
   const initializeData = async () => {
     try {
@@ -159,15 +188,11 @@ const Home = () => {
     }
   };
 
-
-
-
   const handleItemClick = useCallback((item) => {
-    const type = item.media_type === "movie" || item.release_date ? "movie" : "tv";
+    const type = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? "tv" : "movie");
     const genreMap = type === 'movie' ? movieGenres : tvGenres;
     const genreNames = item.genre_ids?.map(id => genreMap.get(id)).filter(Boolean) || [];
 
-    // Open modal immediately — cast & contentRating are lazily loaded inside Modal.
     setSelectedItem({
       ...item,
       type,
@@ -181,7 +206,20 @@ const Home = () => {
     setSelectedItem(null);
   }, []);
 
+  // Kids section minimum thresholds
+  const kidsBannerMovies = kidsCatalog?.bannerItems?.length >= 3
+    ? kidsCatalog.bannerItems
+    : (kidsCatalog?.allApproved?.filter(m => m.backdrop_path)?.slice(0, 8) || []);
 
+  const hasKidsBanner = kidsBannerMovies.length >= 3;
+  const kidsTopTen = (kidsCatalog?.allApproved || []).slice(0, 10);
+  const hasKidsTopTen = kidsTopTen.length >= 5;
+  const kidsFamilyShows = (kidsCatalog?.sections?.familyShows || []);
+  const hasKidsFamilyShows = kidsFamilyShows.length >= 8;
+  const kidsAnimationMovies = (kidsCatalog?.sections?.animationMovies || []);
+  const hasKidsAnimationMovies = kidsAnimationMovies.length >= 6;
+  const kidsShows = (kidsCatalog?.sections?.kidsShows || []);
+  const hasKidsShows = kidsShows.length >= 6;
 
   return (
     <div className="home-page">
@@ -189,14 +227,24 @@ const Home = () => {
         title="StreamFlix - Watch Movies & TV Shows Online | Free Streaming"
         description="StreamFlix - Your favorite destination for movies and TV shows. Stream the latest blockbusters, popular TV series, and anime all in one place."
       />
-      {/* Visually hidden h1 for SEO - provides consistent page heading */}
       <h1 className="visually-hidden">StreamFlix - Watch Movies & TV Shows Online</h1>
-      {/* Use nowPlayingMovies for BannerSlider - shows skeleton while loading */}
-      <BannerSlider
-        movies={nowPlayingMovies.slice(0, 10)}
-        onItemClick={handleItemClick}
-        loading={loading}
-      />
+
+      {/* BannerSlider */}
+      {isKidsMode ? (
+        (hasKidsBanner || loading) && (
+          <BannerSlider
+            movies={kidsBannerMovies}
+            onItemClick={handleItemClick}
+            loading={loading}
+          />
+        )
+      ) : (
+        <BannerSlider
+          movies={nowPlayingMovies.slice(0, 10)}
+          onItemClick={handleItemClick}
+          loading={loading}
+        />
+      )}
 
       {/* Continue Watching Section */}
       <ContinueWatching onItemClick={handleItemClick} />
@@ -205,56 +253,102 @@ const Home = () => {
         {/* Recommended For You - Only shows if user has watch history */}
         <RecommendedForYou onItemClick={handleItemClick} />
 
-        {/* Popular on Streamflix - Top 10 most-watched this week */}
-        <PopularOnStreamflix onItemClick={handleItemClick} />
+        {isKidsMode ? (
+          <>
+            {/* Top 10 for Kids */}
+            {hasKidsTopTen && (
+              <TopTenRow
+                items={kidsTopTen}
+                onItemClick={handleItemClick}
+                title="Top 10 for Kids"
+                subtitle="Most watched by kids"
+              />
+            )}
 
-        {/* Trending Today Section */}
-        <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+            {/* Trending for Kids */}
+            {hasKidsFamilyShows && (
+              <TopTenRow
+                title="Trending for Kids"
+                subtitle="Shows kids are watching now"
+                items={kidsFamilyShows}
+                onItemClick={handleItemClick}
+                showRanks={false}
+              />
+            )}
 
-        {/* Trending This Week Section */}
-        <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+            {/* Animated Favorites */}
+            {hasKidsAnimationMovies && (
+              <TopTenRow
+                title="Animated Favorites"
+                subtitle="Colorful adventures for every age"
+                items={kidsAnimationMovies}
+                onItemClick={handleItemClick}
+                showRanks={false}
+              />
+            )}
 
-        {/* Trending Anime Section */}
-        <TrendingAnimeSection onItemClick={handleItemClick} />
+            {/* Kids Shows */}
+            {hasKidsShows && (
+              <TopTenRow
+                title="Kids Shows"
+                subtitle="More series picked for kids"
+                items={kidsShows}
+                onItemClick={handleItemClick}
+                showRanks={false}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {/* Popular on Streamflix */}
+            <PopularOnStreamflix onItemClick={handleItemClick} />
 
-        {/* Top 10 in Your Country Section */}
-        {topTenMovies.length > 0 && (
-          <TopTenRow
-            items={topTenMovies}
-            onItemClick={handleItemClick}
-            countryName={userCountry.name}
-          />
+            {/* Trending Today Section */}
+            <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+
+            {/* Trending This Week Section */}
+            <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+
+            {/* Trending Anime Section */}
+            <TrendingAnimeSection onItemClick={handleItemClick} />
+
+            {/* Top 10 in Your Country Section */}
+            {topTenMovies.length > 0 && (
+              <TopTenRow
+                items={topTenMovies}
+                onItemClick={handleItemClick}
+                countryName={userCountry.name}
+              />
+            )}
+
+            {/* Popular Collections Section */}
+            <LazyLoadSection minHeight="350px">
+              <PopularCollections />
+            </LazyLoadSection>
+
+            {/* Native Ad Section */}
+            <LazyLoadSection minHeight="200px">
+              <NativeAd />
+            </LazyLoadSection>
+
+            {/* Movie Studios Section */}
+            <LazyLoadSection minHeight="300px">
+              <MovieStudios />
+            </LazyLoadSection>
+
+            {/* Streaming Providers Section */}
+            <LazyLoadSection minHeight="300px">
+              <StreamingProviders />
+            </LazyLoadSection>
+          </>
         )}
-
-        {/* Popular Collections Section */}
-        <LazyLoadSection minHeight="350px">
-          <PopularCollections />
-        </LazyLoadSection>
-
-        {/* Native Ad - Placed after Popular Collections */}
-        <LazyLoadSection minHeight="200px">
-          <NativeAd />
-        </LazyLoadSection>
-
-        {/* Movie Studios Section */}
-        <LazyLoadSection minHeight="300px">
-          <MovieStudios />
-        </LazyLoadSection>
-
-        {/* Streaming Providers Section */}
-        <LazyLoadSection minHeight="300px">
-          <StreamingProviders />
-        </LazyLoadSection>
-
-
       </div>
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />
       )}
 
-
-      {/* Spread the Word Modal - shows once every 3 days */}
+      {/* Spread the Word Modal */}
       <SpreadTheWordModal />
     </div>
   );

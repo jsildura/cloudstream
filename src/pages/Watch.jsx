@@ -12,6 +12,8 @@ import { generateVideoObjectSchema } from '../utils/schemaUtils';
 import { generateContentMeta } from '../utils/metaUtils';
 import { episodeStill, cardBackdrop, posterAsBackdrop } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
+import { useProfiles } from '../contexts/ProfileContext';
+import { filterKidsCandidates } from '../lib/tmdbClient';
 
 // Adsterra smartlink — same monetization used by the Watch Now / Play buttons
 // (Modal, BannerSlider, HoverPreviewCard): open the ad in a new tab with a
@@ -22,6 +24,7 @@ const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 const Watch = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isKidsMode } = useProfiles();
   const searchParams = new URLSearchParams(location.search);
 
   const type = searchParams.get('type');
@@ -122,7 +125,7 @@ const Watch = () => {
   const episodeDrawerTranslateRef = useRef(0);
 
   const { POSTER_URL } = useTMDB();
-  const { showNowPlaying } = useToast();
+  const { showNowPlaying, showSuccess, showError } = useToast();
   const { addToHistory, updateProgress, getLastWatched } = useWatchHistory();
   const getLastWatchedRef = useRef(getLastWatched);
   getLastWatchedRef.current = getLastWatched;
@@ -130,7 +133,7 @@ const Watch = () => {
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const hasShownToast = useRef(false);
   const wakeLockRef = useRef(null);
-  const isSaved = contentInfo ? isInWatchlist(contentInfo.id) : false;
+  const isSaved = contentInfo ? isInWatchlist(type, contentInfo.id) : false;
 
   // Screen Wake Lock - Prevents screen from turning off during playback
   // Works on: Chrome 84+, Safari iOS 16.4+, Edge 84+, Brave, Opera
@@ -260,10 +263,16 @@ const Watch = () => {
     }
   }, [loading, contentInfo, showNowPlaying]);
 
+  const hasAddedHistoryKeyRef = useRef('');
+
   useEffect(() => {
     if (playerLoaded && contentInfo) {
+      const sessionKey = `${type}_${contentInfo.id}_${currentSeason || 1}_${currentEpisode || 1}`;
+      if (hasAddedHistoryKeyRef.current === sessionKey) return;
+      hasAddedHistoryKeyRef.current = sessionKey;
+
       // Keep any previously saved progress so a fresh session doesn't reset it.
-      const prev = getLastWatchedRef.current(contentInfo.id);
+      const prev = getLastWatchedRef.current(type, contentInfo.id);
       addToHistory({
         id: contentInfo.id,
         type,
@@ -272,6 +281,7 @@ const Watch = () => {
         backdrop_path: contentInfo.backdrop_path,
         currentTime: prev?.currentTime || 0,
         duration: prev?.duration || 0,
+        genres: contentInfo.genres || contentInfo.genre_ids,
         ...(type === 'tv' && {
           lastSeason: currentSeason,
           lastEpisode: currentEpisode,
@@ -291,7 +301,17 @@ const Watch = () => {
   // so only the time/duration/progress fields are refreshed.
   const handlePlayerProgress = useCallback((data) => {
     if (!contentInfo) return;
-    updateProgress(contentInfo.id, data.timestamp, data.duration);
+    updateProgress(type, contentInfo.id, data.timestamp, data.duration, {
+      title: contentInfo.title || contentInfo.name,
+      poster_path: contentInfo.poster_path,
+      backdrop_path: contentInfo.backdrop_path,
+      genres: contentInfo.genres || contentInfo.genre_ids,
+      ...(type === 'tv' && {
+        lastSeason: currentSeason,
+        lastEpisode: currentEpisode,
+        totalSeasons: seasons.length,
+      })
+    });
     if (type === 'tv' || type === 'movie') {
       // Keep the live position so the credits heuristic can fire mid-title.
       setPlayerProgress({
@@ -303,7 +323,7 @@ const Watch = () => {
         duration: data.duration,
       });
     }
-  }, [contentInfo, updateProgress, type]);
+  }, [contentInfo, updateProgress, type, currentSeason, currentEpisode, seasons.length]);
 
   // Live playback position for the current episode (drives the credits
   // heuristic). Gated on season/episode so stale progress from a previous
@@ -528,20 +548,24 @@ const Watch = () => {
     if (type !== 'movie') return;
     let active = true;
     setNextMovie(null);
-    const pickNext = (results) => {
-      const list = (results || [])
-        .filter((m) => m.id !== Number(id) && (m.backdrop_path || m.poster_path));
+    const pickNext = async (results) => {
+      let list = (results || [])
+        .filter((m) => m.id !== Number(id) && (m.backdrop_path || m.poster_path))
+        .map((m) => ({ ...m, media_type: 'movie' }));
+      if (isKidsMode) {
+        list = await filterKidsCandidates(list, { maxCandidates: 10 });
+      }
       return list[0] || null;
     };
     (async () => {
       try {
         const res = await fetch(`/api/movie/${id}/recommendations`);
         const data = await res.json();
-        let pick = pickNext(data.results);
+        let pick = await pickNext(data.results);
         if (!pick) {
           const similarRes = await fetch(`/api/movie/${id}/similar`);
           const similarData = await similarRes.json();
-          pick = pickNext(similarData.results);
+          pick = await pickNext(similarData.results);
         }
         if (active) setNextMovie(pick);
       } catch (error) {
@@ -549,7 +573,7 @@ const Watch = () => {
       }
     })();
     return () => { active = false; };
-  }, [type, id]);
+  }, [type, id, isKidsMode]);
 
   const fetchContentData = async () => {
     try {
@@ -849,7 +873,11 @@ const Watch = () => {
     try { localStorage.setItem(`server-${id}`, index); } catch { /* noop */ }
   };
 
-  const handleBack = () => {
+  const handleBack = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     // Navigate directly to homepage to avoid stacked history entries
     // (changing servers/episodes may add history entries, making navigate(-1) unreliable)
     navigate('/');
@@ -1412,9 +1440,9 @@ const Watch = () => {
           <div className="watch-control-bar-item">
             <button
               className={`watch-control-bar-btn${isSaved ? ' active' : ''}`}
-              onClick={() => {
+              onClick={async () => {
                 if (contentInfo) {
-                  toggleWatchlist({
+                  const res = await toggleWatchlist({
                     id: contentInfo.id,
                     title: contentInfo.title || contentInfo.name,
                     poster_path: contentInfo.poster_path,
@@ -1423,8 +1451,16 @@ const Watch = () => {
                     vote_average: contentInfo.vote_average,
                     release_date: contentInfo.release_date || contentInfo.first_air_date,
                     overview: contentInfo.overview,
-                    genre_ids: contentInfo.genre_ids,
+                    genres: contentInfo.genres || contentInfo.genre_ids,
                   });
+
+                  if (res?.ok) {
+                    showSuccess(res.action === 'added' ? 'Added to Watchlist' : 'Removed from Watchlist');
+                  } else if (res?.reason === 'sign-in-required') {
+                    showError('Sign in with Google to add to Watchlist');
+                  } else if (res?.message) {
+                    showError(res.message);
+                  }
                 }
               }}
               disabled={controlsLocked}

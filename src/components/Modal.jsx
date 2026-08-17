@@ -3,7 +3,9 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
+import { useProfiles } from '../contexts/ProfileContext';
 import { useToast } from '../contexts/ToastContext';
+import { getKidsRating, filterKidsCandidates } from '../lib/tmdbClient';
 import SchemaMarkup from './SchemaMarkup';
 import ReviewSection from './ReviewSection';
 import { generateMovieSchema, generateTVSeriesSchema } from '../utils/schemaUtils';
@@ -23,6 +25,7 @@ const GENRE_SEARCH_ALIASES = {
 
 const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const navigate = useNavigate();
+  const { isKidsMode } = useProfiles();
   const {
     BACKDROP_URL,
     POSTER_URL,
@@ -54,16 +57,10 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   // Internal recommendations state
   const [internalRecs, setInternalRecs] = useState([]);
   const [recsLoading, setRecsLoading] = useState(true);
-  const { showSuccess } = useToast();
-  const [inWatchlist, setInWatchlist] = useState(false);
+  const { showSuccess, showError } = useToast();
   const [isClosing, setIsClosing] = useState(false);
 
-  // Check if item is in watchlist on mount
-  useEffect(() => {
-    if (item?.id) {
-      setInWatchlist(isInWatchlist(item.id));
-    }
-  }, [item?.id, isInWatchlist]);
+  const inWatchlist = Boolean(item?.id && isInWatchlist(item.media_type || item.type || 'movie', item.id));
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
   const [logoPath, setLogoPath] = useState(null);
@@ -106,6 +103,22 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
         setCast(item.cast || null);
         setContentRating(item.contentRating || null);
 
+        // Enforce Kids mode rating policy
+        if (isKidsMode) {
+          try {
+            const check = await getKidsRating(type, item.id);
+            if (!check.approved) {
+              showError('This title is not available in Kids mode.');
+              onClose();
+              return;
+            }
+          } catch {
+            showError('This title is not available in Kids mode.');
+            onClose();
+            return;
+          }
+        }
+
         // Fetch trailer, logo, cast, and content rating in parallel
         const [key, logo, fetchedCast, fetchedRating] = await Promise.all([
           fetchVideos(type, item.id),
@@ -134,8 +147,13 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
             }
           }
 
+          let filteredRecs = recs.filter(r => r.id !== item.id);
+          if (isKidsMode) {
+            filteredRecs = await filterKidsCandidates(filteredRecs, { maxCandidates: 20 });
+          }
+
           // Limit to 10 items and filter out current item
-          setInternalRecs(recs.filter(r => r.id !== item.id).slice(0, 10));
+          setInternalRecs(filteredRecs.slice(0, 10));
         } catch (err) {
           console.error('Failed to fetch recommendations:', err);
           setInternalRecs([]);
@@ -145,7 +163,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
       }
     };
     loadData();
-  }, [item?.id, item?.media_type, item?.type, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchMovieRecommendations, fetchTVRecommendations]);
+  }, [item?.id, item?.media_type, item?.type, isKidsMode, onClose, showError, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchMovieRecommendations, fetchTVRecommendations]);
 
   // Animated close handler
   const handleClose = useCallback(() => {
@@ -492,14 +510,27 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                       Watch Now
                     </button>
                     <button
-                      onClick={() => {
-                        const wasInList = inWatchlist;
-                        toggleWatchlist(item);
-                        setInWatchlist(!inWatchlist);
-                        if (wasInList) {
-                          showSuccess('Removed from Watchlist');
-                        } else {
-                          showSuccess('Added to Watchlist');
+                      onClick={async () => {
+                        if (!item) return;
+                        const mediaType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+                        const res = await toggleWatchlist({
+                          id: item.id,
+                          type: mediaType,
+                          title: item.title || item.name,
+                          poster_path: item.poster_path,
+                          backdrop_path: item.backdrop_path,
+                          overview: item.overview,
+                          vote_average: item.vote_average,
+                          release_date: item.release_date || item.first_air_date,
+                          genres: item.genres || item.genre_ids
+                        });
+
+                        if (res?.ok) {
+                          showSuccess(res.action === 'added' ? 'Added to Watchlist' : 'Removed from Watchlist');
+                        } else if (res?.reason === 'sign-in-required') {
+                          showError('Sign in with Google to add to Watchlist');
+                        } else if (res?.message) {
+                          showError(res.message);
                         }
                       }}
                       className={`modal-btn-icon-only ${inWatchlist ? 'active' : ''}`}

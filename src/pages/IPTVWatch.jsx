@@ -1699,7 +1699,11 @@ const IPTVWatch = () => {
     };
 
     // Handle back navigation
-    const handleBack = () => {
+    const handleBack = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         navigate('/iptv');
     };
 

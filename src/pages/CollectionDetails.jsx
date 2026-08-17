@@ -4,10 +4,13 @@ import MovieCard from '../components/MovieCard';
 import Modal from '../components/Modal';
 import { popularCollections } from '../data/collectionsData';
 import { useTMDB } from '../hooks/useTMDB';
+import { useProfiles } from '../contexts/ProfileContext';
+import { filterKidsCandidates } from '../lib/tmdbClient';
 import './CollectionDetails.css';
 
 const CollectionDetails = () => {
     const { id } = useParams();
+    const { isKidsMode } = useProfiles();
 
     const { POSTER_URL, BACKDROP_URL, movieGenres, tvGenres, fetchCredits } = useTMDB();
 
@@ -46,10 +49,15 @@ const CollectionDetails = () => {
 
                 const fetchedMovies = await Promise.all(moviePromises);
                 // Add media_type to each movie for proper handling
-                const moviesWithType = fetchedMovies.map(movie => ({
+                let moviesWithType = fetchedMovies.map(movie => ({
                     ...movie,
                     media_type: 'movie'
                 }));
+
+                if (isKidsMode) {
+                    moviesWithType = await filterKidsCandidates(moviesWithType);
+                }
+
                 setMovies(moviesWithType);
             } catch (err) {
                 console.error('Error fetching collection movies:', err);
@@ -60,7 +68,7 @@ const CollectionDetails = () => {
         };
 
         fetchMovies();
-    }, [collection]);
+    }, [collection, isKidsMode]);
 
     const handleMovieClick = async (movie) => {
         const type = movie.media_type || 'movie';

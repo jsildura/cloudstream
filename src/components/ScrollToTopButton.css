@@ -62,11 +62,17 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .scroll-to-top-btn {
-        bottom: 90px;
-        /* Above Global Chat FAB on mobile */
-        right: 20px;
+        bottom: calc(90px + env(safe-area-inset-bottom));
+        right: max(14px, env(safe-area-inset-right));
         width: 44px;
         height: 44px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .scroll-to-top-btn {
+        bottom: calc(94px + env(safe-area-inset-bottom));
+        right: max(16px, env(safe-area-inset-right));
     }
 }
 

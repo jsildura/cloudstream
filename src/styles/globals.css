@@ -108,10 +108,11 @@ button:focus-visible,
 
 /* Cards - special focus treatment */
 .movie-card:focus-visible {
-  outline: 4px solid #e50914;
+  outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 4px;
-  transform: scale(1.02) translateY(-5px);
-  box-shadow: 0 0 30px rgba(229, 9, 20, 0.4);
+  border-radius: 12px;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Carousel buttons focus */
@@ -480,10 +481,9 @@ input,
   .grid-container {
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 15px 1fr 15px 1fr;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 15px;
-    padding: 10px 5px;
+    grid-template-columns: repeat(auto-fit, 200px) !important;
+    gap: 12px;
+    padding: 4px 0 10px;
   }
 }
 
@@ -506,10 +506,9 @@ input,
   .grid-container {
     display: -ms-grid;
     display: grid;
-    -ms-grid-columns: 1fr 15px 1fr 15px 1fr;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 15px;
-    padding: 10px 5px;
+    grid-template-columns: repeat(auto-fit, 200px) !important;
+    gap: 12px;
+    padding: 4px 0 10px;
   }
 }
 
@@ -812,10 +811,11 @@ input,
 
   /* Enhanced focus for cards on 4K */
   .movie-card:focus-visible {
-    outline: 6px solid #e50914;
-    outline-offset: 8px;
-    transform: scale(1.03) translateY(-10px);
-    box-shadow: 0 0 60px rgba(229, 9, 20, 0.5);
+    outline: 8px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 16px;
+    border-radius: 48px;
+    transform: none;
+    box-shadow: none;
   }
 
   /* Carousel buttons - 4K sized */

@@ -71,9 +71,13 @@ const usePopularTracking = () => {
 
     // Initialize Firebase connection
     useEffect(() => {
-        const firebase = initFirebase();
-        if (firebase?.db) {
-            setDbRef(firebase.db);
+        try {
+            const firebase = initFirebase();
+            if (firebase?.db) {
+                setDbRef(firebase.db);
+            }
+        } catch (e) {
+            console.warn('Popular tracking skipped:', e?.message || e);
         }
     }, []);
 

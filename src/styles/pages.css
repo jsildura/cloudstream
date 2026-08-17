@@ -1735,9 +1735,9 @@
 
 .grid-container {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 15px;
-  padding: 10px 5px;
+  grid-template-columns: repeat(auto-fit, 380px);
+  gap: 16px;
+  padding: 4px 0 10px;
 }
 
 .filters-section {
@@ -3537,7 +3537,7 @@ select.filter-dropdown {
 
   /* Grid Layout - 4 columns for 720p */
   .grid-container {
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, 380px) !important;
     gap: 18px;
   }
 
@@ -3637,7 +3637,7 @@ select.filter-dropdown {
 
   /* Grid Layout - 5 columns for 1080p */
   .grid-container {
-    grid-template-columns: repeat(5, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, 380px) !important;
     gap: 20px;
   }
 
@@ -4197,7 +4197,7 @@ select.filter-dropdown {
 
   /* Grid Layout - 6 columns for 2K */
   .grid-container {
-    grid-template-columns: repeat(6, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, 380px) !important;
     gap: 22px;
   }
 
@@ -4770,7 +4770,7 @@ select.filter-dropdown {
 
   /* Grid Layout - 6-7 columns for 4K */
   .grid-container {
-    grid-template-columns: repeat(6, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, 1520px) !important;
     gap: 24px;
   }
 

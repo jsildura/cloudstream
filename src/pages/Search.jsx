@@ -5,7 +5,9 @@ import MetaTags from '../components/MetaTags';
 import DiscoverGrid from '../components/DiscoverGrid';
 import { useTMDB } from '../hooks/useTMDB';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import { useProfiles } from '../contexts/ProfileContext';
 import { useSearchFeed } from '../hooks/useSearchFeed';
+import { filterKidsCandidates } from '../lib/tmdbClient';
 import { resolveGenreQuery } from '../constants/genres';
 import PeopleStrip from '../components/PeopleStrip';
 import '../components/TrendingSection.css';
@@ -18,6 +20,7 @@ const DESKTOP_SEARCH_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: 
 const MAX_TOP_SEARCHES = 10;
 
 const Search = () => {
+  const { isKidsMode } = useProfiles();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -74,17 +77,18 @@ const Search = () => {
         if (!res.ok) return;
         const data = await res.json();
         if (cancelled) return;
-        setTopSearches(
-          (data.results || [])
-            .filter(i => i.title || i.name)
-            .slice(0, MAX_TOP_SEARCHES)
-        );
+        let results = (data.results || []).filter(i => i.title || i.name);
+        if (isKidsMode) {
+          results = await filterKidsCandidates(results, { maxCandidates: 20 });
+        }
+        if (cancelled) return;
+        setTopSearches(results.slice(0, MAX_TOP_SEARCHES));
       } catch {
         // Empty state just renders without this section.
       }
     })();
     return () => { cancelled = true; };
-  }, []);
+  }, [isKidsMode]);
 
   const runQuery = useCallback((q) => {
     setInput(q);

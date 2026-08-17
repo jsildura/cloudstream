@@ -7,6 +7,7 @@
  */
 import React, { useState, memo } from 'react';
 import useTMDBReviews from '../hooks/useTMDBReviews';
+import { useProfiles } from '../contexts/ProfileContext';
 import './ReviewSection.css';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -178,7 +179,12 @@ const ScoreSummary = ({ voteAverage, voteCount }) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const ReviewSection = memo(({ contentId, type, voteAverage, voteCount }) => {
-    const { reviews, totalResults, loading, error } = useTMDBReviews(contentId, type);
+    const { isKidsMode } = useProfiles();
+    const { reviews, totalResults, loading, error } = useTMDBReviews(isKidsMode ? null : contentId, type);
+
+    if (isKidsMode) {
+        return null;
+    }
 
     return (
         <div className="review-section">

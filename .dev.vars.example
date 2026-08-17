@@ -1,0 +1,2 @@
+# Local Cloudflare Pages secrets belong in .dev.vars, never source control.
+# GlobalChat v2 uses neither an admin password nor an RTDB database secret.

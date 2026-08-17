@@ -11,12 +11,13 @@ import BotProtection from './components/BotProtection';
 import Toast from './components/Toast';
 import PageLoader from './components/PageLoader';
 import UpdatePrompt from './components/UpdatePrompt';
+import KidsFeatureGuard from './components/KidsFeatureGuard';
+import KidsRatedWatchGuard from './components/KidsRatedWatchGuard';
 
 // Deferred — pulls in Firebase, only needed after first paint
 const GlobalChat = lazy(() => import('./components/GlobalChat'));
 
 // Context providers - always loaded
-import { ToastProvider } from './contexts/ToastContext';
 import { ViewerCountProvider } from './contexts/ViewerCountContext';
 import { HoverPreviewProvider } from './contexts/HoverPreviewContext';
 
@@ -116,9 +117,11 @@ const PersonPage = lazy(() => import('./pages/PersonPage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 
-function App() {
+import { useProfiles } from './contexts/ProfileContext';
 
+function App() {
   const location = useLocation();
+  const { isKidsMode } = useProfiles();
 
   // Enable TV remote / D-pad arrow key navigation
   useTVNavigation({ resetOnPathChange: location.pathname });
@@ -131,84 +134,83 @@ function App() {
   }, []);
 
   return (
-    <ToastProvider>
-      <ViewerCountProvider>
-        <HoverPreviewProvider>
-        <div className="App">
-          {/* VisitorTracker disabled */}
-          <BotProtection />
-          <AdblockModal />
-          <ScrollToTop />
-          <UpdatePrompt />
-          {/* Hide ScrollToTopButton on music pages */}
-          {!location.pathname.startsWith('/music') && <ScrollToTopButton />}
-          <Toast />
-          {/* Hide Navbar on watch pages for focused viewing */}
-          {!location.pathname.startsWith('/watch') &&
-            !location.pathname.includes('/iptv/watch') &&
-            !location.pathname.includes('/sports/watch') && (
-              <Navbar />
-            )}
+    <ViewerCountProvider>
+      <HoverPreviewProvider>
+      <div className="App">
+        {/* VisitorTracker disabled */}
+        <BotProtection />
+        <AdblockModal />
+        <ScrollToTop />
+        <UpdatePrompt />
+        {/* Hide ScrollToTopButton on music pages */}
+        {!location.pathname.startsWith('/music') && <ScrollToTopButton />}
+        <Toast />
+        {/* Hide Navbar on watch pages for focused viewing */}
+        {!location.pathname.startsWith('/watch') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <Navbar />
+          )}
 
-          <main>
-            {/* Suspense wrapper for lazy-loaded routes */}
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/my-list" element={<MyList />} />
-                <Route path="/tv-shows" element={<TVShows />} />
-                <Route path="/discover" element={<Discover />} />
-                <Route path="/watch" element={<KeyedWatch />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/disclaimer" element={<Disclaimer />} />
-                <Route path="/privacy" element={<DataPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/collection/:id" element={<CollectionDetails />} />
-                {['netflix', 'disney', 'prime-video', 'apple-tv', 'hbo', 'viu', 'crunchyroll', 'peacock']
-                  .map(path => <Route key={path} path={`/${path}`} element={<StreamingProviderPage />} />)}
-                <Route path="/studio/:id" element={<StudioPage />} />
-                <Route path="/iptv" element={<IPTV />} />
-                <Route path="/iptv/watch/:channelId" element={<IPTVWatch />} />
-                {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
-                <Route path="/sports/watch/:matchId" element={<SportsWatch />} />
-                {/* Temporarily disabled - Music routes
-                <Route path="/music" element={<MusicApp />}>
-                  <Route index element={<MusicHome />} />
-                  <Route path="album/:id" element={<MusicAlbum />} />
-                  <Route path="artist/:id" element={<MusicArtist />} />
-                  <Route path="track/:id" element={<MusicTrack />} />
-                  <Route path="playlist/:id" element={<MusicPlaylist />} />
-                </Route>
-                */}
-                <Route path="/search" element={<Search />} />
-                <Route path="/person/:id" element={<PersonPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+        <main>
+          {/* Suspense wrapper for lazy-loaded routes */}
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/my-list" element={<MyList />} />
+              <Route path="/tv-shows" element={<TVShows />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/watch" element={<KidsRatedWatchGuard><KeyedWatch /></KidsRatedWatchGuard>} />
+              <Route path="/about" element={<About />} />
+              <Route path="/disclaimer" element={<Disclaimer />} />
+              <Route path="/privacy" element={<DataPolicy />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/collection/:id" element={<CollectionDetails />} />
+              {['netflix', 'disney', 'prime-video', 'apple-tv', 'hbo', 'viu', 'crunchyroll', 'peacock']
+                .map(path => <Route key={path} path={`/${path}`} element={<StreamingProviderPage />} />)}
+              <Route path="/studio/:id" element={<StudioPage />} />
+              <Route path="/iptv" element={<KidsFeatureGuard><IPTV /></KidsFeatureGuard>} />
+              <Route path="/iptv/watch/:channelId" element={<KidsFeatureGuard><IPTVWatch /></KidsFeatureGuard>} />
+              {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
+              <Route path="/sports/watch/:matchId" element={<KidsFeatureGuard><SportsWatch /></KidsFeatureGuard>} />
+              {/* Temporarily disabled - Music routes
+              <Route path="/music" element={<MusicApp />}>
+                <Route index element={<MusicHome />} />
+                <Route path="album/:id" element={<MusicAlbum />} />
+                <Route path="artist/:id" element={<MusicArtist />} />
+                <Route path="track/:id" element={<MusicTrack />} />
+                <Route path="playlist/:id" element={<MusicPlaylist />} />
+              </Route>
+              */}
+              <Route path="/search" element={<Search />} />
+              <Route path="/person/:id" element={<KidsFeatureGuard><PersonPage /></KidsFeatureGuard>} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </main>
+
+        {/* Hide Footer on watch/music pages for focused viewing */}
+        {!location.pathname.startsWith('/watch') &&
+          !location.pathname.startsWith('/music') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <Footer />
+          )}
+
+        {/* Global Chat - Hidden on Watch and Music pages, and completely disabled in Kids mode */}
+        {!isKidsMode &&
+          !location.pathname.startsWith('/watch') &&
+          !location.pathname.startsWith('/music') &&
+          !location.pathname.includes('/iptv/watch') &&
+          !location.pathname.includes('/sports/watch') && (
+            <Suspense fallback={null}>
+              <GlobalChat />
             </Suspense>
-          </main>
-
-          {/* Hide Footer on watch/music pages for focused viewing */}
-          {!location.pathname.startsWith('/watch') &&
-            !location.pathname.startsWith('/music') &&
-            !location.pathname.includes('/iptv/watch') &&
-            !location.pathname.includes('/sports/watch') && (
-              <Footer />
-            )}
-
-          {/* Global Chat - Hidden on Watch and Music pages */}
-          {!location.pathname.startsWith('/watch') &&
-            !location.pathname.startsWith('/music') &&
-            !location.pathname.includes('/iptv/watch') &&
-            !location.pathname.includes('/sports/watch') && (
-              <Suspense fallback={null}>
-                <GlobalChat />
-              </Suspense>
-            )}
-        </div>
-        </HoverPreviewProvider>
-      </ViewerCountProvider>
-    </ToastProvider>
+          )}
+      </div>
+      </HoverPreviewProvider>
+    </ViewerCountProvider>
   );
 }
 

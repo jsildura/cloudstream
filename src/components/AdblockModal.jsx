@@ -1,77 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { isTVUserAgent } from '../utils/platform';
+import { runAdblockBaitTest } from '../lib/adblockDetection';
 import './AdblockModal.css';
 
+const SESSION_DISMISSED_KEY = 'streamflix_adblock_dismissed';
+
+const isSessionDismissed = () => {
+    try {
+        return sessionStorage.getItem(SESSION_DISMISSED_KEY) === 'true';
+    } catch {
+        return false;
+    }
+};
+
 const AdblockModal = () => {
-    // TODO: Re-enable adblock detection when project is complete
-    // Remove or comment out the "return null;" below to re-enable
+    // NOTE: detection is ACTIVE — it runs on every page load in dev and
+    // production alike (no environment gating). TV/console browsers get a
+    // dismissible banner instead of the full-screen block. Desktop/mobile users
+    // get a primary refresh prompt with a secondary "continue anyway" escape hatch.
 
     const [adblockDetected, setAdblockDetected] = useState(false);
     const [checkComplete, setCheckComplete] = useState(false);
-    const [dismissed, setDismissed] = useState(false);
+    const [dismissed, setDismissed] = useState(isSessionDismissed);
     const isTV = isTVUserAgent();
 
     useEffect(() => {
+        if (dismissed) {
+            setCheckComplete(true);
+            return;
+        }
+
         const detectAdblock = async () => {
             let blocked = false;
 
             try {
-                // Create bait elements that ad blockers typically hide
-                const baitContainer = document.createElement('div');
-                baitContainer.style.cssText = 'position: absolute; top: -9999px; left: -9999px;';
-
-                const baits = [
-                    { tag: 'div', attrs: { class: 'ad-unit', 'data-ad-slot': '1234567890' } },
-                    { tag: 'div', attrs: { class: 'ad-container ad-wrapper' } },
-                    { tag: 'div', attrs: { id: 'ad-banner', class: 'ad' } },
-                    { tag: 'div', attrs: { class: 'sponsor-ad sponsored-content' } },
-                    { tag: 'iframe', attrs: { src: 'about:blank', class: 'ad-frame' } },
-                ];
-
-                baits.forEach(({ tag, attrs }) => {
-                    const el = document.createElement(tag);
-                    Object.entries(attrs).forEach(([key, value]) => {
-                        el.setAttribute(key, value);
-                    });
-                    el.style.cssText = 'width: 1px; height: 1px; display: block;';
-                    el.innerHTML = '&nbsp;';
-                    baitContainer.appendChild(el);
-                });
-
-                document.body.appendChild(baitContainer);
-
-                // Wait for ad blockers to process
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                // Check if bait elements were hidden or removed
-                const baitElements = baitContainer.querySelectorAll('*');
-                for (const bait of baitElements) {
-                    if (!document.body.contains(bait)) {
-                        blocked = true;
-                        break;
-                    }
-                    const style = window.getComputedStyle(bait);
-                    if (
-                        style.display === 'none' ||
-                        style.visibility === 'hidden' ||
-                        style.opacity === '0' ||
-                        bait.offsetHeight === 0 ||
-                        bait.offsetWidth === 0
-                    ) {
-                        blocked = true;
-                        break;
-                    }
-                }
-
-                // Cleanup
-                if (baitContainer.parentNode) {
-                    baitContainer.parentNode.removeChild(baitContainer);
-                }
-
-                // Note: We intentionally do NOT check fetch to ad domains here
-                // because network failures, CORS issues, and connectivity problems
-                // can cause false positives. The bait element check above is more reliable.
-
+                blocked = await runAdblockBaitTest();
             } catch (error) {
                 console.error('Adblock detection error:', error);
                 // On error, don't assume adblock (avoid false positives)
@@ -82,24 +45,32 @@ const AdblockModal = () => {
             setCheckComplete(true);
         };
 
-        setTimeout(detectAdblock, 500);
-    }, []);
+        const timer = setTimeout(detectAdblock, 500);
+        return () => clearTimeout(timer);
+    }, [dismissed]);
 
     const handleRefresh = () => {
         window.location.reload();
     };
 
-    if (!checkComplete) return null;
-    if (!adblockDetected) return null;
+    const handleDismiss = () => {
+        try {
+            sessionStorage.setItem(SESSION_DISMISSED_KEY, 'true');
+        } catch {
+            // Ignore storage quota/permission errors
+        }
+        setDismissed(true);
+    };
+
+    if (dismissed || !checkComplete || !adblockDetected) return null;
 
     // TV browsers often have built-in ad blocking the user can't disable —
     // show a dismissable banner instead of blocking the entire app
-    if (isTV || dismissed) {
-        if (dismissed) return null;
+    if (isTV) {
         return (
             <div className="adblock-banner" role="alert">
                 <p>Ads are blocked — some features may be limited.</p>
-                <button className="adblock-banner-dismiss" onClick={() => setDismissed(true)} aria-label="Dismiss">✕</button>
+                <button className="adblock-banner-dismiss" onClick={handleDismiss} aria-label="Dismiss">✕</button>
             </div>
         );
     }
@@ -117,15 +88,20 @@ const AdblockModal = () => {
                 <p className="adblock-description">
                     Please disable your ad blocker to continue. Ads help keep Streamflix free for everyone.
                 </p>
-                <button className="adblock-refresh-btn" onClick={handleRefresh}>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 2v6h-6" />
-                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
-                        <path d="M3 22v-6h6" />
-                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
-                    </svg>
-                    I've Disabled It - Refresh
-                </button>
+                <div className="adblock-actions">
+                    <button className="adblock-refresh-btn" onClick={handleRefresh}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 2v6h-6" />
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                            <path d="M3 22v-6h6" />
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                        </svg>
+                        I've Disabled It - Refresh
+                    </button>
+                    <button className="adblock-dismiss-btn" onClick={handleDismiss}>
+                        Continue Anyway
+                    </button>
+                </div>
             </div>
         </div>
     );

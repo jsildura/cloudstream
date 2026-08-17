@@ -179,9 +179,9 @@ const ContinueWatching = ({ onItemClick }) => {
         }
     };
 
-    const handleRemove = (e, id) => {
+    const handleRemove = (e, item) => {
         e.stopPropagation();
-        removeFromHistory(id);
+        removeFromHistory(item.type || 'movie', item.id);
     };
 
     const handleClearAll = () => {
@@ -247,7 +247,7 @@ const ContinueWatching = ({ onItemClick }) => {
 
                     return (
                         <div
-                            key={item.id}
+                            key={`${item.type || 'movie'}_${item.id}`}
                             className="continue-watching-card"
                             onClick={() => handleItemClick(item)}
                             role="button"
@@ -260,17 +260,19 @@ const ContinueWatching = ({ onItemClick }) => {
                             }}
                             onFocus={(e) => e.currentTarget.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })}
                         >
-                            <div className="continue-watching-backdrop">
+                            <div className="continue-watching-backdrop-container">
                                 <img
                                     src={backdropSrc}
                                     alt={item.title}
+                                    className="continue-watching-backdrop"
                                     loading="lazy"
-                                    draggable="false"
                                 />
+
+                                {/* Hover Overlay */}
                                 <div className="continue-watching-hover-overlay">
                                     <button
                                         className="continue-watching-remove-btn"
-                                        onClick={(e) => handleRemove(e, item.id)}
+                                        onClick={(e) => handleRemove(e, item)}
                                         title="Remove from history"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

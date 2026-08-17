@@ -269,7 +269,11 @@ const SportsWatch = () => {
     };
 
     // Go back to sports page
-    const handleBack = () => {
+    const handleBack = (e) => {
+        if (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         navigate('/sports');
     };
 

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useProfiles } from '../contexts/ProfileContext';
+import { filterKidsCandidates } from '../lib/tmdbClient';
 
 // TMDB refuses `page` above 500 regardless of what `total_pages` reports.
 const MAX_TMDB_PAGE = 500;
@@ -62,6 +64,7 @@ const cacheSet = (key, value) => {
  * @param {string} query Already debounced by the caller. Empty string resets.
  */
 export function useSearchFeed(query, genreQuery = null) {
+  const { isKidsMode } = useProfiles();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
@@ -118,57 +121,35 @@ export function useSearchFeed(query, genreQuery = null) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const raw = await res.json();
 
-      // Same dedup + sort logic as PersonPage.jsx:
-      // Cast entries win over crew (if someone acts in AND directs a title,
-      // the cast entry is kept because it has the character name).
-      const seen = new Map();  // "media_type-id" → item
-      for (const item of (raw.cast || [])) {
-        const type = item.media_type || 'movie';
-        const key = `${type}-${item.id}`;
-        if (!seen.has(key)) {
-          seen.set(key, {
-            ...item,
-            media_type: type,
-            _sortDate: item.release_date || item.first_air_date || ''
-          });
-        }
-      }
-      for (const item of (raw.crew || [])) {
-        const type = item.media_type || 'movie';
-        const key = `${type}-${item.id}`;
-        if (!seen.has(key)) {
-          seen.set(key, {
-            ...item,
-            media_type: type,
-            _sortDate: item.release_date || item.first_air_date || ''
-          });
-        }
+      const combined = [
+        ...(raw.cast || []).map(c => ({ ...c, credit_type: 'cast' })),
+        ...(raw.crew || []).map(c => ({ ...c, credit_type: 'crew' }))
+      ];
+
+      const seen = new Set();
+      const deduped = [];
+      for (const item of combined) {
+        if (!isPlayable(item)) continue;
+        const key = keyOf(item);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        deduped.push(item);
       }
 
-      const results = [...seen.values()]
-        .sort((a, b) => {
-          // Titles WITH a date sort before titles without
-          if (a._sortDate && !b._sortDate) return -1;
-          if (!a._sortDate && b._sortDate) return 1;
-          // Among dated titles, newest first
-          return b._sortDate.localeCompare(a._sortDate);
-        })
-        .slice(0, PERSON_FILMOGRAPHY_CAP);
+      deduped.sort((a, b) => {
+        const dateA = a.release_date || a.first_air_date || '';
+        const dateB = b.release_date || b.first_air_date || '';
+        return dateB.localeCompare(dateA);
+      });
 
-      // Cache in the same shape every consumer reads:
-      // { results, people, total_pages, total_results }
-      data = {
-        results,
-        people: [],
-        total_pages: 1,
-        total_results: results.length
-      };
+      data = { results: deduped, total_results: deduped.length };
       cacheSet(cacheKey, data);
     }
 
     return data;
   }, []);
 
+  // ─── Regular multi-search ─────────────────────────────────────────
   const fetchPage = useCallback(async (page, append) => {
     const trimmed = query.trim();
     if (!trimmed) return;
@@ -181,9 +162,6 @@ export function useSearchFeed(query, genreQuery = null) {
     if (append) {
       setIsFetchingMore(true);
     } else {
-      // Stale-while-revalidate: only show skeletons on a cold grid. If results
-      // are already on screen, keep them and just dim — blanking the grid on
-      // every keystroke pause is what made search feel slow.
       setLoading(!hasItemsRef.current);
       setIsRefreshing(hasItemsRef.current);
       setError(null);
@@ -195,7 +173,7 @@ export function useSearchFeed(query, genreQuery = null) {
       let pageCursor = page;
 
       for (let attempt = 0; attempt < MAX_PAGES_PER_LOAD; attempt++) {
-        const cacheKey = `${trimmed}|${pageCursor}`;
+        const cacheKey = `${isKidsMode ? 'kids' : 'adult'}|${trimmed}|${pageCursor}`;
         let pageData = cacheGet(cacheKey);
 
         if (!pageData) {
@@ -209,14 +187,16 @@ export function useSearchFeed(query, genreQuery = null) {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
 
-          // Superseded while awaiting — drop it on the floor.
           if (generation !== generationRef.current) return;
 
           const media = [];
           const personResults = [];
           for (const r of (data.results || [])) {
-            if (r.media_type === 'person') personResults.push(r);
-            else if (isPlayable(r)) media.push(r);
+            if (r.media_type === 'person') {
+              if (!isKidsMode) personResults.push(r);
+            } else if (isPlayable(r)) {
+              media.push(r);
+            }
           }
           pageData = {
             results: media,
@@ -228,65 +208,60 @@ export function useSearchFeed(query, genreQuery = null) {
         }
 
         collected.push(...pageData.results);
-        if (pageData.people) collectedPeople.push(...pageData.people);
+        if (!isKidsMode && pageData.people) collectedPeople.push(...pageData.people);
 
         const cap = Math.min(pageData.total_pages, MAX_TMDB_PAGE);
         setTotalPages(cap);
         setTotalResults(pageData.total_results);
 
-        // Enough to fill a screen, or nothing left to ask for.
         if (collected.length >= THIN_PAGE || pageCursor >= cap) break;
         pageCursor += 1;
       }
+
+      // Filter collected candidates through Kids policy if active
+      let finalCollected = collected;
+      if (isKidsMode) {
+        finalCollected = await filterKidsCandidates(collected, { signal: controller.signal });
+      }
+
+      if (generation !== generationRef.current) return;
 
       setCurrentPage(pageCursor);
 
       if (append) {
         setItems(prev => {
           const seen = new Set(prev.map(keyOf));
-          const next = [...prev, ...collected.filter(i => !seen.has(keyOf(i)))];
+          const next = [...prev, ...finalCollected.filter(i => !seen.has(keyOf(i)))];
           hasItemsRef.current = next.length > 0;
           return next;
         });
-        // Append-mode: merge new people, deduplicate by keyOf
         setPeople(prev => {
+          if (isKidsMode) return [];
           const seen = new Set(prev.map(keyOf));
           return [...prev, ...collectedPeople.filter(p => !seen.has(keyOf(p)))];
         });
       } else {
-        // ─── Person-intent decision ───────────────────────────────────
-        // Derived from page 1 of THIS multi response (zero extra requests).
-        // First person entry whose normalized name equals the query →
-        // the grid becomes that person's filmography.
-        // Page 1 was just fetched + cached by this operation (non-append
-        // always starts at page 1), so it is guaranteed present here.
-        const p1 = cacheGet(`${trimmed}|1`);                // LRU touch is fine
-        const topPerson = (p1 && p1.people) ? p1.people[0] : null;
-        const personMatch = topPerson &&
+        const p1 = cacheGet(`${isKidsMode ? 'kids' : 'adult'}|${trimmed}|1`);
+        const topPerson = (!isKidsMode && p1 && p1.people) ? p1.people[0] : null;
+        const personMatch = !isKidsMode && topPerson &&
           normalizePersonName(topPerson.name) === normalizePersonName(trimmed);
 
         if (personMatch) {
-          // PERSON MODE: swap grid contents with filmography. personMode is
-          // set AFTER the generation guard so a superseded fetch can never
-          // leave a stale person header over the wrong items.
           const creds = await loadCombinedCredits(topPerson.id, controller.signal);
-          // Superseded while awaiting — another query came in, drop this.
           if (generation !== generationRef.current) return;
           setPersonMode({ id: topPerson.id, name: topPerson.name });
-          setPersonEnrichCount(ENRICH_PERSON_CAP);   // restart the logo chunks
+          setPersonEnrichCount(ENRICH_PERSON_CAP);
           setItems(creds.results);
           hasItemsRef.current = creds.results.length > 0;
           setTotalResults(creds.total_results);
-          setTotalPages(1);       // filmography is one complete payload
+          setTotalPages(1);
           setCurrentPage(1);
-          // Strip still shows the ranked people from multi (incl. the match).
           setPeople(collectedPeople);
         } else {
-          // NORMAL TEXT MODE: unchanged behavior
           setPersonMode(null);
-          setItems(collected);
-          hasItemsRef.current = collected.length > 0;
-          setPeople(collectedPeople);
+          setItems(finalCollected);
+          hasItemsRef.current = finalCollected.length > 0;
+          setPeople(isKidsMode ? [] : collectedPeople);
         }
       }
     } catch (err) {
@@ -295,10 +270,9 @@ export function useSearchFeed(query, genreQuery = null) {
       console.error('Search failed:', err);
       if (!append) {
         setItems([]);
+        setPeople([]);
         hasItemsRef.current = false;
-        setPersonMode(null);   // never linger a person header over an error
-        setTotalResults(0);
-        setError('We could not run that search. Please try again.');
+        setError('Search failed. Please check your connection and try again.');
       }
     } finally {
       if (generation === generationRef.current) {
@@ -307,11 +281,11 @@ export function useSearchFeed(query, genreQuery = null) {
         setIsFetchingMore(false);
       }
     }
-  }, [query, loadCombinedCredits]);
+  }, [query, isKidsMode, loadCombinedCredits]);
 
-  // ─── Genre-mode fetch ──────────────────────────────────────────────
+  // ─── Genre-aware search ───────────────────────────────────────────
   const fetchGenrePage = useCallback(async (append) => {
-    if (!genreQuery || !genreQuery.entries || genreQuery.entries.length === 0) return;
+    if (!genreQuery || !genreQuery.entries || !genreQuery.entries.length) return;
 
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -321,12 +295,13 @@ export function useSearchFeed(query, genreQuery = null) {
     if (append) {
       setIsFetchingMore(true);
     } else {
-      setLoading(!hasItemsRef.current);
-      setIsRefreshing(hasItemsRef.current);
+      setLoading(true);
+      setIsRefreshing(false);
       setError(null);
-      // Initialize per-source cursors on first load
       sourcesRef.current = genreQuery.entries.map(e => ({
-        ...e,
+        media: e.media,
+        param: e.param,
+        id: e.id,
         page: 1,
         totalPages: 1,
         done: false
@@ -336,14 +311,10 @@ export function useSearchFeed(query, genreQuery = null) {
     try {
       const allResults = [];
 
-      // Fan out: one /discover call per source (e.g. movie + tv for "Comedy")
       for (const source of sourcesRef.current) {
         if (source.done) continue;
 
-        // Namespace by media AND param: same id on with_genres vs with_keywords
-        // must never share a cache entry (e.g. a future keyword id equal to a
-        // genre id would otherwise serve the wrong catalogue).
-        const cacheKey = `g${source.media[0]}|${source.param}:${source.id}|${source.page}`;
+        const cacheKey = `${isKidsMode ? 'kids' : 'adult'}|${source.media}|${source.param}=${source.id}|${source.page}`;
         let pageData = cacheGet(cacheKey);
 
         if (!pageData) {
@@ -354,13 +325,19 @@ export function useSearchFeed(query, genreQuery = null) {
           url.searchParams.set('sort_by', 'popularity.desc');
           url.searchParams.set('page', String(source.page));
 
+          if (isKidsMode) {
+            if (source.media === 'movie') {
+              url.searchParams.set('certification_country', 'US');
+              url.searchParams.set('certification.lte', 'PG');
+            }
+          }
+
           const res = await fetch(url, { signal: controller.signal });
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const data = await res.json();
 
           if (generation !== generationRef.current) return;
 
-          // CRITICAL: stamp media_type — discover results do NOT carry it
           pageData = {
             results: (data.results || []).map(r => ({ ...r, media_type: source.media })),
             people: [],
@@ -373,7 +350,6 @@ export function useSearchFeed(query, genreQuery = null) {
         source.totalPages = Math.min(pageData.total_pages, MAX_TMDB_PAGE);
         allResults.push(...pageData.results);
 
-        // Advance cursor for next time
         if (source.page >= source.totalPages) {
           source.done = true;
         } else {
@@ -381,24 +357,29 @@ export function useSearchFeed(query, genreQuery = null) {
         }
       }
 
-      // Update totals (rough estimate from the first source)
+      let finalResults = allResults;
+      if (isKidsMode) {
+        finalResults = await filterKidsCandidates(allResults, { signal: controller.signal });
+      }
+
+      if (generation !== generationRef.current) return;
+
       const activeSources = sourcesRef.current.filter(s => !s.done);
       setTotalPages(activeSources.length > 0 ? Math.max(...sourcesRef.current.map(s => s.totalPages)) : 1);
-      setTotalResults(allResults.length);
+      setTotalResults(finalResults.length);
 
       if (append) {
         setItems(prev => {
           const seen = new Set(prev.map(keyOf));
-          const next = [...prev, ...allResults.filter(i => !seen.has(keyOf(i)))];
+          const next = [...prev, ...finalResults.filter(i => !seen.has(keyOf(i)))];
           hasItemsRef.current = next.length > 0;
           return next;
         });
       } else {
-        setItems(allResults);
-        hasItemsRef.current = allResults.length > 0;
+        setItems(finalResults);
+        hasItemsRef.current = finalResults.length > 0;
       }
 
-      // Genre mode never has people
       setPeople([]);
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -416,7 +397,7 @@ export function useSearchFeed(query, genreQuery = null) {
         setIsFetchingMore(false);
       }
     }
-  }, [genreQuery]);
+  }, [genreQuery, isKidsMode]);
 
   const isGenre = !!(genreQuery && genreQuery.entries && genreQuery.entries.length);
 

@@ -1,0 +1,8 @@
+{
+  "database": { "rules": "database.rules.transitional.json" },
+  "emulators": {
+    "auth": { "port": 9099 },
+    "database": { "port": 9000 },
+    "ui": { "enabled": true, "port": 4000 }
+  }
+}

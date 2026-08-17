@@ -7,7 +7,7 @@ import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TopTenRow.css';
 import CarouselControls from './CarouselControls';
 
-const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
+const TopTenRow = ({ items, onItemClick, countryName = 'Your Country', title, subtitle, showRanks = true }) => {
     const { fetchItemBundle } = useTMDB();
     const { getPreviewProps, closeNow } = useHoverPreview();
 
@@ -43,8 +43,6 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
     const animationFrameId = useRef(null);
 
     // Fetch logos and backdrops.
-    // `cancelled` prevents a stale enrichment run (previous `items` prop) from
-    // overwriting new content or leaving isEnriching stuck at true.
     useEffect(() => {
         let cancelled = false;
 
@@ -57,7 +55,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                 const enrichedItems = await Promise.all(
                     items.map(async (item) => {
                         try {
-                            const type = item.type || item.media_type || 'movie';
+                            const type = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
                             // One bundled call covers both the images and the
                             // vote_average that used to need its own details fetch.
                             const data = await fetchItemBundle(type, item.id, ['images']);
@@ -79,6 +77,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
                             return {
                                 ...item,
+                                type,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path, // Fallback to poster if really no backdrop
                                 vote_average: rating
@@ -127,8 +126,6 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
         };
     }, []);
-
-    // ... (Keep existing Momentum/Drag/Event handlers logic) ...
 
     // Validate focusedCardIndex
     useEffect(() => {
@@ -237,7 +234,11 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
             case 'Enter':
             case ' ':
                 e.preventDefault();
-                if (displayContent?.[index]) onItemClick(displayContent[index]);
+                if (displayContent?.[index]) {
+                    const item = displayContent[index];
+                    const itemType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+                    onItemClick({ ...item, type: itemType });
+                }
                 break;
         }
     }, [displayContent, onItemClick]);
@@ -254,8 +255,8 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
 
     return (
         <div className="top-ten-section" data-nav-section="top-ten">
-            <h2 className="top-ten-title">Top 10 in {countryName}</h2>
-            <p className="top-ten-subtitle">What {countryName} is Watching</p>
+            <h2 className="top-ten-title">{title || `Top 10 in ${countryName}`}</h2>
+            <p className="top-ten-subtitle">{subtitle || `What ${countryName} is Watching`}</p>
 
             <div className="carousel-container">
                 <div
@@ -271,6 +272,9 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                 >
                 {displayContent.map((item, index) => {
                     const title = item.title || item.name;
+                    const itemType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+                    const enrichedItem = { ...item, type: itemType };
+
                     // Use Backdrop logic
                     const backdropSrc = cardBackdrop(item.backdrop_path)
                         ?? posterAsBackdrop(item.poster_path)
@@ -287,14 +291,14 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                             onClick={() => {
                                 if (isDragging) return;
                                 closeNow(); // dismiss the hover preview before the modal opens
-                                onItemClick(item);
+                                onItemClick(enrichedItem);
                             }}
-                            {...getPreviewProps(item, undefined, isDragging, onItemClick)}
+                            {...getPreviewProps(enrichedItem, itemType, isDragging, () => onItemClick(enrichedItem))}
                             role="button"
                             tabIndex={0}
                             onKeyDown={(e) => handleKeyDown(e, index)}
                             onFocus={() => handleCardFocus(index)}
-                            aria-label={`#${index + 1} ${title}`}
+                            aria-label={showRanks ? `#${index + 1} ${title}` : title}
                         >
                             <div className="top-ten-backdrop">
                                 <img
@@ -302,6 +306,10 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                                     alt={getPosterAlt(item)}
                                     loading="lazy"
                                     draggable="false"
+                                    onError={(e) => {
+                                        // Fallback to placeholder if image fails to load
+                                        e.target.src = '/placeholder-backdrop.jpg';
+                                    }}
                                 />
                                 <div className="top-ten-hover-overlay">
                                     <button className="top-ten-play-btn" tabIndex={-1}>
@@ -311,8 +319,7 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country' }) => {
                                     </button>
                                 </div>
 
-                                {/* Rank Number inside card */}
-                                <div className="top-ten-rank">{index + 1}</div>
+                                {showRanks && <div className="top-ten-rank">{index + 1}</div>}
 
                                 {/* Rating */}
                                 {item.vote_average > 0 && (

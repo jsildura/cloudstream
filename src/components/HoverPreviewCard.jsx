@@ -28,10 +28,10 @@ const VIEWPORT_MARGIN = 12;
  * proportion with the media.
  */
 const previewWidthFor = (vw) => {
-    if (vw >= 3840) return 1120;
-    if (vw >= 1920) return 560;
-    if (vw >= 1024) return 420;
-    return 360;
+    if (vw >= 3840) return 1130;
+    if (vw >= 1920) return 570;
+    if (vw >= 1024) return 430;
+    return 370;
 };
 
 /** Media (16:9) plus the info panel, which grows with the breakpoint.
@@ -52,7 +52,7 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
     const navigate = useNavigate();
     const { fetchItemBundle, movieGenres, tvGenres } = useTMDB();
     const { isInWatchlist, toggleWatchlist } = useWatchlist();
-    const { showSuccess } = useToast();
+    const { showSuccess, showError } = useToast();
     const { keepPreview, closePreview, closeNow } = useHoverPreview();
 
     const [logoPath, setLogoPath] = useState(item.logo_path || null);
@@ -62,7 +62,7 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
     const [isMuted, setIsMuted] = useState(false);
 
     // Evaluate list status directly from the hook to stay in sync
-    const inList = isInWatchlist(item.id);
+    const inList = isInWatchlist(type || item.type || 'movie', item.id);
 
     // runtime in minutes — seeded from item if detail-fetched, else lazy-loaded
     const [runtimeMins, setRuntimeMins] = useState(
@@ -181,11 +181,29 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
         }
     }, [title, type, item.id, showSuccess]);
 
-    const handleToggleList = useCallback((e) => {
+    const handleToggleList = useCallback(async (e) => {
         e.stopPropagation();
-        const added = toggleWatchlist(item);
-        showSuccess(added ? 'Added to Watchlist' : 'Removed from Watchlist');
-    }, [item, toggleWatchlist, showSuccess]);
+        const mediaType = type || item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+        const res = await toggleWatchlist({
+            id: item.id,
+            type: mediaType,
+            title: item.title || item.name,
+            poster_path: item.poster_path,
+            backdrop_path: item.backdrop_path,
+            overview: item.overview,
+            vote_average: item.vote_average,
+            release_date: item.release_date || item.first_air_date,
+            genres: item.genres || item.genre_ids
+        });
+
+        if (res?.ok) {
+            showSuccess(res.action === 'added' ? 'Added to Watchlist' : 'Removed from Watchlist');
+        } else if (res?.reason === 'sign-in-required') {
+            showError('Sign in with Google to add to Watchlist');
+        } else if (res?.message) {
+            showError(res.message);
+        }
+    }, [item, type, toggleWatchlist, showSuccess, showError]);
 
     // Hands off to the row's own card-click handler so the modal that opens is
     // the exact same one - same enrichment (genres / cast / rating), same

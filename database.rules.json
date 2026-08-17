@@ -1,38 +1,432 @@
 {
   "rules": {
-    "messages": {
-      ".read": true,
-      ".write": "auth != null",
-      ".indexOn": ["broadcast", "ticketNo"],
-      "$messageId": {
-        ".write": "newData.exists() ? ((newData.child('broadcast').val() === true ? root.child('users').child(newData.child('uid').val()).child('isAdmin').val() === true : true) && (newData.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)) : (data.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true)"
+    "accounts": {
+      "$uid": {
+        ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+        "schemaVersion": {
+          ".validate": "newData.val() === 1"
+        },
+        "profiles": {
+          "$profileId": {
+            ".validate": "$profileId.matches(/^-[A-Za-z0-9_-]{19}$/) && (!newData.exists() || newData.hasChildren(['name', 'avatar', 'isKids', 'createdAt']))",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 20"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().matches(/^avatar_(0[1-9]|1[0-2])$/)"
+            },
+            "isKids": {
+              ".validate": "newData.isBoolean()"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && (!data.exists() || data.val() === newData.val())"
+            },
+            "pinHash": {
+              ".validate": "newData.parent().child('isKids').val() === true && newData.isString() && newData.val().length > 0"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
       }
+    },
+    "profileData": {
+      "$uid": {
+        ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+        "$profileId": {
+          ".validate": "!newData.exists() || root.child('accounts').child($uid).child('profiles').child($profileId).exists()",
+          "watchlist": {
+            "$mediaKey": {
+              ".validate": "$mediaKey.matches(/^(movie|tv)_[0-9]+$/) && (!newData.exists() || newData.hasChildren(['id', 'type', 'title', 'addedAt']))",
+              "id": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              },
+              "type": {
+                ".validate": "newData.val() === 'movie' || newData.val() === 'tv'"
+              },
+              "title": {
+                ".validate": "newData.isString() && newData.val().length > 0"
+              },
+              "addedAt": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              },
+              "poster_path": {
+                ".validate": "newData.isString()"
+              },
+              "backdrop_path": {
+                ".validate": "newData.isString()"
+              },
+              "overview": {
+                ".validate": "newData.isString()"
+              },
+              "vote_average": {
+                ".validate": "newData.isNumber()"
+              },
+              "release_date": {
+                ".validate": "newData.isString()"
+              },
+              "genres": {
+                "$genreId": {
+                  ".validate": "$genreId.matches(/^[0-9]+$/) && newData.val() === true"
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "watchHistory": {
+            "$mediaKey": {
+              ".validate": "$mediaKey.matches(/^(movie|tv)_[0-9]+$/) && (!newData.exists() || newData.hasChildren(['id', 'type', 'title', 'lastWatched', 'currentTime', 'duration', 'progress']))",
+              "id": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              },
+              "type": {
+                ".validate": "newData.val() === 'movie' || newData.val() === 'tv'"
+              },
+              "title": {
+                ".validate": "newData.isString() && newData.val().length > 0"
+              },
+              "lastWatched": {
+                ".validate": "newData.isNumber() && newData.val() > 0"
+              },
+              "currentTime": {
+                ".validate": "newData.isNumber() && newData.val() >= 0"
+              },
+              "duration": {
+                ".validate": "newData.isNumber() && newData.val() >= 0"
+              },
+              "progress": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1"
+              },
+              "poster_path": {
+                ".validate": "newData.isString()"
+              },
+              "backdrop_path": {
+                ".validate": "newData.isString()"
+              },
+              "lastSeason": {
+                ".validate": "newData.parent().child('type').val() === 'tv' && newData.isNumber() && newData.val() >= 0"
+              },
+              "lastEpisode": {
+                ".validate": "newData.parent().child('type').val() === 'tv' && newData.isNumber() && newData.val() >= 0"
+              },
+              "totalSeasons": {
+                ".validate": "newData.parent().child('type').val() === 'tv' && newData.isNumber() && newData.val() >= 0"
+              },
+              "genres": {
+                "$genreId": {
+                  ".validate": "$genreId.matches(/^[0-9]+$/) && newData.val() === true"
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "globalChat": {
+      "v2": {
+        "profiles": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com'",
+          "$uid": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['uid', 'displayName', 'joinedAt', 'updatedAt'])",
+            "uid": {
+              ".validate": "newData.val() === $uid && (!data.exists() || data.val() === newData.val())"
+            },
+            "displayName": {
+              ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 80 && (auth.token.name != null && auth.token.name.length >= 1 && auth.token.name.length <= 80 ? newData.val() === auth.token.name : newData.val() === 'Google User')"
+            },
+            "photoURL": {
+              ".validate": "newData.isString() && auth.token.picture != null && auth.token.picture.matches(/^https:\\/\\/.+/) && newData.val() === auth.token.picture"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && (!data.exists() || data.val() === newData.val())"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "messages": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com'",
+          ".indexOn": ["broadcast", "ticketNo", "createdAt"],
+          "$messageId": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && (!data.exists() ? (newData.child('uid').val() === auth.uid && (newData.child('type').val() === 'ticket' ? (newData.child('reporterUid').val() === auth.uid && newData.child('senderIsAdmin').val() === false && newData.child('broadcast').val() === false) : true)) : (!newData.exists() ? (auth.token.globalChatAdmin === true) : (data.child('type').val() === 'ticket' ? (auth.token.globalChatAdmin === true && data.child('ticketStatus').val() === 'open' && newData.child('ticketStatus').val() === 'resolved') : (data.child('uid').val() === auth.uid && data.child('deletedForAll').val() === false && (newData.child('deletedForAll').val() === true || now <= data.child('createdAt').val() + 180000)))))",
+            ".validate": "newData.exists() ? (newData.hasChildren(['uid', 'senderName', 'senderIsAdmin', 'text', 'broadcast', 'createdAt', 'deletedForAll']) && (newData.child('type').val() === 'ticket' ? (newData.hasChildren(['ticketNo', 'ticketAction', 'ticketStatus', 'category', 'reporterUid']) && newData.child('ticketAction').val() === 'created' && (newData.child('ticketStatus').val() === 'open' || (data.exists() && newData.child('ticketStatus').val() === 'resolved')) && newData.child('senderIsAdmin').val() === false && newData.child('broadcast').val() === false && (!data.exists() ? newData.child('reporterUid').val() === auth.uid : true) && newData.child('text').val() === '') : (newData.child('text').val().length > 0 || newData.hasChild('movies') || newData.hasChild('recTitle') || newData.hasChild('recText') || newData.hasChild('mediaUrl')))) : true",
+            "uid": {
+              ".validate": "!data.exists() ? (newData.val() === auth.uid) : (data.val() === newData.val())"
+            },
+            "senderName": {
+              ".validate": "!data.exists() ? (newData.isString() && newData.val().length >= 1 && newData.val().length <= 80 && (auth.token.name != null && auth.token.name.length >= 1 && auth.token.name.length <= 80 ? newData.val() === auth.token.name : newData.val() === 'Google User')) : (data.val() === newData.val())"
+            },
+            "senderPhotoURL": {
+              ".validate": "!data.exists() ? (newData.isString() && auth.token.picture != null && auth.token.picture.matches(/^https:\\/\\/.+/) && newData.val() === auth.token.picture) : (data.val() === newData.val())"
+            },
+            "senderIsAdmin": {
+              ".validate": "!data.exists() ? (newData.isBoolean() && newData.val() === (auth.token.globalChatAdmin === true)) : (data.val() === newData.val())"
+            },
+            "broadcast": {
+              ".validate": "!data.exists() ? (newData.isBoolean() && (newData.val() === true ? (auth.token.globalChatAdmin === true && newData.parent().child('text').val().contains('@everyone')) : true)) : (data.val() === newData.val())"
+            },
+            "text": {
+              ".validate": "newData.isString() && newData.val().length <= 2000"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && (!data.exists() || data.val() === newData.val())"
+            },
+            "editedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "deletedForAll": {
+              ".validate": "newData.isBoolean() && (!data.exists() ? (newData.val() === false) : (data.val() === true ? newData.val() === true : true))"
+            },
+            "type": {
+              ".validate": "newData.val() === 'ticket' && (!data.exists() || data.val() === newData.val())"
+            },
+            "ticketNo": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50 && (!data.exists() || data.val() === newData.val())"
+            },
+            "ticketAction": {
+              ".validate": "newData.val() === 'created' && (!data.exists() || data.val() === newData.val())"
+            },
+            "ticketStatus": {
+              ".validate": "newData.isString() && (!data.exists() ? (newData.val() === 'open') : (data.val() === 'open' && newData.val() === 'resolved'))"
+            },
+            "category": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100 && (!data.exists() || data.val() === newData.val())"
+            },
+            "reporterUid": {
+              ".validate": "!data.exists() ? (newData.val() === auth.uid) : (data.val() === newData.val())"
+            },
+            "resolvedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "resolvedBy": {
+              ".validate": "newData.val() === auth.uid"
+            },
+            "recTitle": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "recText": {
+              ".validate": "newData.isString() && newData.val().length <= 1000"
+            },
+            "mediaUrl": {
+              ".validate": "newData.isString() && newData.val().matches(/^https:\\/\\/.+/)"
+            },
+            "mediaType": {
+              ".validate": "newData.isString() && newData.val().length <= 50"
+            },
+            "movies": {
+              "$index": {
+                ".validate": "newData.hasChildren(['id', 'title'])",
+                "id": {
+                  ".validate": "newData.isNumber() && newData.val() > 0"
+                },
+                "title": {
+                  ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200"
+                },
+                "poster_path": {
+                  ".validate": "newData.isString()"
+                },
+                "type": {
+                  ".validate": "newData.val() === 'movie' || newData.val() === 'tv'"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
+            "replyTo": {
+              ".validate": "newData.hasChildren(['messageId', 'senderName', 'text'])",
+              "messageId": {
+                ".validate": "newData.isString() && newData.val().length > 0"
+              },
+              "senderName": {
+                ".validate": "newData.isString() && newData.val().length <= 80"
+              },
+              "text": {
+                ".validate": "newData.isString() && newData.val().length <= 50"
+              },
+              "$other": {
+                ".validate": false
+              }
+            },
+            "reactions": {
+              "$reactionUid": {
+                ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $reactionUid",
+                ".validate": "newData.val() === '❤️' || newData.val() === '😂' || newData.val() === '😮' || newData.val() === '😢' || newData.val() === '😡' || newData.val() === '👍'"
+              }
+            },
+            "seenBy": {
+              "$seenUid": {
+                ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $seenUid",
+                ".validate": "newData.val() === true"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "reports": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.globalChatAdmin === true",
+          "$reportId": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && (!data.exists() ? (newData.child('reportedBy').val() === auth.uid) : (auth.token.globalChatAdmin === true))",
+            ".validate": "newData.exists() ? (newData.hasChildren(['kind', 'reportedBy', 'reportedByName', 'timestamp']) && (!data.exists() ? newData.child('reportedBy').val() === auth.uid : true) && (newData.child('kind').val() === 'message' || newData.child('kind').val() === 'issue')) : true",
+            "kind": {
+              ".validate": "newData.val() === 'message' || newData.val() === 'issue'"
+            },
+            "reportedBy": {
+              ".validate": "!data.exists() ? (newData.val() === auth.uid) : (data.val() === newData.val())"
+            },
+            "reportedByName": {
+              ".validate": "!data.exists() ? (newData.isString() && newData.val().length >= 1 && newData.val().length <= 80 && (auth.token.name != null && auth.token.name.length >= 1 && auth.token.name.length <= 80 ? newData.val() === auth.token.name : newData.val() === 'Google User')) : (data.val() === newData.val())"
+            },
+            "timestamp": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && (!data.exists() || data.val() === newData.val())"
+            },
+            "msgId": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+            },
+            "messageText": {
+              ".validate": "newData.isString() && newData.val().length <= 200"
+            },
+            "messageSenderName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+            },
+            "messageMedia": {
+              ".validate": "newData.val() === 'image' || newData.val() === 'video' || newData.val() === 'file'"
+            },
+            "category": {
+              ".validate": "newData.val() === 'Video won\\'t play' || newData.val() === 'Buffers or stops' || newData.val() === 'Wrong info (title, poster, etc.)' || newData.val() === 'Search not working' || newData.val() === 'Something else'"
+            },
+            "description": {
+              ".validate": "newData.isString() && newData.val().length <= 1000"
+            },
+            "ticketNo": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "ticketMsgId": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+            },
+            "status": {
+              ".validate": "newData.val() === 'pending' || newData.val() === 'resolved' || newData.val() === 'dismissed'"
+            },
+            "resolvedAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "resolvedBy": {
+              ".validate": "newData.val() === auth.uid"
+            },
+            "context": {
+              ".validate": "newData.hasChildren(['route', 'ua', 'playback'])",
+              "route": {
+                ".validate": "newData.isString() && newData.val().length <= 500"
+              },
+              "ua": {
+                ".validate": "newData.isString() && newData.val().length <= 500"
+              },
+              "playback": {
+                ".validate": "newData.isBoolean()"
+              },
+              "title": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "tmdbId": {
+                ".validate": "(newData.isString() && newData.val().length <= 100) || (newData.isNumber() && newData.val() >= 0)"
+              },
+              "mediaType": {
+                ".validate": "newData.val() === 'movie' || newData.val() === 'tv'"
+              },
+              "season": {
+                ".validate": "newData.isNumber() && newData.val() >= 0"
+              },
+              "episode": {
+                ".validate": "newData.isNumber() && newData.val() >= 0"
+              },
+              "fromServer": {
+                ".validate": "newData.isString() && newData.val().length <= 100"
+              },
+              "toServer": {
+                ".validate": "newData.isString() && newData.val().length <= 100"
+              },
+              "$other": {
+                ".validate": false
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "pinnedMessage": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com'",
+          ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.globalChatAdmin === true",
+          ".validate": "newData.exists() ? (newData.hasChildren(['id', 'text', 'senderName', 'pinnedAt', 'pinnedBy']) && newData.child('pinnedBy').val() === auth.uid) : true",
+          "id": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+          },
+          "text": {
+            ".validate": "newData.isString() && newData.val().length <= 200"
+          },
+          "senderName": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+          },
+          "pinnedAt": {
+            ".validate": "newData.isNumber() && newData.val() > 0"
+          },
+          "pinnedBy": {
+            ".validate": "newData.val() === auth.uid"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "messages": {
+      ".read": false,
+      ".write": false
     },
     "users": {
-      "$uid": {
-        ".read": true,
-        ".write": "$uid === auth.uid && (newData.child('isAdmin').val() !== true || data.child('isAdmin').val() === true)"
-      }
+      ".read": false,
+      ".write": false
     },
     "nicknames": {
-      "$name": {
-        ".read": true,
-        ".write": "newData.exists() ? ((newData.child('uid').val() === auth.uid && (!data.exists() || data.child('uid').val() === auth.uid)) || root.child('users').child(auth.uid).child('isAdmin').val() === true) : (data.exists() && (data.child('uid').val() === auth.uid || root.child('users').child(auth.uid).child('isAdmin').val() === true))"
-      }
+      ".read": false,
+      ".write": false
     },
     "secrets": {
-      "admin_key": { ".read": "auth != null", ".write": false },
-      "admin_profile": { ".read": "auth != null", ".write": "auth != null" }
+      ".read": false,
+      ".write": false
     },
     "reports": {
-      ".read": "root.child('users').child(auth.uid).child('isAdmin').val() === true",
-      "$reportId": {
-        ".write": "(!data.exists() && newData.exists()) || root.child('users').child(auth.uid).child('isAdmin').val() === true"
-      }
+      ".read": false,
+      ".write": false
     },
-    "pinnedMessage": { ".read": true, ".write": "auth != null" },
+    "pinnedMessage": {
+      ".read": false,
+      ".write": false
+    },
     "popular_this_week": {
-      ".read": true, ".write": true,
+      ".read": true,
+      ".write": true,
       "$week": { ".indexOn": ["count"] }
     },
     "reviews": {

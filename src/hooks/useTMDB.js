@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { extractUsMovieCertification, extractUsTvRating } from '../lib/kidsPolicy';
+
+export { extractUsMovieCertification, extractUsTvRating };
 
 const POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 const BACKDROP_URL = 'https://image.tmdb.org/t/p/w1280';
@@ -35,12 +38,11 @@ export const parseContentRating = (type, data) => {
   if (!results) return null;
 
   if (type === 'tv') {
-    const usRating = results.find(r => r.iso_3166_1 === 'US');
-    return usRating?.rating || results[0]?.rating || null;
+    const usRating = extractUsTvRating(data);
+    return usRating || results[0]?.rating || null;
   }
 
-  const usRelease = results.find(r => r.iso_3166_1 === 'US');
-  const usCert = usRelease?.release_dates?.find(rd => rd.certification)?.certification;
+  const usCert = extractUsMovieCertification(data);
   const anyRelease = results.find(r => r.release_dates?.some(rd => rd.certification));
   const anyCert = anyRelease?.release_dates?.find(rd => rd.certification)?.certification;
   return usCert || anyCert || null;

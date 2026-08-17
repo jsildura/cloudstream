@@ -72,6 +72,15 @@
     margin: 0 0 28px 0;
 }
 
+/* Actions container */
+.adblock-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
 /* Refresh button */
 .adblock-refresh-btn {
     display: inline-flex;
@@ -104,6 +113,31 @@
 
 .adblock-refresh-btn:active {
     transform: translateY(0);
+}
+
+/* Secondary dismiss button */
+.adblock-dismiss-btn {
+    background: transparent;
+    color: #9ca3af;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.adblock-dismiss-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.adblock-dismiss-btn:focus-visible {
+    outline: 2px solid #e50914;
+    outline-offset: 2px;
 }
 
 /* Mobile responsive */

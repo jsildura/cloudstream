@@ -1,6 +1,33 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Clapperboard,
+  Home as HomeIcon,
+  ListVideo,
+  MessageCircle,
+  Radio,
+  Search as SearchIcon,
+  Settings,
+  ShieldCheck,
+  TvMinimal,
+  X,
+  LogIn,
+  User,
+  Users,
+  DownloadCloud
+} from 'lucide-react';
 import InstallAppButton from './InstallAppButton';
+import { useAuth } from '../contexts/AuthContext';
+import { useProfiles } from '../contexts/ProfileContext';
+import { useProfileData } from '../contexts/ProfileDataContext';
+
+// Settings sub-views
+import AccountSettings from './settings/AccountSettings';
+import ProfileSelectorSettings from './settings/ProfileSelectorSettings';
+import ProfileFormSettings from './settings/ProfileFormSettings';
+import KidsSettings from './settings/KidsSettings';
+import PinSettings from './settings/PinSettings';
+import DataMigrationSettings from './settings/DataMigrationSettings';
 
 const SEARCH_DEBOUNCE_MS = 350;   // must match Search.jsx
 // Must match Search.jsx and the desktop @media blocks in the CSS, exactly.
@@ -9,35 +36,55 @@ const DESKTOP_SEARCH_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [tvDropdownOpen, setTvDropdownOpen] = useState(false);
-  const [tvMenuOpen, setTvMenuOpen] = useState(false);
+  const { isSignedIn, authEvent } = useAuth();
+  const {
+    profiles,
+    activeProfile,
+    isKidsMode,
+    isPinModalOpen,
+    cancelKidsExit,
+    resetKidsUnlock
+  } = useProfiles();
+  const { isMigrationRequired } = useProfileData();
 
-  // Bottom sheet drag state
-  const [dragY, setDragY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartY = useRef(0);
-  const sheetRef = useRef(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [tvDropdownOpen, setTvDropdownOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [activeSettingsTab, setActiveSettingsTab] = useState('account');
+  const [previousSettingsTab, setPreviousSettingsTab] = useState('account');
+  const [editingProfile, setEditingProfile] = useState(null);
+  const [chatState, setChatState] = useState({ isOpen: false, unreadCount: 0 });
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // STATE, not a ref. This value is read while rendering (it decides which icon
-  // the button shows), so React has to re-render when it changes. v3 used a ref
-  // here and the icon silently went stale on resize — see plan section 0.2.
   const [isDesktopSearch, setIsDesktopSearch] = useState(
-    () => window.matchMedia(DESKTOP_SEARCH_MQ).matches
+    () => (typeof window !== 'undefined' ? window.matchMedia(DESKTOP_SEARCH_MQ).matches : false)
   );
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [navQuery, setNavQuery] = useState('');
 
   const navInputRef = useRef(null);
   const inlineWrapRef = useRef(null);
-  const returnPathRef = useRef('/');   // where ✕ / Escape sends you back to
-  const keepOpenRef = useRef(false);   // survive the route change on manual clear
+  const settingsRef = useRef(null);
+  const settingsBtnRef = useRef(null);
+  const returnPathRef = useRef('/');
+  const keepOpenRef = useRef(false);
+  const mountTimeRef = useRef(Date.now());
 
   const onSearchPage = location.pathname === '/search';
 
+  // Record mount timestamp to protect against ghost/click-through events
+  useEffect(() => {
+    mountTimeRef.current = Date.now();
+  }, []);
+
+  // Close settings panel when navigating to a new route
+  useEffect(() => {
+    setIsSettingsOpen(false);
+    setEditingProfile(null);
+  }, [location.pathname]);
+
+  // Handle scroll state
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 0);
@@ -46,58 +93,94 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const closeMenu = () => {
-    setIsMenuOpen(false);
-  };
-
-
-  // Bottom sheet drag handlers
-  const handleTouchStart = useCallback((e) => {
-    dragStartY.current = e.touches[0].clientY;
-    setIsDragging(true);
+  // Handle chat state
+  useEffect(() => {
+    const handleChatState = (event) => setChatState(event.detail);
+    window.addEventListener('streamflix:global-chat-state', handleChatState);
+    return () => window.removeEventListener('streamflix:global-chat-state', handleChatState);
   }, []);
 
-  const handleTouchMove = useCallback((e) => {
-    if (!isDragging) return;
-    const currentY = e.touches[0].clientY;
-    const diff = currentY - dragStartY.current;
-    // Only allow dragging down (positive diff)
-    if (diff > 0) {
-      setDragY(diff);
-    }
-  }, [isDragging]);
-
-  const handleTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    // Close if dragged more than 100px down
-    if (dragY > 100) {
-      closeMenu();
-    }
-    setDragY(0);
-  }, [dragY]);
-
-  // Reset drag state when menu closes and toggle body class for FAB hiding
+  // Open PIN view when provider requests Kids exit
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.classList.add('mobile-menu-open');
-    } else {
-      document.body.classList.remove('mobile-menu-open');
-      setDragY(0);
-      setIsDragging(false);
-      // Reset the one remaining submenu (TV / live content) when closing
-      setTvMenuOpen(false);
+    if (isPinModalOpen) {
+      setIsSettingsOpen(true);
+      if (activeSettingsTab !== 'pin') {
+        setPreviousSettingsTab(activeSettingsTab);
+      }
+      setActiveSettingsTab('pin');
     }
-    // Cleanup on unmount
-    return () => {
-      document.body.classList.remove('mobile-menu-open');
-    };
-  }, [isMenuOpen]);
+  }, [isPinModalOpen, activeSettingsTab]);
 
+  // Interactive sign-in listener (open panel automatically on interactive sign-in)
+  useEffect(() => {
+    if (authEvent?.type === 'interactive-google-sign-in-complete') {
+      setIsSettingsOpen(true);
+      if (profiles && profiles.length > 1) {
+        setActiveSettingsTab('profiles');
+      } else {
+        setActiveSettingsTab('account');
+      }
+    }
+  }, [authEvent, profiles]);
+
+  // Open migration tab if decision required
+  useEffect(() => {
+    if (isMigrationRequired) {
+      setIsSettingsOpen(true);
+      setActiveSettingsTab('migration');
+    }
+  }, [isMigrationRequired]);
+
+  const handleCloseSettings = useCallback(() => {
+    if (activeSettingsTab === 'pin') {
+      cancelKidsExit();
+    }
+    resetKidsUnlock();
+    setIsSettingsOpen(false);
+    setEditingProfile(null);
+    if (settingsBtnRef.current) {
+      settingsBtnRef.current.focus();
+    }
+  }, [activeSettingsTab, cancelKidsExit, resetKidsUnlock]);
+
+  const handleToggleSettings = useCallback((e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    // Ignore clicks that fire within 350ms of Navbar mounting
+    // (prevents ghost/click-through events from overlapping back buttons on watch pages)
+    if (Date.now() - mountTimeRef.current < 350) {
+      return;
+    }
+    setIsSettingsOpen((open) => !open);
+  }, []);
+
+  // Click outside to close settings panel
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handlePointerDown = (event) => {
+      if (!settingsRef.current?.contains(event.target)) {
+        handleCloseSettings();
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [isSettingsOpen, handleCloseSettings]);
+
+  // Keyboard accessibility for settings panel
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleCloseSettings();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSettingsOpen, handleCloseSettings]);
+
+  // Search media query listener
   useEffect(() => {
     const mq = window.matchMedia(DESKTOP_SEARCH_MQ);
     const onChange = (e) => setIsDesktopSearch(e.matches);
@@ -105,23 +188,20 @@ const Navbar = () => {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  // Three rules, in order:
-  //   not a desktop  -> always collapsed (the page input is the UI there)
-  //   on /search     -> always expanded; it is the only input on that page
-  //   anywhere else  -> collapsed by default; the button opens it
-  //
-  // `keepOpenRef` is an escape hatch for one case: emptying the field by hand
-  // navigates off /search but must leave the bar open so the user can keep
-  // typing. Without it, this effect would fire on that route change and
-  // collapse the bar out from under them.
   useEffect(() => {
-    if (!isDesktopSearch) { setIsSearchOpen(false); return; }
+    if (!isDesktopSearch) {
+      setIsSearchOpen(false);
+      return;
+    }
     if (onSearchPage) {
       setIsSearchOpen(true);
       const id = setTimeout(() => navInputRef.current?.focus(), 0);
       return () => clearTimeout(id);
     }
-    if (keepOpenRef.current) { keepOpenRef.current = false; return; }
+    if (keepOpenRef.current) {
+      keepOpenRef.current = false;
+      return;
+    }
     setIsSearchOpen(false);
   }, [onSearchPage, isDesktopSearch]);
 
@@ -134,92 +214,67 @@ const Navbar = () => {
 
     const timer = setTimeout(() => {
       if (onSearchPage) {
-        // Already on /search: just rewrite ?q=. `replace`, not `push` —
-        // otherwise every debounced keystroke becomes a history entry and
-        // Back walks the query backwards one word at a time.
         setSearchParams(trimmed ? { q: trimmed } : {}, { replace: true });
       } else if (trimmed) {
-        // First real keystroke from another page: this is the navigation.
         navigate(`/search?q=${encodeURIComponent(trimmed)}`);
       }
     }, SEARCH_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [navQuery, isSearchOpen, isDesktopSearch, onSearchPage,
-    searchParams, setSearchParams, navigate]);
+  }, [navQuery, isDesktopSearch, isSearchOpen, onSearchPage, searchParams, setSearchParams, navigate]);
 
   useEffect(() => {
-    if (!onSearchPage) return;
-    const urlQuery = searchParams.get('q') || '';
-    setNavQuery(prev => (prev.trim() === urlQuery ? prev : urlQuery));
+    if (onSearchPage) {
+      setNavQuery(searchParams.get('q') || '');
+    }
   }, [onSearchPage, searchParams]);
 
   const openNavSearch = () => {
-    // Remember where to return to. Include the query string so, e.g.,
-    // /discover?genre=28 comes back intact.
-    if (!onSearchPage) {
-      returnPathRef.current = location.pathname + location.search;
-    }
+    returnPathRef.current = location.pathname + location.search;
     setIsSearchOpen(true);
     setTimeout(() => navInputRef.current?.focus(), 0);
   };
 
-  const clearNavSearch = () => {
-    setNavQuery('');
-    navInputRef.current?.focus();
-  };
-
-  // Collapse first, navigate after. Both happen in the same React commit, so
-  // routing away in the same tick unmounts /search while the width transition
-  // is still running and the bar snaps shut instead of sliding. One frame of
-  // delay lets the collapsed width take effect first.
   const exitNavSearch = () => {
     setNavQuery('');
     setIsSearchOpen(false);
-    const target = returnPathRef.current || '/';
-    requestAnimationFrame(() => navigate(target));
+    if (onSearchPage) {
+      navigate(returnPathRef.current || '/', { replace: true });
+    }
+  };
+
+  const clearNavSearch = () => {
+    setNavQuery('');
+    if (onSearchPage) {
+      keepOpenRef.current = true;
+      navigate(returnPathRef.current || '/', { replace: true });
+    }
+    navInputRef.current?.focus();
   };
 
   const handleNavKeyDown = (e) => {
-    if (e.key !== 'Escape') return;
-    if (navQuery) setNavQuery('');   // first press: clear
-    else exitNavSearch();            // second press: leave
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      exitNavSearch();
+    }
   };
 
-  // Emptying the field by hand (backspace/select-all-delete) leaves /search and
-  // discards the results, but keeps the bar OPEN and focused — the user is
-  // mid-edit. Only ✕ or an outside click collapses it. Guarded on
-  // `onSearchPage` so clearing the field elsewhere just empties it.
-  // `prevQueryRef` detects the non-empty -> empty transition; without it,
-  // landing on /search with an empty field would trigger a spurious exit.
-  const prevQueryRef = useRef(navQuery);
-  useEffect(() => {
-    if (!isDesktopSearch || !onSearchPage || !isSearchOpen) return;
-    const wasNonEmpty = prevQueryRef.current !== '';
-    prevQueryRef.current = navQuery;
-    if (!wasNonEmpty || navQuery !== '') return;
-    keepOpenRef.current = true;   // tell the route effect not to collapse
-    navigate(returnPathRef.current || '/');
-  }, [navQuery, isDesktopSearch, onSearchPage, isSearchOpen, navigate]);
-
-  // Mobile/tablet/TV only: while on /search the navbar button is a "close" control.
   const isMobileSearchExit = !isDesktopSearch && onSearchPage;
 
   const handleSearchBtnClick = () => {
     if (isDesktopSearch) {
-      openNavSearch();               // expand in place — no navigation yet
+      if (!isSearchOpen) openNavSearch();
+      else exitNavSearch();
       return;
     }
     if (onSearchPage) {
-      exitNavSearch();               // the ✕
+      exitNavSearch();
       return;
     }
     returnPathRef.current = location.pathname + location.search;
-    navigate('/search');             // non-desktop: go to the page with the big input
+    navigate('/search');
   };
 
-  // Only when: desktop, open, empty, and NOT on /search. On /search this is the
-  // page's only input, so collapsing it would leave nothing to type into.
   useEffect(() => {
     if (!isDesktopSearch || !isSearchOpen || navQuery || onSearchPage) return;
     const onPointerDown = (e) => {
@@ -240,82 +295,113 @@ const Navbar = () => {
             alt="StreamFlix Logo"
             className="logo-image"
           />
+          {isKidsMode && (
+            <span className="kids-pill-badge navbar-kids-badge">KIDS</span>
+          )}
         </Link>
 
         <div className="navbar-links">
           <NavLink to="/" end className="nav-link">Home</NavLink>
-          <NavLink to="/tv-shows" className="nav-link">Shows</NavLink>
+
+          {/* In Kids mode, hide Shows and TV */}
+          {!isKidsMode && (
+            <NavLink to="/tv-shows" className="nav-link">Shows</NavLink>
+          )}
 
           <NavLink to="/discover" className="nav-link">Movies</NavLink>
 
-          {/* TV Dropdown */}
-          <div
-            className="nav-dropdown-wrapper"
-            onMouseEnter={() => setTvDropdownOpen(true)}
-            onMouseLeave={() => setTvDropdownOpen(false)}
-          >
-            <span className={`nav-link nav-link-dropdown ${location.pathname.startsWith('/iptv') ? 'active' : ''}`} style={{ cursor: 'pointer' }}>
-              TV
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="dropdown-arrow">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </span>
+          {/* TV Dropdown - Hidden in Kids mode */}
+          {!isKidsMode && (
+            <div
+              className="nav-dropdown-wrapper"
+              onMouseEnter={() => setTvDropdownOpen(true)}
+              onMouseLeave={() => setTvDropdownOpen(false)}
+            >
+              <span
+                className={`nav-link nav-link-dropdown ${location.pathname.startsWith('/iptv') ? 'active' : ''}`}
+                style={{ cursor: 'pointer' }}
+              >
+                TV
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="dropdown-arrow"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </span>
 
-            {tvDropdownOpen && (
-              <div className="nav-mega-dropdown">
-                {/* Header */}
-                <div className="mega-dropdown-header">
-                  <div className="mega-dropdown-header-title-row">
-                    <img src="/icons/tv.svg" alt="TV" className="mega-dropdown-icon" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                    <h3>TV</h3>
+              {tvDropdownOpen && (
+                <div className="nav-mega-dropdown">
+                  <div className="mega-dropdown-header">
+                    <div className="mega-dropdown-header-title-row">
+                      <img
+                        src="/icons/tv.svg"
+                        alt="TV"
+                        className="mega-dropdown-icon"
+                        style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }}
+                      />
+                      <h3>TV</h3>
+                    </div>
+                    <p className="mega-dropdown-header-desc">
+                      Dive into a world of live television featuring your favorite news,
+                      sports, and entertainment. With a constantly evolving channel lineup,
+                      you’ll always be in the loop.
+                    </p>
                   </div>
-                  <p className="mega-dropdown-header-desc">Dive into a world of live television featuring your favorite news, sports, and entertainment. With a constantly evolving channel lineup, you’ll always be in the loop. Experience the best of live broadcasting, delivered straight to your screen, anytime, anywhere.</p>
+
+                  <div className="mega-dropdown-grid">
+                    <Link
+                      to="/iptv"
+                      className="mega-dropdown-card"
+                      onClick={() => setTvDropdownOpen(false)}
+                    >
+                      <div className="mega-dropdown-card-icon">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+                          <polyline points="17 2 12 7 7 2" />
+                        </svg>
+                      </div>
+                      <div className="mega-dropdown-card-content">
+                        <div className="mega-dropdown-card-title">Live TV</div>
+                        <p>Your destination for live TV.</p>
+                      </div>
+                    </Link>
+                  </div>
                 </div>
-
-                <div className="mega-dropdown-grid">
-                  <Link to="/iptv" className="mega-dropdown-card" onClick={() => setTvDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
-                        <polyline points="17 2 12 7 7 2" />
-                      </svg>
-                    </div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Live TV</div>
-                      <p>Your destination for live TV. Enjoy news, sports, and entertainment on demand with a fresh, diverse lineup of channels at your fingertips.</p>
-                    </div>
-                  </Link>
-
-                  {/* Temporarily disabled - Live Sports
-                  <Link to="/sports" className="mega-dropdown-card" onClick={() => setTvDropdownOpen(false)}>
-                    <div className="mega-dropdown-card-icon">
-                      <img src="/icons/sports.svg" alt="Live Sports" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                    </div>
-                    <div className="mega-dropdown-card-content">
-                      <div className="mega-dropdown-card-title">Live Sports</div>
-                      <p>Stream global sports, matches, and tournaments in real-time. Your front-row seat to every game, anywhere in the world.</p>
-                    </div>
-                  </Link>
-                  */}
-
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Temporarily disabled - Music
-          <NavLink to="/music" className="nav-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-            Music
-          </NavLink>
-          */}
+              )}
+            </div>
+          )}
 
           <NavLink to="/my-list" className="nav-link">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" />
@@ -323,14 +409,12 @@ const Navbar = () => {
             </svg>
             Watchlist
           </NavLink>
-
         </div>
 
         {/* PWA Install Button - Desktop View */}
         <InstallAppButton />
 
-        {/* Single search control at every breakpoint: magnifier, or ✕ while on
-            /search on non-desktop devices. */}
+        {/* Search button */}
         <button
           className={`navbar-search-btn ${isSearchOpen ? 'is-expanded' : ''}`}
           onClick={handleSearchBtnClick}
@@ -338,22 +422,52 @@ const Navbar = () => {
           aria-expanded={isDesktopSearch ? isSearchOpen : undefined}
         >
           {isMobileSearchExit ? (
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M18 6 6 18"></path>
               <path d="m6 6 12 12"></path>
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.3-4.3"></path>
             </svg>
           )}
         </button>
 
-        {/* Desktop inline search bar. Hidden by default; the desktop @media block
-            in components.css is what reveals it. */}
+        {/* Desktop inline search bar */}
         <div ref={inlineWrapRef} className={`navbar-inline-search ${isSearchOpen ? 'open' : ''}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.3-4.3"></path>
           </svg>
@@ -373,156 +487,236 @@ const Navbar = () => {
           )}
         </div>
 
-        <button
-          className={`menu-toggle ${isMenuOpen ? 'open' : ''}`}
-          onClick={toggleMenu}
-          aria-label="Toggle navigation menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+        {/* Settings Button & Panel */}
+        <div className="navbar-settings-wrapper" ref={settingsRef}>
+          <button
+            ref={settingsBtnRef}
+            type="button"
+            className={`navbar-settings-btn ${isSettingsOpen ? 'active' : ''}`}
+            onClick={handleToggleSettings}
+            aria-label="Settings"
+            aria-expanded={isSettingsOpen}
+          >
+            {isSignedIn && activeProfile ? (
+              <img
+                src={`/avatars/${activeProfile.avatar}.webp`}
+                alt={activeProfile.name}
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  borderRadius: '6px',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  e.currentTarget.src = '/avatars/avatar_01.webp';
+                }}
+              />
+            ) : (
+              <Settings />
+            )}
+          </button>
 
-        {/* Bottom Sheet Mobile Menu */}
-        <div
-          ref={sheetRef}
-          className={`bottom-sheet-menu ${isMenuOpen ? 'open' : ''}`}
-          style={{
-            transform: isMenuOpen ? `translateY(${dragY}px)` : 'translateY(100%)',
-            transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)'
-          }}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
-        >
-          {/* Drag Handle */}
-          <div className="bottom-sheet-handle-container">
-            <div className="bottom-sheet-handle"></div>
-          </div>
-
-          {/* Header */}
-          <div className="bottom-sheet-header">
-            <h3>Menu</h3>
-          </div>
-
-          {/* Menu Items */}
-          <div className="bottom-sheet-content">
-            {/* Home - Non-expandable */}
-            <NavLink to="/" end className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
-              <div className="bottom-sheet-item-header">
-                <div className="bottom-sheet-item-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                  </svg>
-                </div>
-                <span className="bottom-sheet-item-label">Home</span>
-              </div>
-            </NavLink>
-
-            {/* Movies - Non-expandable */}
-            <NavLink to="/discover" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
-              <div className="bottom-sheet-item-header">
-                <div className="bottom-sheet-item-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18" />
-                    <line x1="7" y1="2" x2="7" y2="22" />
-                    <line x1="17" y1="2" x2="17" y2="22" />
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                    <line x1="2" y1="7" x2="7" y2="7" />
-                    <line x1="2" y1="17" x2="7" y2="17" />
-                    <line x1="17" y1="17" x2="22" y2="17" />
-                    <line x1="17" y1="7" x2="22" y2="7" />
-                  </svg>
-                </div>
-                <span className="bottom-sheet-item-label">Movies</span>
-              </div>
-            </NavLink>
-
-            {/* Shows - Non-expandable */}
-            <NavLink to="/tv-shows" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
-              <div className="bottom-sheet-item-header">
-                <div className="bottom-sheet-item-icon">
-                  <img src="/icons/shows.svg" alt="Shows" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                </div>
-                <span className="bottom-sheet-item-label">Shows</span>
-              </div>
-            </NavLink>
-
-            {/* TV Section */}
-            <div className="bottom-sheet-item">
+          {isSettingsOpen && (
+            <div
+              className="navbar-settings-overlay"
+              onClick={handleCloseSettings}
+              data-nav-trap
+            >
               <div
-                className={`bottom-sheet-item-header ${tvMenuOpen ? 'open' : ''} ${location.pathname.startsWith('/iptv') ? 'active' : ''}`}
-                onClick={() => setTvMenuOpen(!tvMenuOpen)}
+                className="navbar-settings-panel"
+                onClick={(event) => event.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="navbar-settings-title"
               >
-                <div className="bottom-sheet-item-icon">
-                  <img src="/icons/tv.svg" alt="TV" width="20" height="20" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                </div>
-                <span className="bottom-sheet-item-label">TV</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="bottom-sheet-chevron">
-                  <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-              </div>
-              <div className={`bottom-sheet-submenu ${tvMenuOpen ? 'open' : ''}`}>
-                <Link to="/iptv" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
-                    <polyline points="17 2 12 7 7 2" />
-                  </svg>
-                  <span>Live TV</span>
-                </Link>
-                {/* Temporarily disabled - Live Sports
-                <Link to="/sports" className="bottom-sheet-submenu-item" onClick={closeMenu}>
-                  <img src="/icons/sports.svg" alt="Live Sports" width="16" height="16" style={{ filter: 'brightness(0) invert(1) opacity(0.7)' }} />
-                  <span>Live Sports</span>
-                </Link>
-                */}
+                <aside className="navbar-settings-sidebar">
+                  <div>
+                    <h2 id="navbar-settings-title">Settings</h2>
+                    <nav aria-label="Settings categories">
+                      {/* Account tab */}
+                      <div
+                        className={`navbar-settings-nav-item ${activeSettingsTab === 'account' ? 'active' : ''}`}
+                        onClick={() => {
+                          setEditingProfile(null);
+                          setActiveSettingsTab('account');
+                        }}
+                      >
+                        {isSignedIn ? <User aria-hidden="true" /> : <LogIn aria-hidden="true" />}
+                        <span>{isSignedIn ? 'Account' : 'Sign In'}</span>
+                      </div>
+
+                      {/* Profiles tab (only enabled if signed in) */}
+                      {isSignedIn && (
+                        <div
+                          className={`navbar-settings-nav-item ${activeSettingsTab === 'profiles' || activeSettingsTab === 'profile_form' ? 'active' : ''}`}
+                          onClick={() => {
+                            setEditingProfile(null);
+                            setActiveSettingsTab('profiles');
+                          }}
+                        >
+                          <Users aria-hidden="true" />
+                          <span>Profiles</span>
+                        </div>
+                      )}
+
+                      {/* Parental Controls tab (only enabled if signed in) */}
+                      {isSignedIn && (
+                        <div
+                          className={`navbar-settings-nav-item ${activeSettingsTab === 'parental' ? 'active' : ''}`}
+                          onClick={() => {
+                            setEditingProfile(null);
+                            setActiveSettingsTab('parental');
+                          }}
+                        >
+                          <ShieldCheck aria-hidden="true" />
+                          <span>Parental Controls</span>
+                        </div>
+                      )}
+
+                      {/* Data Migration tab (only enabled if signed in) */}
+                      {isSignedIn && (
+                        <div
+                          className={`navbar-settings-nav-item ${activeSettingsTab === 'migration' ? 'active' : ''}`}
+                          onClick={() => {
+                            setEditingProfile(null);
+                            setActiveSettingsTab('migration');
+                          }}
+                        >
+                          <DownloadCloud aria-hidden="true" />
+                          <span>Data Migration</span>
+                        </div>
+                      )}
+
+                    </nav>
+                  </div>
+                </aside>
+
+                <section className="navbar-settings-content">
+                  {/* Account View */}
+                  {activeSettingsTab === 'account' && (
+                    <AccountSettings
+                      onClose={handleCloseSettings}
+                      onNavigateToProfiles={() => setActiveSettingsTab('profiles')}
+                      onNavigateToPin={() => {
+                        setPreviousSettingsTab('account');
+                        setActiveSettingsTab('pin');
+                      }}
+                    />
+                  )}
+
+                  {/* Profile Selector View */}
+                  {activeSettingsTab === 'profiles' && (
+                    <ProfileSelectorSettings
+                      onClose={handleCloseSettings}
+                      onCreateProfile={() => {
+                        setEditingProfile(null);
+                        setActiveSettingsTab('profile_form');
+                      }}
+                      onEditProfile={(p) => {
+                        setEditingProfile(p);
+                        setActiveSettingsTab('profile_form');
+                      }}
+                      onNavigateToPin={() => {
+                        setPreviousSettingsTab('profiles');
+                        setActiveSettingsTab('pin');
+                      }}
+                    />
+                  )}
+
+                  {/* Profile Form View */}
+                  {activeSettingsTab === 'profile_form' && (
+                    <ProfileFormSettings
+                      profile={editingProfile}
+                      onCancel={() => setActiveSettingsTab('profiles')}
+                      onSuccess={() => setActiveSettingsTab('profiles')}
+                    />
+                  )}
+
+                  {/* Parental Controls View */}
+                  {activeSettingsTab === 'parental' && (
+                    <KidsSettings
+                      onClose={handleCloseSettings}
+                      onNavigateToProfiles={() => setActiveSettingsTab('profiles')}
+                      onNavigateToPin={() => {
+                        setPreviousSettingsTab('parental');
+                        setActiveSettingsTab('pin');
+                      }}
+                    />
+                  )}
+
+                  {/* Data Migration View */}
+                  {activeSettingsTab === 'migration' && (
+                    <DataMigrationSettings
+                      onComplete={() => setActiveSettingsTab('account')}
+                      onCancel={() => setActiveSettingsTab('account')}
+                    />
+                  )}
+
+                  {/* PIN Keypad View */}
+                  {activeSettingsTab === 'pin' && (
+                    <PinSettings
+                      onCancel={() => setActiveSettingsTab(previousSettingsTab || 'account')}
+                      onSuccess={() => setActiveSettingsTab((curr) => (curr === 'pin' ? 'profiles' : curr))}
+                    />
+                  )}
+
+                </section>
               </div>
             </div>
-
-            {/* Temporarily disabled - Music
-            <NavLink to="/music" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
-              <div className="bottom-sheet-item-header">
-                <div className="bottom-sheet-item-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 18V5l12-2v13" />
-                    <circle cx="6" cy="18" r="3" />
-                    <circle cx="18" cy="16" r="3" />
-                  </svg>
-                </div>
-                <span className="bottom-sheet-item-label">Music</span>
-              </div>
-            </NavLink>
-            */}
-
-            {/* Watchlist - Non-expandable */}
-            <NavLink to="/my-list" className="bottom-sheet-item bottom-sheet-link" onClick={closeMenu}>
-              <div className="bottom-sheet-item-header">
-                <div className="bottom-sheet-item-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="7" height="7" />
-                    <rect x="14" y="3" width="7" height="7" />
-                    <rect x="14" y="14" width="7" height="7" />
-                    <rect x="3" y="14" width="7" height="7" />
-                  </svg>
-                </div>
-                <span className="bottom-sheet-item-label">Watchlist</span>
-              </div>
-            </NavLink>
-
-            {/* Install App Button */}
-            <div className="bottom-sheet-install">
-              <InstallAppButton />
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* Backdrop Overlay */}
-        {isMenuOpen && <div className="bottom-sheet-overlay" onClick={closeMenu} data-nav-trap></div>}
+        {/* Mobile Bottom Sheet Navigation */}
+        <div className={`bottom-sheet-menu ${isKidsMode ? 'kids-mode' : ''}`} aria-label="Primary mobile navigation">
+          <NavLink to="/" end className="bottom-sheet-item bottom-sheet-link">
+            <HomeIcon /><span>Home</span>
+          </NavLink>
+
+          {/* In Kids mode, hide Shows and TV from bottom sheet */}
+          {!isKidsMode && (
+            <NavLink to="/tv-shows" className="bottom-sheet-item bottom-sheet-link">
+              <TvMinimal /><span>Shows</span>
+            </NavLink>
+          )}
+
+          <NavLink to="/discover" className="bottom-sheet-item bottom-sheet-link">
+            <Clapperboard /><span>Movies</span>
+          </NavLink>
+
+          <NavLink to="/search" className="bottom-sheet-item bottom-sheet-link">
+            <SearchIcon /><span>Search</span>
+          </NavLink>
+
+          {!isKidsMode && (
+            <NavLink to="/iptv" className="bottom-sheet-item bottom-sheet-link">
+              <Radio /><span>TV</span>
+            </NavLink>
+          )}
+
+          <NavLink to="/my-list" className="bottom-sheet-item bottom-sheet-link">
+            <ListVideo /><span>My List</span>
+          </NavLink>
+
+          {!isKidsMode && (
+            <button
+              type="button"
+              className={`bottom-sheet-item bottom-sheet-chat-trigger ${chatState.isOpen ? 'active' : ''}`}
+              onClick={() => window.dispatchEvent(new Event('streamflix:open-global-chat'))}
+              aria-label="Open global chat"
+              aria-expanded={chatState.isOpen}
+            >
+              <MessageCircle /><span>Chat</span>
+              {chatState.unreadCount > 0 && (
+                <span className="bottom-sheet-chat-badge">
+                  {chatState.unreadCount > 99 ? '99+' : chatState.unreadCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
 
       </div>
-
-    </nav >
+    </nav>
   );
 };
 
