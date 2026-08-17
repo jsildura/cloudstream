@@ -7,7 +7,7 @@ import { cardPoster } from '../utils/images';
 import { initFirebase } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalChatSignInWall from './GlobalChatSignInWall';
-import { chatPath, buildChatProfile, buildChatMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
+import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
 import './GlobalChat.css';
 
 // Constants
@@ -43,16 +43,16 @@ export const getReactionData = (reactions, currentUid) => {
     return { emojis, total, counts, userReacted, userReaction };
 };
 
-// Check if message was seen by at least one user other than author
+// Seen receipt helper — returns true when seenBy contains any UID other than author
 // eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
 export const isMessageSeen = (msg) => {
-    if (!msg || !msg.seenBy || typeof msg.seenBy !== 'object') return false;
+    if (!msg?.seenBy || typeof msg.seenBy !== 'object' || !msg?.uid) return false;
     return Object.keys(msg.seenBy).some(uid => uid !== msg.uid);
 };
 
 // Report Issue categories — plain language for non-technical users. Short and
 // distinct so reports stay sortable without a taxonomy.
-const REPORT_CATEGORIES = [
+export const REPORT_CATEGORIES = [
     "Video won't play",
     'Buffers or stops',
     'Wrong info (title, poster, etc.)',
@@ -74,20 +74,39 @@ const makeTicketNo = () => String(Date.now()).slice(-6);
 // carries its own copy of what was said.
 // eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
 export const buildMessageReport = (msg, reporter) => {
-    const text = (msg?.text || '').trim();
-    return {
+    const rawText = (msg?.text || '').trim();
+    const messageText = rawText.length > 200 ? rawText.slice(0, 200) : rawText;
+
+    const rawSenderName = typeof (msg?.senderName || msg?.displayName || msg?.nickname) === 'string'
+        ? (msg.senderName || msg.displayName || msg.nickname).trim()
+        : '';
+    const messageSenderName = rawSenderName.length > 0
+        ? rawSenderName.slice(0, 80)
+        : 'Google User';
+
+    const rawReporterName = typeof (reporter?.displayName || reporter?.name || reporter?.nickname) === 'string'
+        ? (reporter.displayName || reporter.name || reporter.nickname).trim()
+        : '';
+    const reportedByName = rawReporterName.length > 0
+        ? rawReporterName.slice(0, 80)
+        : 'Google User';
+
+    const report = {
         kind: 'message',
-        msgId: msg?.id || null,
-        messageText: text ? (text.length > 200 ? text.slice(0, 200) + '…' : text) : '',
-        messageSenderName: msg?.senderName || msg?.displayName || msg?.nickname || 'Unknown',
-        messageNickname: msg?.senderName || msg?.displayName || msg?.nickname || 'Unknown',
-        messageMedia: msg?.mediaUrl ? (msg.mediaType || 'media') : null,
-        reportedBy: reporter?.uid || null,
-        reportedByName: reporter?.displayName || reporter?.nickname || 'Unknown',
-        reportedByNickname: reporter?.displayName || reporter?.nickname || 'Unknown',
+        msgId: String(msg?.id || '').slice(0, 100) || 'unknown',
+        messageSenderName,
+        messageText,
+        reportedBy: reporter?.uid || 'anonymous',
+        reportedByName,
         ticketNo: makeTicketNo(),
         timestamp: Date.now()
     };
+
+    if (msg?.mediaUrl && ['image', 'video', 'file', 'audio'].includes(msg?.mediaType)) {
+        report.messageMedia = msg.mediaType;
+    }
+
+    return report;
 };
 
 // Condense a raw user-agent into a short "Browser on OS" line so the admin
@@ -1206,17 +1225,13 @@ function GlobalChat() {
         if (!userDataRef.current.isAdmin || !dbRef.current) return;
 
         try {
-            const snapshot = await dbRef.current.ref('reports').once('value');
+            const snapshot = await dbRef.current.ref(chatPath('reports')).once('value');
             if (snapshot.exists()) {
                 const data = snapshot.val();
                 const reportsList = Object.entries(data).map(([id, report]) => ({
                     id,
                     ...report
                 }));
-                // Reports written before the message-snapshot fields existed only
-                // carry a msgId. Pull the message's current content so admins
-                // still see what was reported (best-effort — the message may be
-                // gone, in which case the id alone stays).
                 await Promise.all(reportsList.map(async (report) => {
                     if (report.msgId && !report.messageText) {
                         try {
@@ -1224,8 +1239,8 @@ function GlobalChat() {
                             const msg = msgSnap.val();
                             if (msg) {
                                 report.messageText = (msg.text || '').trim().slice(0, 200);
-                                report.messageNickname = msg.senderName || msg.displayName || msg.nickname || 'Unknown';
-                                report.messageMedia = msg.mediaUrl ? (msg.mediaType || 'media') : null;
+                                report.messageSenderName = msg.senderName || msg.displayName || 'Google User';
+                                report.messageMedia = msg.mediaUrl ? (['image', 'video', 'file', 'audio'].includes(msg.mediaType) ? msg.mediaType : 'file') : null;
                             }
                         } catch {
                             /* best-effort: leave the report as-is */
@@ -1474,7 +1489,7 @@ function GlobalChat() {
     // moderation, tagged kind: 'issue' so admins can filter. Category is
     // required; description optional; context is auto-attached.
     const submitReport = async () => {
-        if (reportSending || !dbRef.current || !reportCategory) return;
+        if (reportSending || !dbRef.current || !reportCategory || !currentUserRef.current) return;
         const last = Number(localStorage.getItem(ISSUE_COOLDOWN_KEY) || 0);
         if (Date.now() - last < ISSUE_COOLDOWN_MS) {
             setReportBlocked(true);
@@ -1484,43 +1499,55 @@ function GlobalChat() {
         try {
             const ctx = reportContext || {};
             const ticketNo = makeTicketNo();
-            // Allocate the feed bubble's key up-front so the report can carry it
+            const timestamp = Date.now();
+
+            // 1. Allocate the feed bubble's key up-front so the report can carry it
             // (ticketMsgId): resolving later flips the SAME bubble in place
             // instead of posting a second message.
             const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
-            await dbRef.current.ref(chatPath('reports')).push({
+
+            const rawReporterName = typeof (currentUserRef.current.displayName || currentUserRef.current.name) === 'string'
+                ? (currentUserRef.current.displayName || currentUserRef.current.name).trim()
+                : '';
+            const reportedByName = rawReporterName.length > 0
+                ? rawReporterName.slice(0, 80)
+                : 'Google User';
+
+            const reportPayload = {
                 kind: 'issue',
                 category: reportCategory,
-                description: (reportDesc || '').trim(),
-                reportedBy: currentUserRef.current?.uid || null,
-                reportedByNickname: userDataRef.current?.nickname || 'Unknown',
+                description: (reportDesc || '').trim().slice(0, 1000),
+                reportedBy: currentUserRef.current.uid,
+                reportedByName,
                 ticketNo,
                 ticketMsgId: ticketMsgRef.key,
-                timestamp: Date.now(),
-                context: {
-                    route: ctx.route || '',
-                    ua: ctx.ua || '',
-                    title: ctx.title || '',
-                    tmdbId: ctx.tmdbId ? String(ctx.tmdbId) : null,
-                    mediaType: ctx.mediaType || null,
-                    season: ctx.season ?? null,
-                    episode: ctx.episode ?? null,
-                    fromServer: ctx.fromServer || '',
-                    toServer: ctx.toServer || '',
-                    playback: !!ctx.playback,
-                },
-            });
-            localStorage.setItem(ISSUE_COOLDOWN_KEY, String(Date.now()));
-            // Announce the new ticket in the global chat so everyone can see a
-            // report was filed and by whom.
-            await pushTicketEvent({
-                action: 'created',
+                timestamp
+            };
+
+            if (typeof window !== 'undefined' && window.location?.href) {
+                reportPayload.pageUrl = window.location.href.slice(0, 500);
+            }
+            if (typeof navigator !== 'undefined' && navigator.userAgent) {
+                reportPayload.userAgent = navigator.userAgent.slice(0, 500);
+                const summary = summarizeUA(navigator.userAgent);
+                if (summary) reportPayload.deviceSummary = summary.slice(0, 100);
+            }
+            if (ctx.title || ctx.route) {
+                reportPayload.mediaContext = String(ctx.title || ctx.route).slice(0, 500);
+            }
+
+            await dbRef.current.ref(chatPath('reports')).push(reportPayload);
+
+            // 2. Announce the new ticket in the global chat via valid ticket message
+            const ticketMsg = buildTicketMessage({
+                identity: currentUserRef.current,
+                timestamp,
                 ticketNo,
-                reporterNickname: userDataRef.current?.nickname || 'Unknown',
-                reporterUid: currentUserRef.current?.uid || null,
-                category: reportCategory,
-                atKey: ticketMsgRef.key
+                category: reportCategory
             });
+            await ticketMsgRef.set(ticketMsg);
+
+            localStorage.setItem(ISSUE_COOLDOWN_KEY, String(Date.now()));
             setReportSent(true);
             setTimeout(() => {
                 setShowReport(false);
@@ -1828,110 +1855,57 @@ function GlobalChat() {
         }
     };
 
-    // Post a ticket event into the global chat feed — visible to everyone. Used
-    // to announce when a report/ticket is created (and once, by admins, to
-    // confirm a resolution). Best-effort: a failed event must never masquerade
-    // as a failed report. Returns the message key so callers can store it on the
-    // report (ticketMsgId) and later flip the same bubble to "resolved" instead
-    // of posting a second one.
-    const pushTicketEvent = async ({ action, ticketNo, reporterNickname, reporterUid, category, atKey = null }) => {
-        if (!dbRef.current) return null;
-        try {
-            const ref = atKey
-                ? dbRef.current.ref(chatPath('messages', atKey))
-                : dbRef.current.ref(chatPath('messages')).push();
-            await ref.set({
-                uid: 'system',
-                nickname: 'StreamFlix',
-                avatarUrl: ADMIN_AVATAR,
-                system: true,
-                ticket: true,
-                ticketAction: action,
-                ticketNo: ticketNo || null,
-                reporterNickname: reporterNickname || null,
-                reporterUid: reporterUid || null,
-                category: category || null,
-                createdAt: Date.now()
-            });
-            return ref.key;
-        } catch (err) {
-            console.warn('Failed to post ticket event:', err);
-            return null;
-        }
-    };
-
-    // Flip a ticket's "created" bubble to "resolved" IN PLACE — the feed shows
-    // one bubble per ticket that changes state, never a second message. Newer
-    // reports carry the ticket message key (ticketMsgId); legacy reports (no
-    // key) fall back to matching their created event by ticket number. The
-    // resolved message is stamped with the resolving admin's OWN profile
-    // (nickname, avatar, badge), so the bubble links to the admin identity and
-    // renders as the admin replying to the ticket — not the static site logo.
+    // Flip a ticket's "open" bubble to "resolved" IN PLACE.
     const resolveTicketMessage = async (report) => {
-        if (!dbRef.current) return;
-        const updates = {
-            ticketAction: 'resolved',
-            resolvedAt: Date.now(),
-            nickname: userDataRef.current?.nickname || 'StreamFlix',
-            avatarUrl: userDataRef.current?.avatarUrl || ADMIN_AVATAR,
-            isAdmin: true,
-            adminBadge: userDataRef.current?.adminBadge || 'fa-shield-halved'
-        };
-
-        if (report.ticketMsgId) {
-            try {
-                // Only flip a message that actually exists as a ticket — updating
-                // a deleted message would silently create a broken stub.
-                const existing = await dbRef.current.ref(chatPath('messages', report.ticketMsgId)).once('value');
-                if (existing.exists() && existing.val()?.ticket) {
-                    await existing.ref.update(updates);
-                }
-                return;
-            } catch (err) {
-                console.warn('Ticket message update failed, falling back to ticket-number match:', err);
-            }
-        }
-
-        // Legacy path: match created ticket events by ticket number.
+        if (!dbRef.current || !report?.ticketMsgId || !currentUserRef.current) return;
         try {
-            const snap = await dbRef.current.ref(chatPath('messages'))
-                .orderByChild('ticketNo').equalTo(report.ticketNo).once('value');
-            snap.forEach(child => {
-                const v = child.val();
-                if (v && v.ticket && v.ticketAction === 'created') {
-                    child.ref.update(updates);
+            const ticketRef = dbRef.current.ref(chatPath('messages', report.ticketMsgId));
+            const existing = await ticketRef.once('value');
+            if (existing.exists()) {
+                const data = existing.val();
+                if (data?.type === 'ticket' && data?.ticketStatus === 'open') {
+                    await ticketRef.update({
+                        ticketStatus: 'resolved',
+                        resolvedAt: Date.now(),
+                        resolvedBy: currentUserRef.current.uid
+                    });
                 }
-            });
+            }
         } catch (err) {
-            console.warn('Failed to locate ticket message for resolution:', err);
+            console.warn('Failed to resolve ticket message:', err);
         }
     };
 
     // Handle report message
     const handleReportMessage = async () => {
-        if (!actionSheetTarget || !dbRef.current) return;
+        if (!actionSheetTarget || !dbRef.current || !currentUserRef.current) return;
 
-        const report = buildMessageReport(actionSheetTarget, {
-            uid: currentUserRef.current?.uid,
-            nickname: userDataRef.current?.nickname
-        });
-        // Allocate the feed bubble's key so the report carries it (ticketMsgId)
-        // and resolution can flip the same bubble instead of posting a second.
-        const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
-        report.ticketMsgId = ticketMsgRef.key;
-        await dbRef.current.ref(chatPath('reports')).push(report);
+        try {
+            const ticketNo = makeTicketNo();
+            const timestamp = Date.now();
+            const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
 
-        // Announce the new ticket in the global chat feed.
-        await pushTicketEvent({
-            action: 'created',
-            ticketNo: report.ticketNo,
-            reporterNickname: userDataRef.current?.nickname || 'Unknown',
-            reporterUid: currentUserRef.current?.uid || null,
-            category: null,
-            atKey: ticketMsgRef.key
-        });
+            const report = buildMessageReport(actionSheetTarget, currentUserRef.current);
+            report.ticketNo = ticketNo;
+            report.timestamp = timestamp;
+            report.ticketMsgId = ticketMsgRef.key;
 
-        alert('Message reported.');
+            await dbRef.current.ref(chatPath('reports')).push(report);
+
+            const ticketMsg = buildTicketMessage({
+                identity: currentUserRef.current,
+                timestamp,
+                ticketNo,
+                category: 'Report'
+            });
+            await ticketMsgRef.set(ticketMsg);
+
+            alert('Message reported.');
+        } catch (err) {
+            console.error('Report message failed:', err);
+            alert('Could not report message. Please try again.');
+        }
+
         setShowActionSheet(false);
         setShowReactionPopover(null);
     };
@@ -2112,9 +2086,8 @@ function GlobalChat() {
         // created (system card, never a user bubble), but once an admin resolves
         // the ticket the SAME message flips into a regular chat bubble with the
         // admin avatar — so it reads as the admin replying to the ticket.
-        // Admins can delete either state via the hover ⋮ menu.
-        if (msg.ticket) {
-            const isResolved = msg.ticketAction === 'resolved';
+        if (msg.ticket || msg.type === 'ticket') {
+            const isResolved = msg.ticketStatus === 'resolved' || msg.ticketAction === 'resolved';
             return (
                 <div
                     key={msg.id}
@@ -2131,7 +2104,7 @@ function GlobalChat() {
                     {isResolved && (
                         <img
                             src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || ADMIN_AVATAR}
-                            alt={msg.senderName || msg.displayName || msg.nickname || 'StreamFlix'}
+                            alt={msg.senderName || msg.displayName || 'Google User'}
                             className="gc-avatar"
                             onError={(e) => {
                                 e.target.onerror = null;
@@ -2143,9 +2116,9 @@ function GlobalChat() {
                         {isResolved ? (
                             <>
                                 <div className="gc-sender-name">
-                                    {msg.senderName || msg.displayName || msg.nickname || 'StreamFlix'}
+                                    {msg.senderName || msg.displayName || 'Google User'}
                                     <span className="gc-admin-badge">
-                                        <i className={`fa-solid ${msg.adminBadge || 'fa-shield-halved'}`}></i>
+                                        <i className="fa-solid fa-crown"></i>
                                     </span>
                                 </div>
                                 <div className="gc-bubble-wrapper">
@@ -2170,7 +2143,7 @@ function GlobalChat() {
                                     {msg.ticketNo && <span className="gc-ticket-no">#{msg.ticketNo}</span>}
                                 </div>
                                 <div className="gc-ticket-text">
-                                    {msg.reporterName || msg.reporterNickname || 'Someone'} created a report{msg.category ? ` — ${msg.category}` : ''}
+                                    {msg.senderName || msg.reporterName || 'Google User'} created a report{msg.category ? ` — ${msg.category}` : ''}
                                 </div>
                                 <div className="gc-ticket-time">{formatTime(msg.createdAt)}</div>
                             </div>
@@ -2500,26 +2473,32 @@ function GlobalChat() {
                                     )}
                                     {!isOwn && (
                                         <button onClick={async () => {
-                                            const report = buildMessageReport(msg, {
-                                                uid: currentUserRef.current?.uid,
-                                                nickname: userDataRef.current?.nickname
-                                            });
-                                            // Allocate the feed bubble's key so the report carries it
-                                            // (ticketMsgId) and resolution can flip the same bubble
-                                            // instead of posting a second.
-                                            const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
-                                            report.ticketMsgId = ticketMsgRef.key;
-                                            await dbRef.current.ref(chatPath('reports')).push(report);
-                                            // Announce the new ticket in the global chat feed.
-                                            await pushTicketEvent({
-                                                action: 'created',
-                                                ticketNo: report.ticketNo,
-                                                reporterNickname: userDataRef.current?.nickname || 'Unknown',
-                                                reporterUid: currentUserRef.current?.uid || null,
-                                                category: null,
-                                                atKey: ticketMsgRef.key
-                                            });
-                                            alert('Message reported.');
+                                            if (!currentUserRef.current || !dbRef.current) return;
+                                            try {
+                                                const ticketNo = makeTicketNo();
+                                                const timestamp = Date.now();
+                                                const ticketMsgRef = dbRef.current.ref(chatPath('messages')).push();
+
+                                                const report = buildMessageReport(msg, currentUserRef.current);
+                                                report.ticketNo = ticketNo;
+                                                report.timestamp = timestamp;
+                                                report.ticketMsgId = ticketMsgRef.key;
+
+                                                await dbRef.current.ref(chatPath('reports')).push(report);
+
+                                                const ticketMsg = buildTicketMessage({
+                                                    identity: currentUserRef.current,
+                                                    timestamp,
+                                                    ticketNo,
+                                                    category: 'Report'
+                                                });
+                                                await ticketMsgRef.set(ticketMsg);
+
+                                                alert('Message reported.');
+                                            } catch (err) {
+                                                console.error('Report message failed:', err);
+                                                alert('Could not report message. Please try again.');
+                                            }
                                             setMoreMenuMessageId(null);
                                         }}>
                                             Report
@@ -3494,7 +3473,7 @@ function GlobalChat() {
                                                             ) : (
                                                                 <span className="gc-report-media">{mediaLabel || 'Content no longer available'}</span>
                                                             )}
-                                                            <span className="gc-report-from">— {report.messageNickname}</span>
+                                                            <span className="gc-report-from">— {report.messageSenderName || 'Google User'}</span>
                                                         </div>
                                                     </>
                                                 )}
@@ -3504,7 +3483,7 @@ function GlobalChat() {
                                                     </div>
                                                 )}
                                                 <div className="gc-report-reporter">
-                                                    Reported by: {report.reportedByNickname || report.reportedBy || 'Unknown'}
+                                                    Reported by: {report.reportedByName || 'Unknown'}
                                                 </div>
                                                 <div className="gc-report-actions">
                                                     {report.msgId && (
@@ -3524,7 +3503,7 @@ function GlobalChat() {
                                                             if (resolvingReportsRef.current.has(report.id)) return;
                                                             resolvingReportsRef.current.add(report.id);
                                                             try {
-                                                                await dbRef.current.ref(`reports/${report.id}`).remove();
+                                                                await dbRef.current.ref(chatPath('reports', report.id)).remove();
                                                                 setReports(prev => prev.filter(r => r.id !== report.id));
                                                                 // Flip the ticket's "created" bubble to "resolved" in the feed —
                                                                 // the same bubble changes state, no second message.

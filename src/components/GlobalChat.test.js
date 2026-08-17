@@ -6,58 +6,60 @@ import * as AuthContextModule from '../contexts/AuthContext';
 import * as FirebaseModule from '../lib/firebase';
 
 describe('buildMessageReport', () => {
-    const reporter = { uid: 'user-123', nickname: 'Alice' };
+    const reporter = { uid: 'user-123', displayName: 'Alice' };
 
-    it('snapshots a reported text message with author and reporter', () => {
+    it('snapshots a reported text message with author and reporter Google identity', () => {
         const report = buildMessageReport({
             id: 'msg-1',
             text: 'This movie is great!',
-            nickname: 'Bob'
+            senderName: 'Bob'
         }, reporter);
 
         expect(report.kind).toBe('message');
         expect(report.msgId).toBe('msg-1');
         expect(report.messageText).toBe('This movie is great!');
-        expect(report.messageNickname).toBe('Bob');
+        expect(report.messageSenderName).toBe('Bob');
         expect(report.reportedBy).toBe('user-123');
-        expect(report.reportedByNickname).toBe('Alice');
+        expect(report.reportedByName).toBe('Alice');
         expect(typeof report.timestamp).toBe('number');
+        expect(typeof report.ticketNo).toBe('string');
+        expect(report.messageNickname).toBeUndefined();
+        expect(report.reportedByNickname).toBeUndefined();
     });
 
-    it('caps long message text at 200 chars with an ellipsis', () => {
+    it('caps long message text at 200 chars without exceeding 200 chars', () => {
         const longText = 'x'.repeat(500);
-        const report = buildMessageReport({ id: 'msg-2', text: longText, nickname: 'Bob' }, reporter);
-        expect(report.messageText.length).toBe(201);
-        expect(report.messageText.endsWith('…')).toBe(true);
-        expect(report.messageText).toBe('x'.repeat(200) + '…');
+        const report = buildMessageReport({ id: 'msg-2', text: longText, senderName: 'Bob' }, reporter);
+        expect(report.messageText.length).toBe(200);
+        expect(report.messageText).toBe('x'.repeat(200));
     });
 
-    it('flags the media type for a media-only message', () => {
-        const image = buildMessageReport({ id: 'msg-3', mediaUrl: 'https://drive.example/img.png', mediaType: 'image', nickname: 'Bob' }, reporter);
+    it('flags the media type for a media-only message when valid', () => {
+        const image = buildMessageReport({ id: 'msg-3', mediaUrl: 'https://drive.example/img.png', mediaType: 'image', senderName: 'Bob' }, reporter);
         expect(image.messageText).toBe('');
         expect(image.messageMedia).toBe('image');
 
-        const video = buildMessageReport({ id: 'msg-4', mediaUrl: 'https://drive.example/v.mp4', mediaType: 'video', nickname: 'Bob' }, reporter);
+        const video = buildMessageReport({ id: 'msg-4', mediaUrl: 'https://drive.example/v.mp4', mediaType: 'video', senderName: 'Bob' }, reporter);
         expect(video.messageMedia).toBe('video');
     });
 
-    it('has no media label when the message has no attachment', () => {
-        const report = buildMessageReport({ id: 'msg-5', text: 'hello', nickname: 'Bob' }, reporter);
-        expect(report.messageMedia).toBeNull();
+    it('omits media label when the message has no valid attachment', () => {
+        const report = buildMessageReport({ id: 'msg-5', text: 'hello', senderName: 'Bob' }, reporter);
+        expect(report.messageMedia).toBeUndefined();
     });
 
     it('degrades gracefully when message or reporter fields are missing', () => {
         const report = buildMessageReport({}, {});
         expect(report.kind).toBe('message');
-        expect(report.msgId).toBeNull();
+        expect(report.msgId).toBe('unknown');
         expect(report.messageText).toBe('');
-        expect(report.messageNickname).toBe('Unknown');
-        expect(report.reportedBy).toBeNull();
-        expect(report.reportedByNickname).toBe('Unknown');
+        expect(report.messageSenderName).toBe('Google User');
+        expect(report.reportedBy).toBe('anonymous');
+        expect(report.reportedByName).toBe('Google User');
     });
 
     it('trims message text before snapshotting', () => {
-        const report = buildMessageReport({ id: 'msg-6', text: '  spaced out  ', nickname: 'Bob' }, reporter);
+        const report = buildMessageReport({ id: 'msg-6', text: '  spaced out  ', senderName: 'Bob' }, reporter);
         expect(report.messageText).toBe('spaced out');
     });
 });
@@ -1416,4 +1418,268 @@ describe('GlobalChat v2 Seen Receipts', () => {
     });
 });
 
+// ── GlobalChat v2 Reports and Tickets Tests ─────────────────────────────────
 
+describe('GlobalChat v2 Reports and Tickets', () => {
+    let mockDb;
+    let mockData = {};
+    let pushedReports = [];
+    let setMessages = {};
+    let removeCalls = [];
+    let updateCalls = {};
+
+    const fakeUser = {
+        uid: 'user-google-reporter',
+        displayName: 'Report User',
+        photoURL: 'https://lh3.googleusercontent.com/a/rep',
+        isGoogle: true
+    };
+
+    const fakeAdmin = {
+        uid: 'user-google-admin',
+        displayName: 'Admin User',
+        photoURL: 'https://lh3.googleusercontent.com/a/admin',
+        isGoogle: true
+    };
+
+    const createMockRef = (path) => {
+        const refObj = {
+            path,
+            key: path.split('/').pop(),
+            once: vi.fn().mockImplementation((event, cb) => {
+                const data = mockData[path];
+                const snap = {
+                    exists: () => data !== undefined && data !== null,
+                    val: () => data ?? null,
+                    key: path.split('/').pop(),
+                    forEach: (iter) => {
+                        if (data && typeof data === 'object') {
+                            Object.entries(data).forEach(([k, v]) => {
+                                iter({ key: k, val: () => v, ref: createMockRef(`${path}/${k}`) });
+                            });
+                        }
+                    }
+                };
+                if (typeof event === 'function') event(snap);
+                if (cb) cb(snap);
+                return Promise.resolve(snap);
+            }),
+            push: vi.fn().mockImplementation((val) => {
+                const newKey = `gen_key_${Math.random().toString(36).substring(7)}`;
+                const newPath = `${path}/${newKey}`;
+                if (val) {
+                    if (path.includes('reports')) pushedReports.push({ key: newKey, ...val });
+                    mockData[newPath] = val;
+                }
+                return createMockRef(newPath);
+            }),
+            set: vi.fn().mockImplementation((val) => {
+                if (path.startsWith('globalChat/v2/messages/')) {
+                    setMessages[path] = val;
+                }
+                mockData[path] = val;
+                return Promise.resolve();
+            }),
+            update: vi.fn().mockImplementation((val) => {
+                updateCalls[path] = { ...(updateCalls[path] || {}), ...val };
+                mockData[path] = { ...(mockData[path] || {}), ...val };
+                return Promise.resolve();
+            }),
+            remove: vi.fn().mockImplementation(() => {
+                removeCalls.push(path);
+                delete mockData[path];
+                return Promise.resolve();
+            }),
+            on: vi.fn().mockImplementation((event, cb) => cb),
+            off: vi.fn(),
+            orderByKey: vi.fn().mockReturnThis(),
+            orderByChild: vi.fn().mockReturnThis(),
+            equalTo: vi.fn().mockReturnThis(),
+            limitToLast: vi.fn().mockReturnThis(),
+            endAt: vi.fn().mockReturnThis()
+        };
+        return refObj;
+    };
+
+    beforeEach(() => {
+        mockData = {};
+        pushedReports = [];
+        setMessages = {};
+        removeCalls = [];
+        updateCalls = {};
+        mockDb = {
+            ref: vi.fn((path = '') => createMockRef(path))
+        };
+
+        vi.spyOn(FirebaseModule, 'initFirebase').mockReturnValue({
+            auth: {},
+            db: mockDb,
+            storage: {}
+        });
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: fakeUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        localStorage.clear();
+    });
+
+    it('creates message report and writes self-bound ticket message with reporter UID', async () => {
+        mockData['globalChat/v2/messages'] = {
+            msg_target: {
+                uid: 'offender-uid',
+                senderName: 'Bad Actor',
+                text: 'Spam text message',
+                createdAt: Date.now()
+            }
+        };
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_target')).toBeInTheDocument();
+        });
+
+        const msgEl = document.querySelector('#msg-msg_target');
+        fireEvent.mouseEnter(msgEl);
+
+        const moreBtn = screen.getByTitle('More');
+        fireEvent.click(moreBtn);
+
+        const reportBtn = screen.getByText('Report');
+        window.alert = vi.fn();
+        await act(async () => {
+            fireEvent.click(reportBtn);
+        });
+
+        // 1. Report pushed to reports queue
+        expect(pushedReports.length).toBe(1);
+        const report = pushedReports[0];
+        expect(report.kind).toBe('message');
+        expect(report.reportedBy).toBe(fakeUser.uid);
+        expect(report.reportedByName).toBe(fakeUser.displayName);
+        expect(report.messageSenderName).toBe('Bad Actor');
+        expect(report.messageText).toBe('Spam text message');
+        expect(report.msgId).toBe('msg_target');
+        expect(typeof report.ticketNo).toBe('string');
+        expect(report.ticketMsgId).toBeDefined();
+
+        // 2. Ticket message authored by reporter (never 'system')
+        const messagePaths = Object.keys(setMessages);
+        expect(messagePaths.length).toBe(1);
+        const ticketMsg = setMessages[messagePaths[0]];
+        expect(ticketMsg.uid).toBe(fakeUser.uid);
+        expect(ticketMsg.uid).not.toBe('system');
+        expect(ticketMsg.reporterUid).toBe(fakeUser.uid);
+        expect(ticketMsg.type).toBe('ticket');
+        expect(ticketMsg.ticketAction).toBe('created');
+        expect(ticketMsg.ticketStatus).toBe('open');
+        expect(ticketMsg.senderIsAdmin).toBe(false);
+        expect(ticketMsg.broadcast).toBe(false);
+        expect(ticketMsg.text).toBe('');
+    });
+
+    it('submits issue report with category and context, bound to Google identity', async () => {
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('.gc-rec-btn')).toBeInTheDocument();
+        });
+
+        // Open composer menu & click Report Issue
+        fireEvent.click(document.querySelector('.gc-rec-btn'));
+        const reportIssueItem = screen.getByText('Report Issue');
+        fireEvent.click(reportIssueItem);
+
+        expect(screen.getByText('Report an Issue')).toBeInTheDocument();
+
+        // Select category
+        const catBtn = screen.getByText("Video won't play");
+        fireEvent.click(catBtn);
+
+        // Fill description
+        const descInput = document.querySelector('.gc-report-desc');
+        fireEvent.change(descInput, { target: { value: 'Screen stays black upon loading' } });
+
+        const sendBtn = screen.getByText('Send Report');
+        await act(async () => {
+            fireEvent.click(sendBtn);
+        });
+
+        expect(pushedReports.length).toBe(1);
+        const report = pushedReports[0];
+        expect(report.kind).toBe('issue');
+        expect(report.category).toBe("Video won't play");
+        expect(report.description).toBe('Screen stays black upon loading');
+        expect(report.reportedBy).toBe(fakeUser.uid);
+        expect(report.reportedByName).toBe(fakeUser.displayName);
+
+        // Verify ticket message written to feed
+        const messagePaths = Object.keys(setMessages);
+        expect(messagePaths.length).toBe(1);
+        const ticketMsg = setMessages[messagePaths[0]];
+        expect(ticketMsg.uid).toBe(fakeUser.uid);
+        expect(ticketMsg.category).toBe("Video won't play");
+        expect(ticketMsg.type).toBe('ticket');
+        expect(ticketMsg.ticketStatus).toBe('open');
+    });
+
+    it('renders ticket stub for open ticket and resolved card for resolved ticket', async () => {
+        mockData['globalChat/v2/messages'] = {
+            msg_ticket_open: {
+                uid: fakeUser.uid,
+                senderName: 'Alice Waters',
+                type: 'ticket',
+                ticketAction: 'created',
+                ticketStatus: 'open',
+                ticketNo: '998877',
+                category: "Video won't play",
+                createdAt: Date.now()
+            },
+            msg_ticket_resolved: {
+                uid: fakeUser.uid,
+                senderName: 'StreamFlix Admin',
+                type: 'ticket',
+                ticketAction: 'created',
+                ticketStatus: 'resolved',
+                ticketNo: '112233',
+                category: 'Buffers or stops',
+                createdAt: Date.now()
+            }
+        };
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_ticket_open')).toBeInTheDocument();
+            expect(document.querySelector('#msg-msg_ticket_resolved')).toBeInTheDocument();
+        });
+
+        const openTicketEl = document.querySelector('#msg-msg_ticket_open');
+        expect(openTicketEl.textContent).toContain('Ticket created');
+        expect(openTicketEl.textContent).toContain('#998877');
+        expect(openTicketEl.textContent).toContain("Alice Waters created a report — Video won't play");
+
+        const resolvedTicketEl = document.querySelector('#msg-msg_ticket_resolved');
+        expect(resolvedTicketEl.textContent).toContain('✅ Ticket #112233 resolved');
+    });
+});
