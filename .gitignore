@@ -22,6 +22,9 @@ out/
 .env
 .env.*
 !.env.example  # keep an example for reference
+.dev.vars
+**/.dev.vars
+!.dev.vars.example
 
 # Logs
 logs
@@ -86,7 +89,6 @@ nyc_output/
 
 # Lock files (optional for team consistency)
 # Uncomment one if your team uses multiple package managers
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
 
@@ -178,7 +180,6 @@ pnpm-lock.yaml
 
 # Lock files (optional for team consistency)
 # Uncomment one if your team uses multiple package managers
-**/package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
 
@@ -217,12 +218,21 @@ Person_Content_Search_implementation_plan.md
 .vscode/launch.json
 # Tool caches / Local folders
 .freebuff/
-src/components/GlobalChat.test.js
 src/api/stream/zxcstream.test.js
 .claude/settings.local.json
 Netflix-Style Episode Preview in Auto-Advance Overlay Plan.md
-src/components/UpdatePrompt.test.jsx
 src/test/mocks/
 public/control-bar-test.html
 Mood_Tags_AI_implementation_plan.md
 mood_tags_plan_audit.md
+!tests/database/**
+!src/lib/firebase.test.js
+!src/contexts/AuthContext.test.jsx
+Google Auth + Multi-Profile System for Streamflix.md
+Google Auth System for Streamflix.md
+
+# Firebase / Service Account Secrets
+*serviceAccountKey*.json
+*adminsdk*.json
+service-account*.json
+credentials.json

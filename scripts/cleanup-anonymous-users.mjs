@@ -6,8 +6,45 @@
  * while strictly preserving all Google-authenticated accounts.
  */
 
-import { initializeApp, applicationDefault, getApps } from 'firebase-admin/app';
+import fs from 'node:fs';
+import path from 'node:path';
+import { initializeApp, applicationDefault, cert, getApps } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+
+/**
+ * Resolves Firebase Admin credentials from local service account JSON or Application Default Credentials.
+ */
+function resolveCredential() {
+    // 1. Check if GOOGLE_APPLICATION_CREDENTIALS is set
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS && fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
+        return applicationDefault();
+    }
+
+    // 2. Check for standard local filenames
+    const standardFiles = ['service-account.json', 'serviceAccountKey.json', 'firebase-service-account.json'];
+    for (const name of standardFiles) {
+        const fullPath = path.resolve(process.cwd(), name);
+        if (fs.existsSync(fullPath)) {
+            const key = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+            return cert(key);
+        }
+    }
+
+    // 3. Check for downloaded Firebase Admin SDK JSON files (*adminsdk*.json)
+    try {
+        const files = fs.readdirSync(process.cwd());
+        const adminKeyFile = files.find((f) => f.includes('adminsdk') && f.endsWith('.json'));
+        if (adminKeyFile) {
+            const fullPath = path.resolve(process.cwd(), adminKeyFile);
+            const key = JSON.parse(fs.readFileSync(fullPath, 'utf8'));
+            return cert(key);
+        }
+    } catch {
+        // Fall back to applicationDefault()
+    }
+
+    return applicationDefault();
+}
 
 /**
  * Determines whether a Firebase Auth UserRecord is an anonymous user.
@@ -38,13 +75,14 @@ export async function cleanAnonymousUsers() {
         app = getApps().length > 0
             ? getApps()[0]
             : initializeApp({
-                credential: applicationDefault(),
+                credential: resolveCredential(),
                 projectId: 'streamflix-chat'
             });
     } catch (err) {
         console.error('❌ Failed to initialize Firebase Admin SDK.');
-        console.error('Please ensure you are logged into Google Cloud / Firebase credentials:');
-        console.error('  npx gcloud auth application-default login\n');
+        console.error('Please download your Service Account Key from Firebase Console:');
+        console.error('  Firebase Console > Project Settings > Service Accounts > Generate new private key');
+        console.error('  Save the downloaded JSON in this project folder, then re-run `npm run clean:anon`.\n');
         throw err;
     }
 
