@@ -292,13 +292,14 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
 
     // ── Task 1 & 2: Session & Identity Flows ────────────────────────────────
 
-    it('shows sign-in wall and makes zero v2 database calls when signed out', async () => {
+    it('shows passive participation wall, retains header/close control, and makes zero v2 database calls when signed out', async () => {
+        const signInWithGoogleSpy = vi.fn();
         vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
             chatIdentity: null,
             isSignedIn: false,
             isAuthLoading: false,
             isGlobalChatAdmin: false,
-            signInWithGoogle: vi.fn()
+            signInWithGoogle: signInWithGoogleSpy
         });
 
         render(React.createElement(GlobalChat));
@@ -310,6 +311,15 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         await waitFor(() => {
             expect(screen.getByText('Sign in in Settings to participate in GlobalChat')).toBeInTheDocument();
         });
+
+        // Retains header & close control
+        expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
+
+        // Passive wall has no Google sign-in button, link, or authentication controls
+        expect(screen.queryByRole('button', { name: /sign in with google/i })).toBeNull();
+        expect(screen.queryByRole('link')).toBeNull();
+        expect(screen.queryByAltText(/google/i)).toBeNull();
+        expect(signInWithGoogleSpy).not.toHaveBeenCalled();
 
         // Strict assertion: zero reads/writes to globalChat/v2
         const v2Operations = harness.history.filter(h => h.path.startsWith('globalChat/v2'));

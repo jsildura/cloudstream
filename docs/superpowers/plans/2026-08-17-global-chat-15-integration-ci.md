@@ -13,6 +13,7 @@
 - Depends on plans 08-14.
 - Tests must not contact production Firebase, Cloudflare, or Google.
 - CI rule failures block merges.
+- Signed-out GlobalChat is a passive participation wall with no Google button or authentication callback; Google sign-in remains exclusively in the navbar Settings panel's `.navbar-settings-signin` section.
 
 ---
 
@@ -20,6 +21,7 @@
 
 **Files:**
 - Create: `src/components/GlobalChat.integration.test.jsx`
+- Modify: `src/components/settings/AccountSettings.test.jsx`
 
 **Interfaces:**
 - Produces a test double supporting `ref`, `once`, `on`, `off`, `push`, `set`, `update`, `remove`, `transaction`, query chaining, and server timestamps.
@@ -29,9 +31,11 @@
 - [x] Fail any test that touches a path outside the supplied allowlist.
 - [x] Mock AuthContext states independently from Firebase database state.
 
-### Task 2: Cover Session and Identity Flows
+### Task 2: Cover Passive Wall, Session, and Identity Flows
 
-- [x] Signed-out panel shows wall and makes zero v2 calls.
+- [x] Signed-out panel shows “Sign in in Settings to participate in GlobalChat”, retains its header/close control, and makes zero v2 calls.
+- [x] Assert the signed-out wall has no Google sign-in button, link, form control, popup/error flow, or invocation of `signInWithGoogle`.
+- [x] Add focused `AccountSettings` coverage proving Google sign-in is still available in the navbar Settings panel's `.navbar-settings-signin` section.
 - [x] Google bootstrap writes token identity before listeners and loads an empty feed.
 - [x] Account A-to-B and sign-out clear messages, drafts, unreads, pagination, and listeners.
 - [x] Duplicate display names coexist by UID.
@@ -51,7 +55,7 @@
 **Files:**
 - Modify: `package.json`
 
-- [x] Add an explicit `test:chat` command listing identity, model, wall, GlobalChat unit/integration, and AuthContext tests.
+- [x] Add an explicit `test:chat` command listing identity, model, passive wall, GlobalChat unit/integration, AuthContext, and `AccountSettings` tests.
 - [x] Add:
 
 ```json
@@ -89,8 +93,8 @@ git diff --check
 - [x] Commit:
 
 ```powershell
-git add src/components/GlobalChat.integration.test.jsx .github/workflows/ci.yml package.json
+git add src/components/GlobalChat.integration.test.jsx src/components/settings/AccountSettings.test.jsx .github/workflows/ci.yml package.json
 git commit -m "test: cover google identity global chat flows"
 ```
 
-**Checkpoint:** One command verifies all GlobalChat client/rules behavior, and CI blocks regressions in either rule artifact.
+**Checkpoint:** One command verifies the passive signed-out wall, Settings-only Google authentication, all signed-in GlobalChat behavior, and both rule artifacts; CI blocks regressions in any of them.
