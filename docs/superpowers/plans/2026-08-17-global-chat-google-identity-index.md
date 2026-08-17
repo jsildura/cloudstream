@@ -2,16 +2,17 @@
 
 > **For agentic workers:** Execute one linked plan at a time. Complete its verification checkpoint before starting a dependent plan.
 
-**Goal:** Migrate GlobalChat to Google name/photo identity, Google-only chat access, an empty v2 history, and claims-only administration through small independently reviewable plans.
+**Goal:** Migrate GlobalChat to a passive signed-out participation wall, Google name/photo identity for participants, an empty v2 history, and claims-only administration through small independently reviewable plans.
 
-**Architecture:** Keep anonymous Firebase sessions for non-chat browsing while treating a Google token as the only GlobalChat principal. All new records live below `/globalChat/v2`; `globalChatAdmin: true` is the only moderation authority. Transitional rules enable v2 before the client cutover, and final rules block all legacy chat roots.
+**Architecture:** Keep anonymous Firebase sessions for browsing and allow guests to open a passive GlobalChat participation wall without chat data access. A Google token remains the only GlobalChat data principal, and authentication is available only in the navbar Settings panel's `.navbar-settings-signin` section. All new records live below `/globalChat/v2`; `globalChatAdmin: true` is the only moderation authority. Transitional rules enable v2 before the client cutover, and final rules block all legacy chat roots.
 
 **Tech Stack:** React 19, Firebase Auth v8 browser SDK, Firebase Realtime Database, Firebase Admin SDK, Vitest, Testing Library, Firebase Emulator Suite, Cloudflare Pages, GitHub Actions.
 
 ## Global Constraints
 
 - Sender identity is Google display name plus Google photo.
-- Signed-out users see a GlobalChat sign-in wall and attach no chat database listeners.
+- Signed-out users can open GlobalChat, see a passive wall directing them to Settings before participating, and attach no chat database listeners.
+- The GlobalChat wall contains no Google sign-in button or authentication action; Google sign-in is handled only in `.navbar-settings-signin`.
 - Existing nickname/anonymous chat history is not migrated.
 - Anonymous Firebase sessions remain available for non-chat browsing.
 - The authoritative admin claim is exactly `globalChatAdmin: true`.
@@ -30,7 +31,7 @@
 6. [Core profile and message rules](./2026-08-17-global-chat-06-rules-core-schema.md)
 7. [Moderation record rules](./2026-08-17-global-chat-07-rules-moderation.md)
 8. [Transitional and final rules artifacts](./2026-08-17-global-chat-08-rules-rollout.md)
-9. [Google sign-in wall and session lifecycle](./2026-08-17-global-chat-09-session-gating.md)
+9. [Passive participation wall and session lifecycle](./2026-08-17-global-chat-09-session-gating.md)
 10. [v2 message data paths](./2026-08-17-global-chat-10-message-data-paths.md)
 11. [Google identity rendering and mentions](./2026-08-17-global-chat-11-identity-rendering.md)
 12. [Reactions and seen receipts](./2026-08-17-global-chat-12-reactions-seen.md)
@@ -74,6 +75,7 @@ The v2 roots are `profiles/{uid}`, `messages/{messageId}`, `reports/{reportId}`,
 | `tests/database/database.rules.test.js` | 05, 06, 07, then 08 |
 | `src/components/GlobalChat.jsx` | 09, 10, 11, 12, 13, then 14 |
 | `src/components/GlobalChat.css` | 09, 11, 12, 13, then 14 |
+| `src/components/settings/AccountSettings.test.jsx` | 15 only |
 | `package.json` | 03, 08, then 15 |
 | `docs/firebase-auth-profiles-setup.md` | 01, then 16 |
 | `wrangler.jsonc` | 01, then 14 |
@@ -84,7 +86,7 @@ The v2 roots are `profiles/{uid}`, `messages/{messageId}`, `reports/{reportId}`,
 
 - [x] Every child-plan checkpoint passes.
 - [x] Anonymous and unauthenticated users cannot read or write `/globalChat/v2`.
-- [x] Signed-out GlobalChat performs zero chat subscriptions.
+- [x] Signed-out GlobalChat performs zero chat subscriptions and provides no Google authentication action.
 - [x] Every sender identity uses Google token name/photo and never email.
 - [x] `/globalChat/v2` starts empty and no legacy records are copied.
 - [x] Duplicate Google names coexist using UID identity.
