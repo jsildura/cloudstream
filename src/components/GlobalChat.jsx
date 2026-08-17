@@ -2384,15 +2384,23 @@ function GlobalChat() {
                             />
                         </div>
                         <div className="gc-header-info">
-                            <span className="gc-header-name">
-                                StreamFlix Community
+                            <div className="gc-header-title-row">
+                                <span className="gc-header-name">StreamFlix Community</span>
+                            </div>
+                            <div className="gc-header-status-row">
+                                <span className="gc-header-status">
+                                    {sessionState === 'ready' ? (
+                                        <>
+                                            <span className="gc-status-dot"></span> Live Chat
+                                        </>
+                                    ) : 'Sign In'}
+                                </span>
                                 {isGlobalChatAdmin && (
-                                    <span className="gc-admin-header-badge" title="You are a GlobalChat Admin">
+                                    <span className="gc-admin-pill" title="You have Chat Administrator permissions">
                                         <i className="fa-solid fa-crown"></i> Admin
                                     </span>
                                 )}
-                            </span>
-                            <span className="gc-header-status">{sessionState === 'ready' ? 'Live Chat' : 'Sign In'}</span>
+                            </div>
                         </div>
                     </div>
                     <div className="gc-header-actions">
@@ -2407,13 +2415,16 @@ function GlobalChat() {
                                 title="Reports"
                                 aria-label="Reports"
                             >
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
                                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                                 </svg>
                             </button>
                         )}
-                        <button className="gc-close-btn" onClick={handleCloseChat}>
-                            <img src="/icons/close-circle.svg" alt="Close" style={{ width: '24px', height: '24px', filter: 'brightness(0) invert(1)' }} />
+                        <button className="gc-close-btn" onClick={handleCloseChat} title="Close Chat" aria-label="Close Chat">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
                         </button>
                     </div>
                 </div>
