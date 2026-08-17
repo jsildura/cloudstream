@@ -130,16 +130,7 @@ export const summarizeUA = (ua) => {
 // the primary pointer actually hovers.
 const HOVER_MQ = window.matchMedia('(hover: hover) and (pointer: fine)');
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ADMIN_NICKNAME = "StreamFlix";
 const ADMIN_AVATAR = "/logo/streamflix.png";
-// Normalize a nickname into the key used by the global `nicknames` registry:
-// trimmed, lowercased, and stripped of the characters Firebase keys can't
-// contain (., #, $, /, [, ]). The registry makes names case-insensitively
-// unique across the whole chat.
-// eslint-disable-next-line no-useless-escape -- \/ and \[ are required members here
-const nicknameKey = (name) => (name || '').trim().toLowerCase().replace(/[.#$\/\[\]]/g, '');
-// Google Apps Script URL for file uploads (same as Shakzz-TV)
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec";
 
 // ─── Chat link support ─────────────────────────────────────────────────
 // URLs inside message text are rendered as clickable links. The app's own
@@ -372,44 +363,7 @@ function GlobalChat() {
     const [avatarStyle, setAvatarStyle] = useState('adventurer');
     const [avatarSeed, setAvatarSeed] = useState(() => Math.random().toString(36).substring(7));
 
-    // Available DiceBear avatar styles
-    const AVATAR_STYLES = [
-        { id: 'adventurer', name: 'Adventurer' },
-        { id: 'avataaars', name: 'Avataaars' },
-        { id: 'bottts', name: 'Robots' },
-        { id: 'lorelei', name: 'Lorelei' },
-        { id: 'pixel-art', name: 'Pixel Art' },
-        { id: 'thumbs', name: 'Thumbs' },
-        { id: 'fun-emoji', name: 'Fun Emoji' },
-        { id: 'icons', name: 'Icons' }
-    ];
-
-    // Generate DiceBear avatar URL
-    const getAvatarUrl = (style, seed) => {
-        return `https://api.dicebear.com/7.x/${style}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=1f1f1f`;
-    };
-
-    // Admin settings states
-    const [showAdminSettings, setShowAdminSettings] = useState(false);
-    const [adminAvatarMode, setAdminAvatarMode] = useState('dicebear'); // 'dicebear' or 'upload'
-    const [adminUploadedAvatar, setAdminUploadedAvatar] = useState(null);
-    const [adminNickname, setAdminNickname] = useState('');
-    const [adminBadge, setAdminBadge] = useState('crown');
     const [pinnedMessage, setPinnedMessage] = useState(null);
-    const [isSavingSettings, setIsSavingSettings] = useState(false);
-    const adminFileInputRef = useRef(null);
-
-    // Font Awesome admin badges (using class names)
-    const ADMIN_BADGES = [
-        { id: 'crown', icon: 'fa-crown', name: 'Crown' },
-        { id: 'star', icon: 'fa-star', name: 'Star' },
-        { id: 'shield', icon: 'fa-shield-halved', name: 'Shield' },
-        { id: 'fire', icon: 'fa-fire', name: 'Fire' },
-        { id: 'gem', icon: 'fa-gem', name: 'Diamond' },
-        { id: 'bolt', icon: 'fa-bolt', name: 'Lightning' },
-        { id: 'certificate', icon: 'fa-certificate', name: 'Badge' },
-        { id: 'wand', icon: 'fa-wand-magic-sparkles', name: 'Magic' }
-    ];
     // Edit Message Handler
     const handleEditMessage = (msg) => {
         const now = Date.now();
@@ -481,10 +435,12 @@ function GlobalChat() {
     const longPressTimerRef = useRef(null);
     const longPressStartRef = useRef(null);
     const suppressClickRef = useRef(false);
-    // Guards the profile value-listener against false-positive "deleted"
-    // events caused by Firebase SDK optimistic write rollbacks during
-    // admin login.  Cleared once the listener sees isAdmin: true.
-    const adminLoginGuardRef = useRef(false);
+    // Close admin views if admin claim is revoked
+    useEffect(() => {
+        if (!isGlobalChatAdmin) {
+            setShowReports(false);
+        }
+    }, [isGlobalChatAdmin]);
     // Set the first time the chat is opened after setup — the broadcast
     // backfill uses it to avoid resurrecting the badge with broadcasts the
     // user has already read.
@@ -1061,168 +1017,9 @@ function GlobalChat() {
     // dev`); the legacy Firebase-hash comparison only runs when the proxy is
     // unreachable (plain `npm run dev` on localhost, no proxy serving).
     //
-    // `profile` is an optional { nickname, avatarUrl, adminBadge } object.
-    // When provided the proxy writes the full admin profile atomically so the
-    // client never needs a follow-up `.update()` (which can race with the
-    // proxy's REST write and be rejected by the self-elevation rule).
-    const verifyAdminViaProxy = async (password, profile) => {
-        try {
-            const res = await fetch('/api/admin-login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    password,
-                    uid: currentUserRef.current?.uid,
-                    profile: profile || undefined
-                })
-            });
-            // 404/405 = no proxy in this environment → fall back to legacy.
-            if (res.status === 404 || res.status === 405) return { ok: false, unreachable: true };
-            const data = await res.json().catch(() => null);
-            // If the response wasn't valid JSON (e.g. Vite's SPA fallback
-            // served index.html for the /api/* route), treat as unreachable.
-            if (!data) return { ok: false, unreachable: true };
-            return { ok: !!data.ok, unreachable: false };
-        } catch (e) {
-            // Network error = proxy not running here → legacy fallback.
-            console.warn('Admin proxy unreachable, using legacy verification:', e);
-            return { ok: false, unreachable: true };
-        }
-    };
-
-    // Handle admin login
-    const handleAdminLogin = async () => {
-        const password = prompt('Enter Admin Password:');
-        if (!password) return;
-
-        try {
-            // ── Read admin profile FIRST ──────────────────────────────────
-            // We need the profile fields before calling the proxy so the
-            // proxy can write the full user node in one atomic REST PATCH.
-            let savedNickname = null;
-            let savedAvatar = null;
-            let savedBadge = null;
-
-            try {
-                const profileSnapshot = await dbRef.current.ref('secrets/admin_profile').once('value');
-                if (profileSnapshot.exists()) {
-                    const profile = profileSnapshot.val();
-                    savedNickname = profile.nickname;
-                    savedAvatar = profile.avatarUrl;
-                    savedBadge = profile.adminBadge;
-                    if (savedNickname) localStorage.setItem('sf_admin_nickname', savedNickname);
-                    if (savedAvatar) localStorage.setItem('sf_admin_avatar', savedAvatar);
-                    if (savedBadge) localStorage.setItem('sf_admin_badge', savedBadge);
-                }
-            } catch (e) {
-                console.warn('Firebase admin profile read failed, using localStorage fallback:', e);
-                savedNickname = localStorage.getItem('sf_admin_nickname');
-                savedAvatar = localStorage.getItem('sf_admin_avatar');
-                savedBadge = localStorage.getItem('sf_admin_badge');
-            }
-
-            const finalNickname = savedNickname || ADMIN_NICKNAME;
-            const finalAvatarUrl = savedAvatar || ADMIN_AVATAR;
-            const finalBadge = savedBadge || 'fa-crown';
-
-            // ── Verify password ───────────────────────────────────────────
-            // 1) Server-side proxy — verifies + writes the complete admin
-            //    profile (isAdmin + nickname + avatar + badge) in a single
-            //    REST PATCH that bypasses security rules.
-            const adminProfile = {
-                nickname: finalNickname,
-                avatarUrl: finalAvatarUrl,
-                adminBadge: finalBadge
-            };
-            const viaProxy = await verifyAdminViaProxy(password, adminProfile);
-            let passwordOk = viaProxy.ok;
-
-            // 2) Legacy dev fallback — only when the proxy is unreachable.
-            if (!passwordOk && viaProxy.unreachable) {
-                const snapshot = await dbRef.current.ref('secrets/admin_key').once('value');
-                if (!snapshot.exists()) {
-                    alert('Admin configuration missing. Please set up admin key in Firebase.');
-                    return;
-                }
-                const storedHash = snapshot.val();
-                const msgBuffer = new TextEncoder().encode(password);
-                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-                const hashArray = Array.from(new Uint8Array(hashBuffer));
-                const inputHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-                passwordOk = inputHash === storedHash;
-                // Dev only: rules deny the isAdmin:true write, so the local
-                // session is elevated in memory; the DB flag is not persisted.
-            }
-
-            if (passwordOk) {
-                // Arm the guard so the profile value-listener doesn't
-                // misinterpret a transient !snap.exists() (SDK rollback /
-                // propagation delay) as a profile deletion.
-                adminLoginGuardRef.current = true;
-
-                // Optimistic Update: Set local state immediately
-                userDataRef.current = {
-                    nickname: finalNickname,
-                    avatarUrl: finalAvatarUrl,
-                    adminBadge: finalBadge,
-                    isAdmin: true
-                };
-
-                setNickname(finalNickname);
-                setAdminNickname(finalNickname);
-
-                // Convert badge icon (e.g. 'fa-crown') back to badge ID (e.g. 'crown') for settings UI
-                const matchingBadge = ADMIN_BADGES.find(b => b.icon === finalBadge);
-                if (matchingBadge) {
-                    setAdminBadge(matchingBadge.id);
-                }
-
-                setIsSetup(false);
-                loadMessages();
-
-                // Show welcome message
-                alert('Welcome Admin!');
-
-                // The proxy already wrote the full admin profile (isAdmin +
-                // nickname + avatarUrl + adminBadge) in a single REST PATCH
-                // that bypasses security rules — no client-side .update()
-                // needed.  The legacy (dev) path didn't write to the DB, so
-                // attempt a non-critical profile write there.
-                if (viaProxy.unreachable) {
-                    try {
-                        await dbRef.current.ref(`users/${currentUserRef.current.uid}`).update({
-                            nickname: finalNickname,
-                            avatarUrl: finalAvatarUrl,
-                            adminBadge: finalBadge
-                        });
-                    } catch (dbErr) {
-                        console.error('DB Update failed (Permissions?):', dbErr);
-                        // Non-critical — admin session continues in memory.
-                    }
-                }
-
-                // Claim the admin display name in the registry (overwrites any
-                // squatter) so regular users can never register it.
-                const adminKey = nicknameKey(finalNickname);
-                if (adminKey) {
-                    dbRef.current.ref(`nicknames/${adminKey}`).set({
-                        uid: currentUserRef.current.uid,
-                        nickname: finalNickname,
-                        claimedAt: window.firebase.database.ServerValue.TIMESTAMP
-                    }).catch((e) => console.warn('Admin nickname claim failed:', e));
-                }
-            } else {
-                alert('Incorrect Password');
-            }
-        } catch (err) {
-            console.error('Admin login error:', err);
-            alert('Login error: ' + err.message);
-        }
-    };
-
-    // Load reports (admin only)
+    // Load reports (claims admin only)
     const loadReports = async () => {
-        if (!userDataRef.current.isAdmin || !dbRef.current) return;
+        if (!isGlobalChatAdmin || !dbRef.current) return;
 
         try {
             const snapshot = await dbRef.current.ref(chatPath('reports')).once('value');
@@ -1253,6 +1050,9 @@ function GlobalChat() {
             }
         } catch (err) {
             console.error('Error loading reports:', err);
+            if (err.message?.includes('PERMISSION_DENIED') || err.code === 'PERMISSION_DENIED') {
+                setShowReports(false);
+            }
         }
     };
 
@@ -1607,7 +1407,7 @@ function GlobalChat() {
 
     // Mention options — admins also get a special "everyone" entry at the top
     // that turns the message into an @everyone broadcast when sent.
-    const mentionOptions = userDataRef.current.isAdmin && 'everyone'.includes(mentionQuery.toLowerCase())
+    const mentionOptions = isGlobalChatAdmin && 'everyone'.includes(mentionQuery.toLowerCase())
         ? [{ uid: '__everyone__', displayName: 'everyone', isEveryone: true }, ...filteredUsers]
         : filteredUsers;
 
@@ -1772,7 +1572,7 @@ function GlobalChat() {
         if (!target) return;
 
         const isOwn = currentUserRef.current?.uid && target.uid === currentUserRef.current.uid;
-        const isAdmin = Boolean(userDataRef.current.isAdmin);
+        const isAdmin = isGlobalChatAdmin === true;
         const canDelete = isOwn || isAdmin;
 
         // Ask first, then close the sheet afterwards either way — an early
@@ -2078,7 +1878,7 @@ function GlobalChat() {
     const renderMessage = (msg) => {
         // Targeted system notices (legacy report confirmations / resolutions)
         // are only visible to their recipient and to admins.
-        if (msg.toUid && msg.toUid !== currentUserRef.current?.uid && !userDataRef.current?.isAdmin) {
+        if (msg.toUid && msg.toUid !== currentUserRef.current?.uid && !isGlobalChatAdmin) {
             return null;
         }
 
@@ -2117,7 +1917,7 @@ function GlobalChat() {
                             <>
                                 <div className="gc-sender-name">
                                     {msg.senderName || msg.displayName || 'Google User'}
-                                    <span className="gc-admin-badge">
+                                    <span className="gc-admin-badge" title="StreamFlix Admin">
                                         <i className="fa-solid fa-crown"></i>
                                     </span>
                                 </div>
@@ -2149,7 +1949,7 @@ function GlobalChat() {
                             </div>
                         )}
                     </div>
-                    {userDataRef.current.isAdmin && hoveredMessageId === msg.id && (
+                    {isGlobalChatAdmin && hoveredMessageId === msg.id && (
                         <div className="gc-msg-actions">
                             <button
                                 className="gc-action-icon"
@@ -2194,17 +1994,17 @@ function GlobalChat() {
                 <div key={msg.id} className={`gc-msg ${isOwn ? 'gc-own' : 'gc-other'}`}>
                     <img
                         src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
-                        alt={msg.senderName || msg.displayName || msg.nickname || 'Google User'}
+                        alt={msg.senderName || msg.displayName || 'Google User'}
                         className="gc-avatar"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || msg.nickname || 'Google User')}&background=random`;
+                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || 'Google User')}&background=random`;
                         }}
                     />
                     <div className="gc-msg-group">
                         <div className="gc-msg-bubble gc-unsent">
-                            <em>{isOwn ? 'You unsent a message' : `${msg.senderName || msg.displayName || msg.nickname || 'Someone'} unsent a message`}</em>
-                            {userDataRef.current.isAdmin && (
+                            <em>{isOwn ? 'You unsent a message' : `${msg.senderName || msg.displayName || 'Someone'} unsent a message`}</em>
+                            {isGlobalChatAdmin && (
                                 <button
                                     className="gc-admin-purge-btn"
                                     title="Permanently delete"
@@ -2253,20 +2053,20 @@ function GlobalChat() {
             >
                 <img
                     src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
-                    alt={msg.senderName || msg.displayName || msg.nickname || 'Google User'}
+                    alt={msg.senderName || msg.displayName || 'Google User'}
                     className="gc-avatar"
                     onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || msg.nickname || 'Google User')}&background=random`;
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || 'Google User')}&background=random`;
                     }}
                 />
                 <div className="gc-msg-group">
                     {!isOwn && (
                         <div className="gc-sender-name">
-                            {msg.senderName || msg.displayName || msg.nickname || 'Google User'}
-                            {(msg.senderIsAdmin || msg.isAdmin) && (
-                                <span className="gc-admin-badge">
-                                    <i className={`fa-solid ${msg.adminBadge || 'fa-crown'}`}></i>
+                            {msg.senderName || msg.displayName || 'Google User'}
+                            {msg.senderIsAdmin && (
+                                <span className="gc-admin-badge" title="StreamFlix Admin">
+                                    <i className="fa-solid fa-crown"></i>
                                 </span>
                             )}
                         </div>
@@ -2453,14 +2253,14 @@ function GlobalChat() {
                                             Copy Text
                                         </button>
                                     )}
-                                    {(isOwn || userDataRef.current.isAdmin) && (
+                                    {(isOwn || isGlobalChatAdmin) && (
                                         <button onClick={() => {
                                             setMoreMenuMessageId(null);
                                             // handleDeleteMessage reads the passed msg directly, so no
                                             // setTimeout/state round-trip is needed.
                                             handleDeleteMessage(msg);
                                         }}>
-                                            {userDataRef.current.isAdmin ? 'Delete' : 'Unsend'}
+                                            {isGlobalChatAdmin ? 'Delete' : 'Unsend'}
                                         </button>
                                     )}
                                     {isOwn && msg.text && Date.now() - msg.createdAt < 3 * 60 * 1000 && (
@@ -2504,7 +2304,7 @@ function GlobalChat() {
                                             Report
                                         </button>
                                     )}
-                                    {userDataRef.current.isAdmin && (
+                                    {isGlobalChatAdmin && (
                                         <button onClick={async (e) => {
                                             e.stopPropagation();
                                             try {
@@ -2516,8 +2316,8 @@ function GlobalChat() {
                                                     const pinData = {
                                                         id: msg.id,
                                                         text: msg.text || '[Media]',
-                                                        senderName: msg.senderName || msg.displayName || msg.nickname || 'Admin',
-                                                        senderPhotoURL: msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || null,
+                                                        senderName: msg.senderName || msg.displayName || 'Admin',
+                                                        senderPhotoURL: msg.senderPhotoURL || msg.photoURL || null,
                                                         pinnedAt: Date.now(),
                                                         pinnedBy: currentUserRef.current.uid
                                                     };
@@ -2583,47 +2383,9 @@ function GlobalChat() {
                             <img
                                 src={userDataRef.current.photoURL || '/logo/streamflix.png'}
                                 alt="StreamFlix"
-                                className={`gc-header-avatar ${userDataRef.current.isAdmin ? 'clickable' : ''}`}
+                                className="gc-header-avatar"
                                 onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=SF&background=e50914&color=fff'; }}
-                                onClick={() => {
-                                    if (userDataRef.current.isAdmin) {
-                                        setShowAdminMenu(!showAdminMenu);
-                                    }
-                                }}
                             />
-                            {/* Admin Dropdown Menu */}
-                            {showAdminMenu && userDataRef.current.isAdmin && (
-                                <div className="gc-admin-menu">
-                                    <button onClick={() => {
-                                        setShowAdminSettings(true);
-                                        setAdminNickname(userDataRef.current.displayName || ADMIN_NICKNAME);
-
-                                        const currentAvatar = userDataRef.current.photoURL || '';
-                                        if (currentAvatar && !currentAvatar.includes('dicebear') && !currentAvatar.includes('ui-avatars')) {
-                                            setAdminAvatarMode('upload');
-                                        } else {
-                                            setAdminAvatarMode('dicebear');
-                                        }
-
-                                        setShowAdminMenu(false);
-                                    }}>
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-                                        </svg>
-                                        Settings
-                                    </button>
-                                    <button onClick={() => {
-                                        loadReports();
-                                        setShowReports(true);
-                                        setShowAdminMenu(false);
-                                    }}>
-                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                                        </svg>
-                                        View Reports
-                                    </button>
-                                </div>
-                            )}
                         </div>
                         <div className="gc-header-info">
                             <span className="gc-header-name">StreamFlix Community</span>
@@ -2631,14 +2393,19 @@ function GlobalChat() {
                         </div>
                     </div>
                     <div className="gc-header-actions">
-                        {/* Admin button (hidden when already admin) */}
-                        {!userDataRef.current.isAdmin && (
+                        {/* Reports button (admin only) */}
+                        {isGlobalChatAdmin && (
                             <button
                                 className="gc-icon-btn"
-                                onClick={handleAdminLogin}
-                                title="Admin Login"
+                                onClick={() => {
+                                    loadReports();
+                                    setShowReports(true);
+                                }}
+                                title="Reports"
                             >
-                                <img src="/icons/admin-svg.svg" alt="Admin" style={{ width: '20px', height: '20px', filter: 'brightness(0) invert(1)' }} />
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                                </svg>
                             </button>
                         )}
                         <button className="gc-close-btn" onClick={handleCloseChat}>
@@ -2660,10 +2427,10 @@ function GlobalChat() {
                                     <i className="fa-solid fa-thumbtack"></i>
                                 </div>
                                 <div className="gc-pinned-content">
-                                    <span className="gc-pinned-label">Pinned by {pinnedMessage.senderName || pinnedMessage.displayName || pinnedMessage.nickname || 'Admin'}</span>
+                                    <span className="gc-pinned-label">Pinned by {pinnedMessage.senderName || pinnedMessage.displayName || 'Admin'}</span>
                                     <span className="gc-pinned-text">{pinnedMessage.text}</span>
                                 </div>
-                                {userDataRef.current.isAdmin && (
+                                {isGlobalChatAdmin && (
                                     <button
                                         className="gc-unpin-btn"
                                         onClick={async (e) => {
@@ -3102,9 +2869,9 @@ function GlobalChat() {
                                         ✏️ Edit
                                     </button>
                                 )}
-                            {(actionSheetTarget?.uid === currentUserRef.current?.uid || userDataRef.current.isAdmin) && (
+                            {(actionSheetTarget?.uid === currentUserRef.current?.uid || isGlobalChatAdmin) && (
                                 <button className="gc-sheet-btn danger" onClick={() => handleDeleteMessage()}>
-                                    {userDataRef.current.isAdmin ? '🗑️ Delete for everyone' : '🗑️ Unsend'}
+                                    {isGlobalChatAdmin ? '🗑️ Delete for everyone' : '🗑️ Unsend'}
                                 </button>
                             )}
                             {actionSheetTarget?.uid !== currentUserRef.current?.uid && (
@@ -3174,217 +2941,9 @@ function GlobalChat() {
                 )
             }
 
-            {/* Admin Settings Modal */}
-            {
-                showAdminSettings && userDataRef.current.isAdmin && (
-                    <div className="gc-admin-settings-overlay" onClick={() => setShowAdminSettings(false)} data-nav-trap>
-                        <div className="gc-admin-settings" onClick={e => e.stopPropagation()}>
-                            <div className="gc-admin-settings-header">
-                                <h3>Admin Settings</h3>
-                                <button onClick={() => setShowAdminSettings(false)}>✕</button>
-                            </div>
-
-                            {/* Avatar Section */}
-                            <div className="gc-settings-section">
-                                <h4>Avatar</h4>
-                                <div className="gc-avatar-mode-tabs">
-                                    <button
-                                        className={adminAvatarMode === 'dicebear' ? 'active' : ''}
-                                        onClick={() => setAdminAvatarMode('dicebear')}
-                                    >
-                                        Generate
-                                    </button>
-                                    <button
-                                        className={adminAvatarMode === 'upload' ? 'active' : ''}
-                                        onClick={() => setAdminAvatarMode('upload')}
-                                    >
-                                        Upload
-                                    </button>
-                                </div>
-
-                                {adminAvatarMode === 'dicebear' ? (
-                                    <div className="gc-dicebear-section">
-                                        <div className="gc-settings-avatar-preview">
-                                            <img src={getAvatarUrl(avatarStyle, avatarSeed)} alt="Avatar" />
-                                        </div>
-                                        <div className="gc-avatar-mini-grid">
-                                            {AVATAR_STYLES.slice(0, 4).map(style => (
-                                                <div
-                                                    key={style.id}
-                                                    className={`gc-mini-avatar ${avatarStyle === style.id ? 'selected' : ''}`}
-                                                    onClick={() => setAvatarStyle(style.id)}
-                                                >
-                                                    <img src={getAvatarUrl(style.id, avatarSeed)} alt={style.name} />
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <button
-                                            className="gc-randomize-small"
-                                            onClick={() => setAvatarSeed(Math.random().toString(36).substring(7))}
-                                        >
-                                            🎲 Randomize
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="gc-upload-section">
-                                        <input
-                                            type="file"
-                                            ref={adminFileInputRef}
-                                            accept="image/*,.gif"
-                                            onChange={(e) => {
-                                                if (e.target.files?.[0]) {
-                                                    setAdminUploadedAvatar(e.target.files[0]);
-                                                }
-                                            }}
-                                            style={{ display: 'none' }}
-                                        />
-                                        <div
-                                            className="gc-upload-preview"
-                                            onClick={() => adminFileInputRef.current?.click()}
-                                        >
-                                            {adminUploadedAvatar || (userDataRef.current.avatarUrl && !userDataRef.current.avatarUrl.includes('dicebear') && !userDataRef.current.avatarUrl.includes('ui-avatars')) ? (
-                                                <img src={adminUploadedAvatar ? URL.createObjectURL(adminUploadedAvatar) : userDataRef.current.avatarUrl} alt="Preview" />
-                                            ) : (
-                                                <div className="gc-upload-placeholder">
-                                                    <i className="fa-solid fa-cloud-arrow-up"></i>
-                                                    <span>Click to upload</span>
-                                                    <small>GIF supported</small>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Name Section */}
-                            <div className="gc-settings-section">
-                                <h4>Display Name</h4>
-                                <input
-                                    type="text"
-                                    className="gc-admin-name-input"
-                                    value={adminNickname}
-                                    onChange={(e) => setAdminNickname(e.target.value.slice(0, 20))}
-                                    placeholder="Enter display name"
-                                    maxLength={20}
-                                />
-                            </div>
-
-                            {/* Badge Section */}
-                            <div className="gc-settings-section">
-                                <h4>Admin Badge</h4>
-                                <div className="gc-badge-grid">
-                                    {ADMIN_BADGES.map(badge => (
-                                        <div
-                                            key={badge.id}
-                                            className={`gc-badge-option ${adminBadge === badge.id ? 'selected' : ''}`}
-                                            onClick={() => setAdminBadge(badge.id)}
-                                            title={badge.name}
-                                        >
-                                            <i className={`fa-solid ${badge.icon}`}></i>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Save Button */}
-                            <button
-                                className="gc-save-settings-btn"
-                                disabled={isSavingSettings}
-                                style={{ opacity: isSavingSettings ? 0.7 : 1, cursor: isSavingSettings ? 'not-allowed' : 'pointer' }}
-                                onClick={async () => {
-                                    if (isSavingSettings) return;
-                                    setIsSavingSettings(true);
-                                    try {
-                                        let newAvatarUrl = userDataRef.current.avatarUrl;
-
-                                        if (adminAvatarMode === 'upload' && adminUploadedAvatar) {
-                                            newAvatarUrl = await uploadToDrive(adminUploadedAvatar);
-                                            if (!newAvatarUrl) {
-                                                alert('Failed to upload avatar');
-                                                setIsSavingSettings(false);
-                                                return;
-                                            }
-                                        } else if (adminAvatarMode === 'dicebear') {
-                                            newAvatarUrl = getAvatarUrl(avatarStyle, avatarSeed);
-                                        }
-
-                                        const selectedBadge = ADMIN_BADGES.find(b => b.id === adminBadge);
-
-                                        // Optimistic DB Update (Attempt)
-                                        try {
-                                            await dbRef.current.ref(`users/${currentUserRef.current.uid}`).update({
-                                                nickname: adminNickname.trim() || ADMIN_NICKNAME,
-                                                avatarUrl: newAvatarUrl,
-                                                adminBadge: selectedBadge?.icon || 'fa-crown'
-                                            });
-                                        } catch {
-                                            console.warn('DB Update failed (likely permissions), proceeding with local save.');
-                                        }
-
-                                        // Persist to LocalStorage (offline cache)
-                                        localStorage.setItem('sf_admin_nickname', adminNickname.trim() || ADMIN_NICKNAME);
-                                        localStorage.setItem('sf_admin_avatar', newAvatarUrl);
-                                        localStorage.setItem('sf_admin_badge', selectedBadge?.icon || 'fa-crown');
-
-                                        // Persist to Firebase for cross-device sync
-                                        try {
-                                            await dbRef.current.ref('secrets/admin_profile').set({
-                                                nickname: adminNickname.trim() || ADMIN_NICKNAME,
-                                                avatarUrl: newAvatarUrl,
-                                                adminBadge: selectedBadge?.icon || 'fa-crown'
-                                            });
-                                        } catch (e) {
-                                            console.warn('Failed to save admin profile to Firebase:', e);
-                                        }
-
-                                        // Keep the nickname registry in sync with a rename:
-                                        // free the old key, claim the new one.
-                                        const oldAdminKey = nicknameKey(userDataRef.current.nickname);
-                                        const newAdminNickname = adminNickname.trim() || ADMIN_NICKNAME;
-                                        const newAdminKey = nicknameKey(newAdminNickname);
-                                        if (oldAdminKey && oldAdminKey !== newAdminKey) {
-                                            dbRef.current.ref(`nicknames/${oldAdminKey}`).remove().catch(() => {});
-                                        }
-                                        if (newAdminKey) {
-                                            dbRef.current.ref(`nicknames/${newAdminKey}`).set({
-                                                uid: currentUserRef.current.uid,
-                                                nickname: newAdminNickname,
-                                                claimedAt: window.firebase.database.ServerValue.TIMESTAMP
-                                            }).catch(() => {});
-                                        }
-
-                                        userDataRef.current = {
-                                            ...userDataRef.current,
-                                            nickname: newAdminNickname,
-                                            avatarUrl: newAvatarUrl,
-                                            adminBadge: selectedBadge?.icon || 'fa-crown'
-                                        };
-
-                                        setAdminUploadedAvatar(null);
-                                        setShowAdminSettings(false);
-                                    } catch (err) {
-                                        console.error('Save settings error:', err);
-                                        alert('Failed to save settings');
-                                    } finally {
-                                        setIsSavingSettings(false);
-                                    }
-                                }}
-                            >
-                                {isSavingSettings ? (
-                                    <>
-                                        <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: '8px' }}></i>
-                                        Saving...
-                                    </>
-                                ) : 'Save Changes'}
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
-
             {/* Reports Panel (Admin Only) */}
             {
-                showReports && userDataRef.current.isAdmin && (
+                showReports && isGlobalChatAdmin && (
                     <div
                         className="gc-reports-overlay"
                         onClick={() => setShowReports(false)}

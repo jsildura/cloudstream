@@ -6,13 +6,6 @@
 	"observability": {
 		"enabled": true
 	},
-	"vars": {
-		// hex SHA-256 of the admin password — set a REAL value in the Pages dashboard.
-		"ADMIN_KEY_HASH": "f9b89cec1290e85ff070c2990a6cfb8b3dd5f19c2f993d570baf03da3f9c5701",
-		// RTDB database secret (Firebase console → Project settings → Service accounts).
-		"FIREBASE_DATABASE_SECRET": "Kccodp5atuksCxrG0pha1on1HIb7QzeV9PdWmkNT",
-		"FIREBASE_DATABASE_URL": "https://streamflix-chat-default-rtdb.firebaseio.com"
-	},
 	"kv_namespaces": [
 		{
 			"binding": "VISITOR_STATS",

@@ -1683,3 +1683,335 @@ describe('GlobalChat v2 Reports and Tickets', () => {
         expect(resolvedTicketEl.textContent).toContain('✅ Ticket #112233 resolved');
     });
 });
+
+// ── GlobalChat Custom Claims Admin UI & Moderation Tests ────────────────────
+
+describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
+    let mockDb;
+    let mockData = {};
+    let refCalls = [];
+    let registeredListeners = [];
+    let removedPaths = [];
+
+    const regularUser = {
+        uid: 'user-regular-1',
+        displayName: 'Regular User',
+        photoURL: 'https://lh3.googleusercontent.com/a/reg',
+        isGoogle: true
+    };
+
+    const adminUser = {
+        uid: 'user-admin-1',
+        displayName: 'Admin User',
+        photoURL: 'https://lh3.googleusercontent.com/a/adm',
+        isGoogle: true
+    };
+
+    const createMockRef = (path) => {
+        const refObj = {
+            path,
+            key: path.split('/').pop(),
+            once: vi.fn().mockImplementation((event, cb) => {
+                const data = mockData[path];
+                const snap = {
+                    exists: () => data !== undefined && data !== null,
+                    val: () => data ?? null,
+                    key: path.split('/').pop(),
+                    forEach: (iter) => {
+                        if (data && typeof data === 'object') {
+                            Object.entries(data).forEach(([k, v]) => {
+                                iter({ key: k, val: () => v });
+                            });
+                        }
+                    }
+                };
+                if (typeof event === 'function') event(snap);
+                if (cb) cb(snap);
+                return Promise.resolve(snap);
+            }),
+            set: vi.fn().mockImplementation((val) => {
+                mockData[path] = val;
+                return Promise.resolve();
+            }),
+            update: vi.fn().mockImplementation((val) => {
+                mockData[path] = { ...(mockData[path] || {}), ...val };
+                return Promise.resolve();
+            }),
+            remove: vi.fn().mockImplementation(() => {
+                removedPaths.push(path);
+                delete mockData[path];
+                return Promise.resolve();
+            }),
+            push: vi.fn().mockImplementation((val) => {
+                const newKey = `mock_pushed_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+                const newPath = `${path}/${newKey}`;
+                if (val !== undefined) mockData[newPath] = val;
+                const childRef = createMockRef(newPath);
+                childRef.key = newKey;
+                return childRef;
+            }),
+            on: vi.fn().mockImplementation((event, cb) => {
+                registeredListeners.push({ path, event, cb });
+                if (event === 'value') {
+                    const data = mockData[path];
+                    const snap = {
+                        exists: () => data !== undefined && data !== null,
+                        val: () => data ?? null,
+                        key: path.split('/').pop(),
+                        forEach: (iter) => {
+                            if (data && typeof data === 'object') {
+                                Object.entries(data).forEach(([k, v]) => {
+                                    iter({ key: k, val: () => v });
+                                });
+                            }
+                        }
+                    };
+                    cb(snap);
+                }
+                return cb;
+            }),
+            off: vi.fn().mockImplementation((event, cb) => {
+                registeredListeners = registeredListeners.filter(l => !(l.path === path && l.event === event && (!cb || l.cb === cb)));
+            }),
+            orderByKey: vi.fn().mockReturnThis(),
+            orderByChild: vi.fn().mockReturnThis(),
+            equalTo: vi.fn().mockReturnThis(),
+            limitToLast: vi.fn().mockReturnThis(),
+            endAt: vi.fn().mockReturnThis()
+        };
+        return refObj;
+    };
+
+    beforeEach(() => {
+        mockData = {};
+        refCalls = [];
+        registeredListeners = [];
+        removedPaths = [];
+
+        mockDb = {
+            ref: vi.fn((path = '') => {
+                refCalls.push(path);
+                return createMockRef(path);
+            })
+        };
+
+        window.firebase = {
+            database: Object.assign(() => mockDb, {
+                ServerValue: { TIMESTAMP: { '.sv': 'timestamp' } }
+            }),
+            auth: () => ({
+                currentUser: regularUser,
+                onAuthStateChanged: (cb) => {
+                    cb(regularUser);
+                    return () => {};
+                }
+            })
+        };
+
+        vi.spyOn(FirebaseModule, 'initFirebase').mockReturnValue({
+            auth: window.firebase.auth(),
+            db: mockDb,
+            storage: {}
+        });
+
+        mockData['globalChat/v2/messages'] = {
+            msg_other_user: {
+                uid: 'other-user-99',
+                senderName: 'Bob',
+                text: 'Hello world',
+                createdAt: Date.now() - 10000
+            }
+        };
+        mockData['globalChat/v2/reports'] = {
+            rep_1: {
+                kind: 'message',
+                msgId: 'msg_other_user',
+                messageText: 'Hello world',
+                messageSenderName: 'Bob',
+                reportedBy: 'user-regular-1',
+                reportedByName: 'Regular User',
+                timestamp: Date.now() - 5000
+            }
+        };
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('denies moderation affordances to regular users (no reports button, no pin, no hard delete)', async () => {
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: regularUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_other_user')).toBeInTheDocument();
+        });
+
+        // 1. Reports button in header is absent
+        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+
+        // 2. Admin Login button is completely removed
+        expect(document.querySelector('.gc-icon-btn[title="Admin Login"]')).toBeNull();
+
+        // 3. Pin button on other user's message is absent (in more menu)
+        const moreBtn = document.querySelector('#msg-msg_other_user .gc-action-icon[title="More"]');
+        if (moreBtn) {
+            fireEvent.click(moreBtn);
+            expect(screen.queryByText('Pin')).toBeNull();
+            expect(screen.queryByText('Delete')).toBeNull();
+        }
+
+        // 4. Input textarea does not offer @everyone mention
+        const textarea = document.querySelector('.gc-msg-input');
+        fireEvent.change(textarea, { target: { value: '@ev' } });
+        expect(screen.queryByText('everyone')).toBeNull();
+    });
+
+    it('grants moderation affordances when isGlobalChatAdmin is true', async () => {
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: adminUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: true,
+            signInWithGoogle: vi.fn()
+        });
+
+        window.confirm = vi.fn().mockReturnValue(true);
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_other_user')).toBeInTheDocument();
+        });
+
+        // 1. Reports button in header is visible and opens reports panel
+        const reportsBtn = document.querySelector('.gc-icon-btn[title="Reports"]');
+        expect(reportsBtn).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(reportsBtn);
+        });
+        expect(screen.getByText('User Reports')).toBeInTheDocument();
+        expect(screen.getByText('Hello world')).toBeInTheDocument();
+
+        // 2. Hard delete option exists in more menu
+        const msgEl = document.querySelector('#msg-msg_other_user');
+        fireEvent.mouseEnter(msgEl);
+        const moreBtn = document.querySelector('#msg-msg_other_user .gc-action-icon[title="More"]');
+        expect(moreBtn).toBeInTheDocument();
+        fireEvent.click(moreBtn);
+        const deleteBtn = screen.getByText('Delete');
+        expect(deleteBtn).toBeInTheDocument();
+
+        // 3. Pin option exists in more menu
+        const pinBtn = screen.getByText('Pin');
+        expect(pinBtn).toBeInTheDocument();
+
+        // 4. @everyone mention auto-complete is offered
+        const textarea = document.querySelector('.gc-msg-input');
+        fireEvent.change(textarea, { target: { value: '@ev' } });
+        expect(screen.getByText('everyone')).toBeInTheDocument();
+    });
+
+    it('does not confer admin moderation to user whose message contains forged senderIsAdmin: true', async () => {
+        // Message in feed claims senderIsAdmin: true, but current session user is regularUser
+        mockData['globalChat/v2/messages'] = {
+            msg_forged_admin: {
+                uid: 'impostor-user',
+                senderName: 'Impostor',
+                senderIsAdmin: true,
+                text: 'I claim to be admin',
+                createdAt: Date.now()
+            }
+        };
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: regularUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_forged_admin')).toBeInTheDocument();
+        });
+
+        // Message renders admin crown badge because senderIsAdmin is true in feed
+        const forgedMsg = document.querySelector('#msg-msg_forged_admin');
+        expect(forgedMsg.querySelector('.gc-admin-badge')).toBeInTheDocument();
+
+        // But regularUser session has NO moderation privileges
+        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+        fireEvent.mouseEnter(forgedMsg);
+        const moreBtn = forgedMsg.querySelector('.gc-action-icon[title="More"]');
+        if (moreBtn) {
+            fireEvent.click(moreBtn);
+            expect(screen.queryByText('Pin')).toBeNull();
+            expect(screen.queryByText('Delete')).toBeNull();
+        }
+    });
+
+    it('closes open Reports panel and blocks moderation when isGlobalChatAdmin becomes false', async () => {
+        let authState = {
+            chatIdentity: adminUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: true,
+            signInWithGoogle: vi.fn()
+        };
+
+        const authSpy = vi.spyOn(AuthContextModule, 'useAuth').mockImplementation(() => authState);
+
+        const { rerender } = render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeInTheDocument();
+        });
+
+        // Open reports panel
+        const reportsBtn = document.querySelector('.gc-icon-btn[title="Reports"]');
+        await act(async () => {
+            fireEvent.click(reportsBtn);
+        });
+        expect(screen.getByText('User Reports')).toBeInTheDocument();
+
+        // Revoke admin claim
+        authState = {
+            ...authState,
+            isGlobalChatAdmin: false
+        };
+        await act(async () => {
+            rerender(React.createElement(GlobalChat));
+        });
+
+        // Reports panel should now be dismissed
+        expect(screen.queryByText('User Reports')).toBeNull();
+        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+    });
+});
+
