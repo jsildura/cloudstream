@@ -21,7 +21,9 @@
 		"verify:chat": "npm run test:chat && npm run test:rules:transitional && npm run test:rules && npm run build",
 		"firebase:emulators": "firebase emulators:start --project demo-streamflix --only auth,database",
 		"chat:admin": "node scripts/global-chat-admin.mjs",
-		"test:admin-script": "vitest run scripts/global-chat-admin.test.js"
+		"test:admin-script": "vitest run scripts/global-chat-admin.test.js",
+		"clean:anon": "node scripts/cleanup-anonymous-users.mjs",
+		"test:clean-script": "vitest run scripts/cleanup-anonymous-users.test.js"
 	},
 	"dependencies": {
 		"@ffmpeg/ffmpeg": "^0.12.15",
