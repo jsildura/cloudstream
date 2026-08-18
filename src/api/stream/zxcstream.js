@@ -17,19 +17,19 @@ const BASE = 'https://player.zxcstream.xyz';
 // Obfuscated field names. The site sends its parameters under these weird keys
 // instead of "id", "token", etc. Copied verbatim from the same module.
 const FIELD_MAP = {
-  id:      'c81f7a42d9e2532b16f408',
-  fToken:  '9e3c7bd314af652481d0e49b73',
-  ts:      '54d8b21fc9a3754e60b1fd',
-  token:   'b7f18e4c225d963a50ef81c4a9',
-  title:   '2af9c71de384b54630c91e',
-  year:    'f0b34e8d61c6a9275a14f',
-  season:  'd41e8c6b259af5733510fc48a7e',
-  episode: '8b7d13fa8e620c94541d8e7bc2',
-  imdbId:  '6e2af5c97d19840b63f81a6d54',
+  id:      'c81f42d9e2532b16f408',
+  fToken:  '9e3c7b14af652481d0e49b73',
+  ts:      '54d8b21fa3754e60b1fd',
+  token:   'b7f18e4c225d963aef81c4a9',
+  title:   '2af9c71de384b546391e',
+  year:    'f0b34e8d66a9275a14f',
+  season:  'd41e8c6b259af57510fc48a7e',
+  episode: '8b7d13fe620c94541d8e7bc2',
+  imdbId:  '6e2af5c97d19840b631a6d54',
 };
 
 // The upstream servers, in the order the site lists them. We try each in turn.
-const SERVERS = ['1orion', '1icarus', '1berkas', '1resshin', '1athena', '1sentinel'];
+const SERVERS = ['o_rion', 'i_carus', 'b_erkas', 'r_esshin', 'a_thena', 's_entinel'];
 
 // Headers that make our request look like it came from the real site's player.
 // Without a matching Origin/Referer, Cloudflare tends to answer 403.
