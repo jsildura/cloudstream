@@ -4,6 +4,19 @@
 // Never import it from a React component — the secret would ship to every user.
 
 // === CONFIG (the only things you might need to change) =====================
+//
+// ROTATION RUNBOOK - when the zxc_watcher alerts "ZXCSTREAM ROTATION DETECTED":
+//   1. FIELD_MAP + SERVERS below: copy the new values straight from the alert.
+//   2. The secret is NOT stored in this file - put the new value in the
+//      Cloudflare `ZXC_STREAM_SECRET` binding (read in
+//      functions/api/stream/streamflix.js). The alert masks it; print the full
+//      value with `node seed.js` in the watcher repo.
+//   3. The alert only watches fields/secret/servers — ENDPOINT PATHS CAN MOVE
+//      TOO. In the 2026-08-17 rotation /backend/token__ became /backend/token
+//      (only visible in the live bundle, module 92852). If resolves still fail
+//      after steps 1+2, diff the token/server paths in the bundle against this
+//      file before redeploying.
+//   4. Redeploy the Pages project - the step that gets missed.
 
 // The origin all backend calls go to. The site serves its JS from here and
 // makes same-origin calls to /backend/*, so this is almost certainly correct.
@@ -28,8 +41,9 @@ const FIELD_MAP = {
   imdbId:  '6e2af5c97d19840b631a6d54',
 };
 
-// The upstream servers, in the order the site lists them. We try each in turn.
-const SERVERS = ['o_rion', 'i_carus', 'b_erkas', 'r_esshin', 'a_thena', 's_entinel'];
+// The upstream servers, in the order the site lists them (Orion I → Sentinel
+// VI). We try each in turn.
+const SERVERS = ['o_rion', 'b_erkas', 'i_carus', 'r_esshin', 'a_thena', 's_entinel'];
 
 // Headers that make our request look like it came from the real site's player.
 // Without a matching Origin/Referer, Cloudflare tends to answer 403.
@@ -82,7 +96,10 @@ async function generateFrontendToken(id, secret) {
 }
 
 // === STEP 2: swap our signature for a server-issued token ===================
-// POST /backend/token__  →  { <token>, <serverTs> }
+// POST /backend/token  →  { <token>, <serverTs> }
+// NOTE: the endpoint was /backend/token__ before the 2026-08-17 rotation; the
+// live bundle (module 92852) now posts to /backend/token. The old path answers
+// 405 Method Not Allowed, which made every resolve fail with no_sources.
 async function getServerToken(id, secret, deadline) {
   const { xt, rt } = await generateFrontendToken(id, secret);
   const body = {
@@ -90,7 +107,7 @@ async function getServerToken(id, secret, deadline) {
     [FIELD_MAP.fToken]: xt,
     [FIELD_MAP.ts]: rt,
   };
-  const res = await fetchT(`${BASE}/backend/token__`, {
+  const res = await fetchT(`${BASE}/backend/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...BROWSER_HEADERS },
     body: JSON.stringify(body),
