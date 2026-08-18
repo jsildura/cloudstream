@@ -126,14 +126,24 @@ const Watch = () => {
 
   const { POSTER_URL } = useTMDB();
   const { showNowPlaying, showSuccess, showError } = useToast();
-  const { addToHistory, updateProgress, getLastWatched } = useWatchHistory();
+  const { addToHistory, updateProgress, getLastWatched, flushPendingHistory } = useWatchHistory();
   const getLastWatchedRef = useRef(getLastWatched);
   getLastWatchedRef.current = getLastWatched;
+  const flushPendingHistoryRef = useRef(flushPendingHistory);
+  flushPendingHistoryRef.current = flushPendingHistory;
   const { trackWatch } = usePopularTracking();
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
   const hasShownToast = useRef(false);
   const wakeLockRef = useRef(null);
   const isSaved = contentInfo ? isInWatchlist(type, contentInfo.id) : false;
+
+  // Persist the final playback position as soon as the player is left, instead of
+  // waiting out the remainder of the progress throttle window.
+  useEffect(() => {
+    return () => {
+      flushPendingHistoryRef.current?.();
+    };
+  }, []);
 
   // Screen Wake Lock - Prevents screen from turning off during playback
   // Works on: Chrome 84+, Safari iOS 16.4+, Edge 84+, Brave, Opera

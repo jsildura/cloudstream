@@ -1,7 +1,8 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, act } from '@testing-library/react';
-import { ProfileDataProvider, useProfileData, ANONYMOUS_HISTORY_KEY } from './ProfileDataContext';
+import { ProfileDataProvider, useProfileData, ANONYMOUS_HISTORY_KEY, PROGRESS_THROTTLE_MS } from './ProfileDataContext';
+import { flushPendingHistoryBeforeSignOut } from '../lib/pendingHistoryFlush';
 
 let mockAuth = {
   accountUser: null,
@@ -370,6 +371,189 @@ describe('ProfileDataContext', () => {
 
       expect(localStorage.getItem(`streamflix_profile_migration_v1:${uid}`)).toBe('declined');
       expect(state.isMigrationRequired).toBe(false);
+    });
+  });
+
+  describe('Pending Progress Write Ownership', () => {
+    // Each `rerender` must be given a FRESH element. Reusing the same element
+    // reference makes React bail out of the re-render, so the cloud-listener
+    // effect never re-runs and these tests would pass vacuously.
+    const renderProvider = (onState) => {
+      const tree = () => (
+        <ProfileDataProvider>
+          <TestConsumer onRender={onState} />
+        </ProfileDataProvider>
+      );
+      const { rerender } = render(tree());
+      return { rerenderFresh: () => rerender(tree()) };
+    };
+
+    const historyPath = (uid, profileId, mediaKey) =>
+      `profileData/${uid}/${profileId}/watchHistory/${mediaKey}`;
+
+    it('writes a pending progress update to the profile that queued it, not the newly selected one', async () => {
+      const uid = 'google-uid-switch';
+      const profileA = '-NxProfileAAAAAAAAAA';
+      const profileB = '-NxProfileBBBBBBBBBB';
+
+      mockAuth = { accountUser: { uid }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileA, isProfileLoading: false };
+
+      let state;
+      const { rerenderFresh } = renderProvider((s) => { state = s; });
+
+      await act(async () => {
+        await state.updateProgress('movie', 777, 42, 100, { title: 'Adult Movie 777' });
+      });
+
+      // Still inside the throttle window, so nothing is persisted yet
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))).toBeUndefined();
+
+      mockProfiles = { activeProfileId: profileB, isProfileLoading: false };
+      await act(async () => {
+        rerenderFresh();
+      });
+
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))?.currentTime).toBe(42);
+      expect(getPathVal(mockDatabase, historyPath(uid, profileB, 'movie_777'))).toBeUndefined();
+    });
+
+    it('drops a pending progress update on sign-out instead of leaking it into the next account', async () => {
+      const uid1 = 'google-uid-account-1';
+      const uid2 = 'google-uid-account-2';
+      const profileA = '-NxProfileAAAAAAAAAA';
+      const profileZ = '-NxProfileZZZZZZZZZZ';
+
+      mockAuth = { accountUser: { uid: uid1 }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileA, isProfileLoading: false };
+
+      let state;
+      const { rerenderFresh } = renderProvider((s) => { state = s; });
+
+      await act(async () => {
+        await state.updateProgress('movie', 888, 90, 120, { title: 'Account 1 Private Movie' });
+      });
+
+      // Sign out — the queued write is no longer permitted by the security rules
+      mockAuth = { accountUser: null, isSignedIn: false };
+      mockProfiles = { activeProfileId: null, isProfileLoading: false };
+      await act(async () => {
+        rerenderFresh();
+      });
+
+      // Sign in as a different account with its own profile
+      mockAuth = { accountUser: { uid: uid2 }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileZ, isProfileLoading: false };
+      await act(async () => {
+        rerenderFresh();
+      });
+
+      // A parked entry would be drained here by the throttle timer
+      await act(async () => {
+        vi.advanceTimersByTime(PROGRESS_THROTTLE_MS * 2);
+      });
+
+      expect(getPathVal(mockDatabase, historyPath(uid2, profileZ, 'movie_888'))).toBeUndefined();
+      expect(getPathVal(mockDatabase, `profileData/${uid2}`)).toBeUndefined();
+      // Accepted trade-off: the tail of progress is dropped rather than misfiled
+      expect(getPathVal(mockDatabase, historyPath(uid1, profileA, 'movie_888'))).toBeUndefined();
+    });
+
+    it('keeps separate progress values when the same title is pending under two profiles', async () => {
+      const uid = 'google-uid-shared-title';
+      const profileA = '-NxProfileAAAAAAAAAA';
+      const profileB = '-NxProfileBBBBBBBBBB';
+
+      mockAuth = { accountUser: { uid }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileA, isProfileLoading: false };
+
+      let state;
+      const { rerenderFresh } = renderProvider((s) => { state = s; });
+
+      await act(async () => {
+        await state.updateProgress('movie', 777, 42, 100, { title: 'Shared Movie 777' });
+      });
+
+      mockProfiles = { activeProfileId: profileB, isProfileLoading: false };
+      await act(async () => {
+        rerenderFresh();
+      });
+
+      await act(async () => {
+        await state.updateProgress('movie', 777, 90, 100, { title: 'Shared Movie 777' });
+      });
+
+      // Let the throttle timer fire, which flushes by the composite pending key
+      await act(async () => {
+        vi.advanceTimersByTime(PROGRESS_THROTTLE_MS + 1);
+      });
+
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))?.currentTime).toBe(42);
+      expect(getPathVal(mockDatabase, historyPath(uid, profileB, 'movie_777'))?.currentTime).toBe(90);
+    });
+
+    it('clearHistory only clears the active profile, sparing other profiles history and queued writes', async () => {
+      const uid = 'google-uid-clear-scope';
+      const profileA = '-NxProfileAAAAAAAAAA';
+      const profileB = '-NxProfileBBBBBBBBBB';
+
+      mockAuth = { accountUser: { uid }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileA, isProfileLoading: false };
+
+      let state;
+      const { rerenderFresh } = renderProvider((s) => { state = s; });
+
+      await act(async () => {
+        await state.updateProgress('movie', 777, 42, 100, { title: 'Profile A Movie' });
+      });
+
+      // Switching flushes profile A's queued write to profile A
+      mockProfiles = { activeProfileId: profileB, isProfileLoading: false };
+      await act(async () => {
+        rerenderFresh();
+      });
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))?.currentTime).toBe(42);
+
+      await act(async () => {
+        await state.updateProgress('movie', 555, 30, 100, { title: 'Profile B Movie' });
+      });
+
+      let res;
+      await act(async () => {
+        res = await state.clearHistory();
+      });
+      expect(res.ok).toBe(true);
+
+      // Profile B's queued write must be cancelled, not resurrected by its timer
+      await act(async () => {
+        vi.advanceTimersByTime(PROGRESS_THROTTLE_MS * 2);
+      });
+
+      expect(getPathVal(mockDatabase, `profileData/${uid}/${profileB}/watchHistory`)).toBeUndefined();
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))?.currentTime).toBe(42);
+    });
+
+    it('persists queued writes through the sign-out flush registry', async () => {
+      const uid = 'google-uid-signout-flush';
+      const profileA = '-NxProfileAAAAAAAAAA';
+
+      mockAuth = { accountUser: { uid }, isSignedIn: true };
+      mockProfiles = { activeProfileId: profileA, isProfileLoading: false };
+
+      let state;
+      renderProvider((s) => { state = s; });
+
+      await act(async () => {
+        await state.updateProgress('movie', 777, 42, 100, { title: 'Movie 777' });
+      });
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))).toBeUndefined();
+
+      // AuthContext calls this while the account token is still valid
+      await act(async () => {
+        await flushPendingHistoryBeforeSignOut();
+      });
+
+      expect(getPathVal(mockDatabase, historyPath(uid, profileA, 'movie_777'))?.currentTime).toBe(42);
     });
   });
 });

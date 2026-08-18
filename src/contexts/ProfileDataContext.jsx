@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useAuth } from './AuthContext';
 import { useProfiles } from './ProfileContext';
 import { initFirebase } from '../lib/firebase';
+import { registerPendingHistoryFlush } from '../lib/pendingHistoryFlush';
 import {
   mediaKey,
   isValidMediaKey,
@@ -83,6 +84,15 @@ function resolveMediaIdentifier(typeOrItemOrId, maybeId, fallbackList = []) {
   return { type, id: numId, key: `${type}_${numId}` };
 }
 
+/**
+ * Builds the pendingWrites map key for a throttled history write.
+ * The owner is baked into the key so two profiles with a pending write for the
+ * same title cannot overwrite each other.
+ */
+function pendingWriteKey(uid, profileId, key) {
+  return `${uid}/${profileId}/${key}`;
+}
+
 export const ProfileDataProvider = ({ children }) => {
   const { accountUser, isSignedIn } = useAuth();
   const { activeProfileId, isProfileLoading, isKidsMode } = useProfiles();
@@ -107,7 +117,7 @@ export const ProfileDataProvider = ({ children }) => {
   const [anonymousHistory, setAnonymousHistory] = useState([]);
   const [isAnonymousHistoryLoaded, setIsAnonymousHistoryLoaded] = useState(false);
 
-  const pendingWritesRef = useRef(new Map()); // mediaKey -> { item, timestamp, timerId }
+  const pendingWritesRef = useRef(new Map()); // `${uid}/${profileId}/${mediaKey}` -> { uid, profileId, mediaKey, item, timestamp, timerId }
   const isMountedRef = useRef(true);
   const activeProfileRef = useRef(activeProfileId);
   const uidRef = useRef(accountUser?.uid || null);
@@ -163,37 +173,55 @@ export const ProfileDataProvider = ({ children }) => {
   // ─────────────────────────────────────────────
   // 2. FLUSH PENDING THROTTLED WRITES
   // ─────────────────────────────────────────────
+  /**
+   * Writes queued throttled history items to the owner recorded on each entry.
+   * Entries are always removed from the map — even when they cannot be written —
+   * so a signed-out entry can never be inherited by the next account.
+   */
   const flushPendingHistory = useCallback(async (specificKey = null) => {
-    const uid = uidRef.current;
-    const profileId = activeProfileRef.current;
-    if (!uid || !profileId) return;
+    const currentUid = uidRef.current;
+    const pendingWrites = pendingWritesRef.current;
+    if (pendingWrites.size === 0) return;
+
+    const keysToFlush = specificKey
+      ? [specificKey]
+      : Array.from(pendingWrites.keys());
+
+    const writable = [];
+
+    for (const key of keysToFlush) {
+      const pending = pendingWrites.get(key);
+      if (!pending) continue;
+
+      if (pending.timerId) clearTimeout(pending.timerId);
+      pendingWrites.delete(key); // always drain, even if unwritable
+
+      // Security rules reject writes for a uid that is no longer authenticated,
+      // so drop those instead of misfiling them under the current account.
+      if (!pending.uid || !pending.profileId || pending.uid !== currentUid) continue;
+
+      writable.push(pending);
+    }
+
+    if (writable.length === 0) return;
 
     try {
       const { db } = initFirebase();
-      const keysToFlush = specificKey
-        ? [specificKey]
-        : Array.from(pendingWritesRef.current.keys());
-
-      const writePromises = [];
-
-      for (const key of keysToFlush) {
-        const pending = pendingWritesRef.current.get(key);
-        if (pending) {
-          if (pending.timerId) clearTimeout(pending.timerId);
-          pendingWritesRef.current.delete(key);
-
-          const itemPath = `profileData/${uid}/${profileId}/watchHistory/${key}`;
-          writePromises.push(db.ref(itemPath).set(pending.item));
-        }
-      }
-
-      if (writePromises.length > 0) {
-        await Promise.all(writePromises);
-      }
+      await Promise.all(
+        writable.map((pending) => {
+          const itemPath = `profileData/${pending.uid}/${pending.profileId}/watchHistory/${pending.mediaKey}`;
+          return db.ref(itemPath).set(pending.item);
+        })
+      );
     } catch (err) {
       console.error('[ProfileData] flushPendingHistory error:', err);
     }
   }, []);
+
+  // AuthProvider sits above this provider, so it cannot reach the flush through
+  // context. Register it so sign-out can persist queued writes while the account
+  // token is still valid.
+  useEffect(() => registerPendingHistoryFlush(flushPendingHistory), [flushPendingHistory]);
 
   // Flush on visibility hidden, pagehide/beforeunload
   useEffect(() => {
@@ -223,9 +251,6 @@ export const ProfileDataProvider = ({ children }) => {
     let watchlistRef = null;
     let historyRef = null;
 
-    // Flush any pending writes before switching profile/user
-    flushPendingHistory();
-
     if (!isSignedIn || !accountUser || !activeProfileId) {
       // Clear cloud state synchronously
       setCloudWatchlist([]);
@@ -242,6 +267,7 @@ export const ProfileDataProvider = ({ children }) => {
 
       return () => {
         isMountedRef.current = false;
+        flushPendingHistory();
       };
     }
 
@@ -322,6 +348,9 @@ export const ProfileDataProvider = ({ children }) => {
 
     return () => {
       isMountedRef.current = false;
+      // Each pending entry carries its own owner, so flushing here persists the
+      // profile/account we are leaving rather than the one being switched to.
+      flushPendingHistory();
       if (watchlistRef) watchlistRef.off();
       if (historyRef) historyRef.off();
     };
@@ -763,25 +792,35 @@ export const ProfileDataProvider = ({ children }) => {
     }
 
     // Cloud: Update in-memory state immediately for instant UI feedback
+    const uid = accountUserRef.current.uid;
+    const profileId = activeProfileRef.current;
+    if (!profileId) {
+      return { ok: false, reason: 'no-active-profile' };
+    }
+
     setCloudHistory((prev) => {
       const filtered = prev.filter((i) => !(i.type === resolved.type && i.id === resolved.id));
       return [normalized, ...filtered].slice(0, MAX_HISTORY_ITEMS);
     });
 
-    // Throttle cloud write per mediaKey (15 seconds)
-    const key = resolved.key;
+    // Throttle cloud write per owner + mediaKey (15 seconds). The owner is captured
+    // now, so a later profile/account switch cannot redirect this write.
+    const pendingKey = pendingWriteKey(uid, profileId, resolved.key);
     const now = Date.now();
-    const existingPending = pendingWritesRef.current.get(key);
+    const existingPending = pendingWritesRef.current.get(pendingKey);
 
     if (existingPending) {
       existingPending.item = normalized;
       existingPending.timestamp = now;
     } else {
       const timerId = setTimeout(() => {
-        flushPendingHistory(key);
+        flushPendingHistory(pendingKey);
       }, PROGRESS_THROTTLE_MS);
 
-      pendingWritesRef.current.set(key, {
+      pendingWritesRef.current.set(pendingKey, {
+        uid,
+        profileId,
+        mediaKey: resolved.key,
         item: normalized,
         timestamp: now,
         timerId
@@ -811,14 +850,16 @@ export const ProfileDataProvider = ({ children }) => {
       return { ok: false, reason: 'no-active-profile' };
     }
 
-    // Cancel pending write if any
-    const pending = pendingWritesRef.current.get(resolved.key);
+    const uid = accountUserRef.current.uid;
+
+    // Cancel this profile's pending write if any
+    const pendingKey = pendingWriteKey(uid, profileId, resolved.key);
+    const pending = pendingWritesRef.current.get(pendingKey);
     if (pending?.timerId) {
       clearTimeout(pending.timerId);
     }
-    pendingWritesRef.current.delete(resolved.key);
+    pendingWritesRef.current.delete(pendingKey);
 
-    const uid = accountUserRef.current.uid;
     try {
       const { db } = initFirebase();
       await db.ref(`profileData/${uid}/${profileId}/watchHistory/${resolved.key}`).set(null);
@@ -840,13 +881,16 @@ export const ProfileDataProvider = ({ children }) => {
       return { ok: false, reason: 'no-active-profile' };
     }
 
-    // Clear all pending throttled timers
-    for (const pending of pendingWritesRef.current.values()) {
-      if (pending?.timerId) clearTimeout(pending.timerId);
-    }
-    pendingWritesRef.current.clear();
-
     const uid = accountUserRef.current.uid;
+
+    // Drop only this profile's pending throttled writes; another profile's queued
+    // write must survive, since it targets a subtree we are not clearing.
+    for (const [key, pending] of pendingWritesRef.current.entries()) {
+      if (pending?.uid !== uid || pending?.profileId !== profileId) continue;
+      if (pending.timerId) clearTimeout(pending.timerId);
+      pendingWritesRef.current.delete(key);
+    }
+
     try {
       const { db } = initFirebase();
       await db.ref(`profileData/${uid}/${profileId}/watchHistory`).set(null);

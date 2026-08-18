@@ -6,6 +6,7 @@ import {
     FirebaseInitializationError
 } from '../lib/firebase';
 import { getGoogleTokenIdentity } from '../lib/globalChatIdentity';
+import { flushPendingHistoryBeforeSignOut } from '../lib/pendingHistoryFlush';
 import { isTVDevice } from '../utils/platform';
 
 const REDIRECT_PENDING_KEY = 'streamflix_google_auth_pending_v1';
@@ -452,6 +453,9 @@ export const AuthProvider = ({ children }) => {
      * Sign out Google account and replace with a clean anonymous user.
      */
     const signOutAccount = useCallback(async () => {
+        // Persist queued watch progress while this account's token is still valid
+        await flushPendingHistoryBeforeSignOut();
+
         // Clear identity and claims immediately before waiting for anonymous replacement
         claimsReqRef.current++;
         setAuthClaims({});

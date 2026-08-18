@@ -13,7 +13,8 @@ const useWatchHistory = () => {
     getLastWatched,
     isInHistory,
     removeFromHistory,
-    clearHistory
+    clearHistory,
+    flushPendingHistory
   } = useProfileData();
 
   return {
@@ -26,6 +27,7 @@ const useWatchHistory = () => {
     isInHistory,
     removeFromHistory,
     clearHistory,
+    flushPendingHistory,
     historyCount: watchHistory.length
   };
 };
