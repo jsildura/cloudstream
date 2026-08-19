@@ -3,7 +3,11 @@
  * 
  * This file contains all streaming server configurations.
  * To add, remove, or modify servers, edit the serverConfig array below.
- * 
+ *
+ * Set `disabled: true` on an entry to hide it from the server picker without
+ * removing it. Entries stay in the array so the indices persisted in
+ * localStorage (`server-<tmdbId>`) keep pointing at the same server.
+ *
  * URL PATTERNS:
  * - 'default'    : {baseUrl}{type}/{id}/{season}/{episode}{suffix}
  * - 'movie-only' : {baseUrl}{id}{suffix} (returns null for TV)
@@ -24,10 +28,13 @@ export const serverConfig = [
         hasAds: false,
         pattern: 'default',
         directPlayer: true,
+        // Temporarily hidden: the direct resolver keeps breaking. Remove this
+        // line (or set it to false) to bring Direct Play back.
+        disabled: true,
     },
     {
-        name: 'Server 2',
-        description: 'Reliable Server',
+        name: 'Server 1',
+        description: 'StreamFlix Default',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en?autoplay=true',
         isRecommended: true,
@@ -36,7 +43,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 3',
+        name: 'Server 2',
         description: 'Reliable Server',
         baseUrl: 'https://api.cineby.homes/embed/',
         suffix: '',
@@ -46,7 +53,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 4',
+        name: 'Server 3',
         description: 'Reliable Server',
         baseUrl: 'https://anyembed.xyz/embed/',
         suffix: '',
@@ -56,7 +63,7 @@ export const serverConfig = [
         pattern: 'anyembed',
     },
     {
-        name: 'Server 5',
+        name: 'Server 4',
         description: 'Reliable Server',
         baseUrl: 'https://vaplayer.ru/embed/',
         suffix: '',
@@ -66,7 +73,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 6',
+        name: 'Server 5',
         description: 'Reliable Server',
         baseUrl: 'https://www.vidking.net/embed/',
         suffix: '?autoPlay=true',
@@ -76,7 +83,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 7',
+        name: 'Server 6',
         description: 'Reliable Server',
         baseUrl: 'https://web.nxsha.app/embed/',
         suffix: '',
@@ -86,7 +93,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 8',
+        name: 'Server 7',
         description: 'Reliable Server',
         baseUrl: 'https://vidsync.xyz/embed/',
         suffix: '',
@@ -96,7 +103,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 9',
+        name: 'Server 8',
         description: 'Reliable Server',
         baseUrl: 'https://mapple.uk/watch/',
         suffix: '',
@@ -106,7 +113,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 10',
+        name: 'Server 9',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
@@ -116,7 +123,7 @@ export const serverConfig = [
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 11',
+        name: 'Server 10',
         description: 'Backup Server',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
@@ -126,7 +133,7 @@ export const serverConfig = [
         pattern: 'primesrc',
     },
     {
-        name: 'Server 12',
+        name: 'Server 11',
         description: 'Backup Server',
         baseUrl: 'https://vidlink.pro/',
         suffix: '',
@@ -136,7 +143,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 13',
+        name: 'Server 12',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
@@ -146,7 +153,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 14',
+        name: 'Server 13',
         description: 'Backup Server',
         baseUrl: 'https://vixsrc.to/',
         suffix: '',
@@ -156,7 +163,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 15',
+        name: 'Server 14',
         description: 'Backup Server',
         baseUrl: 'https://player.videasy.net/',
         suffix: '',
@@ -166,7 +173,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 16',
+        name: 'Server 15',
         description: 'Backup Server',
         baseUrl: 'https://www.zxcstream.xyz/embed/',
         suffix: '?autoPlay=true',
@@ -176,7 +183,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 17',
+        name: 'Server 16',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.vc/',
         suffix: '',
@@ -186,7 +193,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 18',
+        name: 'Server 17',
         description: 'Backup Server',
         baseUrl: 'https://vidnest.fun/',
         suffix: '',
@@ -196,7 +203,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 19',
+        name: 'Server 18',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc.to/embed/',
         suffix: '?autoPlay=1',
@@ -260,6 +267,26 @@ export function buildServerUrl(server, type, id, season, episode) {
             // Standard: {base}{type}/{id}{tvPath}{suffix}
             return `${baseUrl}${type}/${id}${tvPath}${suffix}`;
     }
+}
+
+/**
+ * Whether a server index exists and is currently offered to viewers.
+ * @param {number} index - Index into serverConfig
+ * @returns {boolean}
+ */
+export function isServerEnabled(index) {
+    const server = serverConfig[index];
+    return Boolean(server) && !server.disabled;
+}
+
+/**
+ * Index of the first server still offered to viewers. Used as the default
+ * pick when nothing is saved, or when a saved pick points at a disabled one.
+ * @returns {number}
+ */
+export function getFirstEnabledServerIndex() {
+    const index = serverConfig.findIndex(server => !server.disabled);
+    return index === -1 ? 0 : index;
 }
 
 /**

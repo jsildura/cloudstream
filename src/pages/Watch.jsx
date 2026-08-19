@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import useWatchHistory from '../hooks/useWatchHistory';
 import usePopularTracking from '../hooks/usePopularTracking';
 import useWatchlist from '../hooks/useWatchlist';
-import { serverConfig, buildServerUrl } from '../config/servers';
+import { serverConfig, buildServerUrl, isServerEnabled, getFirstEnabledServerIndex } from '../config/servers';
 import SchemaMarkup from '../components/SchemaMarkup';
 import MetaTags from '../components/MetaTags';
 import { generateVideoObjectSchema } from '../utils/schemaUtils';
@@ -55,10 +55,11 @@ const Watch = () => {
       const saved = localStorage.getItem(`server-${id}`);
       if (saved !== null) {
         const idx = parseInt(saved, 10);
-        if (Number.isFinite(idx) && idx >= 0 && idx < serverConfig.length) return idx;
+        // A saved pick that has since been disabled falls through to the default.
+        if (Number.isFinite(idx) && isServerEnabled(idx)) return idx;
       }
     } catch { /* localStorage unavailable */ }
-    return 0;
+    return getFirstEnabledServerIndex();
   });
   const [currentSeason, setCurrentSeason] = useState(urlSeason ? parseInt(urlSeason) : 1);
   const [currentEpisode, setCurrentEpisode] = useState(urlEpisode ? parseInt(urlEpisode) : 1);
@@ -494,8 +495,18 @@ const Watch = () => {
     sandboxSupport: s.sandboxSupport,
     hasAds: s.hasAds || false,
     directPlayer: s.directPlayer || false,
+    disabled: s.disabled || false,
     getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
   })), [type, id]);
+
+  // Only these are listed in the picker. Disabled servers keep their slot in
+  // `servers` so persisted indices stay valid, they just aren't offered.
+  const selectableServers = useMemo(
+    () => servers
+      .map((server, index) => ({ server, index }))
+      .filter(({ server }) => !server.disabled),
+    [servers]
+  );
 
   // Generate VideoObject schema for SEO (memoized) - must be before early returns
   const videoSchema = useMemo(() => {
@@ -1108,8 +1119,10 @@ const Watch = () => {
                   // rate-limiting our resolver). Fall back to Server 2 — the
                   // zxcstream iframe — which plays from the browser's own IP
                   // and usually still works when the direct path is throttled.
-                  const nextServer = currentServer + 1;
-                  if (nextServer < servers.length) {
+                  const nextServer = servers.findIndex(
+                    (s, i) => i > currentServer && !s.disabled
+                  );
+                  if (nextServer !== -1) {
                     // Let GlobalChat's Report Issue auto-attach what the user
                     // was watching and which server failed — the user only has
                     // to pick a category and describe what happened.
@@ -1641,7 +1654,7 @@ const Watch = () => {
               {/* Server List */}
               <div className="watch-server-list">
                 <p className="watch-server-list-title">Select Server</p>
-                {servers.map((server, index) => (
+                {selectableServers.map(({ server, index }) => (
                   <div
                     key={server.name}
                     className={`watch-server-card ${currentServer === index ? 'active' : ''}`}
