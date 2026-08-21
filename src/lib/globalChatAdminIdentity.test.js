@@ -33,7 +33,12 @@ describe('ADMIN_BADGES', () => {
     });
 
     it('contains no emoji or markup in any label or path', () => {
-        const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
+        // U+FE0F (variation selector-16) is an alternation branch rather than a
+        // character-class member: it is a combining mark, and inside a class it
+        // would match as its own code point instead of as part of the grapheme
+        // it modifies (no-misleading-character-class). This regex is only ever
+        // used as a containment test, so the two forms assert the same thing.
+        const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]|\u{FE0F}/u;
         for (const badge of ADMIN_BADGES) {
             expect(badge.label).not.toMatch(emoji);
             expect(badge.label).not.toMatch(/[<>]/);
