@@ -1,6 +1,12 @@
 /**
  * Normalizes Google auth ID-token claims into canonical GlobalChat identity.
- * 
+ *
+ * Deliberately claims-only: database.rules.json validates profile/message
+ * identity against auth.token.name / auth.token.picture, so sourcing these
+ * from anywhere else (e.g. the Firebase User object) produces writes the
+ * server rejects with PERMISSION_DENIED. To get real names/photos into the
+ * claims, see syncGoogleProfileToUserRecord in ./firebase.js.
+ *
  * @param {string} uid Firebase user UID
  * @param {Object} [claims={}] Decoded ID-token claims (e.g. from getIdTokenResult)
  * @returns {{ uid: string, displayName: string, photoURL: string|null } | null}

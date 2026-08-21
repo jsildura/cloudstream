@@ -1,0 +1,425 @@
+/* === GLOBALCHAT ADMIN DASHBOARD ===
+   Overlay modelled on the existing gc-reports-* panel so the Reports tab can
+   keep reusing the gc-report-* item styles already in GlobalChat.css. */
+
+.gc-admin-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.gc-admin-panel {
+    background: #1f1f1f;
+    border-radius: 16px;
+    width: 92%;
+    max-width: 380px;
+    max-height: 82%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+.gc-admin-panel:focus {
+    outline: none;
+}
+
+.gc-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.gc-admin-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.gc-admin-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+}
+
+.gc-admin-close:hover {
+    color: #fff;
+}
+
+/* --- Tabs --- */
+.gc-admin-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 8px 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.gc-admin-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.gc-admin-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1 0 auto;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #9ca3af;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.gc-admin-tab:hover {
+    color: #e5e7eb;
+}
+
+.gc-admin-tab.active {
+    color: #fff;
+    border-bottom-color: #e50914;
+}
+
+.gc-admin-tab-count {
+    background: #e50914;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    min-width: 15px;
+    padding: 0 4px;
+    line-height: 15px;
+    text-align: center;
+}
+
+/* --- Notice --- */
+.gc-admin-notice {
+    margin: 10px 15px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+.gc-admin-notice.ok {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    color: #86efac;
+}
+
+.gc-admin-notice.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+}
+
+/* --- Body --- */
+.gc-admin-body {
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.gc-admin-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.gc-admin-label {
+    color: #e5e7eb;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.gc-admin-hint {
+    color: #6b7280;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+.gc-admin-field-error {
+    color: #fca5a5;
+    font-size: 0.72rem;
+}
+
+.gc-admin-input {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 9px 11px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.gc-admin-input:focus {
+    outline: none;
+    border-color: #e50914;
+}
+
+.gc-admin-input:disabled {
+    opacity: 0.5;
+}
+
+.gc-admin-file {
+    color: #9ca3af;
+    font-size: 0.75rem;
+}
+
+.gc-admin-file::file-selector-button {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #e5e7eb;
+    cursor: pointer;
+    font-size: 0.75rem;
+    margin-right: 10px;
+    padding: 6px 10px;
+}
+
+.gc-admin-file::file-selector-button:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* --- Preview --- */
+.gc-admin-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.gc-admin-preview-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 auto;
+    background: #000;
+}
+
+.gc-admin-preview-avatar.large {
+    width: 64px;
+    height: 64px;
+}
+
+/* --- Buttons --- */
+.gc-admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.gc-admin-btn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    color: #e5e7eb;
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 7px 13px;
+    transition: all 0.2s;
+}
+
+.gc-admin-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.gc-admin-btn.primary {
+    border-color: #e50914;
+    color: #fff;
+    background: #e50914;
+}
+
+.gc-admin-btn.primary:hover:not(:disabled) {
+    background: #f6121d;
+}
+
+.gc-admin-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* --- Badge grid --- */
+.gc-admin-badge-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.gc-admin-badge-swatch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    color: #ffd700;
+    cursor: pointer;
+    padding: 10px 6px;
+    transition: all 0.2s;
+}
+
+.gc-admin-badge-swatch:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.gc-admin-badge-swatch.active {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.12);
+}
+
+.gc-admin-badge-swatch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.gc-admin-badge-swatch-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.gc-admin-badge-swatch-label {
+    color: #9ca3af;
+    font-size: 0.65rem;
+}
+
+.gc-admin-badge-swatch.active .gc-admin-badge-swatch-label {
+    color: #e5e7eb;
+}
+
+/* --- Report filters and status --- */
+.gc-admin-filters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.gc-admin-filter {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 999px;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    transition: all 0.2s;
+}
+
+.gc-admin-filter:hover {
+    color: #e5e7eb;
+}
+
+.gc-admin-filter.active {
+    background: rgba(229, 9, 20, 0.18);
+    border-color: #e50914;
+    color: #fff;
+}
+
+.gc-report-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.gc-report-status {
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 2px 7px;
+    text-transform: uppercase;
+}
+
+.gc-report-status-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+}
+
+.gc-report-status-resolved {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+}
+
+.gc-report-status-dismissed {
+    background: rgba(255, 255, 255, 0.08);
+    color: #9ca3af;
+}
+
+.gc-report-item.gc-report-resolved,
+.gc-report-item.gc-report-dismissed {
+    opacity: 0.72;
+}
+
+.gc-report-audit {
+    color: #6b7280;
+    font-size: 0.68rem;
+    margin-top: 4px;
+}
+
+.gc-report-audit code {
+    font-size: 0.65rem;
+    word-break: break-all;
+}
+
+.gc-report-dismiss,
+.gc-report-delete {
+    background: none;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    pointer-events: auto;
+}
+
+.gc-report-dismiss {
+    border: 1px solid #9ca3af;
+    color: #9ca3af;
+}
+
+.gc-report-dismiss:hover {
+    background: #9ca3af;
+    color: #111;
+}
+
+.gc-report-delete {
+    border: 1px solid #ef4444;
+    color: #ef4444;
+}
+
+.gc-report-delete:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+.gc-report-actions {
+    flex-wrap: wrap;
+}

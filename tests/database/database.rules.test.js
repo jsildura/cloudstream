@@ -668,6 +668,141 @@ describe('Firebase Realtime Database Security Rules', () => {
     });
   });
 
+  describe('globalChat/v2/profiles — admin identity overrides', () => {
+    const LH3 = 'https://lh3.googleusercontent.com/d/1AbC_dEf-GhIjKlMnOpQrStUvWxYz';
+
+    // Seeds a valid base profile for `uid` using that user's own credentials,
+    // so override writes afterwards exercise only the override field rules.
+    const seedProfile = async (uid, opts = {}) => {
+      const db = await createGoogleContext(uid, { name: 'Alice', picture: 'https://img.test/alice.jpg', ...opts });
+      await assertSucceeds(db.ref(`globalChat/v2/profiles/${uid}`).set(
+        createValidProfileFixture(uid, { displayName: 'Alice', photoURL: 'https://img.test/alice.jpg' })
+      ));
+      return db;
+    };
+
+    it('allows a claims admin to set all four override fields on their own profile', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({
+        adminName: 'Nightwatch',
+        adminPhotoURL: LH3,
+        adminBadge: 'shield',
+        adminUpdatedAt: 1700002000000
+      }));
+    });
+
+    it('denies a non-admin Google user setting overrides on their OWN profile', async () => {
+      const db = await seedProfile('google-user-1');
+      await assertFails(db.ref('globalChat/v2/profiles/google-user-1').update({ adminName: 'Nightwatch' }));
+      await assertFails(db.ref('globalChat/v2/profiles/google-user-1').update({ adminPhotoURL: LH3 }));
+      await assertFails(db.ref('globalChat/v2/profiles/google-user-1').update({ adminBadge: 'crown' }));
+      await assertFails(db.ref('globalChat/v2/profiles/google-user-1').update({ adminUpdatedAt: 1700002000000 }));
+    });
+
+    it('denies anonymous and unauthenticated override writes', async () => {
+      const anonDb = await createAnonymousContext('anon-1');
+      await assertFails(anonDb.ref('globalChat/v2/profiles/anon-1').update({ adminName: 'Nightwatch' }));
+
+      const unauthDb = await createUnauthenticatedContext();
+      await assertFails(unauthDb.ref('globalChat/v2/profiles/google-user-1').update({ adminName: 'Nightwatch' }));
+    });
+
+    it('denies an admin writing overrides onto ANOTHER user\'s profile', async () => {
+      await seedProfile('google-user-2');
+      const adminDb = await createGoogleAdminContext('google-admin-1');
+      await assertFails(adminDb.ref('globalChat/v2/profiles/google-user-2').update({ adminName: 'Nightwatch' }));
+      await assertFails(adminDb.ref('globalChat/v2/profiles/google-user-2').update({ adminBadge: 'crown' }));
+    });
+
+    it('denies an adminBadge outside the allowlist', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      for (const badge of ['emperor', '', 'CROWN', '👑', '<svg onload=alert(1)>', 'crown ']) {
+        await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminBadge: badge }));
+      }
+    });
+
+    it('allows every badge id in the allowlist', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      for (const badge of ['crown', 'shield', 'star', 'verified', 'bolt', 'wrench']) {
+        await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminBadge: badge }));
+      }
+    });
+
+    it('denies malformed adminName values', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      const bad = [
+        'A',                    // shorter than 2
+        'A'.repeat(33),         // longer than 32
+        ' Nightwatch',          // leading space
+        'Nightwatch ',          // trailing space
+        'admin@streamflix.com', // contains @
+        '@everyone',            // contains @
+        'Google User'           // reserved fallback identity
+      ];
+      for (const name of bad) {
+        await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminName: name }));
+      }
+    });
+
+    it('allows adminName at both length boundaries', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminName: 'AB' }));
+      await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminName: 'A'.repeat(32) }));
+    });
+
+    it('denies adminPhotoURL that is not a well-formed lh3 Drive URL', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      const bad = [
+        'http://lh3.googleusercontent.com/d/1AbC_dEf',   // not https
+        'https://evil.example.com/d/1AbC_dEf',           // wrong host
+        'https://lh3.googleusercontent.com.evil.com/d/1', // host prefix trick
+        'https://img.test/alice.jpg',                    // arbitrary https host
+        'javascript:alert(1)',
+        'data:image/png;base64,AAAA',
+        'https://lh3.googleusercontent.com/d/',          // empty id
+        `${LH3}?tracking=1`                              // query string not allowed
+      ];
+      for (const url of bad) {
+        await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ adminPhotoURL: url }));
+      }
+    });
+
+    it('allows an admin to clear their own overrides', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({
+        adminName: 'Nightwatch',
+        adminPhotoURL: LH3,
+        adminBadge: 'shield'
+      }));
+      await assertSucceeds(db.ref('globalChat/v2/profiles/google-admin-1').update({
+        adminName: null,
+        adminPhotoURL: null,
+        adminBadge: null
+      }));
+    });
+
+    it('still enforces token-bound displayName and photoURL for an admin', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      // Overrides must not become a side door into the token-bound fields.
+      await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ displayName: 'Not Alice' }));
+      await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ photoURL: LH3 }));
+    });
+
+    it('still rejects undeclared fields for an admin via $other', async () => {
+      const db = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ isAdmin: true }));
+      await assertFails(db.ref('globalChat/v2/profiles/google-admin-1').update({ nickname: 'Nightwatch' }));
+    });
+
+    it('allows any Google user to read admin overrides (render-time overlay)', async () => {
+      const adminDb = await seedProfile('google-admin-1', { globalChatAdmin: true });
+      await assertSucceeds(adminDb.ref('globalChat/v2/profiles/google-admin-1').update({ adminBadge: 'star' }));
+
+      const readerDb = await createGoogleContext('google-user-1');
+      await assertSucceeds(readerDb.ref('globalChat/v2/profiles/google-admin-1').get());
+    });
+  });
+
   describe('globalChat/v2/messages', () => {
     it('denies unauthenticated and anonymous read/write for messages', async () => {
       const unauthDb = await createUnauthenticatedContext();

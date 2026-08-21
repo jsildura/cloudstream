@@ -8,6 +8,11 @@ import { initFirebase } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalChatSignInWall from './GlobalChatSignInWall';
 import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
+import { uploadToDrive, formatDriveUrl } from '../lib/globalChatUpload';
+import { summarizeUA } from '../lib/globalChatReports';
+import { normalizeAdminOverrides, resolveSenderIdentity, FALLBACK_AVATAR } from '../lib/globalChatAdminIdentity';
+import GlobalChatAdminBadge from './GlobalChatAdminBadge';
+import GlobalChatAdminDashboard from './GlobalChatAdminDashboard';
 import './GlobalChat.css';
 
 // Constants
@@ -70,8 +75,6 @@ const ISSUE_COOLDOWN_KEY = 'gc_last_issue_report';
 // moderation queue without a counter (derived from the push timestamp).
 const makeTicketNo = () => String(Date.now()).slice(-6);
 
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxzTmKrwPjOOhL-H7rXVLvs_p9ZPb5aulvhzNhxRlA3x3byy81tUnyFl66MQ5DvEvNo/exec';
-
 // Snapshot a reported message's visible content into the report payload. The
 // admin moderation panel renders this snippet directly, so a report stays
 // useful even if the message is later edited, deleted, or purged — the report
@@ -115,26 +118,18 @@ export const buildMessageReport = (msg, reporter) => {
 
 // Condense a raw user-agent into a short "Browser on OS" line so the admin
 // panel shows device context at a glance instead of a wall of text.
+// Lives in ../lib/globalChatReports so the admin dashboard can use it without
+// importing this component; re-exported here for the existing unit tests.
 // eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
-export const summarizeUA = (ua) => {
-    if (!ua) return '';
-    const os = ['Android', 'iPhone', 'iPad', 'Windows', 'Mac OS X', 'Linux', 'CrOS']
-        .find(o => ua.includes(o)) || 'Unknown OS';
-    let browser = 'Unknown browser';
-    if (/Edg\//.test(ua)) browser = 'Edge';
-    else if (/Firefox\//.test(ua)) browser = 'Firefox';
-    else if (/SamsungBrowser\//.test(ua)) browser = 'Samsung Internet';
-    else if (/Chrome\//.test(ua)) browser = 'Chrome';
-    else if (/Safari\//.test(ua)) browser = 'Safari';
-    return `${browser} on ${os}`;
-};
+export { summarizeUA };
 
 // Hover action buttons (React/Reply/⋮) are a mouse-only affordance. Touch
 // devices long-press for the action sheet instead, so only track hover when
 // the primary pointer actually hovers.
 const HOVER_MQ = window.matchMedia('(hover: hover) and (pointer: fine)');
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ADMIN_AVATAR = "/logo/streamflix.png";
+// Local asset, so a broken avatar never triggers a remote request or an
+// onError loop. Shared with the admin identity overlay.
+const ADMIN_AVATAR = FALLBACK_AVATAR;
 
 // ─── Chat link support ─────────────────────────────────────────────────
 // URLs inside message text are rendered as clickable links. The app's own
@@ -411,15 +406,16 @@ function GlobalChat() {
     const [showLightbox, setShowLightbox] = useState(null);
     const [, setIsRecording] = useState(false);
 
-    // Admin states
-    const [showReports, setShowReports] = useState(false);
+    // Admin states. `adminTab` doubles as the dashboard's open/closed flag:
+    // null means closed, otherwise it names the tab to show.
+    const [adminTab, setAdminTab] = useState(null);
     const [reports, setReports] = useState([]);
 
     // Refs
     const messagesContainerRef = useRef(null);
     const inputRef = useRef(null);
     const currentUserRef = useRef(null);
-    const userDataRef = useRef({ nickname: '', avatarUrl: '', isAdmin: false });
+    const userDataRef = useRef({ uid: '', displayName: '', photoURL: null, isAdmin: false });
     const dbRef = useRef(null);
     const authRef = useRef(null);
     const storageRef = useRef(null);
@@ -434,7 +430,7 @@ function GlobalChat() {
     // Close admin views if admin claim is revoked
     useEffect(() => {
         if (!isGlobalChatAdmin) {
-            setShowReports(false);
+            setAdminTab(null);
         }
     }, [isGlobalChatAdmin]);
     // Set the first time the chat is opened after setup — the broadcast
@@ -558,6 +554,22 @@ function GlobalChat() {
                 const now = Date.now();
                 const profileData = buildChatProfile(chatIdentity, now, existingJoinedAt);
 
+                // buildChatProfile only knows the token-bound canonical fields, so
+                // a bare .set() would drop the admin identity overrides the
+                // dashboard wrote — the profile would silently reset to the Google
+                // name/photo on every reload. Carry them forward, gated on the live
+                // claim so an ex-admin's overrides expire here exactly as the rules
+                // (and the render-time overlay) already expect.
+                if (isGlobalChatAdmin === true) {
+                    const overrides = normalizeAdminOverrides(existingProfile);
+                    if (overrides.adminName) profileData.adminName = overrides.adminName;
+                    if (overrides.adminPhotoURL) profileData.adminPhotoURL = overrides.adminPhotoURL;
+                    if (overrides.adminBadge) profileData.adminBadge = overrides.adminBadge;
+                    if (typeof existingProfile?.adminUpdatedAt === 'number' && existingProfile.adminUpdatedAt > 0) {
+                        profileData.adminUpdatedAt = existingProfile.adminUpdatedAt;
+                    }
+                }
+
                 await db.ref(profilePath).set(profileData);
                 if (!active) return;
 
@@ -586,7 +598,10 @@ function GlobalChat() {
         };
     }, [chatIdentity, isSignedIn, isGlobalChatAdmin, isTVMode, cleanupListeners, getDb]);
 
-    // Load users cache (profiles)
+    // Load users cache (profiles). Also carries the admin identity overrides,
+    // which are applied as a render-time overlay — message sender snapshots
+    // stay immutable, so the overlay is the only place a custom admin name,
+    // avatar, or badge comes from.
     useEffect(() => {
         if (!dbRef.current || sessionState !== 'ready') return;
 
@@ -599,7 +614,11 @@ function GlobalChat() {
                     users.push({
                         uid: child.key,
                         displayName: val.displayName,
-                        photoURL: val.photoURL || null
+                        photoURL: val.photoURL || null,
+                        // normalizeAdminOverrides discards anything the rules
+                        // would have rejected, so a value written before a
+                        // rules deploy can never reach the DOM.
+                        ...normalizeAdminOverrides(val)
                     });
                 }
             });
@@ -609,6 +628,20 @@ function GlobalChat() {
         profilesRef.on('value', callback);
         listenersRef.current.push(() => profilesRef.off('value', callback));
     }, [sessionState]);
+
+    // uid → profile, so the per-message overlay lookup is O(1) instead of a
+    // linear scan of allUsers on every row.
+    const profilesByUid = useMemo(() => {
+        const map = new Map();
+        allUsers.forEach(u => map.set(u.uid, u));
+        return map;
+    }, [allUsers]);
+
+    /** The signed-in admin's own overrides, echoed back from the live cache. */
+    const myOverrides = useMemo(
+        () => normalizeAdminOverrides(profilesByUid.get(chatIdentity?.uid) || null),
+        [profilesByUid, chatIdentity?.uid]
+    );
 
     // Load pinned message
     useEffect(() => {
@@ -869,88 +902,6 @@ function GlobalChat() {
         }
     };
 
-    // Convert file to base64
-    const fileToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-        });
-    };
-
-    // Upload file to Google Drive via Apps Script (free alternative to Firebase Storage)
-    const uploadToDrive = async (file) => {
-        if (!currentUserRef.current) return null;
-
-        try {
-            const base64String = await fileToBase64(file);
-            const payload = {
-                base64: base64String,
-                mimeType: file.type,
-                filename: `StreamFlix_${Date.now()}_${file.name}`,
-                userName: currentUserRef.current.uid
-            };
-
-            const response = await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'cors',
-                redirect: 'follow',
-                headers: {
-                    'Content-Type': 'text/plain'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            const text = await response.text();
-            let result;
-            try {
-                result = JSON.parse(text);
-            } catch {
-                console.error('Response was not JSON:', text);
-                throw new Error('Invalid response from upload server');
-            }
-
-            if (result.status !== 'success') {
-                throw new Error(result.message || 'Upload Failed');
-            }
-            return result.url;
-        } catch (err) {
-            console.error('Upload error:', err);
-            throw err;
-        }
-    };
-
-    // Format Google Drive URL for viewing (uses lh3.googleusercontent.com for reliability)
-    const formatDriveUrl = (url, type = 'view') => {
-        if (!url) return url;
-
-        // If already in lh3 format, return as-is
-        if (url.includes('lh3.googleusercontent.com')) return url;
-
-        // If not a drive URL, return as-is
-        if (!url.includes('drive.google.com')) return url;
-
-        // Extract file ID from various Google Drive URL formats
-        let id = null;
-        const patterns = [
-            /\/file\/d\/([^/]+)/,
-            /id=([^&]+)/,
-            /\/d\/([^/]+)/
-        ];
-        for (const p of patterns) {
-            const m = url.match(p);
-            if (m) { id = m[1]; break; }
-        }
-        if (!id) return url;
-
-        // Use lh3.googleusercontent.com format for reliable embedding
-        if (type === 'download') {
-            return `https://drive.google.com/uc?export=download&id=${id}`;
-        }
-        return `https://lh3.googleusercontent.com/d/${id}`;
-    };
-
     // Get file type
     const getFileType = (file) => {
         if (file.type.startsWith('image/')) return 'image';
@@ -1003,7 +954,7 @@ function GlobalChat() {
         setShowActionSheet(false);
         setShowReactionPopover(null);
         setShowCamera(false);
-        setShowReports(false);
+        setAdminTab(null);
         stopCamera();
     };
 
@@ -1013,44 +964,79 @@ function GlobalChat() {
     // dev`); the legacy Firebase-hash comparison only runs when the proxy is
     // unreachable (plain `npm run dev` on localhost, no proxy serving).
     //
-    // Load reports (claims admin only)
-    const loadReports = async () => {
-        if (!isGlobalChatAdmin || !dbRef.current) return;
-
-        try {
-            const snapshot = await dbRef.current.ref(chatPath('reports')).once('value');
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                const reportsList = Object.entries(data).map(([id, report]) => ({
-                    id,
-                    ...report
-                }));
-                await Promise.all(reportsList.map(async (report) => {
-                    if (report.msgId && !report.messageText) {
-                        try {
-                            const msgSnap = await dbRef.current.ref(chatPath('messages', report.msgId)).once('value');
-                            const msg = msgSnap.val();
-                            if (msg) {
-                                report.messageText = (msg.text || '').trim().slice(0, 200);
-                                report.messageSenderName = msg.senderName || msg.displayName || 'Google User';
-                                report.messageMedia = msg.mediaUrl ? (['image', 'video', 'file', 'audio'].includes(msg.mediaType) ? msg.mediaType : 'file') : null;
-                            }
-                        } catch {
-                            /* best-effort: leave the report as-is */
-                        }
-                    }
-                }));
-                setReports(reportsList.reverse());
-            } else {
-                setReports([]);
-            }
-        } catch (err) {
-            console.error('Error loading reports:', err);
-            if (err.message?.includes('PERMISSION_DENIED') || err.code === 'PERMISSION_DENIED') {
-                setShowReports(false);
-            }
+    // Reports (claims admin only). A live listener, so a report filed while the
+    // dashboard is open appears without a reload, and it detaches the moment the
+    // claim goes away. Reads under reports/ require globalChatAdmin, so a
+    // non-admin never attaches at all.
+    useEffect(() => {
+        if (!isGlobalChatAdmin || !dbRef.current || sessionState !== 'ready') {
+            setReports([]);
+            return;
         }
-    };
+
+        let active = true;
+        const reportsRef = dbRef.current.ref(chatPath('reports'));
+
+        const callback = async (snapshot) => {
+            if (!snapshot.exists()) {
+                if (active) setReports([]);
+                return;
+            }
+
+            const reportsList = Object.entries(snapshot.val()).map(([id, report]) => ({ id, ...report }));
+
+            // Best-effort hydration of the reported message's text, so a report
+            // stays readable even after the message scrolls out of the window.
+            await Promise.all(reportsList.map(async (report) => {
+                if (report.msgId && !report.messageText) {
+                    try {
+                        const msgSnap = await dbRef.current.ref(chatPath('messages', report.msgId)).once('value');
+                        const msg = msgSnap.val();
+                        if (msg) {
+                            report.messageText = (msg.text || '').trim().slice(0, 200);
+                            report.messageSenderName = msg.senderName || msg.displayName || 'Google User';
+                            report.messageMedia = msg.mediaUrl ? (['image', 'video', 'file', 'audio'].includes(msg.mediaType) ? msg.mediaType : 'file') : null;
+                        }
+                    } catch {
+                        /* best-effort: leave the report as-is */
+                    }
+                }
+            }));
+
+            if (!active) return;
+            // Newest first.
+            reportsList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            setReports(reportsList);
+        };
+
+        const errorCallback = (err) => {
+            console.error('Error loading reports:', err);
+            if (active) {
+                setReports([]);
+                // The claim is the only thing that grants this read; if it is
+                // gone, close the admin surface rather than showing an empty list.
+                if (err?.code === 'PERMISSION_DENIED' || err?.message?.includes('PERMISSION_DENIED')) {
+                    setAdminTab(null);
+                }
+            }
+        };
+
+        reportsRef.on('value', callback, errorCallback);
+        const detach = () => reportsRef.off('value', callback);
+        listenersRef.current.push(detach);
+
+        return () => {
+            active = false;
+            detach();
+            listenersRef.current = listenersRef.current.filter(fn => fn !== detach);
+        };
+    }, [isGlobalChatAdmin, sessionState]);
+
+    /** Reports awaiting triage. A legacy report with no status counts as pending. */
+    const pendingReportCount = useMemo(
+        () => reports.filter(r => !r.status || r.status === 'pending').length,
+        [reports]
+    );
 
     // Handle send message
     const handleSendMessage = async () => {
@@ -1067,7 +1053,7 @@ function GlobalChat() {
 
             if (pendingFile) {
                 mediaType = getFileType(pendingFile);
-                mediaUrl = await uploadToDrive(pendingFile);
+                mediaUrl = await uploadToDrive({ file: pendingFile, uid: currentUserRef.current.uid });
             }
 
             const now = Date.now();
@@ -1083,7 +1069,7 @@ function GlobalChat() {
                 mediaType: mediaType || undefined,
                 replyTo: replyTo ? {
                     messageId: replyTo.messageId || replyTo.id,
-                    senderName: replyTo.senderName || replyTo.nickname || replyTo.displayName || 'Google User',
+                    senderName: replyTo.senderName || 'Google User',
                     text: (replyTo.text || (replyTo.recTitle ? `🎬 ${replyTo.recTitle}` : (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movies` : (replyTo.mediaUrl ? '📷 Media' : '')))).slice(0, MAX_REPLY_PREVIEW_LENGTH)
                 } : undefined
             });
@@ -1532,7 +1518,6 @@ function GlobalChat() {
                 id: actionSheetTarget.id,
                 messageId: actionSheetTarget.id,
                 senderName: actionSheetTarget.senderName || actionSheetTarget.displayName || actionSheetTarget.nickname || 'Google User',
-                nickname: actionSheetTarget.senderName || actionSheetTarget.displayName || actionSheetTarget.nickname || 'Google User',
                 uid: actionSheetTarget.uid,
                 text: actionSheetTarget.text,
                 moviesCount: actionSheetTarget.movies?.length || 0,
@@ -1913,8 +1898,11 @@ function GlobalChat() {
                             <>
                                 <div className="gc-sender-name">
                                     {msg.senderName || msg.displayName || 'Google User'}
+                                    {/* A "resolved by staff" marker, not sender identity — the
+                                        rules force senderIsAdmin false on ticket messages, so this
+                                        stays ungated and uses the default badge. */}
                                     <span className="gc-admin-badge" title="StreamFlix Admin">
-                                        <i className="fa-solid fa-crown"></i>
+                                        <GlobalChatAdminBadge title="StreamFlix Admin" />
                                     </span>
                                 </div>
                                 <div className="gc-bubble-wrapper">
@@ -1989,12 +1977,12 @@ function GlobalChat() {
             return (
                 <div key={msg.id} className={`gc-msg ${isOwn ? 'gc-own' : 'gc-other'}`}>
                     <img
-                        src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
+                        src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || FALLBACK_AVATAR}
                         alt={msg.senderName || msg.displayName || 'Google User'}
                         className="gc-avatar"
                         onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || 'Google User')}&background=random`;
+                            e.target.src = FALLBACK_AVATAR;
                         }}
                     />
                     <div className="gc-msg-group">
@@ -2032,6 +2020,13 @@ function GlobalChat() {
         const hasReactions = !!reactionData;
         const isMediaOnly = msg.mediaUrl && !msg.text;
 
+        // Render-time overlay. The message's own sender snapshot is immutable;
+        // a claim-verified admin's custom name/avatar/badge comes from the live
+        // profile cache, and only when msg.senderIsAdmin is true — which the
+        // rules validate against the live claim at write time, so a revoked
+        // admin's new messages fall back to plain Google identity by themselves.
+        const identity = resolveSenderIdentity({ msg, override: profilesByUid.get(msg.uid) });
+
         return (
             <div
                 key={msg.id}
@@ -2048,21 +2043,21 @@ function GlobalChat() {
                 }}
             >
                 <img
-                    src={msg.senderPhotoURL || msg.photoURL || msg.avatarUrl || '/logo/streamflix.png'}
-                    alt={msg.senderName || msg.displayName || 'Google User'}
+                    src={identity.photoURL}
+                    alt={identity.displayName}
                     className="gc-avatar"
                     onError={(e) => {
                         e.target.onerror = null;
-                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.senderName || msg.displayName || 'Google User')}&background=random`;
+                        e.target.src = FALLBACK_AVATAR;
                     }}
                 />
                 <div className="gc-msg-group">
                     {!isOwn && (
                         <div className="gc-sender-name">
-                            {msg.senderName || msg.displayName || 'Google User'}
-                            {msg.senderIsAdmin && (
+                            {identity.displayName}
+                            {identity.badgeId && (
                                 <span className="gc-admin-badge" title="StreamFlix Admin">
-                                    <i className="fa-solid fa-crown"></i>
+                                    <GlobalChatAdminBadge badgeId={identity.badgeId} title="StreamFlix Admin" />
                                 </span>
                             )}
                         </div>
@@ -2126,7 +2121,7 @@ function GlobalChat() {
                                                     e.target.dataset.failed = 'false';
                                                     e.target.src = formatDriveUrl(msg.mediaUrl) + '?retry=' + Date.now();
                                                 } else {
-                                                    setShowLightbox({ url: formatDriveUrl(msg.mediaUrl), type: 'image', nickname: msg.nickname });
+                                                    setShowLightbox({ url: formatDriveUrl(msg.mediaUrl), type: 'image' });
                                                 }
                                             }}
                                             onError={(e) => {
@@ -2143,7 +2138,7 @@ function GlobalChat() {
                                             src={formatDriveUrl(msg.mediaUrl)}
                                             className="gc-msg-media"
                                             preload="metadata"
-                                            onClick={() => setShowLightbox({ url: formatDriveUrl(msg.mediaUrl), type: 'video', nickname: msg.nickname })}
+                                            onClick={() => setShowLightbox({ url: formatDriveUrl(msg.mediaUrl), type: 'video' })}
                                         />
                                     )}
                                     {msg.mediaType === 'audio' && (
@@ -2199,7 +2194,6 @@ function GlobalChat() {
                                         id: msg.id,
                                         messageId: msg.id,
                                         senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
-                                        nickname: msg.senderName || msg.displayName || msg.nickname || 'Google User',
                                         text: msg.text || '',
                                         uid: msg.uid,
                                         moviesCount: msg.movies?.length || 0,
@@ -2230,7 +2224,6 @@ function GlobalChat() {
                                             id: msg.id,
                                             messageId: msg.id,
                                             senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
-                                            nickname: msg.senderName || msg.displayName || msg.nickname || 'Google User',
                                             text: msg.text || '',
                                             uid: msg.uid,
                                             moviesCount: msg.movies?.length || 0,
@@ -2375,12 +2368,29 @@ function GlobalChat() {
                 {/* Header */}
                 <div className="gc-header">
                     <div className="gc-header-user">
-                        <div className="gc-avatar-wrapper">
+                        <div
+                            className={`gc-avatar-wrapper ${isGlobalChatAdmin ? 'clickable' : ''}`}
+                            {...(isGlobalChatAdmin ? {
+                                role: 'button',
+                                tabIndex: 0,
+                                title: 'Admin dashboard',
+                                'aria-label': 'Open admin dashboard',
+                                onClick: () => setAdminTab('identity'),
+                                onKeyDown: (e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setAdminTab('identity');
+                                    }
+                                }
+                            } : {})}
+                        >
+                            {/* The header represents the community, not the signed-in
+                                user, so it is always the Streamflix logo. A local
+                                static asset needs no remote onError fallback. */}
                             <img
-                                src={userDataRef.current.photoURL || '/logo/streamflix.png'}
+                                src={FALLBACK_AVATAR}
                                 alt="StreamFlix"
                                 className="gc-header-avatar"
-                                onError={(e) => { e.target.src = 'https://ui-avatars.com/api/?name=SF&background=e50914&color=fff'; }}
                             />
                         </div>
                         <div className="gc-header-info">
@@ -2397,27 +2407,27 @@ function GlobalChat() {
                                 </span>
                                 {isGlobalChatAdmin && (
                                     <span className="gc-admin-pill" title="You have Chat Administrator permissions">
-                                        <i className="fa-solid fa-crown"></i> Admin
+                                        <GlobalChatAdminBadge badgeId={myOverrides.adminBadge} title="Chat Administrator" /> Admin
                                     </span>
                                 )}
                             </div>
                         </div>
                     </div>
                     <div className="gc-header-actions">
-                        {/* Reports button (admin only) */}
+                        {/* Reports button (admin only) — opens the dashboard's Reports tab */}
                         {isGlobalChatAdmin && (
                             <button
-                                className={`gc-icon-btn gc-reports-btn ${reports.length > 0 ? 'has-unresolved' : ''}`}
-                                onClick={() => {
-                                    loadReports();
-                                    setShowReports(true);
-                                }}
+                                className={`gc-icon-btn gc-reports-btn ${pendingReportCount > 0 ? 'has-unresolved' : ''}`}
+                                onClick={() => setAdminTab('reports')}
                                 title="Reports"
                                 aria-label="Reports"
                             >
                                 <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
                                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
                                 </svg>
+                                {pendingReportCount > 0 && (
+                                    <span className="gc-reports-count">{pendingReportCount > 99 ? '99+' : pendingReportCount}</span>
+                                )}
                             </button>
                         )}
                         <button className="gc-close-btn" onClick={handleCloseChat} title="Close Chat" aria-label="Close Chat">
@@ -2498,7 +2508,7 @@ function GlobalChat() {
                             <div className="gc-reply-bar">
                                 <div className="gc-reply-content">
                                     <span className="gc-reply-label">
-                                        Replying to <b>{replyTo.senderName || replyTo.nickname || replyTo.displayName || 'Google User'}</b>
+                                        Replying to <b>{replyTo.senderName || 'Google User'}</b>
                                     </span>
                                     <span className="gc-reply-text-preview">
                                         {replyTo.recTitle
@@ -2735,12 +2745,12 @@ function GlobalChat() {
                                                 <span className="gc-mention-everyone-icon">📢</span>
                                             ) : (
                                                 <img
-                                                    src={user.photoURL || '/logo/streamflix.png'}
+                                                    src={user.photoURL || FALLBACK_AVATAR}
                                                     alt={user.displayName || 'Google User'}
                                                     className="gc-mention-avatar"
                                                     onError={(e) => {
                                                         e.target.onerror = null;
-                                                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=random`;
+                                                        e.target.src = FALLBACK_AVATAR;
                                                     }}
                                                 />
                                             )}
@@ -2930,9 +2940,9 @@ function GlobalChat() {
                                     Object.entries(showReactionView.reactions)
                                         .filter(([uid, emoji]) => uid && emoji && REACTIONS.includes(emoji))
                                         .map(([uid, emoji]) => {
-                                            const profile = allUsers.find(u => u.uid === uid);
+                                            const profile = profilesByUid.get(uid);
                                             const name = profile?.displayName || 'Google User';
-                                            const avatarUrl = profile?.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                                            const avatarUrl = profile?.photoURL || FALLBACK_AVATAR;
                                             return (
                                                 <div key={`${uid}-${emoji}`} className="gc-reaction-item">
                                                     <img
@@ -2941,7 +2951,7 @@ function GlobalChat() {
                                                         className="gc-reaction-item-avatar"
                                                         onError={(e) => {
                                                             e.currentTarget.onerror = null;
-                                                            e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+                                                            e.currentTarget.src = FALLBACK_AVATAR;
                                                         }}
                                                     />
                                                     <span className="gc-reaction-item-name">{name}</span>
@@ -2956,149 +2966,23 @@ function GlobalChat() {
                 )
             }
 
-            {/* Reports Panel (Admin Only) */}
-            {
-                showReports && isGlobalChatAdmin && (
-                    <div
-                        className="gc-reports-overlay"
-                        onClick={() => setShowReports(false)}
-                        data-nav-trap
-                    >
-                        <div
-                            className="gc-reports-panel"
-                            onClick={e => e.stopPropagation()}
-                        >
-                            <div className="gc-reports-header">
-                                <h3>User Reports</h3>
-                                <button onClick={() => setShowReports(false)}>✕</button>
-                            </div>
-                            <div className="gc-reports-list">
-                                {reports.length === 0 ? (
-                                    <p className="gc-no-reports">No reports found.</p>
-                                ) : (
-                                    reports.map(report => {
-                                        const isIssue = report.kind === 'issue';
-                                        const mediaLabel = report.messageMedia === 'image' ? '📷 Image'
-                                            : report.messageMedia === 'video' ? '🎥 Video'
-                                            : report.messageMedia === 'audio' ? '🎵 Audio'
-                                            : report.messageMedia ? '📎 Media' : null;
-                                        return (
-                                            <div key={report.id} className="gc-report-item">
-                                                <div className="gc-report-time">
-                                                    {new Date(report.timestamp).toLocaleString()}
-                                                </div>
-                                                {isIssue ? (
-                                                    <>
-                                                        <div className="gc-report-kind gc-report-kind-issue">Issue report</div>
-                                                        <div className="gc-report-category">{report.category}</div>
-                                                        {report.description && (
-                                                            <div className="gc-report-desc-text">“{report.description}”</div>
-                                                        )}
-                                                        <div className="gc-report-context">
-                                                            {report.context?.title
-                                                                ? <>While watching: <b>{report.context.title}</b></>
-                                                                : (report.context?.route
-                                                                    ? <>On page: {report.context.route}</>
-                                                                    : 'While browsing the app')}
-                                                        </div>
-                                                        {report.context && (report.context.mediaType || report.context.route || report.context.fromServer || report.context.ua || report.context.playback) && (
-                                                            <div className="gc-report-details">
-                                                                {report.context.mediaType && (
-                                                                    <div className="gc-report-detail">
-                                                                        <span className="gc-report-detail-label">Content</span>
-                                                                        {report.context.mediaType === 'movie' ? 'Movie' : 'TV'}
-                                                                        {report.context.season != null && ` · S${report.context.season}E${report.context.episode ?? '?'}`}
-                                                                        {report.context.tmdbId && ` · TMDB ${report.context.tmdbId}`}
-                                                                    </div>
-                                                                )}
-                                                                {report.context.route && report.context.route !== '/' && (
-                                                                    <div className="gc-report-detail">
-                                                                        <span className="gc-report-detail-label">Page</span>
-                                                                        <span className="gc-report-detail-route">{report.context.route}</span>
-                                                                    </div>
-                                                                )}
-                                                                {report.context.fromServer && (
-                                                                    <div className="gc-report-detail">
-                                                                        <span className="gc-report-detail-label">Server</span>
-                                                                        {report.context.fromServer}{report.context.toServer ? ` → ${report.context.toServer}` : ''}
-                                                                    </div>
-                                                                )}
-                                                                {report.context.ua && (
-                                                                    <div className="gc-report-detail">
-                                                                        <span className="gc-report-detail-label">Device</span>
-                                                                        {summarizeUA(report.context.ua)}
-                                                                    </div>
-                                                                )}
-                                                                {report.context.playback && (
-                                                                    <div className="gc-report-detail">
-                                                                        <span className="gc-report-detail-label">Playback</span>
-                                                                        Issue while playing (auto server fallback)
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <div className="gc-report-kind gc-report-kind-message">Message report</div>
-                                                        <div className="gc-report-msg-text">
-                                                            {report.messageText ? (
-                                                                <span className="gc-report-quote">“{report.messageText}”</span>
-                                                            ) : (
-                                                                <span className="gc-report-media">{mediaLabel || 'Content no longer available'}</span>
-                                                            )}
-                                                            <span className="gc-report-from">— {report.messageSenderName || 'Google User'}</span>
-                                                        </div>
-                                                    </>
-                                                )}
-                                                {report.msgId && (
-                                                    <div className="gc-report-msgid">
-                                                        Message ID: <code>{report.msgId}</code>
-                                                    </div>
-                                                )}
-                                                <div className="gc-report-reporter">
-                                                    Reported by: {report.reportedByName || 'Unknown'}
-                                                </div>
-                                                <div className="gc-report-actions">
-                                                    {report.msgId && (
-                                                        <button
-                                                            className="gc-report-locate"
-                                                            onClick={() => {
-                                                                scrollToRepliedMessage(report.msgId);
-                                                                setShowReports(false);
-                                                            }}
-                                                        >
-                                                            Locate
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        className="gc-report-resolve"
-                                                        onClick={async () => {
-                                                            if (resolvingReportsRef.current.has(report.id)) return;
-                                                            resolvingReportsRef.current.add(report.id);
-                                                            try {
-                                                                await dbRef.current.ref(chatPath('reports', report.id)).remove();
-                                                                setReports(prev => prev.filter(r => r.id !== report.id));
-                                                                // Flip the ticket's "created" bubble to "resolved" in the feed —
-                                                                // the same bubble changes state, no second message.
-                                                                await resolveTicketMessage(report);
-                                                            } finally {
-                                                                resolvingReportsRef.current.delete(report.id);
-                                                            }
-                                                        }}
-                                                    >
-                                                        Resolve
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
+            {/* Admin Management Dashboard (claims admin only) */}
+            <GlobalChatAdminDashboard
+                db={dbRef.current}
+                uid={chatIdentity?.uid || null}
+                isAdmin={isGlobalChatAdmin === true}
+                activeTab={adminTab}
+                overrides={myOverrides}
+                reports={reports}
+                onTabChange={setAdminTab}
+                onClose={() => setAdminTab(null)}
+                onLocateMessage={(msgId) => {
+                    setAdminTab(null);
+                    scrollToRepliedMessage(msgId);
+                }}
+                onResolveTicketMessage={resolveTicketMessage}
+                resolvingRef={resolvingReportsRef}
+            />
 
             {/* Lightbox */}
             {

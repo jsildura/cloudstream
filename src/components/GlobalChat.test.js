@@ -708,18 +708,22 @@ describe('GlobalChat Google Identity Rendering', () => {
             expect(janeAvatar).toHaveAttribute('src', 'https://example.com/jane.jpg');
             expect(janeAvatar).toHaveAttribute('alt', 'Jane Smith');
 
-            // Trigger broken image onError
-            fireEvent.error(janeAvatar);
-            expect(janeAvatar.src).toContain('ui-avatars.com');
-            expect(janeAvatar.src).toContain('Jane%20Smith');
-
             // Fallback user defaults to Google User
             const fallbackMsg = document.querySelector('#msg-msg_fallback_user');
             expect(fallbackMsg).toBeInTheDocument();
             expect(screen.getByText('Google User')).toBeInTheDocument();
             const fallbackAvatar = fallbackMsg.querySelector('.gc-avatar');
             expect(fallbackAvatar).toHaveAttribute('alt', 'Google User');
+            expect(fallbackAvatar).toHaveAttribute('src', '/logo/streamflix.png');
         });
+
+        // A broken avatar falls back to the local Streamflix logo, never to a
+        // remote avatar service — no third-party request carries the name, and a
+        // local asset cannot fail again and loop.
+        const janeAvatar = document.querySelector('#msg-msg_custom_user .gc-avatar');
+        fireEvent.error(janeAvatar);
+        expect(janeAvatar.getAttribute('src')).toBe('/logo/streamflix.png');
+        expect(janeAvatar.src).not.toContain('ui-avatars.com');
     });
 
     it('renders pinned message banner with senderName', async () => {
@@ -1898,8 +1902,17 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         await act(async () => {
             fireEvent.click(reportsBtn);
         });
-        expect(screen.getByText('User Reports')).toBeInTheDocument();
+        // The reports list now lives in the admin dashboard's Reports tab.
+        expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
+        expect(screen.getByRole('tab', { name: /Reports/ }).getAttribute('aria-selected')).toBe('true');
         expect(screen.getByText('Hello world')).toBeInTheDocument();
+
+        // Close it again: the dashboard is a modal overlay, and its own report
+        // actions would otherwise collide with the message menu queries below.
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /close admin dashboard/i }));
+        });
+        expect(screen.queryByRole('dialog', { name: /admin dashboard/i })).toBeNull();
 
         // 2. Hard delete option exists in more menu
         const msgEl = document.querySelector('#msg-msg_other_user');
@@ -1991,7 +2004,7 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         await act(async () => {
             fireEvent.click(reportsBtn);
         });
-        expect(screen.getByText('User Reports')).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
 
         // Revoke admin claim
         authState = {
@@ -2002,8 +2015,8 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
             rerender(React.createElement(GlobalChat));
         });
 
-        // Reports panel should now be dismissed
-        expect(screen.queryByText('User Reports')).toBeNull();
+        // Admin dashboard should now be dismissed
+        expect(screen.queryByRole('dialog', { name: /admin dashboard/i })).toBeNull();
         expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
     });
 });

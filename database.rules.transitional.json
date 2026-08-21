@@ -158,6 +158,18 @@
             "updatedAt": {
               ".validate": "newData.isNumber() && newData.val() > 0"
             },
+            "adminName": {
+              ".validate": "auth.token.globalChatAdmin === true && newData.isString() && newData.val().length >= 2 && newData.val().length <= 32 && !newData.val().beginsWith(' ') && !newData.val().endsWith(' ') && !newData.val().contains('@') && newData.val() !== 'Google User'"
+            },
+            "adminPhotoURL": {
+              ".validate": "auth.token.globalChatAdmin === true && newData.isString() && newData.val().length <= 300 && newData.val().matches(/^https:\\/\\/lh3\\.googleusercontent\\.com\\/d\\/[A-Za-z0-9_-]+$/)"
+            },
+            "adminBadge": {
+              ".validate": "auth.token.globalChatAdmin === true && (newData.val() === 'crown' || newData.val() === 'shield' || newData.val() === 'star' || newData.val() === 'verified' || newData.val() === 'bolt' || newData.val() === 'wrench')"
+            },
+            "adminUpdatedAt": {
+              ".validate": "auth.token.globalChatAdmin === true && newData.isNumber() && newData.val() > 0"
+            },
             "$other": {
               ".validate": false
             }

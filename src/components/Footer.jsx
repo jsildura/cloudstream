@@ -4,18 +4,20 @@ import { useViewerCount } from '../contexts/ViewerCountContext';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { count, isLoading } = useViewerCount();
+  const { count, isLoading, enabled: isViewerCountEnabled } = useViewerCount();
 
   return (
     <footer className="footer" data-nav-section="footer">
       <div className="footer-container">
-        {/* Live Viewer Counter */}
-        <div className="footer-viewer-count">
-          <span className="viewer-dot"></span>
-          <span className="viewer-text">
-            {isLoading ? '...' : `${count ?? 0} ${count === 1 ? 'User' : 'Users'} Online`}
-          </span>
-        </div>
+        {/* Live Viewer Counter — hidden while VIEWER_COUNT_ENABLED is false */}
+        {isViewerCountEnabled && (
+          <div className="footer-viewer-count">
+            <span className="viewer-dot"></span>
+            <span className="viewer-text">
+              {isLoading ? '...' : `${count ?? 0} ${count === 1 ? 'User' : 'Users'} Online`}
+            </span>
+          </div>
+        )}
 
         {/* Social Media Icons */}
         <div className="footer-social-icons">

@@ -3,6 +3,7 @@ import {
     initFirebase,
     isGoogleAccount,
     createGoogleProvider,
+    syncGoogleProfileToUserRecord,
     FirebaseInitializationError
 } from '../lib/firebase';
 import { getGoogleTokenIdentity } from '../lib/globalChatIdentity';
@@ -36,6 +37,14 @@ export const AuthProvider = ({ children }) => {
     const [authEvent, setAuthEvent] = useState(null);
     const [chatIdentity, setChatIdentity] = useState(null);
     const [authClaims, setAuthClaims] = useState({});
+    // Bumped whenever a sign-in flow upgrades the CURRENT principal in place.
+    // linkWithPopup/linkWithRedirect mutate the existing Firebase user object
+    // (isAnonymous → false, google.com pushed onto providerData) while keeping
+    // the same uid AND the same object reference, and onAuthStateChanged does
+    // not fire for a link. Without an explicit signal the accountUser memo
+    // below would keep its stale null and the Settings panel would sit on the
+    // sign-in view until a reload.
+    const [principalVersion, setPrincipalVersion] = useState(0);
 
     const authInstanceRef = useRef(null);
     const anonPromiseRef = useRef(null);
@@ -45,7 +54,11 @@ export const AuthProvider = ({ children }) => {
 
     const accountUser = useMemo(() => {
         return isGoogleAccount(firebaseUser) ? firebaseUser : null;
-    }, [firebaseUser]);
+        // principalVersion is a deliberate dependency: isGoogleAccount reads
+        // fields Firebase mutates in place, so re-deriving the account needs an
+        // explicit signal when the object reference itself has not changed.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [firebaseUser, principalVersion]);
 
     const isSignedIn = !!accountUser;
     const isGlobalChatAdmin = authClaims.globalChatAdmin === true;
@@ -64,7 +77,17 @@ export const AuthProvider = ({ children }) => {
         setAuthClaims({});
         setChatIdentity(null);
 
-        accountUser.getIdTokenResult(true)
+        // Backfill the user record from the google.com provider before minting
+        // the token: a Google account linked onto an anonymous user has an
+        // empty displayName/photoURL, which yields a token with no
+        // name/picture claims — and database.rules.json then forces GlobalChat
+        // identity to 'Google User' with no avatar. A failure here must not
+        // block sign-in, so the error is swallowed after logging.
+        syncGoogleProfileToUserRecord(accountUser)
+            .catch((err) => {
+                console.warn('[AuthContext] Failed to sync Google profile to user record:', err);
+            })
+            .then(() => accountUser.getIdTokenResult(true))
             .then((tokenResult) => {
                 if (!isMountedRef.current) return;
                 if (claimsReqRef.current !== currentGeneration) return;
@@ -87,6 +110,22 @@ export const AuthProvider = ({ children }) => {
 
     const clearAuthEvent = useCallback(() => {
         setAuthEvent(null);
+    }, []);
+
+    /**
+     * Publish the principal an interactive sign-in flow just produced.
+     *
+     * onAuthStateChanged is the only other writer of firebaseUser, and it does
+     * NOT fire when a credential is linked onto the already-signed-in anonymous
+     * user — the uid never changes. The version bump is what actually re-derives
+     * accountUser: linkWithPopup/linkWithRedirect hand back the very object
+     * reference React already holds, so setFirebaseUser alone bails on Object.is
+     * and the UI would keep reading the pre-link (anonymous) snapshot.
+     */
+    const publishPrincipal = useCallback((user) => {
+        if (!user || !isMountedRef.current) return;
+        setFirebaseUser(user);
+        setPrincipalVersion(v => v + 1);
     }, []);
 
     /**
@@ -165,6 +204,10 @@ export const AuthProvider = ({ children }) => {
                             returnPath,
                             linkedAnonymous: redirectLinked
                         });
+                        // linkWithRedirect upgrades the anonymous user in place
+                        // too, and onAuthStateChanged may already have fired
+                        // with the pre-link snapshot on this fresh page load.
+                        publishPrincipal(redirectUser);
                     }
                 }).catch(async (redirectErr) => {
                     console.warn('[AuthContext] getRedirectResult error:', redirectErr);
@@ -173,6 +216,7 @@ export const AuthProvider = ({ children }) => {
                             const credResult = await auth.signInWithCredential(redirectErr.credential);
                             sessionStorage.removeItem(REDIRECT_PENDING_KEY);
                             if (isMountedRef.current) {
+                                publishPrincipal(credResult.user);
                                 setAuthEvent({
                                     type: 'interactive-google-sign-in-complete',
                                     uid: credResult.user.uid,
@@ -238,7 +282,7 @@ export const AuthProvider = ({ children }) => {
             isMountedRef.current = false;
             unsubscribe();
         };
-    }, [ensureAnonymousUser]);
+    }, [ensureAnonymousUser, publishPrincipal]);
 
     /**
      * Sign in with Google (Popup or Redirect)
@@ -287,6 +331,11 @@ export const AuthProvider = ({ children }) => {
                 sessionStorage.setItem(REDIRECT_PENDING_KEY, JSON.stringify(pendingState));
 
                 if (auth.currentUser && auth.currentUser.isAnonymous) {
+                    // NOTE: a link leaves sign_in_provider === 'anonymous', which
+                    // database.rules.json rejects — see the popup flow below for
+                    // the full explanation and the credential re-auth that fixes
+                    // it. No caller uses mode: 'redirect' today; enabling it means
+                    // applying the same upgrade to the getRedirectResult handler.
                     await auth.currentUser.linkWithRedirect(provider);
                 } else {
                     await auth.signInWithRedirect(provider);
@@ -307,16 +356,51 @@ export const AuthProvider = ({ children }) => {
         try {
             let result;
             let linkedAnonymous = false;
+            let providerUpgraded = false;
 
             if (auth.currentUser && auth.currentUser.isAnonymous) {
                 result = await auth.currentUser.linkWithPopup(provider);
                 linkedAnonymous = true;
+
+                // Linking attaches the google.com identity but leaves the
+                // session's firebase.sign_in_provider claim at 'anonymous': that
+                // claim records the original authentication event, and linking
+                // is not a new one (a forced token refresh does not change it
+                // either). Every rule in database.rules.json requires
+                // sign_in_provider === 'google.com', so a first-time user would
+                // spend the whole session denied on accounts/$uid — no profile
+                // seeded, none creatable — and denied in GlobalChat too.
+                //
+                // Re-authenticating with the credential we just received turns
+                // this into a genuine google.com sign-in while keeping the same
+                // uid, since Google is now linked to this very account. Doing it
+                // before publishPrincipal also means the profile listener only
+                // ever attaches once the token can pass the rules — a denied
+                // .on('value') is cancelled for good and never retries.
+                const linkCredential = result.credential;
+                if (linkCredential) {
+                    try {
+                        const reauth = await auth.signInWithCredential(linkCredential);
+                        if (reauth && reauth.user) {
+                            result = reauth;
+                            providerUpgraded = true;
+                        }
+                    } catch (reauthErr) {
+                        // The link itself succeeded, so the user is signed in.
+                        // Failing the whole call would report an error for a
+                        // sign-in that really happened, so keep them signed in
+                        // and report the degraded provider to the caller.
+                        console.warn('[AuthContext] Could not upgrade linked session to a google.com sign-in:', reauthErr);
+                    }
+                }
             } else {
                 result = await auth.signInWithPopup(provider);
                 linkedAnonymous = false;
+                providerUpgraded = true;
             }
 
             if (isMountedRef.current) {
+                publishPrincipal(result.user);
                 setAuthEvent({
                     type: 'interactive-google-sign-in-complete',
                     uid: result.user.uid,
@@ -328,7 +412,8 @@ export const AuthProvider = ({ children }) => {
             return {
                 ok: true,
                 user: result.user,
-                linkedAnonymous
+                linkedAnonymous,
+                providerUpgraded
             };
         } catch (err) {
             // Handle credential collision (already linked to another user)
@@ -336,6 +421,7 @@ export const AuthProvider = ({ children }) => {
                 try {
                     const credResult = await auth.signInWithCredential(err.credential);
                     if (isMountedRef.current) {
+                        publishPrincipal(credResult.user);
                         setAuthEvent({
                             type: 'interactive-google-sign-in-complete',
                             uid: credResult.user.uid,
@@ -416,7 +502,7 @@ export const AuthProvider = ({ children }) => {
                 message: err.message || 'Google sign-in failed.'
             };
         }
-    }, []);
+    }, [publishPrincipal]);
 
     /**
      * Refresh ID-token claims and synchronize Google chat identity.
@@ -430,6 +516,14 @@ export const AuthProvider = ({ children }) => {
         const currentUid = accountUser.uid;
 
         try {
+            // Same provider backfill as the sync effect, so an explicit refresh
+            // also repairs identity for an account linked before this existed.
+            try {
+                await syncGoogleProfileToUserRecord(accountUser);
+            } catch (syncErr) {
+                console.warn('[AuthContext] Failed to sync Google profile to user record:', syncErr);
+            }
+
             const tokenResult = await accountUser.getIdTokenResult(true);
             if (!isMountedRef.current || claimsReqRef.current !== currentGeneration || accountUser.uid !== currentUid) {
                 return { ok: false, reason: 'stale-request' };

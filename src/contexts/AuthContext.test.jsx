@@ -372,6 +372,198 @@ describe('AuthContext & AuthProvider', () => {
         expect(anonUser.linkWithPopup).toHaveBeenCalledTimes(1);
     });
 
+    it('surfaces the signed-in account when linkWithPopup upgrades the anonymous user in place', async () => {
+        // Models what real Firebase does on a first-time sign-in, which the
+        // mock in the test above does NOT: linkWithPopup mutates the EXISTING
+        // user object (isAnonymous → false, google.com appended) and hands back
+        // that same reference, keeping the same uid — so onAuthStateChanged
+        // never fires. Regression guard: the account view must appear without a
+        // reload, rather than the UI staying on the sign-in panel.
+        const anonUser = {
+            uid: 'anon-first-timer',
+            isAnonymous: true,
+            providerData: []
+        };
+        anonUser.linkWithPopup = vi.fn().mockImplementation(() => {
+            anonUser.isAnonymous = false;
+            anonUser.displayName = 'First Timer';
+            anonUser.email = 'first.timer@gmail.com';
+            anonUser.providerData.push({
+                providerId: 'google.com',
+                displayName: 'First Timer',
+                photoURL: 'https://lh3.googleusercontent.com/first'
+            });
+            anonUser.getIdTokenResult = vi.fn().mockResolvedValue({
+                claims: { name: 'First Timer', picture: 'https://lh3.googleusercontent.com/first' }
+            });
+            // Deliberately NO authStateCallback(...) — a link is not a
+            // sign-in, so Firebase emits no auth-state change here.
+            return Promise.resolve({ user: anonUser });
+        });
+        mockAuth.currentUser = anonUser;
+
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('loading').textContent).toBe('ready');
+        });
+        expect(screen.getByTestId('signed-in').textContent).toBe('not-signed-in');
+
+        await act(async () => {
+            screen.getByText('Sign In').click();
+        });
+
+        // The account is recognised straight away, with no reload.
+        await waitFor(() => {
+            expect(screen.getByTestId('signed-in').textContent).toBe('signed-in');
+            expect(screen.getByTestId('account-uid').textContent).toBe('anon-first-timer');
+        });
+
+        // …and the claims effect re-runs off the upgraded principal, so chat
+        // identity binds to the token rather than staying empty.
+        await waitFor(() => {
+            expect(screen.getByTestId('chat-identity-uid').textContent).toBe('anon-first-timer');
+            expect(screen.getByTestId('chat-identity-name').textContent).toBe('First Timer');
+        });
+
+        expect(anonUser.linkWithPopup).toHaveBeenCalledTimes(1);
+    });
+
+    it('upgrades a first-time linked session into a google.com sign-in so the database rules accept it', async () => {
+        // A first-time visitor is anonymous, so Google sign-in LINKS rather than
+        // signs in — and a link leaves firebase.sign_in_provider at 'anonymous',
+        // because that claim records the original authentication event and
+        // linking is not a new one. Every rule in database.rules.json requires
+        // sign_in_provider === 'google.com', so such a session was denied on
+        // accounts/$uid for its whole life: no profile seeded, none creatable.
+        // Regression guard: the session is re-authenticated with the credential
+        // the link returned, which keeps the same uid because Google is now
+        // linked to this very account.
+        const googleCredential = { providerId: 'google.com', idToken: 'google-id-token' };
+
+        const anonUser = {
+            uid: 'anon-first-timer',
+            isAnonymous: true,
+            providerData: []
+        };
+        anonUser.linkWithPopup = vi.fn().mockImplementation(() => {
+            anonUser.isAnonymous = false;
+            anonUser.displayName = 'First Timer';
+            anonUser.providerData.push({
+                providerId: 'google.com',
+                displayName: 'First Timer',
+                photoURL: 'https://lh3.googleusercontent.com/first'
+            });
+            anonUser.getIdTokenResult = vi.fn().mockResolvedValue({
+                claims: { name: 'First Timer', firebase: { sign_in_provider: 'anonymous' } }
+            });
+            // Deliberately NO authStateCallback(...) — a link is not a sign-in.
+            return Promise.resolve({ user: anonUser, credential: googleCredential });
+        });
+
+        const reauthedUser = {
+            uid: 'anon-first-timer',
+            isAnonymous: false,
+            displayName: 'First Timer',
+            providerData: [{
+                providerId: 'google.com',
+                displayName: 'First Timer',
+                photoURL: 'https://lh3.googleusercontent.com/first'
+            }],
+            getIdTokenResult: vi.fn().mockResolvedValue({
+                claims: {
+                    name: 'First Timer',
+                    picture: 'https://lh3.googleusercontent.com/first',
+                    firebase: { sign_in_provider: 'google.com' }
+                }
+            })
+        };
+
+        mockAuth.currentUser = anonUser;
+        mockAuth.signInWithCredential.mockImplementation(() => {
+            mockAuth.currentUser = reauthedUser;
+            if (authStateCallback) authStateCallback(reauthedUser);
+            return Promise.resolve({ user: reauthedUser });
+        });
+
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('loading').textContent).toBe('ready');
+        });
+
+        await act(async () => {
+            screen.getByText('Sign In').click();
+        });
+
+        await waitFor(() => {
+            expect(screen.getByTestId('signed-in').textContent).toBe('signed-in');
+        });
+
+        expect(anonUser.linkWithPopup).toHaveBeenCalledTimes(1);
+        expect(mockAuth.signInWithCredential).toHaveBeenCalledWith(googleCredential);
+
+        // Same uid, so nothing already written under the anonymous account is
+        // orphaned…
+        expect(screen.getByTestId('account-uid').textContent).toBe('anon-first-timer');
+
+        // …and the session's token now satisfies the rules' provider gate.
+        await waitFor(() => {
+            const claims = JSON.parse(screen.getByTestId('claims').textContent);
+            expect(claims.firebase.sign_in_provider).toBe('google.com');
+        });
+    });
+
+    it('keeps a linked user signed in when no credential comes back to re-authenticate with', async () => {
+        // Defensive path: with no credential the provider claim cannot be
+        // upgraded, but the link itself succeeded — reporting failure would deny
+        // a sign-in that really happened.
+        const anonUser = {
+            uid: 'anon-no-cred',
+            isAnonymous: true,
+            providerData: []
+        };
+        anonUser.linkWithPopup = vi.fn().mockImplementation(() => {
+            anonUser.isAnonymous = false;
+            anonUser.displayName = 'No Credential';
+            anonUser.providerData.push({ providerId: 'google.com' });
+            anonUser.getIdTokenResult = vi.fn().mockResolvedValue({
+                claims: { name: 'No Credential' }
+            });
+            return Promise.resolve({ user: anonUser });
+        });
+        mockAuth.currentUser = anonUser;
+
+        render(
+            <AuthProvider>
+                <TestConsumer />
+            </AuthProvider>
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('loading').textContent).toBe('ready');
+        });
+
+        await act(async () => {
+            screen.getByText('Sign In').click();
+        });
+
+        await waitFor(() => {
+            expect(screen.getByTestId('signed-in').textContent).toBe('signed-in');
+            expect(screen.getByTestId('account-uid').textContent).toBe('anon-no-cred');
+        });
+
+        expect(mockAuth.signInWithCredential).not.toHaveBeenCalled();
+    });
+
     it('handles credential collision during linkWithPopup by signing into existing account', async () => {
         const credential = { idToken: 'token-123' };
         const collisionError = new Error('Credential already in use');

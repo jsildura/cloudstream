@@ -3,6 +3,15 @@ import useTVDetect from '../hooks/useTVDetect';
 
 const ViewerCountContext = createContext();
 
+// Master switch for the live viewer counter. Disabled because every heartbeat
+// costs one Cloudflare KV read + one write against a 1,000-writes/day free
+// tier, so the quota burns faster the more daily users the site gets — the
+// cost scales with traffic while the feature is only decorative. Flipping this
+// back to true restores both the heartbeat and the footer readout; nothing else
+// needs changing on the client. See also functions/api/visit.js, which is
+// short-circuited so direct hits to the endpoint cannot spend the quota either.
+export const VIEWER_COUNT_ENABLED = false;
+
 const HEARTBEAT_INTERVAL = 180000; // 180 seconds — reduced from 60s to stay within KV free tier: 1,000 writes/day
 const STORAGE_KEY = 'streamflix_visitor_uid';
 
@@ -24,7 +33,9 @@ function getOrCreateUid() {
 
 export function ViewerCountProvider({ children }) {
     const [count, setCount] = useState(0);
-    const [isLoading, setIsLoading] = useState(true);
+    // Never "loading" while disabled, so no consumer can render a spinner or
+    // placeholder waiting on a heartbeat that will never be sent.
+    const [isLoading, setIsLoading] = useState(VIEWER_COUNT_ENABLED);
     const [error, setError] = useState(null);
     const isTVMode = useTVDetect();
 
@@ -35,10 +46,15 @@ export function ViewerCountProvider({ children }) {
 
     // Initialize UID once
     useEffect(() => {
+        if (!VIEWER_COUNT_ENABLED) return;
         uidRef.current = getOrCreateUid();
     }, []);
 
     useEffect(() => {
+        // Disabled: send nothing. This is the single place the KV quota was
+        // spent from, so returning here is what actually stops the cost.
+        if (!VIEWER_COUNT_ENABLED) return;
+
         isMountedRef.current = true;
 
         const sendHeartbeat = async () => {
@@ -99,7 +115,7 @@ export function ViewerCountProvider({ children }) {
     }, [isTVMode]); // Re-run if TV mode detects changes
 
     return (
-        <ViewerCountContext.Provider value={{ count, isLoading, error }}>
+        <ViewerCountContext.Provider value={{ count, isLoading, error, enabled: VIEWER_COUNT_ENABLED }}>
             {children}
         </ViewerCountContext.Provider>
     );

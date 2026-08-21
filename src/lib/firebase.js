@@ -35,6 +35,48 @@ export function isGoogleAccount(user) {
 }
 
 /**
+ * Copies a linked Google account's displayName/photoURL onto the top-level
+ * Firebase user record when they are missing.
+ *
+ * linkWithPopup/linkWithRedirect attach the google.com provider WITHOUT
+ * copying its profile onto the user record, so the ID token minted afterwards
+ * carries no `name`/`picture` claims. database.rules.json validates GlobalChat
+ * identity against those claims, so without this backfill chat identity is
+ * pinned to 'Google User' with no avatar. Call this before force-refreshing
+ * the ID token.
+ *
+ * Only fills blanks — never overwrites a name/photo the record already has.
+ *
+ * @param {object|null} user Firebase user object
+ * @returns {Promise<boolean>} true when the record was updated
+ */
+export async function syncGoogleProfileToUserRecord(user) {
+    if (!isGoogleAccount(user) || typeof user.updateProfile !== 'function') return false;
+
+    const google = user.providerData.find(p => p && p.providerId === 'google.com');
+    if (!google) return false;
+
+    const updates = {};
+
+    const currentName = typeof user.displayName === 'string' ? user.displayName.trim() : '';
+    const googleName = typeof google.displayName === 'string' ? google.displayName.trim() : '';
+    if (currentName.length === 0 && googleName.length > 0) {
+        updates.displayName = googleName;
+    }
+
+    const currentPhoto = typeof user.photoURL === 'string' ? user.photoURL : '';
+    const googlePhoto = typeof google.photoURL === 'string' ? google.photoURL : '';
+    if (!/^https:\/\//i.test(currentPhoto) && /^https:\/\//i.test(googlePhoto)) {
+        updates.photoURL = googlePhoto;
+    }
+
+    if (Object.keys(updates).length === 0) return false;
+
+    await user.updateProfile(updates);
+    return true;
+}
+
+/**
  * Creates and configures a GoogleAuthProvider instance.
  * @returns {object} GoogleAuthProvider instance
  */

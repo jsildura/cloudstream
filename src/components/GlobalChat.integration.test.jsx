@@ -358,6 +358,85 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         expect(messageListeners.length).toBeGreaterThan(0);
     });
 
+    it('preserves admin identity overrides across the join rewrite so a reload does not reset them', async () => {
+        // A profile that already carries dashboard-written overrides. The join
+        // routine rewrites the profile with .set(), so without preservation the
+        // overrides would vanish on every reload — the bug this guards.
+        harness.store['globalChat/v2/profiles/user-google-admin'] = {
+            uid: adminGoogle.uid,
+            displayName: adminGoogle.displayName,
+            photoURL: adminGoogle.photoURL,
+            joinedAt: 1000,
+            updatedAt: 2000,
+            adminName: 'Nightwatch',
+            adminPhotoURL: 'https://lh3.googleusercontent.com/d/1AbC_dEf-GhIj',
+            adminBadge: 'shield',
+            adminUpdatedAt: 3000
+        };
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: adminGoogle,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: true,
+            signInWithGoogle: vi.fn()
+        });
+
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(harness.history.find(h => h.op === 'set' && h.path === 'globalChat/v2/profiles/user-google-admin')).toBeDefined();
+        });
+
+        const profileWrite = harness.history.find(h => h.op === 'set' && h.path === 'globalChat/v2/profiles/user-google-admin');
+        // Canonical fields are refreshed from the live token…
+        expect(profileWrite.val.displayName).toBe('StreamFlix Moderator');
+        // …and the admin overrides survive the rewrite.
+        expect(profileWrite.val.adminName).toBe('Nightwatch');
+        expect(profileWrite.val.adminPhotoURL).toBe('https://lh3.googleusercontent.com/d/1AbC_dEf-GhIj');
+        expect(profileWrite.val.adminBadge).toBe('shield');
+        expect(profileWrite.val.adminUpdatedAt).toBe(3000);
+    });
+
+    it('lets admin overrides expire on join once the claim is gone, matching the overlay', async () => {
+        harness.store['globalChat/v2/profiles/user-google-admin'] = {
+            uid: adminGoogle.uid,
+            displayName: adminGoogle.displayName,
+            photoURL: adminGoogle.photoURL,
+            joinedAt: 1000,
+            updatedAt: 2000,
+            adminName: 'Nightwatch',
+            adminBadge: 'shield',
+            adminUpdatedAt: 3000
+        };
+
+        // Same account, claim revoked: the client must not re-assert the overrides.
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: adminGoogle,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(harness.history.find(h => h.op === 'set' && h.path === 'globalChat/v2/profiles/user-google-admin')).toBeDefined();
+        });
+
+        const profileWrite = harness.history.find(h => h.op === 'set' && h.path === 'globalChat/v2/profiles/user-google-admin');
+        expect(profileWrite.val.adminName).toBeUndefined();
+        expect(profileWrite.val.adminBadge).toBeUndefined();
+        expect(profileWrite.val.adminUpdatedAt).toBeUndefined();
+    });
+
     it('handles account switching A-to-B: tears down user A listeners and state, and sets up user B', async () => {
         let authState = {
             chatIdentity: aliceGoogle,
@@ -502,9 +581,11 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         const avatarImg = anonMsg.querySelector('.gc-avatar');
         expect(avatarImg.src).toContain('/logo/streamflix.png');
 
-        // Trigger image onError fallback
+        // A broken image stays on the local logo — no remote avatar service is
+        // contacted, so no display name leaks off-origin.
         fireEvent.error(avatarImg);
-        expect(avatarImg.src).toContain('ui-avatars.com');
+        expect(avatarImg.getAttribute('src')).toBe('/logo/streamflix.png');
+        expect(avatarImg.src).not.toContain('ui-avatars.com');
     });
 
     it('strictly avoids reading or querying legacy /messages path', async () => {
@@ -738,7 +819,8 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         await act(async () => {
             fireEvent.click(reportsBtn);
         });
-        expect(screen.getByText('User Reports')).toBeInTheDocument();
+        // The reports queue now lives in the admin dashboard's Reports tab.
+        expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
 
         // 2. Resolve ticket in Reports queue
         const resolveBtn = screen.getByText('Resolve');
@@ -746,16 +828,25 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
             fireEvent.click(resolveBtn);
         });
 
-        // Verify report removed and ticket message updated
+        // Resolving is non-destructive: it stamps the audit trail instead of
+        // deleting the report, so the record survives for later review.
         const reportRemove = harness.history.find(h => h.op === 'remove' && h.path === 'globalChat/v2/reports/rep_1');
-        expect(reportRemove).toBeDefined();
+        expect(reportRemove).toBeUndefined();
+
+        const reportUpdate = harness.history.find(h => h.op === 'update' && h.path === 'globalChat/v2/reports/rep_1');
+        expect(reportUpdate).toBeDefined();
+        expect(reportUpdate.val.status).toBe('resolved');
+        expect(reportUpdate.val.resolvedBy).toBe(adminGoogle.uid);
+        expect(typeof reportUpdate.val.resolvedAt).toBe('number');
 
         const ticketUpdate = harness.history.find(h => h.op === 'update' && h.path === 'globalChat/v2/messages/msg_ticket_item');
         expect(ticketUpdate).toBeDefined();
         expect(ticketUpdate.val.ticketStatus).toBe('resolved');
 
-        // Close reports overlay
-        fireEvent.click(screen.getByText('✕'));
+        // Close the dashboard overlay
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /close admin dashboard/i }));
+        });
 
         // 3. Pin message
         const targetEl = document.querySelector('#msg-msg_target');
@@ -809,7 +900,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         await act(async () => {
             fireEvent.click(document.querySelector('.gc-icon-btn[title="Reports"]'));
         });
-        expect(screen.getByText('User Reports')).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
 
         // Revoke claim
         authState = {
@@ -821,8 +912,8 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
             rerender(React.createElement(GlobalChat));
         });
 
-        // Reports modal dismissed
-        expect(screen.queryByText('User Reports')).toBeNull();
+        // Admin dashboard dismissed
+        expect(screen.queryByRole('dialog', { name: /admin dashboard/i })).toBeNull();
         expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
     });
 });

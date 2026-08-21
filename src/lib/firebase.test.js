@@ -3,8 +3,78 @@ import {
     initFirebase,
     isGoogleAccount,
     createGoogleProvider,
+    syncGoogleProfileToUserRecord,
     FirebaseInitializationError
 } from './firebase';
+
+describe('syncGoogleProfileToUserRecord', () => {
+    const makeUser = (overrides = {}) => ({
+        isAnonymous: false,
+        displayName: '',
+        photoURL: null,
+        providerData: [{
+            providerId: 'google.com',
+            displayName: 'Jhun Sildura',
+            photoURL: 'https://lh3.googleusercontent.com/a/jhun'
+        }],
+        updateProfile: vi.fn().mockResolvedValue(undefined),
+        ...overrides
+    });
+
+    it('backfills name and photo onto a linked account with an empty record', async () => {
+        const user = makeUser();
+        await expect(syncGoogleProfileToUserRecord(user)).resolves.toBe(true);
+        expect(user.updateProfile).toHaveBeenCalledWith({
+            displayName: 'Jhun Sildura',
+            photoURL: 'https://lh3.googleusercontent.com/a/jhun'
+        });
+    });
+
+    it('does not overwrite a record that already has name and photo', async () => {
+        const user = makeUser({
+            displayName: 'Existing Name',
+            photoURL: 'https://example.com/existing.jpg'
+        });
+        await expect(syncGoogleProfileToUserRecord(user)).resolves.toBe(false);
+        expect(user.updateProfile).not.toHaveBeenCalled();
+    });
+
+    it('fills only the missing field', async () => {
+        const user = makeUser({ displayName: 'Existing Name' });
+        await expect(syncGoogleProfileToUserRecord(user)).resolves.toBe(true);
+        expect(user.updateProfile).toHaveBeenCalledWith({
+            photoURL: 'https://lh3.googleusercontent.com/a/jhun'
+        });
+    });
+
+    it('ignores a non-https provider photo', async () => {
+        const user = makeUser({
+            providerData: [{
+                providerId: 'google.com',
+                displayName: 'Jhun Sildura',
+                photoURL: 'http://insecure.example/pic.png'
+            }]
+        });
+        await expect(syncGoogleProfileToUserRecord(user)).resolves.toBe(true);
+        expect(user.updateProfile).toHaveBeenCalledWith({ displayName: 'Jhun Sildura' });
+    });
+
+    it('is a no-op for anonymous, non-Google, and null users', async () => {
+        await expect(syncGoogleProfileToUserRecord(null)).resolves.toBe(false);
+        await expect(syncGoogleProfileToUserRecord(makeUser({ isAnonymous: true }))).resolves.toBe(false);
+
+        const passwordOnly = makeUser({
+            providerData: [{ providerId: 'password', displayName: 'Pw', photoURL: 'https://e.com/p.jpg' }]
+        });
+        await expect(syncGoogleProfileToUserRecord(passwordOnly)).resolves.toBe(false);
+        expect(passwordOnly.updateProfile).not.toHaveBeenCalled();
+    });
+
+    it('propagates an updateProfile failure to the caller', async () => {
+        const user = makeUser({ updateProfile: vi.fn().mockRejectedValue(new Error('network')) });
+        await expect(syncGoogleProfileToUserRecord(user)).rejects.toThrow('network');
+    });
+});
 
 describe('Firebase singleton & helpers', () => {
     const originalFirebase = window.firebase;

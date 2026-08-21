@@ -54,4 +54,22 @@ describe('getGoogleTokenIdentity', () => {
         expect(getGoogleTokenIdentity('', { name: 'Alice' })).toBeNull();
         expect(getGoogleTokenIdentity(undefined, { name: 'Alice' })).toBeNull();
     });
+
+    // database.rules.json binds profile identity to auth.token.name/picture, so
+    // the Firebase User object must NOT be used as a fallback source here —
+    // doing so yields writes the server rejects with PERMISSION_DENIED.
+    it('ignores Firebase User fields and stays claims-only', () => {
+        const user = {
+            displayName: 'Bob Builder',
+            photoURL: 'https://lh3.googleusercontent.com/a/bob',
+            providerData: [
+                { providerId: 'google.com', displayName: 'Bob Builder', photoURL: 'https://lh3.googleusercontent.com/a/bob' }
+            ]
+        };
+        expect(getGoogleTokenIdentity('google-123', {}, user)).toEqual({
+            uid: 'google-123',
+            displayName: 'Google User',
+            photoURL: null
+        });
+    });
 });
