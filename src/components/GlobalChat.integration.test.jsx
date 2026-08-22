@@ -708,6 +708,105 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         expect(unsendUpdate.val.deletedForAll).toBe(true);
     });
 
+    it('renders an admin reply header with the override chat name, and "you" for the viewer being answered', async () => {
+        const williamGoogle = {
+            uid: 'user-google-william',
+            displayName: 'William Romano',
+            photoURL: 'https://lh3.googleusercontent.com/a/william',
+            isGoogle: true
+        };
+
+        harness.store['globalChat/v2/profiles/user-google-admin'] = {
+            uid: adminGoogle.uid,
+            displayName: 'Joelito Sildura (Jay)',
+            photoURL: adminGoogle.photoURL,
+            adminName: 'StreamFlix',
+            adminBadge: 'shield',
+            joinedAt: 1,
+            updatedAt: 2
+        };
+        harness.store['globalChat/v2/profiles/user-google-william'] = {
+            uid: williamGoogle.uid,
+            displayName: williamGoogle.displayName,
+            photoURL: williamGoogle.photoURL,
+            joinedAt: 1,
+            updatedAt: 2
+        };
+
+        harness.store['globalChat/v2/messages/msg_william'] = {
+            uid: williamGoogle.uid,
+            senderName: williamGoogle.displayName,
+            senderPhotoURL: williamGoogle.photoURL,
+            senderIsAdmin: false,
+            text: 'Is the new season up yet?',
+            createdAt: Date.now() - 20000,
+            deletedForAll: false
+        };
+        // The admin's Google name is frozen into the message snapshot at send
+        // time — the rules bind it to the token — so only the profile override
+        // carries the chat name they actually chose.
+        harness.store['globalChat/v2/messages/msg_admin_reply'] = {
+            uid: adminGoogle.uid,
+            senderName: 'Joelito Sildura (Jay)',
+            senderPhotoURL: adminGoogle.photoURL,
+            senderIsAdmin: true,
+            text: 'Dropping this Friday.',
+            createdAt: Date.now() - 10000,
+            deletedForAll: false,
+            replyTo: {
+                messageId: 'msg_william',
+                senderName: 'William Romano',
+                text: 'Is the new season up yet?'
+            }
+        };
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: aliceGoogle,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        const { unmount } = render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        // The profile cache lands a tick after the feed, so the override name
+        // appears on the following render rather than the first one.
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_admin_reply .gc-reply-header')?.textContent)
+                .toContain('StreamFlix replied to William Romano');
+        });
+        expect(document.querySelector('#msg-msg_admin_reply .gc-reply-header').textContent)
+            .not.toContain('Joelito');
+
+        unmount();
+
+        // William is the one being answered, so the tail reads "you" — resolved
+        // from the live target message, since replyTo never persists a uid.
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: williamGoogle,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_admin_reply .gc-reply-header')?.textContent)
+                .toContain('StreamFlix replied to you');
+        });
+    });
+
     it('submits reports and generates reporter-authored ticket messages', async () => {
         harness.store['globalChat/v2/messages/msg_spam'] = {
             uid: bobGoogle.uid,
@@ -813,14 +912,15 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
             expect(document.querySelector('#msg-msg_target')).toBeInTheDocument();
         });
 
-        // 1. Open Reports queue
-        const reportsBtn = document.querySelector('.gc-icon-btn[title="Reports"]');
-        expect(reportsBtn).toBeInTheDocument();
+        // 1. Open the Reports section of the admin console
+        const openDashboard = screen.getByRole('button', { name: /open admin dashboard/i });
         await act(async () => {
-            fireEvent.click(reportsBtn);
+            fireEvent.click(openDashboard);
         });
-        // The reports queue now lives in the admin dashboard's Reports tab.
         expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(screen.getByRole('tab', { name: /Reports/ }));
+        });
 
         // 2. Resolve ticket in Reports queue
         const resolveBtn = screen.getByText('Resolve');
@@ -875,7 +975,7 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         expect(hardDelete).toBeDefined();
     });
 
-    it('claim revocation dismisses reports panel and resets moderation capabilities', async () => {
+    it('claim revocation dismisses the admin console and resets moderation capabilities', async () => {
         let authState = {
             chatIdentity: adminGoogle,
             isSignedIn: true,
@@ -893,12 +993,12 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
         });
 
         await waitFor(() => {
-            expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /open admin dashboard/i })).toBeInTheDocument();
         });
 
-        // Open reports
+        // Open the admin console
         await act(async () => {
-            fireEvent.click(document.querySelector('.gc-icon-btn[title="Reports"]'));
+            fireEvent.click(screen.getByRole('button', { name: /open admin dashboard/i }));
         });
         expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
 
@@ -914,6 +1014,6 @@ describe('GlobalChat Integration Flows (v8 Harness)', () => {
 
         // Admin dashboard dismissed
         expect(screen.queryByRole('dialog', { name: /admin dashboard/i })).toBeNull();
-        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+        expect(screen.queryByRole('button', { name: /open admin dashboard/i })).toBeNull();
     });
 });

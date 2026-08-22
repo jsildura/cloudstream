@@ -651,6 +651,20 @@ function GlobalChat() {
         [profilesByUid, chatIdentity?.uid]
     );
 
+    // id → message, so a reply header can resolve who it is answering from the
+    // live message instead of the name snapshot frozen into replyTo. The stored
+    // replyTo carries only {messageId, senderName, text} — the rules reject any
+    // other field — so this map is the only way to reach the target's uid.
+    const messagesById = useMemo(() => {
+        const map = new Map();
+        messages.forEach(m => map.set(m.id, m));
+        return map;
+    }, [messages]);
+
+    /** The name to show for a message's sender, admin override applied. */
+    const displayNameFor = (msg) =>
+        resolveSenderIdentity({ msg, override: profilesByUid.get(msg?.uid) }).displayName;
+
     // Load pinned message
     useEffect(() => {
         if (!dbRef.current || sessionState !== 'ready') return;
@@ -1611,7 +1625,7 @@ function GlobalChat() {
             setReplyTo({
                 id: actionSheetTarget.id,
                 messageId: actionSheetTarget.id,
-                senderName: actionSheetTarget.senderName || actionSheetTarget.displayName || actionSheetTarget.nickname || 'Google User',
+                senderName: displayNameFor(actionSheetTarget),
                 uid: actionSheetTarget.uid,
                 text: actionSheetTarget.text,
                 moviesCount: actionSheetTarget.movies?.length || 0,
@@ -1949,6 +1963,22 @@ function GlobalChat() {
         }));
     }, [isOpen, unreadBroadcastCount]);
 
+    /**
+     * Who a reply is answering, for the "X replied to Y" header.
+     *
+     * Prefers the live target message so an admin's custom chat name wins over
+     * the Google name frozen into replyTo.senderName at send time, and so the
+     * viewer sees "you" when they are the one being answered. Falls back to the
+     * snapshot when the target has scrolled out of the loaded window.
+     */
+    const resolveReplyTargetName = (replyTo) => {
+        const target = messagesById.get(replyTo.messageId || replyTo.id);
+        const targetUid = target?.uid || replyTo.uid;
+        if (targetUid && targetUid === currentUserRef.current?.uid) return 'you';
+        if (target) return displayNameFor(target);
+        return replyTo.senderName || replyTo.nickname || 'Google User';
+    };
+
     // Render message
     const renderMessage = (msg) => {
         // Targeted system notices (legacy report confirmations / resolutions)
@@ -2159,7 +2189,7 @@ function GlobalChat() {
                     {msg.replyTo && !deletedMsgIdsRef.current.has(msg.replyTo.messageId || msg.replyTo.id) && (
                         <>
                             <div className="gc-reply-header">
-                                <span className="gc-reply-icon">↩</span> {isOwn ? 'You' : (msg.senderName || msg.displayName || msg.nickname || 'Google User')} replied to {msg.replyTo.uid === currentUserRef.current?.uid ? 'you' : (msg.replyTo.senderName || msg.replyTo.nickname || 'Google User')}
+                                <span className="gc-reply-icon">↩</span> {isOwn ? 'You' : identity.displayName} replied to {resolveReplyTargetName(msg.replyTo)}
                             </div>
                             <div
                                 className="gc-reply-preview"
@@ -2287,7 +2317,7 @@ function GlobalChat() {
                                     setReplyTo({
                                         id: msg.id,
                                         messageId: msg.id,
-                                        senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                        senderName: identity.displayName,
                                         text: msg.text || '',
                                         uid: msg.uid,
                                         moviesCount: msg.movies?.length || 0,
@@ -2317,7 +2347,7 @@ function GlobalChat() {
                                         setReplyTo({
                                             id: msg.id,
                                             messageId: msg.id,
-                                            senderName: msg.senderName || msg.displayName || msg.nickname || 'Google User',
+                                            senderName: identity.displayName,
                                             text: msg.text || '',
                                             uid: msg.uid,
                                             moviesCount: msg.movies?.length || 0,
@@ -2469,11 +2499,11 @@ function GlobalChat() {
                                 tabIndex: 0,
                                 title: 'Admin dashboard',
                                 'aria-label': 'Open admin dashboard',
-                                onClick: () => setAdminTab('identity'),
+                                onClick: () => setAdminTab('profile'),
                                 onKeyDown: (e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
                                         e.preventDefault();
-                                        setAdminTab('identity');
+                                        setAdminTab('profile');
                                     }
                                 }
                             } : {})}

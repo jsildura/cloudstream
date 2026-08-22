@@ -10,16 +10,57 @@ import {
 } from '../lib/globalChatAdminIdentity';
 import { AVATAR_ACCEPT, AVATAR_EXTENSIONS, formatDriveUrl, uploadToDrive, validateAvatarFile } from '../lib/globalChatUpload';
 import { REPORT_FILTERS, REPORT_FILTER_LABELS, filterReports, reportStatus, summarizeUA } from '../lib/globalChatReports';
+import { CHAT_COMMANDS } from '../lib/chatCommands';
 import GlobalChatAdminBadge from './GlobalChatAdminBadge';
 import './GlobalChatAdminDashboard.css';
 
-const TABS = [
-    { id: 'identity', label: 'Identity' },
-    { id: 'avatar', label: 'Avatar' },
-    { id: 'badge', label: 'Badge' },
-    { id: 'commands', label: 'Commands' },
-    { id: 'reports', label: 'Reports' }
+/* Line icons, drawn with currentColor so a section inherits the nav state. */
+const SECTION_ICONS = {
+    profile: (
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="8.2" r="3.6" />
+            <path d="M5 20c.7-3.6 3.5-5.6 7-5.6s6.3 2 7 5.6" />
+        </svg>
+    ),
+    commands: (
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3.2" y="4.6" width="17.6" height="14.8" rx="3.4" />
+            <path d="M7.6 10.2l2.3 2.3-2.3 2.3M12.8 14.8h3.7" />
+        </svg>
+    ),
+    reports: (
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6.2 21V4" />
+            <path d="M6.2 4.9c3.4-1.7 5.7.9 9.1-.8v7.8c-3.4 1.7-5.7-.9-9.1.8" />
+        </svg>
+    )
+};
+
+/**
+ * Three sections, not five tabs: name, avatar, and badge are all facets of the
+ * same thing — how an admin appears in chat — so they live together under
+ * Profile.
+ */
+const SECTIONS = [
+    { id: 'profile', label: 'Profile', blurb: 'How you appear in chat' },
+    { id: 'commands', label: 'Commands', blurb: 'Slash commands and FAQ' },
+    { id: 'reports', label: 'Reports', blurb: 'Triage what members flag' }
 ];
+
+const SECTION_IDS = new Set(SECTIONS.map(s => s.id));
+
+/** The pre-merge tabs still arrive from deep links and older callers. */
+const LEGACY_SECTIONS = { identity: 'profile', avatar: 'profile', badge: 'profile' };
+
+/**
+ * Resolve an incoming tab id to one of the three sections. Anything
+ * unrecognised opens Profile rather than rendering an empty body.
+ */
+function normalizeSection(tab) {
+    if (!tab) return null;
+    const id = LEGACY_SECTIONS[tab] || tab;
+    return SECTION_IDS.has(id) ? id : 'profile';
+}
 
 /**
  * A PERMISSION_DENIED here almost always means the rules have not been deployed
@@ -39,10 +80,11 @@ function describeWriteError(err) {
  * Admin Management Dashboard for GlobalChat.
  *
  * Lets a claim-verified admin set the chat name, avatar, and badge that overlay
- * their messages, and triage user reports. The `isAdmin` guard here is defence
- * in depth and a UI concern only — `database.rules.json` is the real boundary:
- * every override field validates `auth.token.globalChatAdmin === true`, and
- * reads under `reports/` require the same claim.
+ * their messages, curate the slash-command FAQ, and triage user reports. The
+ * `isAdmin` guard here is defence in depth and a UI concern only —
+ * `database.rules.json` is the real boundary: every override field validates
+ * `auth.token.globalChatAdmin === true`, and reads under `reports/` require the
+ * same claim.
  */
 export default function GlobalChatAdminDashboard({
     db,
@@ -58,6 +100,7 @@ export default function GlobalChatAdminDashboard({
     resolvingRef
 }) {
     const isOpen = Boolean(activeTab) && isAdmin === true;
+    const section = normalizeSection(activeTab);
 
     const [nameDraft, setNameDraft] = useState('');
     const [badgeDraft, setBadgeDraft] = useState(DEFAULT_ADMIN_BADGE_ID);
@@ -76,6 +119,7 @@ export default function GlobalChatAdminDashboard({
     const [faqBusy, setFaqBusy] = useState(false);
 
     const panelRef = useRef(null);
+    const bodyRef = useRef(null);
     const fileInputRef = useRef(null);
     const fallbackResolvingRef = useRef(new Set());
     const resolving = resolvingRef || fallbackResolvingRef;
@@ -110,9 +154,9 @@ export default function GlobalChatAdminDashboard({
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, onClose]);
 
-    // Load FAQ items when the commands tab is active.
+    // Load FAQ items only while the Commands section is on screen.
     useEffect(() => {
-        if (!isOpen || activeTab !== 'commands' || !db) return;
+        if (!isOpen || section !== 'commands' || !db) return;
         let active = true;
         const faqRef = db.ref(chatPath('commands', 'faq'));
         const callback = (snapshot) => {
@@ -139,11 +183,17 @@ export default function GlobalChatAdminDashboard({
             active = false;
             faqRef.off('value', callback);
         };
-    }, [isOpen, activeTab, db]);
+    }, [isOpen, section, db]);
 
     useEffect(() => {
         if (isOpen) panelRef.current?.focus();
     }, [isOpen]);
+
+    // One scrolling body serves all three sections, so it would otherwise open
+    // a new section already scrolled to wherever the last one was left.
+    useEffect(() => {
+        if (bodyRef.current) bodyRef.current.scrollTop = 0;
+    }, [section]);
 
     const nameCheck = useMemo(
         () => (nameDraft === '' ? { ok: true, error: null } : validateAdminName(nameDraft)),
@@ -290,6 +340,7 @@ export default function GlobalChatAdminDashboard({
     };
 
     const visibleReports = useMemo(() => filterReports(reports, reportFilter), [reports, reportFilter]);
+    const pendingCount = useMemo(() => reports.filter(r => reportStatus(r) === 'pending').length, [reports]);
 
     // ── FAQ CRUD handlers ───────────────────────────────────────────────
     const startFaqEdit = (item) => {
@@ -392,7 +443,64 @@ export default function GlobalChatAdminDashboard({
         }
     };
 
+    // Left/right walks the section rail, the way a native tablist behaves.
+    const handleNavKeyDown = (e) => {
+        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+        e.preventDefault();
+        const idx = SECTIONS.findIndex(s => s.id === section);
+        const step = e.key === 'ArrowRight' ? 1 : -1;
+        const next = SECTIONS[(idx + step + SECTIONS.length) % SECTIONS.length];
+        onTabChange?.(next.id);
+    };
+
     if (!isOpen) return null;
+
+    const current = SECTIONS.find(s => s.id === section) || SECTIONS[0];
+    const headerBlurb = section === 'reports'
+        ? (pendingCount > 0
+            ? `${pendingCount} awaiting triage`
+            : 'Nothing awaiting triage')
+        : current.blurb;
+
+    /** Shared question/answer editor — same fields whether adding or editing. */
+    const renderFaqForm = (isAdd) => (
+        <div className={`gc-admin-faq-form${isAdd ? ' gc-admin-faq-form--add' : ''}`}>
+            <label className="gc-admin-faq-form-label">{isAdd ? 'New question' : 'Question'}</label>
+            <input
+                className="gc-admin-input"
+                type="text"
+                value={faqDraftQ}
+                onChange={e => setFaqDraftQ(e.target.value)}
+                maxLength={MAX_FAQ_QUESTION_LENGTH}
+                placeholder="What do members keep asking?"
+                disabled={faqBusy}
+                autoFocus={isAdd}
+            />
+            <label className="gc-admin-faq-form-label">Answer</label>
+            <textarea
+                className="gc-admin-input gc-admin-faq-textarea"
+                value={faqDraftA}
+                onChange={e => setFaqDraftA(e.target.value)}
+                maxLength={MAX_FAQ_ANSWER_LENGTH}
+                placeholder="Keep it short — this renders inside a chat card."
+                rows={3}
+                disabled={faqBusy}
+            />
+            <div className="gc-admin-faq-form-hint">
+                Q {faqDraftQ.length}/{MAX_FAQ_QUESTION_LENGTH} · A {faqDraftA.length}/{MAX_FAQ_ANSWER_LENGTH}
+            </div>
+            <div className="gc-admin-actions">
+                <button
+                    className="gc-admin-btn primary"
+                    onClick={handleFaqSave}
+                    disabled={faqBusy || !faqDraftQ.trim() || !faqDraftA.trim()}
+                >
+                    {faqBusy ? (isAdd ? 'Adding…' : 'Saving…') : (isAdd ? 'Add' : 'Save')}
+                </button>
+                <button className="gc-admin-btn" onClick={cancelFaqEdit} disabled={faqBusy}>Cancel</button>
+            </div>
+        </div>
+    );
 
     return (
         <div className="gc-admin-overlay" onClick={onClose} data-nav-trap>
@@ -405,264 +513,307 @@ export default function GlobalChatAdminDashboard({
                 tabIndex={-1}
                 ref={panelRef}
             >
-                <div className="gc-admin-header">
-                    <h3>Admin Dashboard</h3>
-                    <button className="gc-admin-close" onClick={onClose} aria-label="Close admin dashboard">✕</button>
-                </div>
+                <header className="gc-admin-header">
+                    <span className="gc-admin-header-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <path d="M12 3.2l6.4 2.3v5.6c0 4-2.6 7.3-6.4 8.7-3.8-1.4-6.4-4.7-6.4-8.7V5.5L12 3.2Z" />
+                            <path d="M9.3 12.1l1.9 1.9 3.6-3.9" />
+                        </svg>
+                    </span>
+                    <span className="gc-admin-header-text">
+                        <h3>Admin Console</h3>
+                        <span className="gc-admin-header-blurb">{headerBlurb}</span>
+                    </span>
+                    <button className="gc-admin-close" onClick={onClose} aria-label="Close admin dashboard">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M7 7l10 10M17 7L7 17" />
+                        </svg>
+                    </button>
+                </header>
 
-                <div className="gc-admin-tabs" role="tablist" aria-label="Admin dashboard sections">
-                    {TABS.map(tab => (
-                        <button
-                            key={tab.id}
-                            role="tab"
-                            aria-selected={activeTab === tab.id}
-                            className={`gc-admin-tab ${activeTab === tab.id ? 'active' : ''}`}
-                            onClick={() => onTabChange?.(tab.id)}
-                        >
-                            {tab.label}
-                            {tab.id === 'reports' && reports.length > 0 && (
-                                <span className="gc-admin-tab-count">{reports.length}</span>
-                            )}
-                        </button>
-                    ))}
+                <div
+                    className="gc-admin-nav"
+                    role="tablist"
+                    aria-label="Admin dashboard sections"
+                    onKeyDown={handleNavKeyDown}
+                >
+                    {SECTIONS.map(s => {
+                        const isActive = section === s.id;
+                        return (
+                            <button
+                                key={s.id}
+                                id={`gc-admin-nav-${s.id}`}
+                                role="tab"
+                                aria-selected={isActive}
+                                aria-controls="gc-admin-body"
+                                tabIndex={isActive ? 0 : -1}
+                                className={`gc-admin-nav-item ${isActive ? 'active' : ''}`}
+                                onClick={() => onTabChange?.(s.id)}
+                            >
+                                <span className="gc-admin-nav-icon" aria-hidden="true">{SECTION_ICONS[s.id]}</span>
+                                <span className="gc-admin-nav-label">{s.label}</span>
+                                {/* Pending only: a red count that includes
+                                    already-triaged reports reads as unfinished
+                                    work that isn't there. */}
+                                {s.id === 'reports' && pendingCount > 0 && (
+                                    <span className="gc-admin-tab-count">{pendingCount}</span>
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
 
                 {(status || error) && (
                     <div className={`gc-admin-notice ${error ? 'error' : 'ok'}`} role="status">
-                        {error || status}
+                        <span className="gc-admin-notice-dot" aria-hidden="true" />
+                        <span>{error || status}</span>
                     </div>
                 )}
 
-                <div className="gc-admin-body">
-                    {activeTab === 'identity' && (
-                        <section className="gc-admin-section" aria-label="Identity settings">
-                            <label className="gc-admin-label" htmlFor="gc-admin-name">Chat display name</label>
-                            <input
-                                id="gc-admin-name"
-                                className="gc-admin-input"
-                                type="text"
-                                value={nameDraft}
-                                maxLength={ADMIN_NAME_MAX_LENGTH}
-                                placeholder="Leave blank to use your Google name"
-                                onChange={e => setNameDraft(e.target.value)}
-                                disabled={busy}
-                            />
-                            <div className="gc-admin-hint">
-                                {nameDraft.length}/{ADMIN_NAME_MAX_LENGTH} · no “@”, no leading or trailing space
-                            </div>
-                            {!nameCheck.ok && <div className="gc-admin-field-error">{nameCheck.error}</div>}
-
-                            <div className="gc-admin-preview" aria-label="Preview">
-                                <img className="gc-admin-preview-avatar" src={previewPhoto} alt="" />
-                                <span className="gc-sender-name">
-                                    {previewName}
-                                    <span className="gc-admin-badge" title="StreamFlix Admin">
-                                        <GlobalChatAdminBadge badgeId={badgeDraft} title="StreamFlix Admin" />
-                                    </span>
-                                </span>
-                            </div>
-
-                            <div className="gc-admin-actions">
-                                <button
-                                    className="gc-admin-btn primary"
-                                    onClick={handleSaveIdentity}
-                                    disabled={busy || !nameCheck.ok || nameDraft === ''}
-                                >
-                                    {busy ? 'Saving…' : 'Save'}
-                                </button>
-                                <button className="gc-admin-btn" onClick={handleResetName} disabled={busy || !adminName}>
-                                    Reset to Google name
-                                </button>
-                            </div>
-                        </section>
-                    )}
-
-                    {activeTab === 'avatar' && (
-                        <section className="gc-admin-section" aria-label="Avatar settings">
-                            <div className="gc-admin-label">Chat profile image</div>
-                            <div className="gc-admin-preview">
-                                <img className="gc-admin-preview-avatar large" src={previewPhoto} alt="Current chat avatar" />
-                            </div>
-                            <div className="gc-admin-hint">
-                                {AVATAR_EXTENSIONS.join(', ')} · up to 10MB. The file is checked before it leaves your browser.
-                            </div>
-                            <input
-                                ref={fileInputRef}
-                                className="gc-admin-file"
-                                type="file"
-                                accept={AVATAR_ACCEPT}
-                                aria-label="Choose a profile image"
-                                onChange={handleAvatarChange}
-                                disabled={busy}
-                            />
-                            <div className="gc-admin-actions">
-                                <button className="gc-admin-btn" onClick={handleResetAvatar} disabled={busy || !adminPhotoURL}>
-                                    Reset to Google photo
-                                </button>
-                            </div>
-                            {busy && <div className="gc-admin-hint">Uploading…</div>}
-                        </section>
-                    )}
-
-                    {activeTab === 'badge' && (
-                        <section className="gc-admin-section" aria-label="Badge settings">
-                            <div className="gc-admin-label">Admin badge</div>
-                            <div className="gc-admin-hint">
-                                Vector icons only — the database stores just the badge name, never any markup.
-                            </div>
-                            <div className="gc-admin-badge-grid">
-                                {ADMIN_BADGES.map(badge => (
+                <div
+                    className="gc-admin-body"
+                    id="gc-admin-body"
+                    role="tabpanel"
+                    aria-labelledby={`gc-admin-nav-${section}`}
+                    tabIndex={0}
+                    ref={bodyRef}
+                >
+                    {section === 'profile' && (
+                        <section className="gc-admin-section" aria-label="Profile settings">
+                            {/* The hero doubles as the live preview: this is exactly
+                                what members see next to an admin message. */}
+                            <div className="gc-admin-identity">
+                                <div className="gc-admin-identity-avatar">
+                                    <img className="gc-admin-preview-avatar" src={previewPhoto} alt="Current chat avatar" />
                                     <button
-                                        key={badge.id}
-                                        className={`gc-admin-badge-swatch ${badgeDraft === badge.id ? 'active' : ''}`}
-                                        aria-pressed={badgeDraft === badge.id}
-                                        aria-label={badge.label}
-                                        title={badge.label}
-                                        onClick={() => handleSaveBadge(badge.id)}
+                                        className="gc-admin-avatar-edit"
+                                        onClick={() => fileInputRef.current?.click()}
                                         disabled={busy}
+                                        title="Change profile image"
+                                        aria-label="Change profile image"
                                     >
-                                        <GlobalChatAdminBadge badgeId={badge.id} className="gc-admin-badge-swatch-icon" />
-                                        <span className="gc-admin-badge-swatch-label">{badge.label}</span>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <path d="M4.5 8.5h2.6l1.3-2h7.2l1.3 2h2.6v9.5h-15V8.5Z" />
+                                            <circle cx="12" cy="13.2" r="2.9" />
+                                        </svg>
                                     </button>
-                                ))}
-                            </div>
-                        </section>
-                    )}
-
-                    {activeTab === 'commands' && (
-                        <section className="gc-admin-section" aria-label="Command settings">
-                            <div className="gc-admin-label">FAQ Management</div>
-                            <div className="gc-admin-hint">
-                                Manage the questions and answers shown when users type <code>/faq</code> in chat.
-                                Up to {MAX_FAQ_ITEMS} entries.
-                            </div>
-
-                            <div className="gc-admin-faq-list">
-                                {faqItems.length === 0 && !faqAdding && (
-                                    <div className="gc-admin-faq-empty">No FAQ entries yet. Click "Add Entry" to create one.</div>
-                                )}
-                                {faqItems.map((item, idx) => (
-                                    faqEditId === item.id ? (
-                                        <div key={item.id} className="gc-admin-faq-form">
-                                            <label className="gc-admin-faq-form-label">Question</label>
-                                            <input
-                                                className="gc-admin-input"
-                                                type="text"
-                                                value={faqDraftQ}
-                                                onChange={e => setFaqDraftQ(e.target.value)}
-                                                maxLength={MAX_FAQ_QUESTION_LENGTH}
-                                                placeholder="Enter question..."
-                                                disabled={faqBusy}
-                                            />
-                                            <label className="gc-admin-faq-form-label">Answer</label>
-                                            <textarea
-                                                className="gc-admin-input gc-admin-faq-textarea"
-                                                value={faqDraftA}
-                                                onChange={e => setFaqDraftA(e.target.value)}
-                                                maxLength={MAX_FAQ_ANSWER_LENGTH}
-                                                placeholder="Enter answer..."
-                                                rows={3}
-                                                disabled={faqBusy}
-                                            />
-                                            <div className="gc-admin-faq-form-hint">
-                                                Q: {faqDraftQ.length}/{MAX_FAQ_QUESTION_LENGTH} · A: {faqDraftA.length}/{MAX_FAQ_ANSWER_LENGTH}
-                                            </div>
-                                            <div className="gc-admin-actions">
-                                                <button className="gc-admin-btn primary" onClick={handleFaqSave} disabled={faqBusy || !faqDraftQ.trim() || !faqDraftA.trim()}>
-                                                    {faqBusy ? 'Saving…' : 'Save'}
-                                                </button>
-                                                <button className="gc-admin-btn" onClick={cancelFaqEdit} disabled={faqBusy}>Cancel</button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div key={item.id} className="gc-admin-faq-item">
-                                            <div className="gc-admin-faq-item-num">{idx + 1}</div>
-                                            <div className="gc-admin-faq-item-content">
-                                                <div className="gc-admin-faq-item-q">{item.question}</div>
-                                                <div className="gc-admin-faq-item-a">{item.answer}</div>
-                                            </div>
-                                            <div className="gc-admin-faq-item-actions">
-                                                <button
-                                                    className="gc-admin-faq-btn"
-                                                    onClick={() => handleFaqReorder(item.id, 'up')}
-                                                    disabled={idx === 0 || faqBusy}
-                                                    title="Move up"
-                                                >▲</button>
-                                                <button
-                                                    className="gc-admin-faq-btn"
-                                                    onClick={() => handleFaqReorder(item.id, 'down')}
-                                                    disabled={idx === faqItems.length - 1 || faqBusy}
-                                                    title="Move down"
-                                                >▼</button>
-                                                <button
-                                                    className="gc-admin-faq-btn gc-admin-faq-btn--edit"
-                                                    onClick={() => startFaqEdit(item)}
-                                                    disabled={faqBusy}
-                                                    title="Edit"
-                                                >✎</button>
-                                                <button
-                                                    className="gc-admin-faq-btn gc-admin-faq-btn--delete"
-                                                    onClick={() => handleFaqDelete(item.id)}
-                                                    disabled={faqBusy}
-                                                    title="Delete"
-                                                >🗑</button>
-                                            </div>
-                                        </div>
-                                    )
-                                ))}
-
-                                {/* Add new FAQ entry form */}
-                                {faqAdding && (
-                                    <div className="gc-admin-faq-form gc-admin-faq-form--add">
-                                        <label className="gc-admin-faq-form-label">New Question</label>
-                                        <input
-                                            className="gc-admin-input"
-                                            type="text"
-                                            value={faqDraftQ}
-                                            onChange={e => setFaqDraftQ(e.target.value)}
-                                            maxLength={MAX_FAQ_QUESTION_LENGTH}
-                                            placeholder="Enter question..."
-                                            disabled={faqBusy}
-                                            autoFocus
-                                        />
-                                        <label className="gc-admin-faq-form-label">Answer</label>
-                                        <textarea
-                                            className="gc-admin-input gc-admin-faq-textarea"
-                                            value={faqDraftA}
-                                            onChange={e => setFaqDraftA(e.target.value)}
-                                            maxLength={MAX_FAQ_ANSWER_LENGTH}
-                                            placeholder="Enter answer..."
-                                            rows={3}
-                                            disabled={faqBusy}
-                                        />
-                                        <div className="gc-admin-faq-form-hint">
-                                            Q: {faqDraftQ.length}/{MAX_FAQ_QUESTION_LENGTH} · A: {faqDraftA.length}/{MAX_FAQ_ANSWER_LENGTH}
-                                        </div>
-                                        <div className="gc-admin-actions">
-                                            <button className="gc-admin-btn primary" onClick={handleFaqSave} disabled={faqBusy || !faqDraftQ.trim() || !faqDraftA.trim()}>
-                                                {faqBusy ? 'Adding…' : 'Add'}
-                                            </button>
-                                            <button className="gc-admin-btn" onClick={cancelFaqEdit} disabled={faqBusy}>Cancel</button>
-                                        </div>
-                                    </div>
-                                )}
+                                </div>
+                                <div className="gc-admin-identity-meta">
+                                    <span className="gc-admin-identity-name">
+                                        <span className="gc-admin-identity-name-text">{previewName}</span>
+                                        <span className="gc-admin-badge" title="StreamFlix Admin">
+                                            <GlobalChatAdminBadge badgeId={badgeDraft} title="StreamFlix Admin" />
+                                        </span>
+                                    </span>
+                                    <span className="gc-admin-identity-sub">Live preview of your chat identity</span>
+                                </div>
                             </div>
 
-                            {!faqAdding && !faqEditId && (
+                            <div className="gc-admin-group">
+                                <div className="gc-admin-group-head">
+                                    <label className="gc-admin-label" htmlFor="gc-admin-name">Chat display name</label>
+                                    <span className="gc-admin-group-meta">{nameDraft.length}/{ADMIN_NAME_MAX_LENGTH}</span>
+                                </div>
+                                <input
+                                    id="gc-admin-name"
+                                    className="gc-admin-input"
+                                    type="text"
+                                    value={nameDraft}
+                                    maxLength={ADMIN_NAME_MAX_LENGTH}
+                                    placeholder="Leave blank to use your Google name"
+                                    onChange={e => setNameDraft(e.target.value)}
+                                    disabled={busy}
+                                />
+                                {nameCheck.ok
+                                    ? <div className="gc-admin-hint">No “@”, no leading or trailing space.</div>
+                                    : <div className="gc-admin-field-error">{nameCheck.error}</div>}
                                 <div className="gc-admin-actions">
                                     <button
                                         className="gc-admin-btn primary"
-                                        onClick={startFaqAdd}
-                                        disabled={faqBusy || faqItems.length >= MAX_FAQ_ITEMS}
+                                        onClick={handleSaveIdentity}
+                                        disabled={busy || !nameCheck.ok || nameDraft === ''}
                                     >
-                                        + Add Entry
+                                        {busy ? 'Saving…' : 'Save'}
+                                    </button>
+                                    <button className="gc-admin-btn subtle" onClick={handleResetName} disabled={busy || !adminName}>
+                                        Reset to Google name
                                     </button>
                                 </div>
-                            )}
+                            </div>
+
+                            <div className="gc-admin-group">
+                                <div className="gc-admin-group-head">
+                                    <span className="gc-admin-label">Profile image</span>
+                                </div>
+                                <div className="gc-admin-hint">
+                                    {AVATAR_EXTENSIONS.join(' · ')} up to 10MB. Checked before it leaves your browser.
+                                </div>
+                                {/* Kept in the tree so the file dialog is reachable
+                                    from the avatar's camera button and by name. */}
+                                <input
+                                    ref={fileInputRef}
+                                    className="gc-admin-file"
+                                    type="file"
+                                    accept={AVATAR_ACCEPT}
+                                    aria-label="Choose a profile image"
+                                    onChange={handleAvatarChange}
+                                    disabled={busy}
+                                />
+                                <div className="gc-admin-actions">
+                                    <button
+                                        className="gc-admin-btn"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={busy}
+                                    >
+                                        {busy ? 'Uploading…' : 'Upload image'}
+                                    </button>
+                                    <button className="gc-admin-btn subtle" onClick={handleResetAvatar} disabled={busy || !adminPhotoURL}>
+                                        Reset to Google photo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="gc-admin-group">
+                                <div className="gc-admin-group-head">
+                                    <span className="gc-admin-label">Admin badge</span>
+                                    <span className="gc-admin-group-meta">Saves instantly</span>
+                                </div>
+                                <div className="gc-admin-badge-grid">
+                                    {ADMIN_BADGES.map(badge => (
+                                        <button
+                                            key={badge.id}
+                                            className={`gc-admin-badge-swatch ${badgeDraft === badge.id ? 'active' : ''}`}
+                                            aria-pressed={badgeDraft === badge.id}
+                                            aria-label={badge.label}
+                                            title={badge.label}
+                                            onClick={() => handleSaveBadge(badge.id)}
+                                            disabled={busy}
+                                        >
+                                            <GlobalChatAdminBadge badgeId={badge.id} className="gc-admin-badge-swatch-icon" />
+                                            <span className="gc-admin-badge-swatch-label">{badge.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="gc-admin-hint">
+                                    Vector icons only — the database stores just the badge name, never any markup.
+                                </div>
+                            </div>
                         </section>
                     )}
 
-                    {activeTab === 'reports' && (
+                    {section === 'commands' && (
+                        <section className="gc-admin-section" aria-label="Command settings">
+                            <div className="gc-admin-group">
+                                <div className="gc-admin-group-head">
+                                    <span className="gc-admin-label">Slash commands</span>
+                                </div>
+                                <ul className="gc-admin-cmd-list">
+                                    {CHAT_COMMANDS.map(cmd => (
+                                        <li key={cmd.command} className="gc-admin-cmd">
+                                            <code className="gc-admin-cmd-name">{cmd.command}</code>
+                                            <span className="gc-admin-cmd-desc">{cmd.description}</span>
+                                            <span className={`gc-admin-cmd-tag ${cmd.type === 'dynamic' ? 'editable' : ''}`}>
+                                                {cmd.type === 'dynamic' ? 'Editable' : 'Built-in'}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="gc-admin-group">
+                                <div className="gc-admin-group-head">
+                                    <span className="gc-admin-label">FAQ entries</span>
+                                    <span className="gc-admin-group-meta">{faqItems.length}/{MAX_FAQ_ITEMS}</span>
+                                </div>
+                                <div className="gc-admin-hint">
+                                    Shown as a card when a member types <code>/faq</code>. Order here is the order in chat.
+                                </div>
+
+                                <div className="gc-admin-faq-list">
+                                    {faqItems.length === 0 && !faqAdding && (
+                                        <div className="gc-admin-faq-empty">
+                                            Nothing here yet — add the first entry and <code>/faq</code> starts answering for you.
+                                        </div>
+                                    )}
+                                    {faqItems.map((item, idx) => (
+                                        faqEditId === item.id ? (
+                                            <div key={item.id}>{renderFaqForm(false)}</div>
+                                        ) : (
+                                            <div key={item.id} className="gc-admin-faq-item">
+                                                <div className="gc-admin-faq-item-num">{idx + 1}</div>
+                                                <div className="gc-admin-faq-item-content">
+                                                    <div className="gc-admin-faq-item-q">{item.question}</div>
+                                                    <div className="gc-admin-faq-item-a">{item.answer}</div>
+                                                </div>
+                                                <div className="gc-admin-faq-item-actions">
+                                                    <button
+                                                        className="gc-admin-faq-btn"
+                                                        onClick={() => handleFaqReorder(item.id, 'up')}
+                                                        disabled={idx === 0 || faqBusy}
+                                                        title="Move up"
+                                                        aria-label={`Move “${item.question}” up`}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                            <path d="M7 14l5-5 5 5" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        className="gc-admin-faq-btn"
+                                                        onClick={() => handleFaqReorder(item.id, 'down')}
+                                                        disabled={idx === faqItems.length - 1 || faqBusy}
+                                                        title="Move down"
+                                                        aria-label={`Move “${item.question}” down`}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                            <path d="M7 10l5 5 5-5" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        className="gc-admin-faq-btn gc-admin-faq-btn--edit"
+                                                        onClick={() => startFaqEdit(item)}
+                                                        disabled={faqBusy}
+                                                        title="Edit"
+                                                        aria-label={`Edit “${item.question}”`}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                            <path d="M15.2 5.4l3.4 3.4-9 9H6.2v-3.4l9-9Z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        className="gc-admin-faq-btn gc-admin-faq-btn--delete"
+                                                        onClick={() => handleFaqDelete(item.id)}
+                                                        disabled={faqBusy}
+                                                        title="Delete"
+                                                        aria-label={`Delete “${item.question}”`}
+                                                    >
+                                                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                                            <path d="M6.6 8.4h10.8M9.4 8.4V6.6h5.2v1.8M8 8.4l.7 9.2h6.6l.7-9.2" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )
+                                    ))}
+
+                                    {faqAdding && renderFaqForm(true)}
+                                </div>
+
+                                {!faqAdding && !faqEditId && (
+                                    <div className="gc-admin-actions">
+                                        <button
+                                            className="gc-admin-btn primary"
+                                            onClick={startFaqAdd}
+                                            disabled={faqBusy || faqItems.length >= MAX_FAQ_ITEMS}
+                                        >
+                                            Add entry
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </section>
+                    )}
+
+                    {section === 'reports' && (
                         <section className="gc-admin-section" aria-label="User reports">
                             <div className="gc-admin-filters" role="group" aria-label="Filter reports by status">
                                 {REPORT_FILTERS.map(f => (
@@ -678,7 +829,15 @@ export default function GlobalChatAdminDashboard({
                             </div>
                             <div className="gc-reports-list">
                                 {visibleReports.length === 0 ? (
-                                    <p className="gc-no-reports">No {reportFilter === 'all' ? '' : `${REPORT_FILTER_LABELS[reportFilter].toLowerCase()} `}reports found.</p>
+                                    <div className="gc-admin-empty">
+                                        <span className="gc-admin-empty-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" focusable="false">
+                                                <circle cx="12" cy="12" r="8.2" />
+                                                <path d="M8.6 12.4l2.3 2.3 4.5-4.9" />
+                                            </svg>
+                                        </span>
+                                        <p className="gc-no-reports">No {reportFilter === 'all' ? '' : `${REPORT_FILTER_LABELS[reportFilter].toLowerCase()} `}reports found.</p>
+                                    </div>
                                 ) : (
                                     visibleReports.map(report => {
                                         const isIssue = report.kind === 'issue';

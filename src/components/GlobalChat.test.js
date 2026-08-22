@@ -1836,7 +1836,7 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         vi.restoreAllMocks();
     });
 
-    it('denies moderation affordances to regular users (no reports button, no pin, no hard delete)', async () => {
+    it('denies moderation affordances to regular users (no admin console, no pin, no hard delete)', async () => {
         vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
             chatIdentity: regularUser,
             isSignedIn: true,
@@ -1855,8 +1855,8 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
             expect(document.querySelector('#msg-msg_other_user')).toBeInTheDocument();
         });
 
-        // 1. Reports button in header is absent
-        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+        // 1. No way into the admin console from the header
+        expect(screen.queryByRole('button', { name: /open admin dashboard/i })).toBeNull();
 
         // 2. Admin Login button is completely removed
         expect(document.querySelector('.gc-icon-btn[title="Admin Login"]')).toBeNull();
@@ -1896,16 +1896,17 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
             expect(document.querySelector('#msg-msg_other_user')).toBeInTheDocument();
         });
 
-        // 1. Reports button in header is visible and opens reports panel
-        const reportsBtn = document.querySelector('.gc-icon-btn[title="Reports"]');
-        expect(reportsBtn).toBeInTheDocument();
+        // 1. The admin avatar opens the console, and Reports is one of its sections.
+        const openDashboard = screen.getByRole('button', { name: /open admin dashboard/i });
         await act(async () => {
-            fireEvent.click(reportsBtn);
+            fireEvent.click(openDashboard);
         });
-        // The reports list now lives in the admin dashboard's Reports tab.
         expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
+        await act(async () => {
+            fireEvent.click(screen.getByRole('tab', { name: /Reports/ }));
+        });
         expect(screen.getByRole('tab', { name: /Reports/ }).getAttribute('aria-selected')).toBe('true');
-        expect(screen.getByText('Hello world')).toBeInTheDocument();
+        expect(document.querySelector('.gc-admin-panel .gc-report-quote').textContent).toContain('Hello world');
 
         // Close it again: the dashboard is a modal overlay, and its own report
         // actions would otherwise collide with the message menu queries below.
@@ -1968,7 +1969,7 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         expect(forgedMsg.querySelector('.gc-admin-badge')).toBeInTheDocument();
 
         // But regularUser session has NO moderation privileges
-        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+        expect(screen.queryByRole('button', { name: /open admin dashboard/i })).toBeNull();
         fireEvent.mouseEnter(forgedMsg);
         const moreBtn = forgedMsg.querySelector('.gc-action-icon[title="More"]');
         if (moreBtn) {
@@ -1978,7 +1979,7 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         }
     });
 
-    it('closes open Reports panel and blocks moderation when isGlobalChatAdmin becomes false', async () => {
+    it('closes the open admin console and blocks moderation when isGlobalChatAdmin becomes false', async () => {
         let authState = {
             chatIdentity: adminUser,
             isSignedIn: true,
@@ -1996,13 +1997,12 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
         });
 
         await waitFor(() => {
-            expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeInTheDocument();
+            expect(screen.getByRole('button', { name: /open admin dashboard/i })).toBeInTheDocument();
         });
 
-        // Open reports panel
-        const reportsBtn = document.querySelector('.gc-icon-btn[title="Reports"]');
+        // Open the admin console
         await act(async () => {
-            fireEvent.click(reportsBtn);
+            fireEvent.click(screen.getByRole('button', { name: /open admin dashboard/i }));
         });
         expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeInTheDocument();
 
@@ -2015,9 +2015,9 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
             rerender(React.createElement(GlobalChat));
         });
 
-        // Admin dashboard should now be dismissed
+        // Admin dashboard should now be dismissed, and the entry point gone
         expect(screen.queryByRole('dialog', { name: /admin dashboard/i })).toBeNull();
-        expect(document.querySelector('.gc-icon-btn[title="Reports"]')).toBeNull();
+        expect(screen.queryByRole('button', { name: /open admin dashboard/i })).toBeNull();
     });
 });
 

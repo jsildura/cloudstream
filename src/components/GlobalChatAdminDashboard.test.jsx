@@ -74,19 +74,55 @@ describe('GlobalChatAdminDashboard gating', () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it('renders the dialog with all four tabs for an admin', () => {
+    it('renders the dialog with the three sections for an admin', () => {
         setup();
         expect(screen.getByRole('dialog', { name: /admin dashboard/i })).toBeDefined();
-        ['Identity', 'Avatar', 'Badge', 'Reports'].forEach(label => {
+        ['Profile', 'Commands', 'Reports'].forEach(label => {
             expect(screen.getByRole('tab', { name: new RegExp(label) })).toBeDefined();
         });
+        // Name, avatar, and badge are facets of one identity, so they no longer
+        // get a tab each.
+        expect(screen.queryByRole('tab', { name: /Identity|Avatar|Badge/ })).toBeNull();
     });
 
-    it('marks the active tab and reports tab changes', () => {
+    it('folds the legacy identity tab onto Profile and reports section changes', () => {
         const { onTabChange } = setup();
-        expect(screen.getByRole('tab', { name: /Identity/ }).getAttribute('aria-selected')).toBe('true');
-        fireEvent.click(screen.getByRole('tab', { name: /Badge/ }));
-        expect(onTabChange).toHaveBeenCalledWith('badge');
+        expect(screen.getByRole('tab', { name: /Profile/ }).getAttribute('aria-selected')).toBe('true');
+        fireEvent.click(screen.getByRole('tab', { name: /Commands/ }));
+        expect(onTabChange).toHaveBeenCalledWith('commands');
+    });
+
+    // Deep links and older callers still send the pre-merge tab ids.
+    it.each(['identity', 'avatar', 'badge', 'profile'])('opens Profile for the %s tab id', (tab) => {
+        setup({ activeTab: tab });
+        expect(screen.getByRole('tab', { name: /Profile/ }).getAttribute('aria-selected')).toBe('true');
+    });
+
+    it('puts the name, avatar, and badge controls in one Profile section', () => {
+        setup({ activeTab: 'profile' });
+        expect(screen.getByLabelText(/chat display name/i)).toBeDefined();
+        expect(screen.getByLabelText(/choose a profile image/i)).toBeDefined();
+        expect(screen.getByRole('button', { name: 'Shield' })).toBeDefined();
+    });
+
+    // Roving tabIndex plus left/right, the way a native tablist behaves.
+    it('walks the section rail with the arrow keys, wrapping at both ends', () => {
+        const { onTabChange } = setup({ activeTab: 'profile' });
+        const nav = screen.getByRole('tablist');
+
+        expect(screen.getByRole('tab', { name: /Profile/ }).tabIndex).toBe(0);
+        expect(screen.getByRole('tab', { name: /Commands/ }).tabIndex).toBe(-1);
+
+        fireEvent.keyDown(nav, { key: 'ArrowRight' });
+        expect(onTabChange).toHaveBeenLastCalledWith('commands');
+
+        // Left from the first section wraps round to the last.
+        fireEvent.keyDown(nav, { key: 'ArrowLeft' });
+        expect(onTabChange).toHaveBeenLastCalledWith('reports');
+
+        onTabChange.mockClear();
+        fireEvent.keyDown(nav, { key: 'ArrowUp' });
+        expect(onTabChange).not.toHaveBeenCalled();
     });
 
     it('closes on backdrop click and on Escape', () => {
@@ -106,7 +142,7 @@ describe('GlobalChatAdminDashboard gating', () => {
     });
 });
 
-describe('GlobalChatAdminDashboard identity tab', () => {
+describe('GlobalChatAdminDashboard profile section: display name', () => {
     it('seeds the input from the live override', () => {
         setup({ overrides: { adminName: 'Nightwatch', adminPhotoURL: null, adminBadge: 'shield' } });
         expect(screen.getByLabelText(/chat display name/i).value).toBe('Nightwatch');
@@ -186,7 +222,8 @@ describe('GlobalChatAdminDashboard identity tab', () => {
     });
 });
 
-describe('GlobalChatAdminDashboard avatar tab', () => {
+describe('GlobalChatAdminDashboard profile section: avatar', () => {
+    // The legacy tab id still resolves to the merged Profile section.
     const avatarProps = { activeTab: 'avatar' };
 
     it('accepts only the three allowed formats on the input', () => {
@@ -287,7 +324,7 @@ describe('GlobalChatAdminDashboard avatar tab', () => {
     });
 });
 
-describe('GlobalChatAdminDashboard badge tab', () => {
+describe('GlobalChatAdminDashboard profile section: badge', () => {
     it('offers every allowlisted badge as an SVG swatch, no emoji or glyph', () => {
         const { container } = setup({ activeTab: 'badge' });
         ADMIN_BADGES.forEach(badge => {
@@ -315,7 +352,7 @@ describe('GlobalChatAdminDashboard badge tab', () => {
     });
 });
 
-describe('GlobalChatAdminDashboard reports tab', () => {
+describe('GlobalChatAdminDashboard reports section', () => {
     const pending = { id: 'r1', kind: 'message', msgId: 'm1', messageText: 'bad words', reportedByName: 'Bob', timestamp: 3000 };
     const resolved = { id: 'r2', kind: 'message', msgId: 'm2', messageText: 'old one', reportedByName: 'Carol', timestamp: 2000, status: 'resolved', resolvedAt: 2500, resolvedBy: 'admin-1' };
     const dismissed = { id: 'r3', kind: 'issue', category: 'Playback', reportedByName: 'Dave', timestamp: 1000, status: 'dismissed', resolvedAt: 1500, resolvedBy: 'admin-1' };
@@ -412,8 +449,32 @@ describe('GlobalChatAdminDashboard reports tab', () => {
         expect(screen.getByText(/no pending reports found/i)).toBeDefined();
     });
 
-    it('shows a count on the Reports tab', () => {
+    // The count is a call to action, so it counts only what still needs triage.
+    it('counts only pending reports on the Reports nav item', () => {
         const { container } = setup(reportsProps);
-        expect(container.querySelector('.gc-admin-tab-count').textContent).toBe('3');
+        expect(container.querySelector('.gc-admin-tab-count').textContent).toBe('1');
+    });
+
+    it('drops the count entirely once nothing is pending', () => {
+        const { container } = setup({ activeTab: 'reports', reports: [resolved, dismissed] });
+        expect(container.querySelector('.gc-admin-tab-count')).toBeNull();
+    });
+
+    it('resets the body scroll when the section changes', () => {
+        const { container, rerender } = setup(reportsProps);
+        const body = container.querySelector('.gc-admin-body');
+        body.scrollTop = 120;
+        rerender(
+            <GlobalChatAdminDashboard
+                db={makeDb().db}
+                uid="admin-1"
+                isAdmin
+                activeTab="profile"
+                overrides={{}}
+                reports={reportsProps.reports}
+                onClose={() => {}}
+            />
+        );
+        expect(container.querySelector('.gc-admin-body').scrollTop).toBe(0);
     });
 });
