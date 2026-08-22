@@ -14,6 +14,11 @@ export const MAX_REC_TITLE_LENGTH = 200;
 export const MAX_MOVIES_COUNT = 10;
 export const MAX_REPLY_PREVIEW_LENGTH = 50;
 
+// Slash-command FAQ limits
+export const MAX_FAQ_QUESTION_LENGTH = 200;
+export const MAX_FAQ_ANSWER_LENGTH = 500;
+export const MAX_FAQ_ITEMS = 20;
+
 /**
  * Returns the versioned database path for a given subpath or root.
  * 

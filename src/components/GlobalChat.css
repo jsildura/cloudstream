@@ -1394,6 +1394,240 @@
     object-fit: cover;
 }
 
+/* === SLASH COMMAND AUTOCOMPLETE === */
+.gc-command-menu {
+    position: absolute;
+    bottom: 100%;
+    left: 12px;
+    right: 12px;
+    background: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    overflow: hidden;
+    z-index: 1001;
+    margin-bottom: 6px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+    animation: gc-command-slide-up 0.15s ease-out;
+}
+
+@keyframes gc-command-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gc-command-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 3px solid transparent;
+}
+
+.gc-command-item:hover,
+.gc-command-item.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-left-color: #e50914;
+}
+
+.gc-command-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    width: 24px;
+    text-align: center;
+}
+
+.gc-command-name {
+    font-weight: 600;
+    color: #e50914;
+    font-size: 0.9rem;
+    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    flex-shrink: 0;
+}
+
+.gc-command-label {
+    color: #9ca3af;
+    font-size: 0.82rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* === COMMAND RESPONSE CARD ===
+   Local-only info panel shown when a user runs /faq, /help or /rules. Styled as
+   a neutral, elevated chatroom information panel — a calm surface distinct from
+   both the chat background and message bubbles — rather than an alert box. Brand
+   red is kept to a whisper (header icon chip, muted command pills) so it reads
+   as helpful context, not a warning. */
+.gc-command-card {
+    position: relative;
+    flex-shrink: 0;
+    margin: 3px 2px 2px;
+    background: linear-gradient(180deg, #2b2b30 0%, #232327 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.32);
+    overflow: hidden;
+    animation: gc-card-fade-in 0.2s ease-out;
+}
+
+@keyframes gc-card-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.gc-command-card-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: none;
+    border: none;
+    color: #7a7f88;
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+    z-index: 1;
+}
+
+.gc-command-card-dismiss:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e5e7eb;
+}
+
+.gc-command-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    padding-right: 34px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.gc-command-card-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: rgba(229, 9, 20, 0.13);
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.gc-command-card-title {
+    font-weight: 600;
+    color: #f1f1f3;
+    font-size: 0.85rem;
+    letter-spacing: 0.01em;
+}
+
+.gc-command-card-empty {
+    color: #8b909a;
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 14px 16px;
+}
+
+.gc-command-card-items {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 6px 6px;
+}
+
+/* FAQ / rules row: soft numbered badge + a question/answer body. */
+.gc-command-card-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+
+.gc-command-card-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.gc-command-card-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.gc-command-card-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.07);
+    color: #c9ccd1;
+    font-size: 0.68rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.gc-command-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.gc-command-card-q {
+    color: #eceef1;
+    font-weight: 600;
+    font-size: 0.83rem;
+    line-height: 1.35;
+    margin-bottom: 2px;
+}
+
+.gc-command-card-a {
+    color: #9aa0a8;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+/* /help row: a muted command pill beside its description. */
+.gc-command-card-item--help {
+    align-items: baseline;
+    gap: 9px;
+    padding: 6px 8px;
+}
+
+.gc-command-card-cmd {
+    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    color: #eba7aa;
+    font-weight: 600;
+    font-size: 0.77rem;
+    flex-shrink: 0;
+    background: rgba(229, 9, 20, 0.1);
+    padding: 2px 7px;
+    border-radius: 6px;
+}
+
+.gc-command-card-desc {
+    color: #9aa0a8;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
 /* === ACTION SHEET (Mobile) === */
 .gc-action-sheet {
     position: fixed;
@@ -1595,33 +1829,6 @@
     transform: translateY(0) scale(0.96);
 }
 
-.gc-reports-btn {
-    color: #ef4444;
-}
-
-.gc-reports-btn:hover {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ff5555;
-    border-color: rgba(239, 68, 68, 0.3);
-}
-
-.gc-reports-btn.has-unresolved {
-    position: relative;
-    color: #ef4444;
-}
-
-.gc-reports-btn.has-unresolved::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 6px;
-    height: 6px;
-    background: #ef4444;
-    border-radius: 50%;
-    box-shadow: 0 0 5px #ef4444;
-}
-
 /* === ADMIN MESSAGE BADGE === */
 .gc-admin-badge {
     display: inline-flex;
@@ -1667,27 +1874,6 @@
     box-shadow: 0 0 0 2px rgba(229, 9, 20, 0.9);
     transform: scale(1.04);
     outline: none;
-}
-
-/* Pending-report count on the header reports button. */
-.gc-reports-btn {
-    position: relative;
-}
-
-.gc-reports-count {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    min-width: 15px;
-    padding: 0 3px;
-    border-radius: 8px;
-    background: #e50914;
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 700;
-    line-height: 15px;
-    text-align: center;
-    pointer-events: none;
 }
 
 /* === UPLOAD HINT === */

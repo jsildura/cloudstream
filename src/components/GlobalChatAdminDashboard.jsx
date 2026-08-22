@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { chatPath } from '../lib/globalChatModel';
+import { chatPath, MAX_FAQ_QUESTION_LENGTH, MAX_FAQ_ANSWER_LENGTH, MAX_FAQ_ITEMS } from '../lib/globalChatModel';
 import {
     ADMIN_BADGES,
     DEFAULT_ADMIN_BADGE_ID,
@@ -17,6 +17,7 @@ const TABS = [
     { id: 'identity', label: 'Identity' },
     { id: 'avatar', label: 'Avatar' },
     { id: 'badge', label: 'Badge' },
+    { id: 'commands', label: 'Commands' },
     { id: 'reports', label: 'Reports' }
 ];
 
@@ -66,6 +67,14 @@ export default function GlobalChatAdminDashboard({
     const [busy, setBusy] = useState(false);
     const [reportFilter, setReportFilter] = useState('pending');
 
+    // FAQ management state
+    const [faqItems, setFaqItems] = useState([]);
+    const [faqEditId, setFaqEditId] = useState(null);
+    const [faqDraftQ, setFaqDraftQ] = useState('');
+    const [faqDraftA, setFaqDraftA] = useState('');
+    const [faqAdding, setFaqAdding] = useState(false);
+    const [faqBusy, setFaqBusy] = useState(false);
+
     const panelRef = useRef(null);
     const fileInputRef = useRef(null);
     const fallbackResolvingRef = useRef(new Set());
@@ -100,6 +109,37 @@ export default function GlobalChatAdminDashboard({
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, onClose]);
+
+    // Load FAQ items when the commands tab is active.
+    useEffect(() => {
+        if (!isOpen || activeTab !== 'commands' || !db) return;
+        let active = true;
+        const faqRef = db.ref(chatPath('commands', 'faq'));
+        const callback = (snapshot) => {
+            if (!active) return;
+            if (!snapshot.exists()) {
+                setFaqItems([]);
+                return;
+            }
+            const items = [];
+            snapshot.forEach(child => {
+                const val = child.val();
+                if (val && val.question && val.answer) {
+                    items.push({ id: child.key, ...val });
+                }
+            });
+            items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setFaqItems(items);
+        };
+        faqRef.on('value', callback, (err) => {
+            console.error('Error loading FAQ items:', err);
+            if (active) setFaqItems([]);
+        });
+        return () => {
+            active = false;
+            faqRef.off('value', callback);
+        };
+    }, [isOpen, activeTab, db]);
 
     useEffect(() => {
         if (isOpen) panelRef.current?.focus();
@@ -251,6 +291,107 @@ export default function GlobalChatAdminDashboard({
 
     const visibleReports = useMemo(() => filterReports(reports, reportFilter), [reports, reportFilter]);
 
+    // ── FAQ CRUD handlers ───────────────────────────────────────────────
+    const startFaqEdit = (item) => {
+        setFaqEditId(item.id);
+        setFaqDraftQ(item.question);
+        setFaqDraftA(item.answer);
+        setFaqAdding(false);
+    };
+
+    const startFaqAdd = () => {
+        setFaqEditId(null);
+        setFaqDraftQ('');
+        setFaqDraftA('');
+        setFaqAdding(true);
+    };
+
+    const cancelFaqEdit = () => {
+        setFaqEditId(null);
+        setFaqDraftQ('');
+        setFaqDraftA('');
+        setFaqAdding(false);
+    };
+
+    const handleFaqSave = async () => {
+        if (!db || faqBusy) return;
+        const q = faqDraftQ.trim();
+        const a = faqDraftA.trim();
+        if (!q || !a) { setError('Both question and answer are required.'); return; }
+        if (q.length > MAX_FAQ_QUESTION_LENGTH) { setError(`Question must be ${MAX_FAQ_QUESTION_LENGTH} characters or fewer.`); return; }
+        if (a.length > MAX_FAQ_ANSWER_LENGTH) { setError(`Answer must be ${MAX_FAQ_ANSWER_LENGTH} characters or fewer.`); return; }
+
+        setFaqBusy(true);
+        setError(null);
+        setStatus(null);
+        try {
+            if (faqAdding) {
+                if (faqItems.length >= MAX_FAQ_ITEMS) {
+                    setError(`Maximum of ${MAX_FAQ_ITEMS} FAQ entries reached.`);
+                    setFaqBusy(false);
+                    return;
+                }
+                const maxOrder = faqItems.reduce((m, i) => Math.max(m, i.order ?? 0), -1);
+                await db.ref(chatPath('commands', 'faq')).push({ question: q, answer: a, order: maxOrder + 1 });
+                setStatus('FAQ entry added.');
+            } else if (faqEditId) {
+                const existing = faqItems.find(i => i.id === faqEditId);
+                await db.ref(chatPath('commands', 'faq', faqEditId)).update({
+                    question: q,
+                    answer: a,
+                    order: existing?.order ?? 0
+                });
+                setStatus('FAQ entry updated.');
+            }
+            cancelFaqEdit();
+        } catch (err) {
+            console.error('FAQ save failed:', err);
+            setError(describeWriteError(err));
+        } finally {
+            setFaqBusy(false);
+        }
+    };
+
+    const handleFaqDelete = async (itemId) => {
+        if (!db || faqBusy) return;
+        if (!window.confirm('Delete this FAQ entry?')) return;
+        setFaqBusy(true);
+        setError(null);
+        try {
+            await db.ref(chatPath('commands', 'faq', itemId)).remove();
+            setStatus('FAQ entry deleted.');
+        } catch (err) {
+            console.error('FAQ delete failed:', err);
+            setError(describeWriteError(err));
+        } finally {
+            setFaqBusy(false);
+        }
+    };
+
+    const handleFaqReorder = async (itemId, direction) => {
+        if (!db || faqBusy) return;
+        const idx = faqItems.findIndex(i => i.id === itemId);
+        if (idx === -1) return;
+        const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (swapIdx < 0 || swapIdx >= faqItems.length) return;
+
+        setFaqBusy(true);
+        setError(null);
+        try {
+            const a = faqItems[idx];
+            const b = faqItems[swapIdx];
+            const updates = {};
+            updates[chatPath('commands', 'faq', a.id, 'order')] = b.order ?? swapIdx;
+            updates[chatPath('commands', 'faq', b.id, 'order')] = a.order ?? idx;
+            await db.ref().update(updates);
+        } catch (err) {
+            console.error('FAQ reorder failed:', err);
+            setError(describeWriteError(err));
+        } finally {
+            setFaqBusy(false);
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -385,6 +526,139 @@ export default function GlobalChatAdminDashboard({
                                     </button>
                                 ))}
                             </div>
+                        </section>
+                    )}
+
+                    {activeTab === 'commands' && (
+                        <section className="gc-admin-section" aria-label="Command settings">
+                            <div className="gc-admin-label">FAQ Management</div>
+                            <div className="gc-admin-hint">
+                                Manage the questions and answers shown when users type <code>/faq</code> in chat.
+                                Up to {MAX_FAQ_ITEMS} entries.
+                            </div>
+
+                            <div className="gc-admin-faq-list">
+                                {faqItems.length === 0 && !faqAdding && (
+                                    <div className="gc-admin-faq-empty">No FAQ entries yet. Click "Add Entry" to create one.</div>
+                                )}
+                                {faqItems.map((item, idx) => (
+                                    faqEditId === item.id ? (
+                                        <div key={item.id} className="gc-admin-faq-form">
+                                            <label className="gc-admin-faq-form-label">Question</label>
+                                            <input
+                                                className="gc-admin-input"
+                                                type="text"
+                                                value={faqDraftQ}
+                                                onChange={e => setFaqDraftQ(e.target.value)}
+                                                maxLength={MAX_FAQ_QUESTION_LENGTH}
+                                                placeholder="Enter question..."
+                                                disabled={faqBusy}
+                                            />
+                                            <label className="gc-admin-faq-form-label">Answer</label>
+                                            <textarea
+                                                className="gc-admin-input gc-admin-faq-textarea"
+                                                value={faqDraftA}
+                                                onChange={e => setFaqDraftA(e.target.value)}
+                                                maxLength={MAX_FAQ_ANSWER_LENGTH}
+                                                placeholder="Enter answer..."
+                                                rows={3}
+                                                disabled={faqBusy}
+                                            />
+                                            <div className="gc-admin-faq-form-hint">
+                                                Q: {faqDraftQ.length}/{MAX_FAQ_QUESTION_LENGTH} · A: {faqDraftA.length}/{MAX_FAQ_ANSWER_LENGTH}
+                                            </div>
+                                            <div className="gc-admin-actions">
+                                                <button className="gc-admin-btn primary" onClick={handleFaqSave} disabled={faqBusy || !faqDraftQ.trim() || !faqDraftA.trim()}>
+                                                    {faqBusy ? 'Saving…' : 'Save'}
+                                                </button>
+                                                <button className="gc-admin-btn" onClick={cancelFaqEdit} disabled={faqBusy}>Cancel</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div key={item.id} className="gc-admin-faq-item">
+                                            <div className="gc-admin-faq-item-num">{idx + 1}</div>
+                                            <div className="gc-admin-faq-item-content">
+                                                <div className="gc-admin-faq-item-q">{item.question}</div>
+                                                <div className="gc-admin-faq-item-a">{item.answer}</div>
+                                            </div>
+                                            <div className="gc-admin-faq-item-actions">
+                                                <button
+                                                    className="gc-admin-faq-btn"
+                                                    onClick={() => handleFaqReorder(item.id, 'up')}
+                                                    disabled={idx === 0 || faqBusy}
+                                                    title="Move up"
+                                                >▲</button>
+                                                <button
+                                                    className="gc-admin-faq-btn"
+                                                    onClick={() => handleFaqReorder(item.id, 'down')}
+                                                    disabled={idx === faqItems.length - 1 || faqBusy}
+                                                    title="Move down"
+                                                >▼</button>
+                                                <button
+                                                    className="gc-admin-faq-btn gc-admin-faq-btn--edit"
+                                                    onClick={() => startFaqEdit(item)}
+                                                    disabled={faqBusy}
+                                                    title="Edit"
+                                                >✎</button>
+                                                <button
+                                                    className="gc-admin-faq-btn gc-admin-faq-btn--delete"
+                                                    onClick={() => handleFaqDelete(item.id)}
+                                                    disabled={faqBusy}
+                                                    title="Delete"
+                                                >🗑</button>
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
+
+                                {/* Add new FAQ entry form */}
+                                {faqAdding && (
+                                    <div className="gc-admin-faq-form gc-admin-faq-form--add">
+                                        <label className="gc-admin-faq-form-label">New Question</label>
+                                        <input
+                                            className="gc-admin-input"
+                                            type="text"
+                                            value={faqDraftQ}
+                                            onChange={e => setFaqDraftQ(e.target.value)}
+                                            maxLength={MAX_FAQ_QUESTION_LENGTH}
+                                            placeholder="Enter question..."
+                                            disabled={faqBusy}
+                                            autoFocus
+                                        />
+                                        <label className="gc-admin-faq-form-label">Answer</label>
+                                        <textarea
+                                            className="gc-admin-input gc-admin-faq-textarea"
+                                            value={faqDraftA}
+                                            onChange={e => setFaqDraftA(e.target.value)}
+                                            maxLength={MAX_FAQ_ANSWER_LENGTH}
+                                            placeholder="Enter answer..."
+                                            rows={3}
+                                            disabled={faqBusy}
+                                        />
+                                        <div className="gc-admin-faq-form-hint">
+                                            Q: {faqDraftQ.length}/{MAX_FAQ_QUESTION_LENGTH} · A: {faqDraftA.length}/{MAX_FAQ_ANSWER_LENGTH}
+                                        </div>
+                                        <div className="gc-admin-actions">
+                                            <button className="gc-admin-btn primary" onClick={handleFaqSave} disabled={faqBusy || !faqDraftQ.trim() || !faqDraftA.trim()}>
+                                                {faqBusy ? 'Adding…' : 'Add'}
+                                            </button>
+                                            <button className="gc-admin-btn" onClick={cancelFaqEdit} disabled={faqBusy}>Cancel</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {!faqAdding && !faqEditId && (
+                                <div className="gc-admin-actions">
+                                    <button
+                                        className="gc-admin-btn primary"
+                                        onClick={startFaqAdd}
+                                        disabled={faqBusy || faqItems.length >= MAX_FAQ_ITEMS}
+                                    >
+                                        + Add Entry
+                                    </button>
+                                </div>
+                            )}
                         </section>
                     )}
 

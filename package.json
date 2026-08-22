@@ -22,6 +22,8 @@
 		"firebase:emulators": "firebase emulators:start --project demo-streamflix --only auth,database",
 		"chat:admin": "node scripts/global-chat-admin.mjs",
 		"test:admin-script": "vitest run scripts/global-chat-admin.test.js",
+		"chat:seed-faq": "node scripts/seed-chat-faq.mjs",
+		"test:seed-faq-script": "vitest run scripts/seed-chat-faq.test.js",
 		"clean:anon": "node scripts/cleanup-anonymous-users.mjs",
 		"test:clean-script": "vitest run scripts/cleanup-anonymous-users.test.js"
 	},

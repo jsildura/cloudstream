@@ -409,6 +409,27 @@
           "$other": {
             ".validate": false
           }
+        },
+        "commands": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com'",
+          "faq": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.globalChatAdmin === true",
+            "$itemId": {
+              ".validate": "newData.hasChildren(['question', 'answer', 'order'])",
+              "question": {
+                ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 200"
+              },
+              "answer": {
+                ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 500"
+              },
+              "order": {
+                ".validate": "newData.isNumber() && newData.val() >= 0"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          }
         }
       }
     },

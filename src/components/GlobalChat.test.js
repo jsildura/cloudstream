@@ -2021,3 +2021,210 @@ describe('GlobalChat Custom Claims Admin UI & Moderation', () => {
     });
 });
 
+describe('GlobalChat Slash Commands', () => {
+    let mockDb;
+    let mockData = {};
+    let registeredListeners = [];
+
+    const regularUser = {
+        uid: 'user-regular-1',
+        displayName: 'Regular User',
+        photoURL: 'https://lh3.googleusercontent.com/a/reg',
+        isGoogle: true
+    };
+
+    const snapOf = (path) => {
+        const data = mockData[path];
+        return {
+            exists: () => data !== undefined && data !== null,
+            val: () => data ?? null,
+            key: path.split('/').pop(),
+            forEach: (iter) => {
+                if (data && typeof data === 'object') {
+                    Object.entries(data).forEach(([k, v]) => iter({ key: k, val: () => v }));
+                }
+            }
+        };
+    };
+
+    const createMockRef = (path) => ({
+        path,
+        key: path.split('/').pop(),
+        once: vi.fn().mockImplementation((event, cb) => {
+            const snap = snapOf(path);
+            if (typeof event === 'function') event(snap);
+            if (cb) cb(snap);
+            return Promise.resolve(snap);
+        }),
+        set: vi.fn().mockResolvedValue(undefined),
+        update: vi.fn().mockResolvedValue(undefined),
+        remove: vi.fn().mockResolvedValue(undefined),
+        push: vi.fn().mockImplementation(() => createMockRef(`${path}/mock_key`)),
+        on: vi.fn().mockImplementation((event, cb) => {
+            registeredListeners.push({ path, event, cb });
+            if (event === 'value') cb(snapOf(path));
+            return cb;
+        }),
+        off: vi.fn().mockImplementation((event, cb) => {
+            registeredListeners = registeredListeners.filter(
+                l => !(l.path === path && l.event === event && (!cb || l.cb === cb))
+            );
+        }),
+        orderByKey: vi.fn().mockReturnThis(),
+        orderByChild: vi.fn().mockReturnThis(),
+        equalTo: vi.fn().mockReturnThis(),
+        limitToLast: vi.fn().mockReturnThis(),
+        endAt: vi.fn().mockReturnThis()
+    });
+
+    /** Opens the chat and returns the composer textarea. */
+    const openComposer = async () => {
+        render(React.createElement(GlobalChat));
+        await act(async () => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_other_user')).toBeInTheDocument();
+        });
+        return document.querySelector('.gc-msg-input');
+    };
+
+    const type = (textarea, value) => fireEvent.change(textarea, { target: { value } });
+    const commandNames = () =>
+        Array.from(document.querySelectorAll('.gc-command-menu .gc-command-name')).map(el => el.textContent);
+
+    beforeEach(() => {
+        mockData = {};
+        registeredListeners = [];
+
+        mockDb = { ref: vi.fn((path = '') => createMockRef(path)) };
+
+        window.firebase = {
+            database: Object.assign(() => mockDb, {
+                ServerValue: { TIMESTAMP: { '.sv': 'timestamp' } }
+            }),
+            auth: () => ({
+                currentUser: regularUser,
+                onAuthStateChanged: (cb) => {
+                    cb(regularUser);
+                    return () => {};
+                }
+            })
+        };
+
+        vi.spyOn(FirebaseModule, 'initFirebase').mockReturnValue({
+            auth: window.firebase.auth(),
+            db: mockDb,
+            storage: {}
+        });
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: regularUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+
+        mockData['globalChat/v2/messages'] = {
+            msg_other_user: {
+                uid: 'other-user-99',
+                senderName: 'Bob',
+                text: 'Hello world',
+                createdAt: Date.now() - 10000
+            }
+        };
+        // Seeded out of display order to prove the listener sorts by `order`.
+        mockData['globalChat/v2/commands/faq'] = {
+            faq_b: { question: 'Second question?', answer: 'Second answer.', order: 1 },
+            faq_a: { question: 'First question?', answer: 'First answer.', order: 0 }
+        };
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('opens the autocomplete on "/" and filters it as the query narrows', async () => {
+        const textarea = await openComposer();
+
+        type(textarea, '/');
+        expect(commandNames()).toEqual(['/faq', '/help', '/rules']);
+
+        type(textarea, '/f');
+        expect(commandNames()).toEqual(['/faq']);
+
+        // A non-command keeps the menu closed.
+        type(textarea, 'hello');
+        expect(document.querySelector('.gc-command-menu')).toBeNull();
+    });
+
+    it('completes the highlighted command on Tab without running it', async () => {
+        const textarea = await openComposer();
+
+        type(textarea, '/');
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'Tab' });
+        });
+
+        // Input is completed, menu narrows to the single match, nothing executed.
+        expect(textarea.value).toBe('/faq');
+        expect(commandNames()).toEqual(['/faq']);
+        expect(document.querySelector('.gc-command-card')).toBeNull();
+    });
+
+    it('runs the completed command on the following Enter', async () => {
+        const textarea = await openComposer();
+
+        type(textarea, '/');
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'Tab' });
+        });
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'Enter' });
+        });
+
+        const card = document.querySelector('.gc-command-card');
+        expect(card).toBeInTheDocument();
+        expect(card.querySelector('.gc-command-card-title').textContent).toBe('Frequently Asked Questions');
+        // Sorted by `order`, not by key — questions and their number badges align.
+        expect(Array.from(card.querySelectorAll('.gc-command-card-q')).map(el => el.textContent))
+            .toEqual(['First question?', 'Second question?']);
+        expect(Array.from(card.querySelectorAll('.gc-command-card-num')).map(el => el.textContent))
+            .toEqual(['1', '2']);
+        // The command is consumed locally: input cleared, menu closed, no message pushed.
+        expect(textarea.value).toBe('');
+        expect(document.querySelector('.gc-command-menu')).toBeNull();
+    });
+
+    it('navigates with arrows so Tab completes the highlighted entry', async () => {
+        const textarea = await openComposer();
+
+        type(textarea, '/');
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'ArrowDown' });
+            fireEvent.keyDown(textarea, { key: 'ArrowDown' });
+        });
+        expect(document.querySelector('.gc-command-item.active .gc-command-name').textContent).toBe('/rules');
+
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'Tab' });
+        });
+        expect(textarea.value).toBe('/rules');
+        expect(document.querySelector('.gc-command-card')).toBeNull();
+    });
+
+    it('dismisses the autocomplete on Escape without completing', async () => {
+        const textarea = await openComposer();
+
+        type(textarea, '/f');
+        await act(async () => {
+            fireEvent.keyDown(textarea, { key: 'Escape' });
+        });
+
+        expect(document.querySelector('.gc-command-menu')).toBeNull();
+        expect(textarea.value).toBe('/f');
+        expect(document.querySelector('.gc-command-card')).toBeNull();
+    });
+});
+

@@ -13,6 +13,7 @@ import { summarizeUA } from '../lib/globalChatReports';
 import { normalizeAdminOverrides, resolveSenderIdentity, FALLBACK_AVATAR } from '../lib/globalChatAdminIdentity';
 import GlobalChatAdminBadge from './GlobalChatAdminBadge';
 import GlobalChatAdminDashboard from './GlobalChatAdminDashboard';
+import { isCommandInput, filterCommands, matchCommand, buildHelpContent, buildRulesContent, buildFaqContent } from '../lib/chatCommands';
 import './GlobalChat.css';
 
 // Constants
@@ -410,6 +411,13 @@ function GlobalChat() {
     // null means closed, otherwise it names the tab to show.
     const [adminTab, setAdminTab] = useState(null);
     const [reports, setReports] = useState([]);
+
+    // Slash-command states
+    const [showCommandMenu, setShowCommandMenu] = useState(false);
+    const [commandQuery, setCommandQuery] = useState('');
+    const [commandActiveIndex, setCommandActiveIndex] = useState(0);
+    const [commandResponse, setCommandResponse] = useState(null);
+    const [faqItems, setFaqItems] = useState([]);
 
     // Refs
     const messagesContainerRef = useRef(null);
@@ -1032,11 +1040,43 @@ function GlobalChat() {
         };
     }, [isGlobalChatAdmin, sessionState]);
 
-    /** Reports awaiting triage. A legacy report with no status counts as pending. */
-    const pendingReportCount = useMemo(
-        () => reports.filter(r => !r.status || r.status === 'pending').length,
-        [reports]
-    );
+    // FAQ items for /faq command — live listener so admin edits reflect
+    // immediately. Readable by all authenticated users (same as messages).
+    useEffect(() => {
+        if (!dbRef.current || sessionState !== 'ready') {
+            setFaqItems([]);
+            return;
+        }
+        let active = true;
+        const faqRef = dbRef.current.ref(chatPath('commands', 'faq'));
+        const callback = (snapshot) => {
+            if (!active) return;
+            if (!snapshot.exists()) {
+                setFaqItems([]);
+                return;
+            }
+            const items = [];
+            snapshot.forEach(child => {
+                const val = child.val();
+                if (val && val.question && val.answer) {
+                    items.push({ id: child.key, ...val });
+                }
+            });
+            items.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+            setFaqItems(items);
+        };
+        faqRef.on('value', callback, (err) => {
+            console.error('Error loading FAQ items:', err);
+            if (active) setFaqItems([]);
+        });
+        const detach = () => faqRef.off('value', callback);
+        listenersRef.current.push(detach);
+        return () => {
+            active = false;
+            detach();
+            listenersRef.current = listenersRef.current.filter(fn => fn !== detach);
+        };
+    }, [sessionState]);
 
     // Handle send message
     const handleSendMessage = async () => {
@@ -1108,6 +1148,20 @@ function GlobalChat() {
     const handleInputChange = (e) => {
         const value = e.target.value;
         setMessageText(value);
+
+        // Slash-command detection — takes priority over mentions.
+        // Only triggers when the ENTIRE input is a command-in-progress
+        // (e.g. "/f", "/faq") with no spaces.
+        if (isCommandInput(value)) {
+            const filtered = filterCommands(value.trim());
+            setCommandQuery(value.trim());
+            setShowCommandMenu(filtered.length > 0);
+            setCommandActiveIndex(0);
+            setShowMentionList(false);
+            return;
+        }
+        setShowCommandMenu(false);
+        setCommandQuery('');
 
         const cursorPos = e.target.selectionStart;
         const lastAt = value.lastIndexOf('@', cursorPos);
@@ -1187,6 +1241,46 @@ function GlobalChat() {
         document.addEventListener('mousedown', onDocDown);
         return () => document.removeEventListener('mousedown', onDocDown);
     }, [showRecMenu]);
+
+    // Close the command autocomplete when clicking outside it.
+    useEffect(() => {
+        if (!showCommandMenu) return;
+        const onDocDown = (e) => {
+            if (!e.target.closest('.gc-command-menu') && !e.target.closest('.gc-msg-input')) {
+                setShowCommandMenu(false);
+                setCommandQuery('');
+            }
+        };
+        document.addEventListener('mousedown', onDocDown);
+        return () => document.removeEventListener('mousedown', onDocDown);
+    }, [showCommandMenu]);
+
+    // Execute a slash command — builds the local-only response card.
+    const executeCommand = useCallback((cmd) => {
+        setShowCommandMenu(false);
+        setCommandQuery('');
+        setMessageText('');
+
+        switch (cmd.command) {
+            case '/faq':
+                setCommandResponse(buildFaqContent(faqItems));
+                break;
+            case '/help':
+                setCommandResponse(buildHelpContent());
+                break;
+            case '/rules':
+                setCommandResponse(buildRulesContent());
+                break;
+            default:
+                break;
+        }
+    }, [faqItems]);
+
+    // Filtered commands for the autocomplete popup.
+    const filteredCommands = useMemo(
+        () => filterCommands(commandQuery),
+        [commandQuery]
+    );
 
     // Cache the most recent DirectPlayer fallback (playback → iframe switch)
     // so a Report Issue opened right after auto-attaches what the user was
@@ -2414,22 +2508,6 @@ function GlobalChat() {
                         </div>
                     </div>
                     <div className="gc-header-actions">
-                        {/* Reports button (admin only) — opens the dashboard's Reports tab */}
-                        {isGlobalChatAdmin && (
-                            <button
-                                className={`gc-icon-btn gc-reports-btn ${pendingReportCount > 0 ? 'has-unresolved' : ''}`}
-                                onClick={() => setAdminTab('reports')}
-                                title="Reports"
-                                aria-label="Reports"
-                            >
-                                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                                </svg>
-                                {pendingReportCount > 0 && (
-                                    <span className="gc-reports-count">{pendingReportCount > 99 ? '99+' : pendingReportCount}</span>
-                                )}
-                            </button>
-                        )}
                         <button className="gc-close-btn" onClick={handleCloseChat} title="Close Chat" aria-label="Close Chat">
                             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -2482,6 +2560,47 @@ function GlobalChat() {
                                 </div>
                             ) : (
                                 messages.map(renderMessage)
+                            )}
+
+                            {/* Inline command response card (local-only, not pushed to Firebase) */}
+                            {commandResponse && (
+                                <div className="gc-command-card">
+                                    <button
+                                        className="gc-command-card-dismiss"
+                                        onClick={() => setCommandResponse(null)}
+                                        aria-label="Dismiss"
+                                    >
+                                        ✕
+                                    </button>
+                                    <div className="gc-command-card-header">
+                                        <span className="gc-command-card-icon">{commandResponse.icon}</span>
+                                        <span className="gc-command-card-title">{commandResponse.title}</span>
+                                    </div>
+                                    {commandResponse.empty ? (
+                                        <div className="gc-command-card-empty">
+                                            No FAQ entries have been added yet.
+                                        </div>
+                                    ) : (
+                                        <div className="gc-command-card-items">
+                                            {commandResponse.items.map((item, idx) => (
+                                                commandResponse.type === 'help' ? (
+                                                    <div key={idx} className="gc-command-card-item gc-command-card-item--help">
+                                                        <span className="gc-command-card-cmd">{item.label}</span>
+                                                        <span className="gc-command-card-desc">{item.text}</span>
+                                                    </div>
+                                                ) : (
+                                                    <div key={idx} className="gc-command-card-item">
+                                                        <span className="gc-command-card-num">{idx + 1}</span>
+                                                        <div className="gc-command-card-body">
+                                                            <div className="gc-command-card-q">{item.label}</div>
+                                                            <div className="gc-command-card-a">{item.text}</div>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
 
@@ -2732,6 +2851,24 @@ function GlobalChat() {
                                 </div>
                             )}
 
+                            {/* Slash-Command Autocomplete */}
+                            {showCommandMenu && filteredCommands.length > 0 && (
+                                <div className="gc-command-menu">
+                                    {filteredCommands.map((cmd, idx) => (
+                                        <div
+                                            key={cmd.command}
+                                            className={`gc-command-item ${idx === commandActiveIndex ? 'active' : ''}`}
+                                            onClick={() => executeCommand(cmd)}
+                                            onMouseEnter={() => setCommandActiveIndex(idx)}
+                                        >
+                                            <span className="gc-command-icon">{cmd.icon}</span>
+                                            <span className="gc-command-name">{cmd.command}</span>
+                                            <span className="gc-command-label">{cmd.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
                             {/* Mention List */}
                             {showMentionList && mentionOptions.length > 0 && (
                                 <div className="gc-mention-list show">
@@ -2769,10 +2906,53 @@ function GlobalChat() {
                                     value={messageText}
                                     onChange={handleInputChange}
                                     onKeyDown={(e) => {
+                                        // Slash-command keyboard navigation
+                                        if (showCommandMenu && filteredCommands.length > 0) {
+                                            if (e.key === 'ArrowDown') {
+                                                e.preventDefault();
+                                                setCommandActiveIndex(i => (i + 1) % filteredCommands.length);
+                                                return;
+                                            }
+                                            if (e.key === 'ArrowUp') {
+                                                e.preventDefault();
+                                                setCommandActiveIndex(i => (i - 1 + filteredCommands.length) % filteredCommands.length);
+                                                return;
+                                            }
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                executeCommand(filteredCommands[commandActiveIndex]);
+                                                return;
+                                            }
+                                            // Tab completes the input to the highlighted command
+                                            // without running it — the menu stays open on the
+                                            // single remaining match so Enter can fire it.
+                                            if (e.key === 'Tab') {
+                                                e.preventDefault();
+                                                const cmd = filteredCommands[commandActiveIndex];
+                                                if (cmd) {
+                                                    setMessageText(cmd.command);
+                                                    setCommandQuery(cmd.command);
+                                                    setCommandActiveIndex(0);
+                                                }
+                                                return;
+                                            }
+                                            if (e.key === 'Escape') {
+                                                e.preventDefault();
+                                                setShowCommandMenu(false);
+                                                setCommandQuery('');
+                                                return;
+                                            }
+                                        }
                                         // Enter inserts a new line (for paragraphs & bullets);
                                         // Shift+Enter or Ctrl/Cmd+Enter sends the message.
                                         if (e.key === 'Enter' && (e.shiftKey || e.ctrlKey || e.metaKey)) {
                                             e.preventDefault();
+                                            // Intercept exact command on send
+                                            const cmd = matchCommand(messageText.trim());
+                                            if (cmd) {
+                                                executeCommand(cmd);
+                                                return;
+                                            }
                                             isEditing ? updateMessage() : handleSendMessage();
                                         }
                                     }}
@@ -2802,7 +2982,11 @@ function GlobalChat() {
                             </button>
                             <button
                                 className="gc-send-btn"
-                                onClick={isEditing ? updateMessage : handleSendMessage}
+                                onClick={() => {
+                                    const cmd = matchCommand(messageText.trim());
+                                    if (cmd) { executeCommand(cmd); return; }
+                                    isEditing ? updateMessage() : handleSendMessage();
+                                }}
                                 disabled={(!messageText.trim() && !pendingFile && recMovies.length === 0) || isSending}
                             >
                                 {isSending ? '...' : (
