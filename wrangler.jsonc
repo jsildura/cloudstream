@@ -6,6 +6,16 @@
 	"observability": {
 		"enabled": true
 	},
+	// Non-secret config for the Pages Functions in functions/. These same values
+	// are already public in the client bundle (see src/lib/firebase.js), so they
+	// are plain vars. Everything genuinely secret — AD_KEY_HMAC_SECRET,
+	// FIREBASE_SERVICE_ACCOUNT, PAYPAL_CLIENT_SECRET — is an encrypted secret set
+	// via the dashboard or `wrangler pages secret put`, never listed here.
+	"vars": {
+		"FIREBASE_PROJECT_ID": "streamflix-chat",
+		"FIREBASE_DATABASE_URL": "https://streamflix-chat-default-rtdb.firebaseio.com",
+		"PAYPAL_CLIENT_ID": "AdLd1DLKnwu6gajlgLUlki4iSJcYgq3TwYhKG5IH__-VzNr9wa_w_vhkiLbeEnnqqTHd-iKW4r0EVzEx"
+	},
 	"kv_namespaces": [
 		{
 			"binding": "VISITOR_STATS",
