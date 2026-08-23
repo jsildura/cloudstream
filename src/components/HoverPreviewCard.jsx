@@ -12,6 +12,7 @@ import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../ho
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import { maybeOpenSmartlinkAd } from '../utils/adGating';
 import { previewBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import YouTubePlayer from './YouTubePlayer';
 import './HoverPreviewCard.css';
@@ -43,10 +44,6 @@ const bodyHeightFor = (vw) => {
     if (vw >= 1920) return 152;
     return 132;
 };
-
-//Adsterra configuration smartlink
-const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
-const AD_COOLDOWN_MS = 2 * 60 * 1000;
 
 const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) => {
     const navigate = useNavigate();
@@ -143,19 +140,8 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
     const handleWatchNow = useCallback((e) => {
         e.stopPropagation();
 
-        // Same ad gating as the banner: skip on a user's very first click,
-        // then throttle to once per cooldown window.
-        const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
-        if (!hasClickedBefore) {
-            localStorage.setItem('hasClickedWatch', 'true');
-        } else {
-            const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
-            const now = Date.now();
-            if (now - lastAdTime >= AD_COOLDOWN_MS) {
-                window.open(AD_URL, '_blank');
-                localStorage.setItem('lastAdTrigger', now.toString());
-            }
-        }
+        // Shared smartlink gate: no-op while pending or ad-free.
+        maybeOpenSmartlinkAd();
 
         closeNow();
         navigate(`/watch?type=${type}&id=${item.id}`, { state: { fromModal: true } });

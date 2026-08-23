@@ -13,13 +13,16 @@ import { generateContentMeta } from '../utils/metaUtils';
 import { episodeStill, cardBackdrop, posterAsBackdrop } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
 import { useProfiles } from '../contexts/ProfileContext';
+import { maybeOpenSmartlinkAd } from '../utils/adGating';
+import { isHevcSupported } from '../utils/codecSupport';
 import { filterKidsCandidates } from '../lib/tmdbClient';
 
-// Adsterra smartlink — same monetization used by the Watch Now / Play buttons
-// (Modal, BannerSlider, HoverPreviewCard): open the ad in a new tab with a
-// first-click grace period and a 2-minute cooldown between popups.
-const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
-const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+// How long after a flagged embed loads before the HEVC warning appears. The
+// embed still has to boot its player, fetch the manifest and filter renditions
+// after load — about 1.5s by its own logs, plus network. 5s lands just after
+// the viewer notices sound with no picture, and stays clear of embeds that
+// merely take a moment to show the first frame.
+const HEVC_WARNING_DELAY_MS = 5000;
 
 const Watch = () => {
   const location = useLocation();
@@ -126,7 +129,7 @@ const Watch = () => {
   const episodeDrawerTranslateRef = useRef(0);
 
   const { POSTER_URL } = useTMDB();
-  const { showNowPlaying, showSuccess, showError } = useToast();
+  const { showNowPlaying, showSuccess, showError, showWarning } = useToast();
   const { addToHistory, updateProgress, getLastWatched, flushPendingHistory } = useWatchHistory();
   const getLastWatchedRef = useRef(getLastWatched);
   getLastWatchedRef.current = getLastWatched;
@@ -496,6 +499,7 @@ const Watch = () => {
     hasAds: s.hasAds || false,
     directPlayer: s.directPlayer || false,
     disabled: s.disabled || false,
+    mayRequireHevc: s.mayRequireHevc || false,
     getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
   })), [type, id]);
 
@@ -534,6 +538,47 @@ const Watch = () => {
   useEffect(() => {
     setSandboxEnabled(servers[currentServer].sandboxSupport);
   }, [currentServer, servers]);
+
+  // HEVC warning for servers flagged `mayRequireHevc`, shown *after* playback
+  // has visibly failed. Those embeds serve an HEVC/H.265-only ladder for some
+  // titles; a browser with no HEVC decoder has every video rendition stripped
+  // by the embed's own player (Shaka's CapabilitiesFilter) and plays the audio
+  // track over a blank picture. Mostly desktop Chrome/Firefox with no
+  // OS-level decoder, which is why phones are unaffected.
+  //
+  // The failure itself is unobservable from here: the embed is cross-origin,
+  // so its console, its manifest and its <video> are all off limits. Two
+  // things we *can* see stand in for it — the iframe element's own load event
+  // (which fires cross-origin) and this browser's decode capability, without
+  // which the blank picture can't happen. So the warning waits for the embed
+  // to load, gives it time to fail, then explains the black screen the viewer
+  // is already looking at.
+  //
+  // Fires once per server per visit; the timer is dropped if the viewer
+  // switches server, changes episode, or leaves before it lands.
+  const hevcWarnedForServerRef = useRef(null);
+  const hevcWarningTimerRef = useRef(null);
+
+  const handleEmbedLoad = useCallback(() => {
+    if (!servers[currentServer]?.mayRequireHevc) return;
+    if (hevcWarnedForServerRef.current === currentServer) return;
+    if (isHevcSupported()) return;
+    const serverName = servers[currentServer].name;
+    const warnedServer = currentServer;
+    clearTimeout(hevcWarningTimerRef.current);
+    hevcWarningTimerRef.current = setTimeout(() => {
+      hevcWarnedForServerRef.current = warnedServer;
+      showWarning(
+        `No picture on ${serverName}? This browser can't decode HEVC (H.265), so only the stream's audio plays. Switch to another server to watch it.`
+      );
+    }, HEVC_WARNING_DELAY_MS);
+  }, [currentServer, servers, showWarning]);
+
+  // A pending warning describes one specific embed. Once that embed is torn
+  // down — server switch, episode change, back to the lazy overlay, unmount —
+  // the message would be about something no longer on screen, so drop it.
+  useEffect(() => () => clearTimeout(hevcWarningTimerRef.current),
+    [currentServer, currentSeason, currentEpisode, id, sandboxEnabled, playerLoaded]);
 
   // Any change that forces a fresh load resets the player to the lazy overlay.
   // Player mode is derived from the server config: `directPlayer` servers
@@ -807,20 +852,9 @@ const Watch = () => {
   }, [clearAutoAdvanceTimer]);
 
   const skipAutoAdvance = useCallback(() => {
-    // Ad popup: first ever click is a grace period (no ad), then the smartlink
-    // opens in a new tab at most once per cooldown window. Same as the Watch
-    // Now / Play buttons elsewhere in the app.
-    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
-    if (!hasClickedBefore) {
-      localStorage.setItem('hasClickedWatch', 'true');
-    } else {
-      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
-      const now = Date.now();
-      if (now - lastAdTime >= AD_COOLDOWN_MS) {
-        window.open(AD_URL, '_blank');
-        localStorage.setItem('lastAdTrigger', now.toString());
-      }
-    }
+    // Shared smartlink gate: first ever click is a grace period, then at most
+    // once per cooldown window, and never while pending or ad-free.
+    maybeOpenSmartlinkAd();
 
     clearAutoAdvanceTimer();
     setAutoAdvanceActive(false);
@@ -1152,6 +1186,7 @@ const Watch = () => {
               <iframe
                 key={`${currentServer}-${currentSeason}-${currentEpisode}-${sandboxEnabled}`}
                 src={getVideoUrl()}
+                onLoad={handleEmbedLoad}
                 className="watch-video-player"
                 allowFullScreen
                 title="Video Player"

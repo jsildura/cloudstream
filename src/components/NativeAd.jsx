@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
+import { useAdFree } from '../contexts/AdFreeContext';
+import { AD_STATE_ADS } from '../utils/adGating';
 import './NativeAd.css';
 
 const NativeAd = () => {
+    const { adGateState } = useAdFree();
+    // Fail-closed: `pending` renders nothing and injects nothing, so a paying
+    // account never sees a flash of native ads before the listener resolves.
+    const adsAllowed = adGateState === AD_STATE_ADS;
     const adContainerRef = useRef(null);
-    const scriptLoaded = useRef(false);
 
     useEffect(() => {
-        // Only load the script once
-        if (scriptLoaded.current) return;
+        if (!adsAllowed) return;
 
         const container = adContainerRef.current;
         if (!container) return;
@@ -19,15 +23,16 @@ const NativeAd = () => {
         script.src = 'https://consumptionbackwardsentiments.com/2169057a99b05d1f0c42cb91d4e1e11e/invoke.js';
 
         container.appendChild(script);
-        scriptLoaded.current = true;
 
         return () => {
-            // Cleanup on unmount
-            if (container && script.parentNode === container) {
+            // Cleanup on unmount or when the gate leaves `ads`
+            if (script.parentNode === container) {
                 container.removeChild(script);
             }
         };
-    }, []);
+    }, [adsAllowed]);
+
+    if (!adsAllowed) return null;
 
     return (
         <section className="native-ad-section">

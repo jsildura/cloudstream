@@ -5,6 +5,7 @@ import { useTMDB } from '../hooks/useTMDB';
 import useWatchlist from '../hooks/useWatchlist';
 import { useProfiles } from '../contexts/ProfileContext';
 import { useToast } from '../contexts/ToastContext';
+import { maybeOpenSmartlinkAd } from '../utils/adGating';
 import { getKidsRating, filterKidsCandidates } from '../lib/tmdbClient';
 import SchemaMarkup from './SchemaMarkup';
 import ReviewSection from './ReviewSection';
@@ -181,28 +182,9 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     }
   }, [handleClose]);
 
-  // Adsterra configuration smartlink
-  const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
-  const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
-
   const playButtonClick = useCallback(() => {
-    // Check if this is user's first ever click (grace period)
-    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
-
-    if (!hasClickedBefore) {
-      // First click ever - mark it and skip ad
-      localStorage.setItem('hasClickedWatch', 'true');
-    } else {
-      // Not first click - check cooldown timer
-      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
-      const now = Date.now();
-
-      if (now - lastAdTime >= AD_COOLDOWN_MS) {
-        // Cooldown expired - open ad and reset timer
-        window.open(AD_URL, '_blank');
-        localStorage.setItem('lastAdTrigger', now.toString());
-      }
-    }
+    // No-op while the ad gate is pending or the account is ad-free.
+    maybeOpenSmartlinkAd();
 
     // Normal navigation to watch page (always happens)
     let url = `/watch?type=${item.type}&id=${item.id}`;

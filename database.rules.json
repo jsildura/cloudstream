@@ -3,9 +3,14 @@
     "accounts": {
       "$uid": {
         ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
-        ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+        ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid && ((!data.child('adFree').exists() && !newData.child('adFree').exists()) || (data.child('adFree').exists() && newData.child('adFree').exists() && newData.child('adFree').child('keyHash').val() === data.child('adFree').child('keyHash').val() && newData.child('adFree').child('activatedAt').val() === data.child('adFree').child('activatedAt').val() && newData.child('adFree').child('method').val() === data.child('adFree').child('method').val() && ((!data.child('adFree').child('orderId').exists() && !newData.child('adFree').child('orderId').exists()) || (data.child('adFree').child('orderId').exists() && newData.child('adFree').child('orderId').exists() && newData.child('adFree').child('orderId').val() === data.child('adFree').child('orderId').val()))))",
         "schemaVersion": {
           ".validate": "newData.val() === 1"
+        },
+        "adFree": {
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+          ".write": false,
+          ".validate": "!newData.exists() || (newData.hasChildren(['keyHash', 'activatedAt', 'method']) && newData.child('keyHash').isString() && newData.child('activatedAt').isNumber() && (newData.child('method').val() === 'key' || newData.child('method').val() === 'purchase'))"
         },
         "profiles": {
           "$profileId": {
@@ -469,6 +474,14 @@
     "ratings": {
       ".read": true,
       ".write": "auth != null"
+    },
+    "adFreeKeys": {
+      ".read": false,
+      ".write": false
+    },
+    "adFreeOrders": {
+      ".read": false,
+      ".write": false
     }
   }
 }

@@ -61,6 +61,12 @@
     color: #ef4444;
 }
 
+/* Warning - Amber */
+.toast-warning .toast-icon {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
 /* Playing - Green */
 .toast-playing .toast-icon {
     background: rgba(34, 197, 94, 0.2);

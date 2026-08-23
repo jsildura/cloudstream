@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>Payment complete — Streamflix</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0b0b;
+        color: #fff;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      }
+      main {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        text-align: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      h1 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      p {
+        font-size: 0.85rem;
+        color: #a1a1a1;
+        margin: 0;
+        max-width: 30ch;
+        line-height: 1.5;
+      }
+      .spinner {
+        width: 26px;
+        height: 26px;
+        border: 3px solid #2a2a2a;
+        border-top-color: #e50914;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      a {
+        color: #e50914;
+        font-size: 0.85rem;
+      }
+      #fallback {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="spinner"></div>
+      <h1>Finishing your purchase…</h1>
+      <p id="msg">You can close this window if it does not close on its own.</p>
+      <p id="fallback"><a href="/">Return to Streamflix</a></p>
+    </main>
+    <script>
+      // PayPal sends the buyer here after approval. This page exists only so the
+      // checkout has a return destination — without one PayPal re-renders its
+      // own page and the approval never finalises.
+      //
+      // The opener polls `popup.closed` and captures the payment server-side the
+      // moment this window goes away, so closing ourselves is what advances the
+      // flow. Capture is NOT done here: this page is unauthenticated and its URL
+      // is attacker-suppliable, so it must never be able to trigger a charge.
+      (function () {
+        var closed = false;
+        try {
+          window.close();
+          closed = true;
+        } catch (err) {
+          // Ignored: handled by the fallback below.
+        }
+
+        // A window the user navigated to directly (the popup-blocked fallback
+        // path, where checkout ran in the main tab) cannot close itself. Send
+        // those users back into the app rather than leaving them on a dead page.
+        setTimeout(function () {
+          if (!window.closed) {
+            if (window.opener) {
+              // Opened by script but close() was refused — leave it to the user
+              // so we do not navigate away from a window the opener is watching.
+              document.getElementById('msg').textContent =
+                'Close this window to finish activating your ad-free access.';
+              document.getElementById('fallback').style.display = 'block';
+            } else {
+              window.location.replace('/');
+            }
+          }
+        }, closed ? 600 : 0);
+      })();
+    </script>
+  </body>
+</html>

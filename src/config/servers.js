@@ -8,6 +8,11 @@
  * removing it. Entries stay in the array so the indices persisted in
  * localStorage (`server-<tmdbId>`) keep pointing at the same server.
  *
+ * Set `mayRequireHevc: true` on an entry whose embed serves an HEVC/H.265-only
+ * quality ladder for some titles. Browsers without an HEVC decoder get every
+ * video rendition filtered out by the embed's own player and play audio with a
+ * blank picture, so the Watch page warns before that happens.
+ *
  * URL PATTERNS:
  * - 'default'    : {baseUrl}{type}/{id}/{season}/{episode}{suffix}
  * - 'movie-only' : {baseUrl}{id}{suffix} (returns null for TV)
@@ -34,13 +39,16 @@ export const serverConfig = [
     },
     {
         name: 'Server 1',
-        description: 'StreamFlix Default',
+        description: 'Server 1',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en?autoplay=true',
         isRecommended: true,
         sandboxSupport: false,
         hasAds: false,
         pattern: 'default',
+        // Some titles resolve to an HEVC-only ladder here — audio plays, the
+        // picture stays blank on browsers that can't decode it.
+        mayRequireHevc: true,
     },
     {
         name: 'Server 2',

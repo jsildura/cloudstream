@@ -14,7 +14,8 @@ import {
   LogIn,
   User,
   Users,
-  DownloadCloud
+  DownloadCloud,
+  Sparkles
 } from 'lucide-react';
 import InstallAppButton from './InstallAppButton';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,6 +29,7 @@ import ProfileFormSettings from './settings/ProfileFormSettings';
 import KidsSettings from './settings/KidsSettings';
 import PinSettings from './settings/PinSettings';
 import DataMigrationSettings from './settings/DataMigrationSettings';
+import AdFreeSettings from './settings/AdFreeSettings';
 
 const SEARCH_DEBOUNCE_MS = 350;   // must match Search.jsx
 // Must match Search.jsx and the desktop @media blocks in the CSS, exactly.
@@ -36,9 +38,10 @@ const DESKTOP_SEARCH_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: 
 const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSignedIn, authEvent } = useAuth();
+  const { isSignedIn, authEvent, clearAuthEvent } = useAuth();
   const {
     profiles,
+    isProfileLoading,
     activeProfile,
     isKidsMode,
     isPinModalOpen,
@@ -54,6 +57,9 @@ const Navbar = () => {
   const [previousSettingsTab, setPreviousSettingsTab] = useState('account');
   const [editingProfile, setEditingProfile] = useState(null);
   const [chatState, setChatState] = useState({ isOpen: false, unreadCount: 0 });
+  // A sign-in just landed and we are still waiting for the profile list to
+  // settle before choosing which tab to show. See the auth-event effect below.
+  const [awaitingSignInLanding, setAwaitingSignInLanding] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -78,11 +84,75 @@ const Navbar = () => {
     mountTimeRef.current = Date.now();
   }, []);
 
+  /*
+   * ---------------------------------------------------------------------------
+   * SETTINGS PANEL AUTO-OPEN RULES — read this before adding another one.
+   *
+   * App.jsx does not render the Navbar on /watch, /iptv/watch or /sports/watch,
+   * so leaving the player (the "Back" control) MOUNTS A BRAND NEW NAVBAR and
+   * every effect in this component runs again from scratch.
+   *
+   * INVARIANT: the panel may only auto-open for a signal that arrives *while
+   * this Navbar instance is mounted*. A signal that is already set on our first
+   * render is left over from before the player, and acting on it is exactly what
+   * makes the panel appear to open on its own after pressing Back.
+   *
+   * Every trigger below therefore fires on a transition, never on standing
+   * state. Locked down by the "settings panel auto-open" tests in
+   * Navbar.test.jsx — if you add a trigger, add a case there too.
+   * ---------------------------------------------------------------------------
+   */
+
+  // Whatever auth event is already published on our first render was published
+  // while we were unmounted, so it has been served already: record it as handled.
+  const handledAuthEventRef = useRef(authEvent);
+  // isPinModalOpen / isMigrationRequired are standing provider state, so compare
+  // against the previous value and only react to a falsy -> truthy edge. Both
+  // start out false and are set asynchronously, so a genuine first-load request
+  // still produces an edge; only a value inherited from a previous mount does not.
+  const prevPinModalOpenRef = useRef(isPinModalOpen);
+  const prevMigrationRequiredRef = useRef(isMigrationRequired);
+
+  // Latest values for cleanups that must not re-run every time they change.
+  const pinRequestPendingRef = useRef(isPinModalOpen);
+  const cancelKidsExitRef = useRef(cancelKidsExit);
+  useEffect(() => {
+    pinRequestPendingRef.current = isPinModalOpen;
+    cancelKidsExitRef.current = cancelKidsExit;
+  }, [isPinModalOpen, cancelKidsExit]);
+
+  /**
+   * The Kids-exit PIN keypad only exists inside this panel, so a pending request
+   * must not outlive it. handleCloseSettings() cancels it, but two paths dismiss
+   * the panel without going through there — a route change, and the Navbar being
+   * unmounted on a watch route. Both cancel here, otherwise isPinModalOpen stays
+   * true in the provider and (a) re-opens the panel on the PIN view at the next
+   * mount, and (b) makes the next requestKidsExit() a no-op because the flag is
+   * already set, so the edge guard above would never see a transition.
+   */
+  const dismissPendingPinRequest = useCallback(() => {
+    if (!pinRequestPendingRef.current) return;
+    pinRequestPendingRef.current = false;
+    // Deliberately does NOT touch prevPinModalOpenRef: the cancel flips
+    // isPinModalOpen back to false in the provider, and the effect below records
+    // that on the resulting render. Clearing it here instead would forge a
+    // falsy -> truthy edge for the effect running later in this same commit,
+    // which is the very thing the guard exists to prevent.
+    cancelKidsExitRef.current?.();
+  }, []);
+
   // Close settings panel when navigating to a new route
   useEffect(() => {
     setIsSettingsOpen(false);
     setEditingProfile(null);
-  }, [location.pathname]);
+    setAwaitingSignInLanding(false);
+    dismissPendingPinRequest();
+  }, [location.pathname, dismissPendingPinRequest]);
+
+  // ...and when this Navbar goes away entirely (i.e. entering a watch route).
+  useEffect(() => {
+    return () => dismissPendingPinRequest();
+  }, [dismissPendingPinRequest]);
 
   // Handle scroll state
   useEffect(() => {
@@ -102,34 +172,67 @@ const Navbar = () => {
 
   // Open PIN view when provider requests Kids exit
   useEffect(() => {
-    if (isPinModalOpen) {
-      setIsSettingsOpen(true);
-      if (activeSettingsTab !== 'pin') {
-        setPreviousSettingsTab(activeSettingsTab);
-      }
-      setActiveSettingsTab('pin');
+    const requested = isPinModalOpen && !prevPinModalOpenRef.current;
+    prevPinModalOpenRef.current = isPinModalOpen;
+    if (!requested) return;
+
+    setIsSettingsOpen(true);
+    if (activeSettingsTab !== 'pin') {
+      setPreviousSettingsTab(activeSettingsTab);
     }
+    setActiveSettingsTab('pin');
   }, [isPinModalOpen, activeSettingsTab]);
 
-  // Interactive sign-in listener (open panel automatically on interactive sign-in)
+  // Interactive sign-in listener (open panel automatically on interactive sign-in).
+  //
+  // The event is CONSUMED here: clearing it is what stops it from re-opening the
+  // panel on every later mount. It also has to be consumed unconditionally,
+  // because re-running this effect while the event is still set (any `profiles`
+  // update did that) forced the panel back open over whatever the user was doing.
   useEffect(() => {
-    if (authEvent?.type === 'interactive-google-sign-in-complete') {
+    if (!authEvent) return;
+
+    const alreadyHandled = authEvent === handledAuthEventRef.current;
+    handledAuthEventRef.current = authEvent;
+
+    if (!alreadyHandled && authEvent.type === 'interactive-google-sign-in-complete') {
       setIsSettingsOpen(true);
-      if (profiles && profiles.length > 1) {
-        setActiveSettingsTab('profiles');
-      } else {
-        setActiveSettingsTab('account');
-      }
+      setActiveSettingsTab('account');
+      setAwaitingSignInLanding(true);
     }
-  }, [authEvent, profiles]);
+
+    clearAuthEvent?.();
+  }, [authEvent, clearAuthEvent]);
+
+  // Land a fresh sign-in on the profile picker when the account has more than one
+  // profile. This is deferred because profiles arrive from RTDB a moment after the
+  // sign-in event, so the list is not yet known when the event is consumed above.
+  // Resolves exactly once, as soon as the list has settled.
+  useEffect(() => {
+    if (!awaitingSignInLanding || isProfileLoading) return;
+    if (profiles && profiles.length > 1) {
+      setActiveSettingsTab('profiles');
+    }
+    setAwaitingSignInLanding(false);
+  }, [awaitingSignInLanding, isProfileLoading, profiles]);
 
   // Open migration tab if decision required
   useEffect(() => {
-    if (isMigrationRequired) {
-      setIsSettingsOpen(true);
-      setActiveSettingsTab('migration');
-    }
+    const requested = isMigrationRequired && !prevMigrationRequiredRef.current;
+    prevMigrationRequiredRef.current = isMigrationRequired;
+    if (!requested) return;
+
+    setIsSettingsOpen(true);
+    setActiveSettingsTab('migration');
   }, [isMigrationRequired]);
+
+  // Disable Ads is signed-in only: signing out while it is open would otherwise
+  // leave the tab selected with an empty content pane.
+  useEffect(() => {
+    if (!isSignedIn && activeSettingsTab === 'adfree') {
+      setActiveSettingsTab('account');
+    }
+  }, [isSignedIn, activeSettingsTab]);
 
   const handleCloseSettings = useCallback(() => {
     if (activeSettingsTab === 'pin') {
@@ -138,6 +241,7 @@ const Navbar = () => {
     resetKidsUnlock();
     setIsSettingsOpen(false);
     setEditingProfile(null);
+    setAwaitingSignInLanding(false);
     if (settingsBtnRef.current) {
       settingsBtnRef.current.focus();
     }
@@ -587,6 +691,20 @@ const Navbar = () => {
                         </div>
                       )}
 
+                      {/* Disable Ads tab (only enabled if signed in) */}
+                      {isSignedIn && (
+                        <div
+                          className={`navbar-settings-nav-item ${activeSettingsTab === 'adfree' ? 'active' : ''}`}
+                          onClick={() => {
+                            setEditingProfile(null);
+                            setActiveSettingsTab('adfree');
+                          }}
+                        >
+                          <Sparkles aria-hidden="true" />
+                          <span>Disable Ads</span>
+                        </div>
+                      )}
+
                     </nav>
                   </div>
                 </aside>
@@ -602,6 +720,11 @@ const Navbar = () => {
                         setActiveSettingsTab('pin');
                       }}
                     />
+                  )}
+
+                  {/* Disable Ads View */}
+                  {isSignedIn && activeSettingsTab === 'adfree' && (
+                    <AdFreeSettings onClose={handleCloseSettings} />
                   )}
 
                   {/* Profile Selector View */}

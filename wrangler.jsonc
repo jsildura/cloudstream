@@ -14,7 +14,8 @@
 	"vars": {
 		"FIREBASE_PROJECT_ID": "streamflix-chat",
 		"FIREBASE_DATABASE_URL": "https://streamflix-chat-default-rtdb.firebaseio.com",
-		"PAYPAL_CLIENT_ID": "AdLd1DLKnwu6gajlgLUlki4iSJcYgq3TwYhKG5IH__-VzNr9wa_w_vhkiLbeEnnqqTHd-iKW4r0EVzEx"
+		"PAYPAL_CLIENT_ID": "BAAtSXXI6ddkYAIITfOlcOBomPT87gyxfbdBDssr73mpKKR-B-5NxNrMA_jq8vv0tsLy6wP_QCUeA4MQA4",
+		"PAYPAL_ENV": "live"
 	},
 	"kv_namespaces": [
 		{

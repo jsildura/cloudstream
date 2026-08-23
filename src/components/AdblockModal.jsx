@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { isTVUserAgent } from '../utils/platform';
 import { runAdblockBaitTest } from '../lib/adblockDetection';
+import { useAdFree } from '../contexts/AdFreeContext';
+import { AD_STATE_ADS } from '../utils/adGating';
 import './AdblockModal.css';
 
 const SESSION_DISMISSED_KEY = 'streamflix_adblock_dismissed';
@@ -14,18 +16,17 @@ const isSessionDismissed = () => {
 };
 
 const AdblockModal = () => {
-    // NOTE: detection is ACTIVE — it runs on every page load in dev and
-    // production alike (no environment gating). TV/console browsers get a
-    // dismissible banner instead of the full-screen block. Desktop/mobile users
-    // get a primary refresh prompt with a secondary "continue anyway" escape hatch.
-
+    const { adGateState } = useAdFree();
+    // Fail-closed: detection only runs for a resolved ad-supported session, so a
+    // paying account is never asked to disable its ad blocker.
+    const adsAllowed = adGateState === AD_STATE_ADS;
     const [adblockDetected, setAdblockDetected] = useState(false);
     const [checkComplete, setCheckComplete] = useState(false);
     const [dismissed, setDismissed] = useState(isSessionDismissed);
     const isTV = isTVUserAgent();
 
     useEffect(() => {
-        if (dismissed) {
+        if (!adsAllowed || dismissed) {
             setCheckComplete(true);
             return;
         }
@@ -47,7 +48,7 @@ const AdblockModal = () => {
 
         const timer = setTimeout(detectAdblock, 500);
         return () => clearTimeout(timer);
-    }, [dismissed]);
+    }, [dismissed, adsAllowed]);
 
     const handleRefresh = () => {
         window.location.reload();
@@ -62,7 +63,7 @@ const AdblockModal = () => {
         setDismissed(true);
     };
 
-    if (dismissed || !checkComplete || !adblockDetected) return null;
+    if (!adsAllowed || dismissed || !checkComplete || !adblockDetected) return null;
 
     // TV browsers often have built-in ad blocking the user can't disable —
     // show a dismissable banner instead of blocking the entire app

@@ -4,6 +4,7 @@ import { useTMDB, pickLogoPath, pickTrailerKey, parseContentRating } from '../ho
 import useSwipe from '../hooks/useSwipe';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
+import { maybeOpenSmartlinkAd } from '../utils/adGating';
 import { getPosterAlt } from '../utils/altTextUtils';
 import useTVDetect from '../hooks/useTVDetect';
 import YouTubePlayer from './YouTubePlayer';
@@ -380,29 +381,10 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     }
   };
 
-  // Adsterra configuration smartlink
-  const AD_URL = 'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
-  const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
-
   // Handle Watch Now button click with ad popup
   const handleWatchNow = () => {
-    // Check if this is user's first ever click (grace period)
-    const hasClickedBefore = localStorage.getItem('hasClickedWatch') === 'true';
-
-    if (!hasClickedBefore) {
-      // First click ever - mark it and skip ad
-      localStorage.setItem('hasClickedWatch', 'true');
-    } else {
-      // Not first click - check cooldown timer
-      const lastAdTime = parseInt(localStorage.getItem('lastAdTrigger') || '0', 10);
-      const now = Date.now();
-
-      if (now - lastAdTime >= AD_COOLDOWN_MS) {
-        // Cooldown expired - open ad and reset timer
-        window.open(AD_URL, '_blank');
-        localStorage.setItem('lastAdTrigger', now.toString());
-      }
-    }
+    // Shared smartlink gate: no-op while pending or ad-free.
+    maybeOpenSmartlinkAd();
 
     // Normal navigation to watch page
     const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');

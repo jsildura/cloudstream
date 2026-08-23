@@ -18,7 +18,7 @@ export const ToastProvider = ({ children }) => {
         const toast = {
             id,
             message,
-            type: options.type || 'info', // info, success, error, playing
+            type: options.type || 'info', // info, success, error, warning, playing
             duration: options.duration || 4000,
             icon: options.icon || null,
         };
@@ -48,6 +48,13 @@ export const ToastProvider = ({ children }) => {
         return addToast(message, { ...options, type: 'error' });
     }, [addToast]);
 
+    // Caution rather than failure: the action worked, but the result may not be
+    // what the viewer expects. Runs longer than the 4s default because these
+    // messages explain a condition and suggest a fix, so there's more to read.
+    const showWarning = useCallback((message, options = {}) => {
+        return addToast(message, { duration: 9000, ...options, type: 'warning' });
+    }, [addToast]);
+
     const showNowPlaying = useCallback((title, options = {}) => {
         return addToast(`Now Playing: ${title}`, { ...options, type: 'playing', duration: 5000 });
     }, [addToast]);
@@ -63,6 +70,7 @@ export const ToastProvider = ({ children }) => {
             removeToast,
             showSuccess,
             showError,
+            showWarning,
             showNowPlaying,
             showServerChanged
         }}>

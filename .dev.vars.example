@@ -1,2 +1,31 @@
 # Local Cloudflare Pages secrets belong in .dev.vars, never source control.
 # GlobalChat v2 uses neither an admin password nor an RTDB database secret.
+#
+# Copy this file to .dev.vars and fill in real values. `wrangler pages dev`
+# reads .dev.vars automatically; `vite dev` does not serve functions/ at all,
+# so the ad-free API only responds under wrangler (npm run preview:pages).
+#
+# Non-secret values (FIREBASE_PROJECT_ID, FIREBASE_DATABASE_URL,
+# PAYPAL_CLIENT_ID) already live in wrangler.jsonc "vars" and are picked up
+# locally from there — do not duplicate them here.
+
+# --- Disable Ads / ad-free feature ---------------------------------------
+# HMAC-SHA256 pepper for hashing redemption keys. Any high-entropy hex string
+# of 32+ chars. Must match whatever the deployed environment uses, or keys
+# generated in one environment will not validate in the other.
+AD_KEY_HMAC_SECRET=
+
+# Google service-account JSON with RTDB admin rights, base64-encoded.
+# .dev.vars is dotenv-style and cannot hold raw multi-line JSON, so base64 it:
+#   node -e "console.log(require('fs').readFileSync('sa.json','base64'))"
+# functions/lib/firebaseAdminRest.js accepts raw JSON or base64.
+FIREBASE_SERVICE_ACCOUNT=
+
+# PayPal REST secret for the same app whose client ID is in wrangler.jsonc.
+# Sandbox and Live are separate credential pairs — never mix them.
+PAYPAL_CLIENT_SECRET=
+
+# Omit PAYPAL_ENV entirely for sandbox. Only the exact string `live` switches
+# to real payments, and it must be paired with VITE_PAYPAL_ENV=live at build
+# time or the server and browser will target different PayPal environments.
+# PAYPAL_ENV=live

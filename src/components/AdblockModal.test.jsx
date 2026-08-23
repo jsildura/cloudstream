@@ -1,9 +1,11 @@
 import React from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import AdblockModal from './AdblockModal';
 import { runAdblockBaitTest } from '../lib/adblockDetection';
 import { isTVUserAgent } from '../utils/platform';
+import { useAdFree } from '../contexts/AdFreeContext';
+import { AD_STATE_PENDING, AD_STATE_ADS, AD_STATE_ADFREE } from '../utils/adGating';
 
 vi.mock('../lib/adblockDetection', async (importOriginal) => {
     const actual = await importOriginal();
@@ -14,6 +16,12 @@ vi.mock('../utils/platform', async (importOriginal) => {
     const actual = await importOriginal();
     return { ...actual, isTVUserAgent: vi.fn(actual.isTVUserAgent) };
 });
+
+// The modal is an ad surface, so it reads the tri-state gate. Default the mock
+// to `ads`; the gating tests below override it.
+vi.mock('../contexts/AdFreeContext', () => ({
+    useAdFree: vi.fn(() => ({ adGateState: 'ads' }))
+}));
 
 // happy-dom reports offsetWidth/offsetHeight as 0 (no layout engine); simulate
 // real browser layout so a 1x1px block reads 1 unless actually hidden.
@@ -37,6 +45,15 @@ const runDetection = async () => {
         vi.advanceTimersByTime(RUN_DETECTION_MS);
     });
 };
+
+const mockGate = (adGateState) => {
+    vi.mocked(useAdFree).mockReturnValue({ adGateState });
+};
+
+beforeEach(() => {
+    vi.mocked(runAdblockBaitTest).mockClear();
+    mockGate(AD_STATE_ADS);
+});
 
 afterEach(() => {
     vi.useRealTimers();
@@ -165,6 +182,49 @@ describe('AdblockModal — desktop/mobile dismiss escape hatch', () => {
         } finally {
             restore();
             sessionStorage.clear();
+        }
+    });
+});
+
+describe('AdblockModal — ad gate', () => {
+    const blockAds = () => {
+        const style = document.createElement('style');
+        style.dataset.testStyle = '1';
+        style.textContent = '.ad-unit { display: none !important; }';
+        document.head.appendChild(style);
+    };
+
+    it('runs no detection and renders nothing while the gate is pending', async () => {
+        vi.useFakeTimers();
+        mockGate(AD_STATE_PENDING);
+        const restore = patchRealLayout();
+        try {
+            blockAds();
+            render(<AdblockModal />);
+
+            await runDetection();
+
+            expect(vi.mocked(runAdblockBaitTest)).not.toHaveBeenCalled();
+            expect(document.querySelector('.adblock-overlay')).not.toBeInTheDocument();
+        } finally {
+            restore();
+        }
+    });
+
+    it('runs no detection and renders nothing for an ad-free account', async () => {
+        vi.useFakeTimers();
+        mockGate(AD_STATE_ADFREE);
+        const restore = patchRealLayout();
+        try {
+            blockAds();
+            render(<AdblockModal />);
+
+            await runDetection();
+
+            expect(vi.mocked(runAdblockBaitTest)).not.toHaveBeenCalled();
+            expect(document.querySelector('.adblock-overlay')).not.toBeInTheDocument();
+        } finally {
+            restore();
         }
     });
 });

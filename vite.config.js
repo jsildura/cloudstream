@@ -206,7 +206,11 @@ export default defineConfig(({ mode }) => {
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           navigateFallback: '/index.html',
-          navigateFallbackDenylist: [/^\/api\//, /\.[^/]+$/],
+          // /paypal-return is a real static file, not an SPA route. Without it
+          // here the service worker answers the PayPal redirect with index.html,
+          // React routes the unknown path to NotFound, and the buyer sees a 404
+          // while the popup never closes and capture never fires.
+          navigateFallbackDenylist: [/^\/api\//, /^\/paypal-return/, /\.[^/]+$/],
           cleanupOutdatedCaches: true,
           clientsClaim: true,
           runtimeCaching: [
@@ -286,6 +290,34 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',  // Expose to all network interfaces for mobile testing
       // Note: COOP/COEP headers removed - they block cross-origin images from TMDB
       proxy: {
+        // Pages Functions routes. Vite cannot execute functions/, so forward
+        // them to a `wrangler pages dev` on :8788 (npm run preview:pages).
+        // Without this they fall through to the catch-all below and get sent to
+        // TMDB, which answers 404 status_code 34 and reads as a backend bug.
+        // ECONNREFUSED here just means wrangler is not running.
+        '^/api/(create-adfree-order|purchase-adfree|redeem-key|generate-adfree-keys)$': {
+          target: 'http://127.0.0.1:8788',
+          changeOrigin: false,
+          configure: (proxy, _options) => {
+            // Without this, a dead upstream surfaces as a bodyless 500 and the
+            // UI blames PayPal. Say plainly that wrangler is not running.
+            proxy.on('error', (err, _req, res) => {
+              const body = JSON.stringify({
+                ok: false,
+                reason: 'pages-functions-unavailable',
+                error: 'Pages Functions dev server unreachable',
+                message:
+                  'No wrangler on 127.0.0.1:8788 (' +
+                  (err.code || err.message) +
+                  '). Vite cannot run functions/ — start it with: npm run preview:pages'
+              });
+              if (!res.headersSent && res.writeHead) {
+                res.writeHead(503, { 'Content-Type': 'application/json' });
+              }
+              res.end(body);
+            });
+          }
+        },
         // Only proxy /api paths that are NOT handled by local middleware
         // /api/proxy and /api/visit are handled by corsProxyPlugin middleware
         '/api': {
@@ -301,10 +333,13 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => path.replace(/^\/api/, ''),
           configure: (proxy, _options) => {
             proxy.on('proxyReq', (proxyReq, _req, _res) => {
-              if (env.VITE_TMDB_READ_ACCESS_TOKEN) {
-                proxyReq.setHeader('Accept', 'application/json');
-                proxyReq.setHeader('Authorization', `Bearer ${env.VITE_TMDB_READ_ACCESS_TOKEN}`);
-              }
+              // Unconditional: never let a caller's own Authorization header
+              // (e.g. a Firebase ID token) travel onward to TMDB.
+              proxyReq.setHeader('Accept', 'application/json');
+              proxyReq.setHeader(
+                'Authorization',
+                env.VITE_TMDB_READ_ACCESS_TOKEN ? `Bearer ${env.VITE_TMDB_READ_ACCESS_TOKEN}` : ''
+              );
             });
           }
         }
