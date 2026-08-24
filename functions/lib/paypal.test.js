@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   paypalBaseUrl,
+  paypalCheckoutUrl,
   getPayPalAccessToken,
   createPayPalOrder,
   capturePayPalOrder,
@@ -58,7 +59,7 @@ describe('functions/lib/paypal', () => {
   });
 
   describe('createPayPalOrder', () => {
-    it('creates server order with USD 2.99 and streamflix-adfree-v1', async () => {
+    it('creates server order with USD 0.01 and streamflix-adfree-v1', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -74,14 +75,17 @@ describe('functions/lib/paypal', () => {
       );
 
       const result = await createPayPalOrder(mockEnv, 'user-uid-1');
-      expect(result).toEqual({ orderId: 'ORDER-12345' });
+      expect(result).toEqual({
+        orderId: 'ORDER-12345',
+        checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=ORDER-12345'
+      });
 
       expect(fetch).toHaveBeenNthCalledWith(
         2,
         'https://api-m.sandbox.paypal.com/v2/checkout/orders',
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('"value":"2.99"')
+          body: expect.stringContaining('"value":"0.01"')
         })
       );
     });
@@ -244,6 +248,36 @@ describe('functions/lib/paypal', () => {
     });
   });
 
+  describe('paypalCheckoutUrl', () => {
+    it('points at the live checkout host only when PAYPAL_ENV is exactly live', () => {
+      expect(paypalCheckoutUrl({ PAYPAL_ENV: 'live' }, 'ORDER-1')).toBe(
+        'https://www.paypal.com/checkoutnow?token=ORDER-1'
+      );
+      expect(paypalCheckoutUrl({ PAYPAL_ENV: 'sandbox' }, 'ORDER-1')).toBe(
+        'https://www.sandbox.paypal.com/checkoutnow?token=ORDER-1'
+      );
+      // Anything other than the exact string must not reach live money.
+      expect(paypalCheckoutUrl({ PAYPAL_ENV: 'LIVE' }, 'ORDER-1')).toContain('sandbox');
+      expect(paypalCheckoutUrl({}, 'ORDER-1')).toContain('sandbox');
+    });
+
+    it('agrees with paypalBaseUrl for the same env', () => {
+      // The bug this pairing prevents: an order created against the live API and
+      // approved on the sandbox host, which fails with no error and no charge.
+      for (const env of [{ PAYPAL_ENV: 'live' }, { PAYPAL_ENV: 'sandbox' }, {}]) {
+        const apiIsLive = paypalBaseUrl(env) === 'https://api-m.paypal.com';
+        const checkoutIsLive = paypalCheckoutUrl(env, 'X') === 'https://www.paypal.com/checkoutnow?token=X';
+        expect(checkoutIsLive).toBe(apiIsLive);
+      }
+    });
+
+    it('encodes the order id', () => {
+      expect(paypalCheckoutUrl({}, 'a b&c')).toBe(
+        'https://www.sandbox.paypal.com/checkoutnow?token=a%20b%26c'
+      );
+    });
+  });
+
   describe('extractCaptureId', () => {
     const withCaptures = (captures) => ({
       id: 'ORDER-12345',
@@ -279,7 +313,7 @@ describe('functions/lib/paypal', () => {
     it('returns null for an order with no capture rather than inventing one', () => {
       // An APPROVED-but-uncaptured order has no transaction id yet, and a
       // caller must be able to tell that apart from a real value.
-      expect(extractCaptureId({ purchase_units: [{ amount: { value: '2.99' } }] })).toBeNull();
+      expect(extractCaptureId({ purchase_units: [{ amount: { value: '0.01' } }] })).toBeNull();
       expect(extractCaptureId(withCaptures([]))).toBeNull();
       expect(extractCaptureId(withCaptures([{ status: 'COMPLETED' }]))).toBeNull();
     });
@@ -303,7 +337,7 @@ describe('functions/lib/paypal', () => {
           custom_id: 'streamflix-adfree-v1',
           amount: {
             currency_code: 'USD',
-            value: '2.99'
+            value: '0.01'
           }
         }
       ]

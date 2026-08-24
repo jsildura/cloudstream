@@ -74,7 +74,7 @@ describe('AdFreeSettings Component', () => {
 
     render(<AdFreeSettings onClose={() => {}} />);
 
-    expect(screen.getByText('$2.99')).toBeInTheDocument();
+    expect(screen.getByText('$0.01')).toBeInTheDocument();
     expect(screen.getByText('USD')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Purchase Ad-Free/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('SFXAD-XXXXX-XXXXX-XXXXX')).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe('AdFreeSettings Component', () => {
     render(<AdFreeSettings onClose={() => {}} />);
 
     expect(screen.getByText('Lifetime Ad-Free Active')).toBeInTheDocument();
-    expect(screen.getByText('PayPal Purchase ($2.99)')).toBeInTheDocument();
+    expect(screen.getByText('PayPal Purchase ($0.01)')).toBeInTheDocument();
     expect(screen.getByText('ORDER-12345678')).toBeInTheDocument();
 
     // The caveat stays after purchase, so an entitled user still knows why an ad
@@ -175,7 +175,11 @@ describe('AdFreeSettings Component', () => {
 
     it('opens sandbox checkout and captures with an order-derived requestId', async () => {
       signedIn();
-      mockCreatePayPalOrder.mockResolvedValue({ ok: true, orderId: '5O190127TN364715T' });
+      mockCreatePayPalOrder.mockResolvedValue({
+        ok: true,
+        orderId: '5O190127TN364715T',
+        checkoutUrl: 'https://www.sandbox.paypal.com/checkoutnow?token=5O190127TN364715T'
+      });
       mockCompletePayPalPurchase.mockResolvedValue({ ok: true });
 
       // Closed straight away so the popup poll fires on its first tick.
@@ -202,6 +206,71 @@ describe('AdFreeSettings Component', () => {
       );
       expect(mockShowSuccess).toHaveBeenCalledWith(
         'Payment verified! Lifetime Ad-Free is now active.'
+      );
+    });
+
+    it('follows the server to the live host even though the build says sandbox', async () => {
+      signedIn();
+      // The exact live-mode failure: PAYPAL_ENV=live on the server mints a live
+      // order id, while VITE_PAYPAL_ENV is baked sandbox into the bundle. Built
+      // client-side that URL goes to sandbox/checkoutnow, where the token does
+      // not exist — PayPal answers "Things don't appear to be working at the
+      // moment" and nothing is charged.
+      mockCreatePayPalOrder.mockResolvedValue({
+        ok: true,
+        orderId: '26J86727T2545091L',
+        checkoutUrl: 'https://www.paypal.com/checkoutnow?token=26J86727T2545091L'
+      });
+      mockCompletePayPalPurchase.mockResolvedValue({ ok: true });
+
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue({ closed: true });
+
+      render(<AdFreeSettings onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: /Purchase Ad-Free/i }));
+
+      await waitFor(() => expect(openSpy).toHaveBeenCalled());
+      expect(openSpy.mock.calls[0][0]).toBe(
+        'https://www.paypal.com/checkoutnow?token=26J86727T2545091L'
+      );
+      expect(openSpy.mock.calls[0][0]).not.toContain('sandbox');
+    });
+
+    it('ignores a checkoutUrl that is not a PayPal checkout host', async () => {
+      signedIn();
+      // This value is handed straight to window.open, so a tampered response
+      // must not be able to land a buyer on a lookalike payment page.
+      mockCreatePayPalOrder.mockResolvedValue({
+        ok: true,
+        orderId: '5O190127TN364715T',
+        checkoutUrl: 'https://paypal.evil.example/checkoutnow?token=5O190127TN364715T'
+      });
+      mockCompletePayPalPurchase.mockResolvedValue({ ok: true });
+
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue({ closed: true });
+
+      render(<AdFreeSettings onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: /Purchase Ad-Free/i }));
+
+      await waitFor(() => expect(openSpy).toHaveBeenCalled());
+      expect(openSpy.mock.calls[0][0]).toBe(
+        'https://www.sandbox.paypal.com/checkoutnow?token=5O190127TN364715T'
+      );
+    });
+
+    it('falls back to the built-in host when the server sends no checkoutUrl', async () => {
+      signedIn();
+      // Covers a browser holding a newer bundle than the deployed Function.
+      mockCreatePayPalOrder.mockResolvedValue({ ok: true, orderId: '5O190127TN364715T' });
+      mockCompletePayPalPurchase.mockResolvedValue({ ok: true });
+
+      const openSpy = vi.spyOn(window, 'open').mockReturnValue({ closed: true });
+
+      render(<AdFreeSettings onClose={() => {}} />);
+      fireEvent.click(screen.getByRole('button', { name: /Purchase Ad-Free/i }));
+
+      await waitFor(() => expect(openSpy).toHaveBeenCalled());
+      expect(openSpy.mock.calls[0][0]).toBe(
+        'https://www.sandbox.paypal.com/checkoutnow?token=5O190127TN364715T'
       );
     });
 

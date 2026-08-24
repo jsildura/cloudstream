@@ -14,7 +14,7 @@ Create:
 Modify if needed:
 
 - `functions/lib/paypal.js` from Task 02.
-- `.env.example` for `VITE_PAYPAL_CLIENT_ID` and `PAYPAL_ENV` documentation.
+- `.dev.vars.example` for `PAYPAL_CLIENT_SECRET` and `PAYPAL_ENV` documentation.
 
 ## Required Environment
 
@@ -28,7 +28,9 @@ Server-only Cloudflare secrets:
 
 Public build variable:
 
-- `VITE_PAYPAL_CLIENT_ID`
+- None. The PayPal client ID is server-only (`env.PAYPAL_CLIENT_ID`); there is no
+  `VITE_PAYPAL_CLIENT_ID`, because the browser never talks to PayPal directly — it only
+  opens the `checkoutUrl` the Function returns.
 
 Never put the client secret in a Vite variable.
 
@@ -56,7 +58,11 @@ Steps:
 }
 ```
 
-5. Return only `{ "ok": true, "orderId": "..." }`.
+5. Return only `{ "ok": true, "orderId": "...", "checkoutUrl": "..." }`. `checkoutUrl`
+   is derived from the same `PAYPAL_ENV` that selected the API base URL, so the buyer
+   is always sent to the host that minted the order. The browser must treat it as the
+   authoritative checkout target and only verify it is a real PayPal host before
+   opening it — never rebuild it from a build-time variable.
 
 ## `POST /api/purchase-adfree`
 

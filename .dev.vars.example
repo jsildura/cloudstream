@@ -25,7 +25,15 @@ FIREBASE_SERVICE_ACCOUNT=
 # Sandbox and Live are separate credential pairs — never mix them.
 PAYPAL_CLIENT_SECRET=
 
-# Omit PAYPAL_ENV entirely for sandbox. Only the exact string `live` switches
-# to real payments, and it must be paired with VITE_PAYPAL_ENV=live at build
-# time or the server and browser will target different PayPal environments.
-# PAYPAL_ENV=live
+# Omit PAYPAL_ENV entirely for sandbox. Only the exact string `live` switches to
+# real payments — `production` and any other value fall back to sandbox.
+#
+# This one variable drives both the PayPal API base URL and the checkout host the
+# buyer is sent to: /api/create-adfree-order returns `checkoutUrl` with the order
+# id, so the browser never picks an environment of its own. There is no
+# VITE_PAYPAL_ENV to keep in sync — leave it unset.
+#
+# NOTE: wrangler.jsonc currently pins "PAYPAL_ENV": "live", so `wrangler pages dev`
+# transacts against LIVE PayPal with real money. Set PAYPAL_ENV=sandbox here to
+# override it for local work (.dev.vars wins over wrangler.jsonc "vars").
+# PAYPAL_ENV=sandbox

@@ -100,7 +100,10 @@ describe('functions/api/create-adfree-order', () => {
     });
 
     vi.spyOn(firebaseAdminRest, 'firebaseRestGet').mockResolvedValue({ value: null });
-    vi.spyOn(paypal, 'createPayPalOrder').mockResolvedValue({ orderId: 'ORDER-999888' });
+    vi.spyOn(paypal, 'createPayPalOrder').mockResolvedValue({
+      orderId: 'ORDER-999888',
+      checkoutUrl: 'https://www.paypal.com/checkoutnow?token=ORDER-999888'
+    });
 
     const req = new Request('http://localhost/api/create-adfree-order', {
       method: 'POST',
@@ -113,6 +116,10 @@ describe('functions/api/create-adfree-order', () => {
     const data = await res.json();
     expect(data.ok).toBe(true);
     expect(data.orderId).toBe('ORDER-999888');
+    // Passed through so the browser approves the order on the host that minted
+    // it. Rebuilding this client-side lets a stale build-time VITE_PAYPAL_ENV
+    // send a live order id to sandbox, which fails silently and charges nothing.
+    expect(data.checkoutUrl).toBe('https://www.paypal.com/checkoutnow?token=ORDER-999888');
     // The request must be forwarded so the return_url is derived from the host
     // Cloudflare routed rather than from a caller-supplied Origin header.
     expect(paypal.createPayPalOrder).toHaveBeenCalledWith(mockEnv, 'google-user-1', req);

@@ -112,16 +112,29 @@ Implement:
 
 ```js
 export function paypalBaseUrl(env): string;
+export function paypalCheckoutUrl(env, orderId): string;
+export function resolveAppOrigin(env, request): string | null;
 export async function getPayPalAccessToken(env): Promise<string>;
-export async function createPayPalOrder(env, uid): Promise<{ orderId: string }>;
+export async function createPayPalOrder(env, uid, request): Promise<{ orderId: string, checkoutUrl: string }>;
 export async function capturePayPalOrder(env, orderId): Promise<object>;
 export async function fetchPayPalOrder(env, orderId): Promise<object>;
+export function extractCaptureId(order): string | null;
 export function validateAdFreePayPalOrder(order): void;
 ```
 
 Requirements:
 
-- Select sandbox or live using `PAYPAL_ENV`.
+- Select sandbox or live using `PAYPAL_ENV`, for **both** the API base URL and the
+  buyer-facing checkout host. `createPayPalOrder` returns `checkoutUrl` so the browser
+  never infers the environment itself — a client-side guess can disagree with the
+  server and send an order id to a host where it does not exist.
+- Derive `return_url` from `resolveAppOrigin`, which uses the routed host rather than a
+  caller-supplied `Origin` header.
+- Send `shipping_preference: NO_SHIPPING` and `user_action: PAY_NOW`; the entitlement
+  is digital and the default (`GET_FROM_FILE`) traps the buyer on order review.
+- Expose the capture id via `extractCaptureId` — it is separate from the order id and
+  is the only one of the two the buyer ever sees.
+
 - Keep amount, currency, and product identifier server-owned.
 - Cache PayPal OAuth tokens until shortly before expiration.
 - Treat non-2xx PayPal responses as errors.

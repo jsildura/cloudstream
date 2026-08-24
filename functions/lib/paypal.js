@@ -2,6 +2,26 @@
  * PayPal API client and validation helpers for Cloudflare Pages Functions
  */
 
+/**
+ * The one place the ad-free price is defined.
+ *
+ * ⚠️ TEMPORARILY LOWERED TO $0.01 FOR LIVE CHECKOUT TESTING. The product price is
+ * $2.99 — restore this to '2.99' (and ADFREE_PRICE_LABEL in
+ * src/components/settings/AdFreeSettings.jsx) before real customers can reach it.
+ *
+ * Not '0.00': PayPal rejects a zero-amount CAPTURE order with HTTP 422
+ * UNPROCESSABLE_ENTITY / CANNOT_BE_ZERO_OR_NEGATIVE ("Must be greater than zero"),
+ * so no order id is minted and there is nothing to approve. $0.01 is the smallest
+ * value the two-decimal precision limit allows, and it exercises the identical
+ * code path with a real charge.
+ *
+ * Both the order we create and the order we later validate read this constant, so
+ * the amount we ask PayPal for cannot drift from the amount we accept — a drift
+ * would reject every genuine payment as `payment-mismatch` after taking the money.
+ */
+export const ADFREE_PRICE = '0.01';
+export const ADFREE_CURRENCY = 'USD';
+
 let cachedPayPalToken = null;
 let payPalTokenExpiresAt = 0;
 
@@ -13,6 +33,23 @@ export function _resetPayPalTokenCacheForTesting() {
 export function paypalBaseUrl(env = {}) {
   const isLive = env?.PAYPAL_ENV === 'live';
   return isLive ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+}
+
+/**
+ * Where the buyer goes to approve an order.
+ *
+ * Derived from the same `env` as `paypalBaseUrl` on purpose. An order minted in
+ * one PayPal environment does not exist in the other, so sending a live order id
+ * to sandbox's `checkoutnow` (or the reverse) renders PayPal's generic "Things
+ * don't appear to be working at the moment" page — no error code, nothing in any
+ * log, and no charge. Returning this to the browser keeps the host and the order
+ * that has to match it derived from one variable, instead of a server variable
+ * and a build-time variable that can silently disagree after a redeploy.
+ */
+export function paypalCheckoutUrl(env = {}, orderId = '') {
+  const isLive = env?.PAYPAL_ENV === 'live';
+  const host = isLive ? 'https://www.paypal.com' : 'https://www.sandbox.paypal.com';
+  return `${host}/checkoutnow?token=${encodeURIComponent(orderId)}`;
 }
 
 export async function getPayPalAccessToken(env = {}) {
@@ -117,8 +154,8 @@ export async function createPayPalOrder(env = {}, uid = '', request = null) {
         custom_id: 'streamflix-adfree-v1',
         reference_id: uid ? `user_${uid}` : undefined,
         amount: {
-          currency_code: 'USD',
-          value: '2.99'
+          currency_code: ADFREE_CURRENCY,
+          value: ADFREE_PRICE
         }
       }
     ]
@@ -143,7 +180,9 @@ export async function createPayPalOrder(env = {}, uid = '', request = null) {
     throw new Error('PayPal response missing order id');
   }
 
-  return { orderId: data.id };
+  // The checkout URL travels with the order id so the browser never has to
+  // infer which PayPal environment this order belongs to.
+  return { orderId: data.id, checkoutUrl: paypalCheckoutUrl(env, data.id) };
 }
 
 export async function capturePayPalOrder(env = {}, orderId) {
@@ -235,9 +274,10 @@ export function validateAdFreePayPalOrder(order) {
 
   const unit = order.purchase_units[0];
   const amount = unit.amount;
-  if (!amount || amount.currency_code !== 'USD' || amount.value !== '2.99') {
+  if (!amount || amount.currency_code !== ADFREE_CURRENCY || amount.value !== ADFREE_PRICE) {
     throw new Error(
-      `Order amount mismatch. Expected 2.99 USD, got ${amount?.value} ${amount?.currency_code}`
+      `Order amount mismatch. Expected ${ADFREE_PRICE} ${ADFREE_CURRENCY}, ` +
+        `got ${amount?.value} ${amount?.currency_code}`
     );
   }
 

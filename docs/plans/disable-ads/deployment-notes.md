@@ -1,5 +1,37 @@
 # Streamflix Disable Ads & Ad-Free System Deployment Notes
 
+> ## ⚠️ CURRENT STATE: PRICE TEMPORARILY LOWERED TO $0.01
+>
+> The code charges **$0.01 USD**, not the $2.99 described everywhere else in these
+> docs. This was done to test the live PayPal checkout flow with a real charge that
+> costs almost nothing.
+>
+> **Restore before real customers can reach it — two literals:**
+>
+> | File | Constant | Test value | Restore to |
+> |---|---|---|---|
+> | [functions/lib/paypal.js](../../../functions/lib/paypal.js) | `ADFREE_PRICE` | `'0.01'` | `'2.99'` |
+> | [AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx) | `ADFREE_PRICE_LABEL` | `'$0.01'` | `'$2.99'` |
+>
+> Then update the four amount literals in
+> [functions/lib/paypal.test.js](../../../functions/lib/paypal.test.js),
+> [functions/api/purchase-adfree.test.js](../../../functions/api/purchase-adfree.test.js),
+> and [AdFreeSettings.test.jsx](../../../src/components/settings/AdFreeSettings.test.jsx).
+> Those tests are *meant* to fail on a price change — they pin the amount actually put
+> on the wire, which a constant-referencing assertion could not.
+>
+> **Why not $0.00:** PayPal rejects a zero-amount `CAPTURE` order with HTTP 422
+> `UNPROCESSABLE_ENTITY` / `CANNOT_BE_ZERO_OR_NEGATIVE` ("Must be greater than zero").
+> No order id is minted, so there is nothing to approve and nothing to test. With
+> two-decimal precision, `0.01` is the smallest valid amount.
+>
+> **Both halves must agree.** `createPayPalOrder` and `validateAdFreePayPalOrder` read
+> the same `ADFREE_PRICE`, so they cannot disagree — but if they ever did, every genuine
+> payment would be taken and then rejected as `payment-mismatch`. Do not split them.
+>
+> **Anyone who buys at $0.01 keeps lifetime ad-free.** The entitlement is permanent and
+> there is no downgrade path; revoking means deleting `accounts/<uid>/adFree` by hand.
+
 ## 1. Overview
 The Streamflix Disable Ads system provides verified, permanent ad suppression backed by:
 - **Client Gate (`src/utils/adGating.js`, `src/contexts/AdFreeContext.jsx`)**: Fail-closed entitlement evaluator and real-time Firebase RTDB listener.
@@ -26,24 +58,37 @@ Configure the following secrets in **Cloudflare Dashboard -> Pages -> Settings -
 
 ### ⚠️ `PAYPAL_ENV` must be exactly `live`
 
-Both sides test for the same literal string, and neither accepts `production`:
+`PAYPAL_ENV` is the **single** switch for both halves of the flow, and it does not
+accept `production`:
 
-- [functions/lib/paypal.js](../../../functions/lib/paypal.js) — `env?.PAYPAL_ENV === 'live'` picks
-  `https://api-m.paypal.com`, else `https://api-m.sandbox.paypal.com`.
-- [src/components/settings/AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx) —
-  `import.meta.env?.VITE_PAYPAL_ENV === 'live'` picks `https://www.paypal.com`,
-  else `https://www.sandbox.paypal.com`.
+- [functions/lib/paypal.js](../../../functions/lib/paypal.js) — `paypalBaseUrl()` uses
+  `env?.PAYPAL_ENV === 'live'` to pick `https://api-m.paypal.com`, else
+  `https://api-m.sandbox.paypal.com`.
+- [functions/lib/paypal.js](../../../functions/lib/paypal.js) — `paypalCheckoutUrl()`
+  uses the same test to pick `https://www.paypal.com`, else
+  `https://www.sandbox.paypal.com`, and `createPayPalOrder()` returns that URL as
+  `checkoutUrl` alongside the order id.
 
 So `PAYPAL_ENV=production` fails **silently into sandbox**: no error, no warning, and
-no real orders. Going live requires both of:
+no real orders. Going live is one variable plus a redeploy:
 
-- `PAYPAL_ENV=live` on the Pages Function environment, and
-- `VITE_PAYPAL_ENV=live` at build time (a Vite variable, so it is baked into the
-  bundle — changing it requires a rebuild, not just a redeploy).
+- `PAYPAL_ENV=live` on the Pages Function environment.
 
-If the two disagree, the server creates orders in one environment while the browser
-opens checkout in the other and every purchase fails. Leaving both unset is the safe
-default: sandbox on both sides.
+The browser does **not** decide the checkout host. `/api/create-adfree-order` returns
+`checkoutUrl`, and [AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx)
+opens that after checking it against the two real PayPal hosts. The host and the order
+id that must match it therefore come from one variable and cannot drift apart.
+
+`VITE_PAYPAL_ENV` is **no longer required** and should be left unset. It survives only
+as a fallback for a browser holding a bundle newer than the deployed Function, and is
+never consulted when the server supplies `checkoutUrl`.
+
+> **Historical note.** Before `checkoutUrl` existed the browser rebuilt the URL from
+> `VITE_PAYPAL_ENV`, a build-time Vite variable. Setting `PAYPAL_ENV=live` without
+> also rebuilding with `VITE_PAYPAL_ENV=live` sent a **live** order id to
+> **sandbox**'s `checkoutnow`, where the token does not exist — PayPal answered
+> "Things don't appear to be working at the moment" with no error code, nothing in
+> any log, and no charge. That failure mode is gone.
 
 ### Local development
 

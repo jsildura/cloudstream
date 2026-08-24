@@ -1,6 +1,8 @@
 import { jsonResponse, handleOptions } from '../lib/cors.js';
 import { verifyFirebaseIdToken } from '../lib/firebaseAuth.js';
 import {
+  ADFREE_CURRENCY,
+  ADFREE_PRICE,
   capturePayPalOrder,
   extractCaptureId,
   fetchPayPalOrder,
@@ -19,8 +21,11 @@ const MAX_BODY_BYTES = 2048;
 // preventing a crashed request from locking an order forever.
 const RESERVATION_STALE_MS = 10 * 60 * 1000;
 
-const AMOUNT = 2.99;
-const CURRENCY = 'USD';
+// What gets recorded on the order. Derived from the price PayPal was actually asked
+// for, so the audit trail cannot claim an amount we never charged. Numeric here
+// because `adFreeOrders.amount` is a number; PayPal wants the two-decimal string.
+const AMOUNT = Number(ADFREE_PRICE);
+const CURRENCY = ADFREE_CURRENCY;
 
 /** Extracts the HTTP status a PayPal helper embedded in its error message. */
 function payPalHttpStatus(err) {

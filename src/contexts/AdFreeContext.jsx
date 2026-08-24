@@ -161,7 +161,7 @@ export const AdFreeProvider = ({ children }) => {
         };
       }
 
-      return { ok: true, orderId: data.orderId };
+      return { ok: true, orderId: data.orderId, checkoutUrl: data.checkoutUrl };
     } catch (err) {
       return {
         ok: false,

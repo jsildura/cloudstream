@@ -82,14 +82,27 @@ If `isGlobalChatAdmin === true`, render in both State A and State B:
 
 ## PayPal Browser Integration
 
-1. Read public `import.meta.env.VITE_PAYPAL_CLIENT_ID`.
-2. When the settings panel opens or the component mounts, inject the PayPal SDK once if the client ID exists.
-3. Include `currency=USD`.
-4. Clean up only the script element owned by this component, or use a shared promise so repeated tab opens do not load duplicates.
-5. `createOrder` must call `/api/create-adfree-order` through the context/API method and return the server `orderId`.
-6. `onApprove` must call `purchaseAdFree(orderId)`.
+> **Amended in implementation.** The PayPal JS SDK is **not** used. Loading it would
+> have required a public `VITE_PAYPAL_CLIENT_ID` and put order creation partly in the
+> browser. Instead the server creates the order and the browser just opens PayPal's
+> hosted checkout in a popup, so no PayPal credential or SDK reaches the client at all.
+
+1. Call `/api/create-adfree-order` through the context method. It returns
+   `{ ok, orderId, checkoutUrl }`.
+2. Open `checkoutUrl` with `window.open`, after verifying it is one of the two real
+   PayPal checkout hosts. Do **not** rebuild this URL client-side: only the server knows
+   which PayPal environment minted the order, and a mismatch sends a valid order id to a
+   host where it does not exist, which PayPal reports only as "Things don't appear to be
+   working at the moment."
+3. If the popup is blocked, fall back to `window.location.href = checkoutUrl`.
+4. Derive the request id as `adfree-<orderId>` so a retry — even in a new tab — resumes
+   the server's existing reservation instead of colliding with it.
+5. Poll `popup.closed`, then call `purchaseAdFree(orderId, requestId)`. PayPal's
+   `return_url` closes the popup itself after approval.
+6. Surface a capture failure explicitly. A buyer who approved payment and then hit a
+   capture error must be told, or they close the pane assuming success while a paid
+   order sits unactivated.
 7. Show success only after the RTDB listener reports `isAdFree`.
-8. Display a useful non-secret error if the SDK cannot load.
 
 ## Navbar Changes
 

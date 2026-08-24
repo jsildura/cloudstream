@@ -72,8 +72,10 @@ export async function onRequest(context) {
   // `request` is passed so the return_url is derived from the host Cloudflare
   // actually routed, never from a caller-supplied Origin header.
   try {
-    const { orderId } = await createPayPalOrder(env, auth.uid, request);
-    return jsonResponse({ ok: true, orderId }, 200, request, env);
+    const { orderId, checkoutUrl } = await createPayPalOrder(env, auth.uid, request);
+    // checkoutUrl is returned rather than rebuilt in the browser: only the
+    // server knows which PayPal environment minted this order id.
+    return jsonResponse({ ok: true, orderId, checkoutUrl }, 200, request, env);
   } catch (err) {
     return jsonResponse(
       { ok: false, error: 'Failed to create PayPal order', message: err.message },

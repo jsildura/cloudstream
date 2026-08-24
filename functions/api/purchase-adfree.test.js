@@ -6,6 +6,12 @@ import * as paypal from '../lib/paypal.js';
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
+// An amount that is deliberately never the configured price, so the mismatch
+// fixtures below stay mismatches whatever the price is set to. A literal that
+// happens to equal the current price would silently turn a rejection test into a
+// success test — which is exactly what a $2.99 → $0.01 change did once.
+const WRONG_AMOUNT = '13.37';
+
 describe('functions/api/purchase-adfree', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -32,7 +38,7 @@ describe('functions/api/purchase-adfree', () => {
       {
         description: 'Streamflix Ad-Free',
         custom_id: 'streamflix-adfree-v1',
-        amount: { currency_code: 'USD', value: '2.99' },
+        amount: { currency_code: 'USD', value: '0.01' },
         payments: { captures: [{ id: captureId, status: 'COMPLETED' }] }
       }
     ],
@@ -175,7 +181,7 @@ describe('functions/api/purchase-adfree', () => {
     // 2. Payment marked as taken before the entitlement is granted.
     expect(putCalls[1].path).toBe(`adFreeOrders/${validOrderId}`);
     expect(putCalls[1].value.status).toBe('captured');
-    expect(putCalls[1].value.amount).toBe(2.99);
+    expect(putCalls[1].value.amount).toBe(0.01);
     expect(putCalls[1].value.currency).toBe('USD');
     // Recorded before the grant so a half-finished activation is still
     // traceable to the PayPal transaction the buyer can see.
@@ -249,7 +255,7 @@ describe('functions/api/purchase-adfree', () => {
             {
               description: 'Streamflix Ad-Free',
               custom_id: 'streamflix-adfree-v1',
-              amount: { currency_code: 'USD', value: '0.01' },
+              amount: { currency_code: 'USD', value: WRONG_AMOUNT },
               payments: { captures: [{ id: captureId, status: 'COMPLETED' }] }
             }
           ]
@@ -271,7 +277,7 @@ describe('functions/api/purchase-adfree', () => {
             {
               description: 'Streamflix Ad-Free',
               custom_id: 'streamflix-adfree-v1',
-              amount: { currency_code: 'USD', value: '2.99' },
+              amount: { currency_code: 'USD', value: '0.01' },
               payments: {
                 captures: [
                   { id: 'DECLINED-CAPTURE-1', status: 'DECLINED' },
@@ -300,7 +306,7 @@ describe('functions/api/purchase-adfree', () => {
             {
               description: 'Streamflix Ad-Free',
               custom_id: 'streamflix-adfree-v1',
-              amount: { currency_code: 'USD', value: '2.99' }
+              amount: { currency_code: 'USD', value: '0.01' }
             }
           ]
         })
@@ -625,7 +631,7 @@ describe('functions/api/purchase-adfree', () => {
           {
             description: 'Streamflix Ad-Free',
             custom_id: 'streamflix-adfree-v1',
-            amount: { currency_code: 'USD', value: '0.01' }
+            amount: { currency_code: 'USD', value: WRONG_AMOUNT }
           }
         ]
       })

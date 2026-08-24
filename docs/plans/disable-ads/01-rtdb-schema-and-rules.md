@@ -46,12 +46,34 @@ The backend writes:
   "adFreeOrders": {
     "<orderId>": {
       "uid": "<uid>",
+      "status": "reserved | captured | completed | rejected",
+      "requestId": "<client-supplied or generated, scopes a retry>",
       "keyHash": "<hash>",
-      "completedAt": 1720000000000
+      "reservedAt": 1720000000000,
+      "capturedAt": 1720000000000,
+      "completedAt": 1720000000000,
+      "amount": 2.99,
+      "currency": "USD",
+      "captureId": "<PayPal capture id, omitted if unknown>",
+      "reason": "<payment-mismatch | already-ad-free, only when rejected>"
     }
   }
 }
 ```
+
+`status` is a state machine: `reserved` → `captured` → `completed`, with `rejected` for
+an order PayPal took money for that must never be replayed. The `reserved` record is
+created with an ETag conditional write, which is what makes reservation create-only —
+a concurrent request invalidates the ETag and RTDB answers `412`.
+
+`captureId` is the PayPal **capture** (transaction) id, which is not the order id. Only
+the capture id appears in the buyer's PayPal history and on refunds, so it is what lets
+support go from an id a buyer quotes back to the order and account. It is *omitted*
+rather than written as `null` when unknown, because writing `null` to an RTDB child
+deletes it and would read as "checked, there is none" instead of "not recorded". It is
+stored here rather than on `accounts/<uid>/adFree` because this node is server-only —
+the account node's `.write` rule enumerates exactly four fields for immutability, and a
+fifth would fall outside that comparison and become owner-writable.
 
 The client may read only its own `accounts/<uid>/adFree`. The client may not read or write `adFreeKeys` or `adFreeOrders`.
 

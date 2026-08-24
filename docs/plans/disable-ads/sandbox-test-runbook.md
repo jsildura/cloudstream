@@ -76,10 +76,12 @@ default, since the local one was freshly generated — keys generated in one
 environment will not validate in the other. That is harmless for purchase testing and
 only matters if you generate keys locally and try to redeem them on the deployed site.
 
-`PAYPAL_ENV` stays unset. That is what selects sandbox on the server.
-`VITE_PAYPAL_ENV` also stays unset, which selects sandbox in the browser. Both must
-be unset (or both `live`) or the server and browser target different PayPal
-environments and every order fails.
+`PAYPAL_ENV` stays unset (or `sandbox`). That single variable selects sandbox for both
+the PayPal API and the checkout host the buyer is sent to, so there is nothing to keep
+in sync. `VITE_PAYPAL_ENV` is unused — leave it unset.
+
+> Note: `wrangler.jsonc` currently pins `"PAYPAL_ENV": "live"`. For local sandbox work
+> set `PAYPAL_ENV=sandbox` in `.dev.vars`, which overrides it.
 
 ### 1.2 Create a PayPal sandbox buyer
 
@@ -116,13 +118,18 @@ site is the only place the flow can work.
 npm run deploy
 ```
 
-This is safe as a sandbox test **provided** neither `PAYPAL_ENV` (Pages env) nor
-`VITE_PAYPAL_ENV` (build-time) is set to `live`. With both absent, server and browser
-both resolve to sandbox. Verify after building:
+This is safe as a sandbox test **provided** `PAYPAL_ENV` is not set to `live` — in the
+Pages environment or in `wrangler.jsonc` `"vars"`, where it is currently pinned to
+`live`. That one variable governs both the API and the checkout host. Verify what the
+deployed Function is actually using by creating an order and reading the host back:
 
 ```bash
-grep -o 'VITE_PAYPAL_ENV[:=]"[^"]*"' dist/assets/index-*.js || echo "unset -> sandbox"
+curl -s -X POST https://streamflix.stream/api/create-adfree-order \
+  -H "Authorization: Bearer $ID_TOKEN" | grep -o '"checkoutUrl":"[^"]*"'
 ```
+
+`www.sandbox.paypal.com` in the response means sandbox; `www.paypal.com` means the next
+purchase moves real money. This is authoritative — it is the URL the browser opens.
 
 Confirm the functions deployed with an unauthenticated call — **`401` is the healthy
 answer**:
@@ -179,8 +186,9 @@ Click **Purchase Ad-Free ($2.99)**.
 
 | Check | Expected |
 |---|---|
-| `POST /api/create-adfree-order` | `200` with `{"ok":true,"orderId":"..."}` — a ~17-char uppercase alphanumeric id |
-| Popup opens | URL is `https://www.sandbox.paypal.com/checkoutnow?token=<orderId>` — confirm the **sandbox** host |
+| `POST /api/create-adfree-order` | `200` with `{"ok":true,"orderId":"...","checkoutUrl":"..."}` — a ~17-char uppercase alphanumeric id |
+| `checkoutUrl` in the response | `https://www.sandbox.paypal.com/checkoutnow?token=<orderId>` — confirm the **sandbox** host before the popup opens |
+| Popup opens | Exactly that `checkoutUrl`. The browser opens what the server sent, after checking it is a real PayPal host |
 | Button state | "Connecting to PayPal..." |
 
 Failure modes worth recognising:
@@ -192,6 +200,12 @@ Failure modes worth recognising:
 - `409 already-ad-free` → this account is already entitled from an earlier run.
 - No popup at all → the browser blocked it and the tab redirected instead; that
   fallback path works but you lose the auto-capture, so allow popups for localhost.
+- Popup shows **"Things don't appear to be working at the moment."** → the order id
+  and the checkout host belong to different PayPal environments, so the token does not
+  exist on that host. Compare `checkoutUrl` against `PAYPAL_ENV`. Historically this
+  meant `PAYPAL_ENV=live` with a sandbox `VITE_PAYPAL_ENV` baked into the bundle; since
+  the server returns `checkoutUrl` it should only appear if the response was blocked or
+  rewritten in transit.
 
 ### Stage 2 — pay in the sandbox popup
 
@@ -208,12 +222,15 @@ Log into the popup with the sandbox **buyer** credentials. The order is created 
 > [functions/lib/paypal.js](../../../functions/lib/paypal.js); if it recurs, that block
 > was lost. Nothing in the popup reports this as an error.
 
-> **The popup will not close by itself.** The order still sets no `return_url`, so
-> PayPal has nowhere to send the buyer and parks them on its own confirmation page.
-> The frontend polls `popup.closed` once a second and does nothing until then.
-> **Close the popup manually.** This is expected behaviour, not a hang — but it is
-> worth deciding later whether you want an `application_context.return_url` so the
-> flow closes itself in production.
+> **The popup closes itself.** The order sets `application_context.return_url` to
+> `<origin>/paypal-return`, so PayPal redirects the buyer there after approval and that
+> page closes the window. The frontend polls `popup.closed` once a second and captures
+> as soon as it goes.
+>
+> If you land on a **404 at `/paypal-return?token=...`** instead, the PWA service
+> worker's `navigateFallback` is shadowing the static file — it must stay in the
+> denylist. Fixed on 2026-08-23; the purchase still completes on a manual refresh,
+> because capture is driven by the polling loop rather than by that page.
 
 ### Stage 3 — capture and activation
 
@@ -274,20 +291,44 @@ show exactly **one** $2.99 payment.
 
 ## 4. Switching to live — do not do this until §3 is fully green
 
-Four things change together:
+Three things change together:
 
 1. PayPal Dashboard → **Live** tab → create/locate the live app. Its client ID and
-   secret are entirely separate values from the sandbox pair.
+   secret are entirely separate values from the sandbox pair. The receiving business
+   account must be fully verified, or live payments fail at approval.
 2. `wrangler.jsonc` `vars.PAYPAL_CLIENT_ID` → the **live** client ID.
 3. Cloudflare Pages → Settings → Variables and secrets:
    `PAYPAL_CLIENT_SECRET` (Secret) → the live secret, and `PAYPAL_ENV` (Variable)
    → exactly `live`. Not `production`, not `LIVE` — anything else silently means
    sandbox.
-4. `VITE_PAYPAL_ENV=live` at build time, then **rebuild**. It is a Vite variable
-   baked into the bundle, so a redeploy without a rebuild leaves the browser
-   pointing at sandbox while the server creates live orders.
 
-Also still outstanding before a real launch: get `npm run test:rules` and
-`npm run test:rules:transitional` green on a machine with a working Database
-emulator, then deploy `database.rules.json`. Until those rules are live, a
-determined client can write its own `accounts/<uid>/adFree` record directly.
+Then redeploy. `PAYPAL_ENV` is the only environment switch: it selects both the API
+base URL and the `checkoutUrl` the Function hands the browser. There is no
+`VITE_PAYPAL_ENV` to set and no rebuild-versus-redeploy trap.
+
+Confirm before charging anyone, using the `checkoutUrl` check in §2 — if it comes back
+`www.paypal.com`, the next purchase moves real money.
+
+### What live mode does not do for you
+
+- **You cannot pay yourself.** PayPal blocks sending money to your own account, and
+  moving $2.99 between two accounts you own tends to get flagged. A live end-to-end
+  test needs a genuinely separate real PayPal account or card.
+- **A refund does not revoke the entitlement.** There is no webhook handler, so
+  refunding in the PayPal dashboard leaves `accounts/<uid>/adFree` in place. Delete
+  that node by hand. The `captureId` on `adFreeOrders/<orderId>` is what lets you go
+  from a transaction id the buyer quotes back to the account to clear.
+- **Every test account stays permanently ad-free.** There is no expiry, so each live
+  rehearsal burns an account unless you delete its entitlement node afterwards.
+
+Also still outstanding before a real launch: deploy the database rules. Both suites are
+green (`npm run test:rules` → 96, `npm run test:rules:transitional` → 98; the Windows
+emulator issue is fixed in [scripts/run-emulator-exec.mjs](../../../scripts/run-emulator-exec.mjs)),
+but until they are deployed a determined client can write its own
+`accounts/<uid>/adFree` record directly and skip payment entirely. Deploy the
+transitional rules first, then the strict set:
+
+```bash
+npm run deploy:firebase-rules:transitional
+```
+

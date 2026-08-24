@@ -19,6 +19,32 @@ const MIN_KEY_COUNT = 1;
 const MAX_KEY_COUNT = 25;
 
 /**
+ * The displayed price. Must match ADFREE_PRICE in functions/lib/paypal.js.
+ *
+ * ⚠️ TEMPORARILY $0.01 FOR LIVE CHECKOUT TESTING — restore to '$2.99' together with
+ * the server constant. This is a separate literal because the server value lives in
+ * a Cloudflare Function that is not part of the browser bundle; the server is
+ * authoritative for what is actually charged, and this only labels it.
+ */
+const ADFREE_PRICE_LABEL = '$0.01';
+
+// The only two hosts that can approve a PayPal order.
+const PAYPAL_CHECKOUT_HOSTS = ['https://www.paypal.com', 'https://www.sandbox.paypal.com'];
+
+/**
+ * Returns `url` only if it is a PayPal checkout URL, else null.
+ *
+ * The server chooses the checkout host, but this value is handed to
+ * `window.open`, so it is host-checked rather than trusted outright — a tampered
+ * or misconfigured response must not be able to send a buyer somewhere that only
+ * looks like PayPal.
+ */
+function payPalCheckoutUrl(url) {
+  if (typeof url !== 'string') return null;
+  return PAYPAL_CHECKOUT_HOSTS.some((host) => url.startsWith(`${host}/checkoutnow?`)) ? url : null;
+}
+
+/**
  * Coverage line shown on every surface that sells or confirms the entitlement.
  *
  * The gate suppresses every ad slot this app owns — smartlink popups, the
@@ -263,12 +289,20 @@ export default function AdFreeSettings({ onClose }) {
       // id and resumes the server's existing reservation instead of colliding
       // with it and getting rejected as someone else's in-flight order.
       const requestId = `adfree-${orderId}`;
-      const isLive = import.meta.env?.VITE_PAYPAL_ENV === 'live';
-      const paypalCheckoutDomain = isLive
-        ? 'https://www.paypal.com'
-        : 'https://www.sandbox.paypal.com';
 
-      const checkoutUrl = `${paypalCheckoutDomain}/checkoutnow?token=${orderId}`;
+      // The server tells us where to approve this order, because only the server
+      // knows which PayPal environment minted it. Sending a live order id to
+      // sandbox's checkoutnow (or the reverse) shows PayPal's generic "Things
+      // don't appear to be working at the moment" page and charges nothing.
+      // The VITE_PAYPAL_ENV fallback only covers a browser holding a newer
+      // bundle than the deployed Function; it is not the normal path.
+      const isLive = import.meta.env?.VITE_PAYPAL_ENV === 'live';
+      const fallbackDomain = isLive ? 'https://www.paypal.com' : 'https://www.sandbox.paypal.com';
+
+      const checkoutUrl =
+        payPalCheckoutUrl(orderRes.checkoutUrl) ||
+        `${fallbackDomain}/checkoutnow?token=${encodeURIComponent(orderId)}`;
+
       const popup = window.open(
         checkoutUrl,
         'streamflix_paypal',
@@ -454,7 +488,11 @@ export default function AdFreeSettings({ onClose }) {
             <div className="adfree-detail-row">
               <dt className="adfree-detail-label">Activation Method</dt>
               <dd className="adfree-detail-value">
-                {isPurchase ? 'PayPal Purchase ($2.99)' : 'Redeemed Key'}
+                {/* Shows the current price, not what this buyer was charged — the
+                    amount is recorded on the server-only adFreeOrders node, which
+                    the client cannot read. Matters only if the price ever changes
+                    after a real purchase exists. */}
+                {isPurchase ? `PayPal Purchase (${ADFREE_PRICE_LABEL})` : 'Redeemed Key'}
               </dd>
             </div>
             <div className="adfree-detail-row">
@@ -513,7 +551,7 @@ export default function AdFreeSettings({ onClose }) {
         </div>
 
         <div className="adfree-card-price-row">
-          <span className="adfree-card-price">$2.99</span>
+          <span className="adfree-card-price">{ADFREE_PRICE_LABEL}</span>
           <span className="adfree-card-currency">USD</span>
         </div>
         <p className="adfree-card-sub">
@@ -547,7 +585,7 @@ export default function AdFreeSettings({ onClose }) {
           onClick={handlePayPalPurchase}
           disabled={isPurchasing}
           aria-busy={isPurchasing}
-          aria-label="Pay $2.99 · Lifetime Access — purchase Ad-Free with PayPal"
+          aria-label={`Pay ${ADFREE_PRICE_LABEL} · Lifetime Access — purchase Ad-Free with PayPal`}
         >
           {isPurchasing ? (
             <>
@@ -556,7 +594,7 @@ export default function AdFreeSettings({ onClose }) {
             </>
           ) : (
             <>
-              <span className="adfree-btn-label">Pay $2.99 · Lifetime Access</span>
+              <span className="adfree-btn-label">Pay {ADFREE_PRICE_LABEL} · Lifetime Access</span>
               <span className="adfree-btn-divider" aria-hidden="true" />
               <span className="paypal-logo-text" aria-hidden="true">
                 <span style={{ color: '#003087' }}>Pay</span>
