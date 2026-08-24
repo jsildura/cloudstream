@@ -21,12 +21,11 @@ const MAX_KEY_COUNT = 25;
 /**
  * The displayed price. Must match ADFREE_PRICE in functions/lib/paypal.js.
  *
- * ⚠️ TEMPORARILY $0.01 FOR LIVE CHECKOUT TESTING — restore to '$2.99' together with
- * the server constant. This is a separate literal because the server value lives in
- * a Cloudflare Function that is not part of the browser bundle; the server is
- * authoritative for what is actually charged, and this only labels it.
+ * A separate literal because the server value lives in a Cloudflare Function that is
+ * not part of the browser bundle. The server is authoritative for what is actually
+ * charged; this only labels it, so the two have to be changed together.
  */
-const ADFREE_PRICE_LABEL = '$0.01';
+const ADFREE_PRICE_LABEL = '$2.99';
 
 // The only two hosts that can approve a PayPal order.
 const PAYPAL_CHECKOUT_HOSTS = ['https://www.paypal.com', 'https://www.sandbox.paypal.com'];

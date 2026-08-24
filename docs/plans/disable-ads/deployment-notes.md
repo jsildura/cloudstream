@@ -1,36 +1,19 @@
 # Streamflix Disable Ads & Ad-Free System Deployment Notes
 
-> ## ⚠️ CURRENT STATE: PRICE TEMPORARILY LOWERED TO $0.01
+> **Price is defined once.** `ADFREE_PRICE` in
+> [functions/lib/paypal.js](../../../functions/lib/paypal.js) is what PayPal is asked
+> for *and* what the capture is validated against, so the two cannot drift and take
+> money the validator then rejects. `ADFREE_PRICE_LABEL` in
+> [AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx) only labels
+> it — the browser bundle cannot import from a Pages Function, so both must be changed
+> together, along with the amount literals in the three test files that pin them.
 >
-> The code charges **$0.01 USD**, not the $2.99 described everywhere else in these
-> docs. This was done to test the live PayPal checkout flow with a real charge that
-> costs almost nothing.
->
-> **Restore before real customers can reach it — two literals:**
->
-> | File | Constant | Test value | Restore to |
-> |---|---|---|---|
-> | [functions/lib/paypal.js](../../../functions/lib/paypal.js) | `ADFREE_PRICE` | `'0.01'` | `'2.99'` |
-> | [AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx) | `ADFREE_PRICE_LABEL` | `'$0.01'` | `'$2.99'` |
->
-> Then update the four amount literals in
-> [functions/lib/paypal.test.js](../../../functions/lib/paypal.test.js),
-> [functions/api/purchase-adfree.test.js](../../../functions/api/purchase-adfree.test.js),
-> and [AdFreeSettings.test.jsx](../../../src/components/settings/AdFreeSettings.test.jsx).
-> Those tests are *meant* to fail on a price change — they pin the amount actually put
-> on the wire, which a constant-referencing assertion could not.
->
-> **Why not $0.00:** PayPal rejects a zero-amount `CAPTURE` order with HTTP 422
-> `UNPROCESSABLE_ENTITY` / `CANNOT_BE_ZERO_OR_NEGATIVE` ("Must be greater than zero").
-> No order id is minted, so there is nothing to approve and nothing to test. With
-> two-decimal precision, `0.01` is the smallest valid amount.
->
-> **Both halves must agree.** `createPayPalOrder` and `validateAdFreePayPalOrder` read
-> the same `ADFREE_PRICE`, so they cannot disagree — but if they ever did, every genuine
-> payment would be taken and then rejected as `payment-mismatch`. Do not split them.
->
-> **Anyone who buys at $0.01 keeps lifetime ad-free.** The entitlement is permanent and
-> there is no downgrade path; revoking means deleting `accounts/<uid>/adFree` by hand.
+> To rehearse live checkout for a token charge, set both to `0.01` / `$0.01`. **Not
+> `0.00`:** PayPal rejects a zero-amount `CAPTURE` order with HTTP 422
+> `UNPROCESSABLE_ENTITY` / `CANNOT_BE_ZERO_OR_NEGATIVE` ("Must be greater than zero"),
+> so no order id is minted and there is nothing to approve. Fees consume the whole
+> cent, so expect $0.00 net — judge success from the transaction record, not the
+> balance. Anyone who buys at the reduced price keeps lifetime ad-free.
 
 ## 1. Overview
 The Streamflix Disable Ads system provides verified, permanent ad suppression backed by:

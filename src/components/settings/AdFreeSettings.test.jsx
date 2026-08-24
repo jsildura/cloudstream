@@ -74,7 +74,7 @@ describe('AdFreeSettings Component', () => {
 
     render(<AdFreeSettings onClose={() => {}} />);
 
-    expect(screen.getByText('$0.01')).toBeInTheDocument();
+    expect(screen.getByText('$2.99')).toBeInTheDocument();
     expect(screen.getByText('USD')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Purchase Ad-Free/i })).toBeInTheDocument();
     expect(screen.getByPlaceholderText('SFXAD-XXXXX-XXXXX-XXXXX')).toBeInTheDocument();
@@ -146,7 +146,7 @@ describe('AdFreeSettings Component', () => {
     render(<AdFreeSettings onClose={() => {}} />);
 
     expect(screen.getByText('Lifetime Ad-Free Active')).toBeInTheDocument();
-    expect(screen.getByText('PayPal Purchase ($0.01)')).toBeInTheDocument();
+    expect(screen.getByText('PayPal Purchase ($2.99)')).toBeInTheDocument();
     expect(screen.getByText('ORDER-12345678')).toBeInTheDocument();
 
     // The caveat stays after purchase, so an entitled user still knows why an ad

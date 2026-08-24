@@ -59,7 +59,7 @@ describe('functions/lib/paypal', () => {
   });
 
   describe('createPayPalOrder', () => {
-    it('creates server order with USD 0.01 and streamflix-adfree-v1', async () => {
+    it('creates server order with USD 2.99 and streamflix-adfree-v1', async () => {
       vi.stubGlobal(
         'fetch',
         vi
@@ -85,7 +85,7 @@ describe('functions/lib/paypal', () => {
         'https://api-m.sandbox.paypal.com/v2/checkout/orders',
         expect.objectContaining({
           method: 'POST',
-          body: expect.stringContaining('"value":"0.01"')
+          body: expect.stringContaining('"value":"2.99"')
         })
       );
     });
@@ -313,7 +313,7 @@ describe('functions/lib/paypal', () => {
     it('returns null for an order with no capture rather than inventing one', () => {
       // An APPROVED-but-uncaptured order has no transaction id yet, and a
       // caller must be able to tell that apart from a real value.
-      expect(extractCaptureId({ purchase_units: [{ amount: { value: '0.01' } }] })).toBeNull();
+      expect(extractCaptureId({ purchase_units: [{ amount: { value: '2.99' } }] })).toBeNull();
       expect(extractCaptureId(withCaptures([]))).toBeNull();
       expect(extractCaptureId(withCaptures([{ status: 'COMPLETED' }]))).toBeNull();
     });
@@ -337,7 +337,7 @@ describe('functions/lib/paypal', () => {
           custom_id: 'streamflix-adfree-v1',
           amount: {
             currency_code: 'USD',
-            value: '0.01'
+            value: '2.99'
           }
         }
       ]

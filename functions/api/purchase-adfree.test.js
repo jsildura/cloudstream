@@ -38,7 +38,7 @@ describe('functions/api/purchase-adfree', () => {
       {
         description: 'Streamflix Ad-Free',
         custom_id: 'streamflix-adfree-v1',
-        amount: { currency_code: 'USD', value: '0.01' },
+        amount: { currency_code: 'USD', value: '2.99' },
         payments: { captures: [{ id: captureId, status: 'COMPLETED' }] }
       }
     ],
@@ -181,7 +181,7 @@ describe('functions/api/purchase-adfree', () => {
     // 2. Payment marked as taken before the entitlement is granted.
     expect(putCalls[1].path).toBe(`adFreeOrders/${validOrderId}`);
     expect(putCalls[1].value.status).toBe('captured');
-    expect(putCalls[1].value.amount).toBe(0.01);
+    expect(putCalls[1].value.amount).toBe(2.99);
     expect(putCalls[1].value.currency).toBe('USD');
     // Recorded before the grant so a half-finished activation is still
     // traceable to the PayPal transaction the buyer can see.
@@ -277,7 +277,7 @@ describe('functions/api/purchase-adfree', () => {
             {
               description: 'Streamflix Ad-Free',
               custom_id: 'streamflix-adfree-v1',
-              amount: { currency_code: 'USD', value: '0.01' },
+              amount: { currency_code: 'USD', value: '2.99' },
               payments: {
                 captures: [
                   { id: 'DECLINED-CAPTURE-1', status: 'DECLINED' },
@@ -306,7 +306,7 @@ describe('functions/api/purchase-adfree', () => {
             {
               description: 'Streamflix Ad-Free',
               custom_id: 'streamflix-adfree-v1',
-              amount: { currency_code: 'USD', value: '0.01' }
+              amount: { currency_code: 'USD', value: '2.99' }
             }
           ]
         })

@@ -5,21 +5,18 @@
 /**
  * The one place the ad-free price is defined.
  *
- * ⚠️ TEMPORARILY LOWERED TO $0.01 FOR LIVE CHECKOUT TESTING. The product price is
- * $2.99 — restore this to '2.99' (and ADFREE_PRICE_LABEL in
- * src/components/settings/AdFreeSettings.jsx) before real customers can reach it.
- *
- * Not '0.00': PayPal rejects a zero-amount CAPTURE order with HTTP 422
- * UNPROCESSABLE_ENTITY / CANNOT_BE_ZERO_OR_NEGATIVE ("Must be greater than zero"),
- * so no order id is minted and there is nothing to approve. $0.01 is the smallest
- * value the two-decimal precision limit allows, and it exercises the identical
- * code path with a real charge.
- *
  * Both the order we create and the order we later validate read this constant, so
  * the amount we ask PayPal for cannot drift from the amount we accept — a drift
- * would reject every genuine payment as `payment-mismatch` after taking the money.
+ * would take the buyer's money and then reject it as `payment-mismatch`. Keep them
+ * on this constant rather than on two literals.
+ *
+ * To rehearse live checkout for a token charge, set this (and ADFREE_PRICE_LABEL in
+ * src/components/settings/AdFreeSettings.jsx) to '0.01'. Not '0.00': PayPal rejects
+ * a zero-amount CAPTURE order with HTTP 422 UNPROCESSABLE_ENTITY /
+ * CANNOT_BE_ZERO_OR_NEGATIVE, so no order id is minted and there is nothing to
+ * approve. Restore this value before real customers can reach it.
  */
-export const ADFREE_PRICE = '0.01';
+export const ADFREE_PRICE = '2.99';
 export const ADFREE_CURRENCY = 'USD';
 
 let cachedPayPalToken = null;
