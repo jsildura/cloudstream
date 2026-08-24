@@ -4,9 +4,11 @@
 > [functions/lib/paypal.js](../../../functions/lib/paypal.js) is what PayPal is asked
 > for *and* what the capture is validated against, so the two cannot drift and take
 > money the validator then rejects. `ADFREE_PRICE_LABEL` in
-> [AdFreeSettings.jsx](../../../src/components/settings/AdFreeSettings.jsx) only labels
-> it — the browser bundle cannot import from a Pages Function, so both must be changed
-> together, along with the amount literals in the three test files that pin them.
+> [src/utils/adGating.js](../../../src/utils/adGating.js) only labels it — the browser
+> bundle cannot import from a Pages Function, so both must be changed together, along
+> with the amount literals in the three test files that pin them. The label lives in
+> `adGating.js` rather than beside the checkout UI because two surfaces quote it now:
+> the Disable Ads pane and the ad-free offer in the adblock notice.
 >
 > To rehearse live checkout for a token charge, set both to `0.01` / `$0.01`. **Not
 > `0.00`:** PayPal rejects a zero-amount `CAPTURE` order with HTTP 422

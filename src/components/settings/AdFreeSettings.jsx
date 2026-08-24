@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdFree } from '../../contexts/AdFreeContext';
 import { useToast } from '../../contexts/ToastContext';
+import { ADFREE_PRICE_LABEL } from '../../utils/adGating';
 import {
   Sparkles,
   ShieldCheck,
@@ -18,15 +19,6 @@ import {
 const MIN_KEY_COUNT = 1;
 const MAX_KEY_COUNT = 25;
 
-/**
- * The displayed price. Must match ADFREE_PRICE in functions/lib/paypal.js.
- *
- * A separate literal because the server value lives in a Cloudflare Function that is
- * not part of the browser bundle. The server is authoritative for what is actually
- * charged; this only labels it, so the two have to be changed together.
- */
-const ADFREE_PRICE_LABEL = '$2.99';
-
 // The only two hosts that can approve a PayPal order.
 const PAYPAL_CHECKOUT_HOSTS = ['https://www.paypal.com', 'https://www.sandbox.paypal.com'];
 
@@ -41,27 +33,6 @@ const PAYPAL_CHECKOUT_HOSTS = ['https://www.paypal.com', 'https://www.sandbox.pa
 function payPalCheckoutUrl(url) {
   if (typeof url !== 'string') return null;
   return PAYPAL_CHECKOUT_HOSTS.some((host) => url.startsWith(`${host}/checkoutnow?`)) ? url : null;
-}
-
-/**
- * Coverage line shown on every surface that sells or confirms the entitlement.
- *
- * The gate suppresses every ad slot this app owns — smartlink popups, the
- * popunder script, native banners, the interstitial and the anti-adblock gate.
- * Watch pages embed players hosted on third-party servers we have no access to,
- * so whatever those inject is unreachable from here. Stated as coverage plus a
- * parenthetical rather than a boxed warning: the scope has to be honest without
- * reading as a disclaimer stapled above the buy button.
- */
-function AdCoverageNote() {
-  return (
-    <p className="adfree-card-note">
-      Cleans 100% of Streamflix browsing and redirect ads.{' '}
-      <span className="adfree-note-caveat">
-        (Note: External player servers maintain their own embedded streams.)
-      </span>
-    </p>
-  );
 }
 
 /**
@@ -409,8 +380,6 @@ export default function AdFreeSettings({ onClose }) {
           </div>
         </div>
 
-        <AdCoverageNote />
-
         <div className="signin-divider">
           <span>SIGN IN TO ACTIVATE</span>
         </div>
@@ -505,8 +474,6 @@ export default function AdFreeSettings({ onClose }) {
               </div>
             )}
           </dl>
-
-          <AdCoverageNote />
         </div>
 
         <div className="adfree-footer-note">
@@ -575,8 +542,6 @@ export default function AdFreeSettings({ onClose }) {
             </li>
           ))}
         </ul>
-
-        <AdCoverageNote />
 
         <button
           type="button"

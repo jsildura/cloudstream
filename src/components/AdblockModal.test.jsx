@@ -5,7 +5,7 @@ import AdblockModal from './AdblockModal';
 import { runAdblockBaitTest } from '../lib/adblockDetection';
 import { isTVUserAgent } from '../utils/platform';
 import { useAdFree } from '../contexts/AdFreeContext';
-import { AD_STATE_PENDING, AD_STATE_ADS, AD_STATE_ADFREE } from '../utils/adGating';
+import { AD_STATE_PENDING, AD_STATE_ADS, AD_STATE_ADFREE, ADFREE_PRICE_LABEL } from '../utils/adGating';
 
 vi.mock('../lib/adblockDetection', async (importOriginal) => {
     const actual = await importOriginal();
@@ -182,6 +182,89 @@ describe('AdblockModal — desktop/mobile dismiss escape hatch', () => {
         } finally {
             restore();
             sessionStorage.clear();
+        }
+    });
+});
+
+describe('AdblockModal — ad-free upsell', () => {
+    const blockAds = () => {
+        const style = document.createElement('style');
+        style.dataset.testStyle = '1';
+        style.textContent = '.ad-unit { display: none !important; }';
+        document.head.appendChild(style);
+    };
+
+    it('hides the overlay and asks the navbar to open Disable Ads', async () => {
+        vi.useFakeTimers();
+        sessionStorage.clear();
+        const restore = patchRealLayout();
+        const onOpen = vi.fn();
+        window.addEventListener('streamflix:open-adfree-settings', onOpen);
+        try {
+            blockAds();
+            render(<AdblockModal />);
+            await runDetection();
+
+            expect(document.querySelector('.adblock-overlay')).toBeInTheDocument();
+            const adFreeBtn = screen.getByRole('button', { name: /go ad-free/i });
+
+            act(() => fireEvent.click(adFreeBtn));
+
+            // The overlay is z-index 99999 over the navbar dropdown the event opens,
+            // so it has to be gone or the panel is unreachable.
+            expect(document.querySelector('.adblock-overlay')).not.toBeInTheDocument();
+            expect(onOpen).toHaveBeenCalledTimes(1);
+        } finally {
+            window.removeEventListener('streamflix:open-adfree-settings', onOpen);
+            restore();
+            sessionStorage.clear();
+        }
+    });
+
+    it('does not persist the dismissal, so a non-buyer is asked again next load', async () => {
+        vi.useFakeTimers();
+        sessionStorage.clear();
+        const restore = patchRealLayout();
+        try {
+            blockAds();
+            render(<AdblockModal />);
+            await runDetection();
+
+            act(() => fireEvent.click(screen.getByRole('button', { name: /go ad-free/i })));
+
+            expect(sessionStorage.getItem('streamflix_adblock_dismissed')).toBeNull();
+        } finally {
+            restore();
+            sessionStorage.clear();
+        }
+    });
+
+    it('quotes the shared price label rather than its own literal', async () => {
+        vi.useFakeTimers();
+        const restore = patchRealLayout();
+        try {
+            blockAds();
+            render(<AdblockModal />);
+            await runDetection();
+
+            expect(document.querySelector('.adblock-adfree-btn').textContent)
+                .toContain(ADFREE_PRICE_LABEL);
+        } finally {
+            restore();
+        }
+    });
+
+    it('leaves "Continue Anyway" in place as the free way out', async () => {
+        vi.useFakeTimers();
+        const restore = patchRealLayout();
+        try {
+            blockAds();
+            render(<AdblockModal />);
+            await runDetection();
+
+            expect(screen.getByRole('button', { name: /continue anyway/i })).toBeInTheDocument();
+        } finally {
+            restore();
         }
     });
 });

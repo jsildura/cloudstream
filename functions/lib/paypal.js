@@ -11,7 +11,7 @@
  * on this constant rather than on two literals.
  *
  * To rehearse live checkout for a token charge, set this (and ADFREE_PRICE_LABEL in
- * src/components/settings/AdFreeSettings.jsx) to '0.01'. Not '0.00': PayPal rejects
+ * src/utils/adGating.js) to '0.01'. Not '0.00': PayPal rejects
  * a zero-amount CAPTURE order with HTTP 422 UNPROCESSABLE_ENTITY /
  * CANNOT_BE_ZERO_OR_NEGATIVE, so no order id is minted and there is nothing to
  * approve. Restore this value before real customers can reach it.

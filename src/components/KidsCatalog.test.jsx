@@ -70,6 +70,10 @@ vi.mock('./SpreadTheWordModal', () => ({
   default: () => null
 }));
 
+vi.mock('./GiveawayModal', () => ({
+  default: () => null
+}));
+
 vi.mock('./MetaTags', () => ({
   default: () => null
 }));

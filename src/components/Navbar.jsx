@@ -234,6 +234,22 @@ const Navbar = () => {
     }
   }, [isSignedIn, activeSettingsTab]);
 
+  // Lets surfaces outside the navbar send a user to Disable Ads — the adblock
+  // notice offers it as the alternative to turning the blocker off. The panel is
+  // navbar-local state rather than a route, so an event is the only way in.
+  //
+  // No sign-in check here on purpose: setting 'adfree' while signed out is caught
+  // by the guard above and lands on 'account', which renders the Sign In view —
+  // exactly the step such a user needs first.
+  useEffect(() => {
+    const openAdFree = () => {
+      setIsSettingsOpen(true);
+      setActiveSettingsTab('adfree');
+    };
+    window.addEventListener('streamflix:open-adfree-settings', openAdFree);
+    return () => window.removeEventListener('streamflix:open-adfree-settings', openAdFree);
+  }, []);
+
   const handleCloseSettings = useCallback(() => {
     if (activeSettingsTab === 'pin') {
       cancelKidsExit();

@@ -15,6 +15,7 @@ import TopTenRow from '../components/TopTenRow';
 import PopularOnStreamflix from '../components/PopularOnStreamflix';
 import NativeAd from '../components/NativeAd';
 import SpreadTheWordModal from '../components/SpreadTheWordModal';
+import GiveawayModal from '../components/GiveawayModal';
 import MetaTags from '../components/MetaTags';
 import { useTMDB } from '../hooks/useTMDB';
 import { useProfiles } from '../contexts/ProfileContext';
@@ -350,6 +351,10 @@ const Home = () => {
 
       {/* Spread the Word Modal */}
       <SpreadTheWordModal />
+
+      {/* Monthly ad-free key giveaway announcement. Stands down on any visit
+          where Spread the Word is also due, so the two never stack. */}
+      <GiveawayModal />
     </div>
   );
 };

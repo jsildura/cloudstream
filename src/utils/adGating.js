@@ -26,6 +26,19 @@ export const AD_URL =
   'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
 export const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
+/**
+ * The displayed price. Must match ADFREE_PRICE in functions/lib/paypal.js.
+ *
+ * A separate literal because the server value lives in a Cloudflare Function that is
+ * not part of the browser bundle. The server is authoritative for what is actually
+ * charged; this only labels it, so the two have to be changed together.
+ *
+ * It lives here rather than next to the checkout UI because more than one surface
+ * quotes the price now — the Disable Ads pane and the adblock notice — and a second
+ * literal is exactly how the two drift apart.
+ */
+export const ADFREE_PRICE_LABEL = '$2.99';
+
 const FIRST_CLICK_STORAGE_KEY = 'hasClickedWatch';
 const LAST_TRIGGER_STORAGE_KEY = 'lastAdTrigger';
 

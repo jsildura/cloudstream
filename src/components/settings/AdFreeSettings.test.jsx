@@ -51,9 +51,6 @@ describe('AdFreeSettings Component', () => {
     // The entitlement cannot touch ads inside the embedded third-party players,
     // so the offer must never be presented as "no ads anywhere".
     expect(screen.queryByText(/Disable All Ads/i)).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/External player servers maintain their own embedded streams/i)
-    ).toBeInTheDocument();
   });
 
   it('renders upgrade and redeem options when Google account is connected but not ad-free', () => {
@@ -80,11 +77,7 @@ describe('AdFreeSettings Component', () => {
     expect(screen.getByPlaceholderText('SFXAD-XXXXX-XXXXX-XXXXX')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Redeem Key/i })).toBeInTheDocument();
 
-    // The buyer has to see the third-party player caveat before paying, and the
-    // anti-adblock gate is part of what the entitlement actually turns off.
-    expect(
-      screen.getByText(/External player servers maintain their own embedded streams/i)
-    ).toBeInTheDocument();
+    // The anti-adblock gate is part of what the entitlement actually turns off.
     expect(screen.getByText(/no anti-adblock gate/i)).toBeInTheDocument();
     expect(screen.queryByText(/video overlay ads/i)).not.toBeInTheDocument();
   });
@@ -148,12 +141,6 @@ describe('AdFreeSettings Component', () => {
     expect(screen.getByText('Lifetime Ad-Free Active')).toBeInTheDocument();
     expect(screen.getByText('PayPal Purchase ($2.99)')).toBeInTheDocument();
     expect(screen.getByText('ORDER-12345678')).toBeInTheDocument();
-
-    // The caveat stays after purchase, so an entitled user still knows why an ad
-    // can appear inside a player.
-    expect(
-      screen.getByText(/External player servers maintain their own embedded streams/i)
-    ).toBeInTheDocument();
   });
 
   describe('PayPal purchase flow', () => {

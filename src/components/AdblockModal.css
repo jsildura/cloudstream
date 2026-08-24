@@ -24,6 +24,10 @@
     text-align: center;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     animation: modalSlideIn 0.3s ease;
+    /* Three stacked actions clear a landscape phone's viewport, and the last of
+       them is the only way out of a full-screen overlay. */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
 }
 
 @keyframes modalSlideIn {
@@ -115,6 +119,102 @@
     transform: translateY(0);
 }
 
+.adblock-refresh-btn:focus-visible {
+    outline: 2px solid #e50914;
+    outline-offset: 2px;
+}
+
+/* "or" rule between the two real ways out of the notice. Matched to the buttons'
+   width so the three read as one stack rather than a button and a stray line. */
+.adblock-or {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 260px;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.adblock-or::before,
+.adblock-or::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* The paid alternative. Same width as the refresh button so neither looks like the
+   afterthought, but a neutral raised surface rather than the accent: red belongs to
+   the warning above, and an upgrade offer wearing it reads as a second alarm. */
+.adblock-adfree-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    max-width: 260px;
+    text-align: left;
+}
+
+.adblock-adfree-btn svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    color: #e5e7eb;
+}
+
+.adblock-adfree-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.adblock-adfree-label {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+/* Only a shade under the label: quiet enough to stay a subtitle, strong enough that
+   the number is the second thing read rather than fine print. */
+.adblock-adfree-price {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #d1d5db;
+}
+
+.adblock-adfree-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.24);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px -10px rgba(0, 0, 0, 0.7);
+}
+
+.adblock-adfree-btn:hover .adblock-adfree-price {
+    color: #ffffff;
+}
+
+.adblock-adfree-btn:active {
+    transform: translateY(0);
+}
+
+.adblock-adfree-btn:focus-visible {
+    outline: 2px solid #e50914;
+    outline-offset: 2px;
+}
+
 /* Secondary dismiss button */
 .adblock-dismiss-btn {
     background: transparent;
@@ -159,11 +259,30 @@
 
     .adblock-description {
         font-size: 13px;
+        /* Tightened to pay for the ad-free row below without the stack of three
+           actions pushing the last one off a short phone screen. */
+        margin-bottom: 22px;
     }
 
     .adblock-refresh-btn {
         padding: 12px 20px;
         font-size: 13px;
+    }
+
+    .adblock-adfree-btn {
+        padding: 9px 18px;
+    }
+
+    .adblock-adfree-label {
+        font-size: 13px;
+    }
+
+    .adblock-adfree-price {
+        font-size: 11.5px;
+    }
+
+    .adblock-or {
+        font-size: 10px;
     }
 }
 

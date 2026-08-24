@@ -35,9 +35,12 @@
 .collection-hero-content {
     position: relative;
     z-index: 20;
-    max-width: 1400px;
+    /* Kept in lockstep with .collection-movies-container: the title, the description
+       and the grid below all have to share one left edge, so these two must agree on
+       both the max-width and the horizontal padding. */
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 80px 40px 40px;
+    padding: 80px clamp(16px, 4vw, 40px) 40px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -94,9 +97,14 @@
 
 /* Movies Container */
 .collection-movies-container {
-    max-width: 1400px;
+    /* Widened from 1400px, which left a ~250px gutter each side on a 1080p desktop.
+       Matches the widest content grid on the site (.iptv-grid) so the page does not
+       read as narrower than the rest of the app. */
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 40px;
+    /* Horizontal padding shrinks with the viewport so a phone spends its width on
+       cards rather than on margins. Mirrored in .collection-hero-content. */
+    padding: 40px clamp(16px, 4vw, 40px);
 }
 
 .collection-movies-heading {
@@ -108,9 +116,21 @@
 
 .collection-movies-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, 380px);
+    /* Fluid tracks, not fixed 380px ones. `auto-fill` with a `1fr` maximum lets the
+       columns share out whatever is left over, so a row ends flush with the container
+       instead of stranding the remainder as dead space on the right — with fixed
+       tracks a 1920px screen left 293px of margin on the left and 455px on the right.
+       The clamped minimum carries the column count from phone to 4K on one rule:
+       ~320px tracks on a wide desktop down to ~140px on a small phone. */
+    grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 22vw, 320px), 1fr));
     gap: 16px;
-    justify-content: start;
+}
+
+/* .movie-card is a fixed width globally because the horizontal rows on Home need a
+   predictable track size. Here the grid track decides the width instead, so the card
+   follows it; .card-image-container's 16/9 aspect-ratio keeps the proportions. */
+.collection-movies-grid .movie-card {
+    width: 100%;
 }
 
 /* Loading State */
@@ -163,7 +183,7 @@
 /* Responsive */
 @media (max-width: 768px) {
     .collection-hero-content {
-        padding: 60px 20px 30px;
+        padding: 60px clamp(16px, 4vw, 40px) 30px;
     }
 
     .collection-title {
@@ -175,12 +195,30 @@
     }
 
     .collection-movies-container {
-        padding: 20px;
+        /* Only the vertical padding tightens — the horizontal clamp is shared with
+           the hero and must stay identical or the grid stops aligning with the title. */
+        padding: 24px clamp(16px, 4vw, 40px);
     }
 
+    /* The grid tracks are deliberately not overridden here: the fluid base rule
+       already lands on three columns across this range. */
     .collection-movies-grid {
-        grid-template-columns: repeat(auto-fit, 200px);
         gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Pinned to two columns rather than left to the fluid minimum. A 16/9 card one
+       per row wastes most of a phone screen, and two fit from 320px up once the
+       gap and the container padding come down. */
+    .collection-movies-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .collection-movies-heading {
+        font-size: 1.25rem;
+        margin-bottom: 16px;
     }
 }
 
@@ -191,8 +229,8 @@
     }
 
     .collection-hero-content {
-        max-width: 2800px;
-        /* 1400px × 2 */
+        max-width: 3200px;
+        /* 1600px × 2 */
         padding: 160px 80px 80px;
         /* 80px × 2, 40px × 2 */
     }
@@ -239,8 +277,8 @@
     }
 
     .collection-movies-container {
-        max-width: 2800px;
-        /* 1400px × 2 */
+        max-width: 3200px;
+        /* 1600px × 2 */
         padding: 80px;
         /* 40px × 2 */
     }
@@ -253,7 +291,9 @@
     }
 
     .collection-movies-grid {
-        grid-template-columns: repeat(auto-fit, 480px);
+        /* 480px is the floor, not the track width: `1fr` lets three tracks share out
+           the full row so a 10-foot layout does not end with a 272px dead strip. */
+        grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
         gap: 24px;
     }
 
@@ -288,8 +328,8 @@
     }
 
     .collection-hero-content {
-        max-width: 4200px;
-        /* 1400px × 3 */
+        max-width: 4800px;
+        /* 1600px × 3 */
         padding: 240px 120px 120px;
         /* 80px × 3, 40px × 3 */
     }
@@ -336,8 +376,8 @@
     }
 
     .collection-movies-container {
-        max-width: 4200px;
-        /* 1400px × 3 */
+        max-width: 4800px;
+        /* 1600px × 3 */
         padding: 120px;
         /* 40px × 3 */
     }
@@ -350,7 +390,9 @@
     }
 
     .collection-movies-grid {
-        grid-template-columns: repeat(auto-fit, 1520px);
+        /* Floor, not fixed width — see the 1080p block. Fixed 1520px tracks left a
+           512px dead strip on a 3840px panel. */
+        grid-template-columns: repeat(auto-fill, minmax(1520px, 1fr));
         gap: 48px;
     }
 

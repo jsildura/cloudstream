@@ -327,8 +327,10 @@
     }
 }
 
-/* TV 1080p */
-@media (min-width: 1920px) and (max-width: 3839px) {
+/* TV 1080p — roughly 2x the base sheet for 10-foot viewing. The hover/pointer test
+   keeps it off desktops at the same width; see the matching block in
+   GiveawayModal.css, which is the sibling modal on Home and had the same bug. */
+@media (min-width: 1920px) and (max-width: 3839px) and (hover: none) and (pointer: coarse) {
     .stw-modal {
         max-width: 840px;
         padding: 64px 56px 56px;

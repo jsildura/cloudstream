@@ -1,0 +1,643 @@
+/* ========================================
+   GIVEAWAY ANNOUNCEMENT MODAL
+
+   Shares its visual language with the Disable Ads pane in
+   src/styles/components.css — same fading divider, same icon-chip geometry,
+   same primary-button treatment — so the two read as one feature.
+   ======================================== */
+
+/* Overlay */
+.gwm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 2500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: gwm-fade-in 0.3s ease;
+}
+
+@keyframes gwm-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Container */
+.gwm-modal {
+    background: #1e1e21;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 440px;
+    padding: 26px 26px 20px;
+    position: relative;
+    /* Never taller than the viewport, whatever the text wraps to. */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Layered rather than glowing: a wide ambient shadow for lift, a tight one
+       for contact, and a 1px inner highlight for the glass top edge. */
+    box-shadow:
+        0 32px 80px -20px rgba(0, 0, 0, 0.8),
+        0 8px 24px -12px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    animation: gwm-slide-up 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes gwm-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header icon */
+.gwm-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(229, 9, 20, 0.1);
+    border: 1px solid rgba(229, 9, 20, 0.22);
+    color: #ff2b36;
+}
+
+/* Eyebrow */
+.gwm-eyebrow {
+    margin: 15px 0 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+/* Title */
+.gwm-title {
+    margin: 6px 0 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+    color: #fff;
+}
+
+/* Intro */
+.gwm-intro {
+    margin: 9px 0 0;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.58);
+}
+
+.gwm-intro strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Divider — matches .adfree-card-divider */
+.gwm-divider {
+    height: 1px;
+    margin: 17px 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+}
+
+/* Detail rows */
+.gwm-details {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 12px;
+}
+
+.gwm-details li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+}
+
+.gwm-detail-icon {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    margin-top: 1px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #fff;
+}
+
+.gwm-detail-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.gwm-detail-label {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #ededed;
+}
+
+.gwm-detail-note {
+    font-size: 12px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Footer */
+.gwm-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.gwm-footer-text {
+    margin: 0;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Global Chat link — a button because it opens the chat widget rather than
+   navigating, so it has to carry the link affordance itself. */
+.gwm-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.28);
+    text-underline-offset: 3px;
+    transition: color 0.2s ease, text-decoration-color 0.2s ease;
+}
+
+.gwm-link svg {
+    transition: transform 0.2s ease;
+}
+
+.gwm-link:hover,
+.gwm-link:focus-visible {
+    color: #ff2b36;
+    text-decoration-color: rgba(229, 9, 20, 0.55);
+}
+
+.gwm-link:hover svg,
+.gwm-link:focus-visible svg {
+    transform: translate(1px, -1px);
+}
+
+/* Primary confirmation — matches .adfree-redeem-btn */
+.gwm-dismiss-btn {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 10px 18px;
+    background: #e50914;
+    border: none;
+    border-radius: 9px;
+    color: #fff;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 20px -12px rgba(229, 9, 20, 0.7);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.gwm-dismiss-btn:hover {
+    background: #f6121d;
+    transform: translateY(-1px);
+}
+
+.gwm-dismiss-btn:active {
+    transform: translateY(0);
+}
+
+/* Keyboard focus — the modal has no close X, so these must stay visible */
+.gwm-dismiss-btn:focus-visible,
+.gwm-link:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* ========================================
+   RESPONSIVE
+
+   Narrow screens tighten the vertical rhythm rather than dropping content:
+   every giveaway term still reads, it just occupies less height.
+   ======================================== */
+
+/* Tablets */
+@media (max-width: 768px) {
+    .gwm-modal {
+        max-width: 410px;
+        padding: 22px 22px 18px;
+    }
+
+    .gwm-title {
+        font-size: 19px;
+    }
+
+    .gwm-divider {
+        margin: 15px 0;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .gwm-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .gwm-modal {
+        max-width: 100%;
+        /* Bottom sheet, so it measures from the top of the viewport instead. */
+        max-height: 88vh;
+        border-radius: 18px 18px 0 0;
+        border-bottom: none;
+        padding: 20px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+        animation: gwm-slide-up-mobile 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    @keyframes gwm-slide-up-mobile {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .gwm-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+    }
+
+    .gwm-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .gwm-eyebrow {
+        margin-top: 12px;
+    }
+
+    .gwm-title {
+        margin-top: 5px;
+        font-size: 17.5px;
+    }
+
+    .gwm-intro {
+        margin-top: 7px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .gwm-divider {
+        margin: 14px 0;
+    }
+
+    .gwm-details {
+        gap: 9px;
+    }
+
+    .gwm-details li {
+        gap: 10px;
+    }
+
+    .gwm-detail-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 7px;
+    }
+
+    .gwm-detail-label {
+        font-size: 13px;
+        line-height: 1.3;
+    }
+
+    .gwm-detail-note {
+        font-size: 11.5px;
+        line-height: 1.35;
+    }
+
+    /* Stays a single row here. Stacking gave the button full width but cost
+       roughly a fifth of the sheet's height, and the link alone reads fine
+       without its lead-in. */
+    .gwm-footer {
+        margin-top: 16px;
+        gap: 12px;
+    }
+
+    .gwm-footer-prompt {
+        display: none;
+    }
+
+    .gwm-footer-text {
+        font-size: 12.5px;
+    }
+
+    .gwm-dismiss-btn {
+        /* Padding alone would drop under a comfortable tap target once the
+           font shrinks, so the height is set explicitly. */
+        min-height: 40px;
+        padding: 0 16px;
+        gap: 6px;
+        font-size: 13px;
+    }
+}
+
+/* Tiny phones — 320-360px, where the scale above still crowds the sheet.
+   Deliberately below 375px so iPhone SE/mini keep the more readable type. */
+@media (max-width: 360px) {
+    .gwm-modal {
+        padding: 18px 15px calc(14px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .gwm-title {
+        font-size: 16.5px;
+    }
+
+    .gwm-details {
+        gap: 8px;
+    }
+
+    .gwm-details li {
+        gap: 9px;
+    }
+
+    .gwm-detail-label {
+        font-size: 12.5px;
+    }
+
+    .gwm-detail-note {
+        font-size: 11px;
+    }
+
+    .gwm-footer-text {
+        font-size: 12px;
+    }
+
+    .gwm-dismiss-btn {
+        padding: 0 14px;
+    }
+}
+
+/* Short viewports — landscape phones and split-screen, where height is the
+   constraint rather than width. Set below the shortest portrait phone (568px)
+   so portrait never loses copy it has room for. */
+@media (max-height: 520px) {
+    .gwm-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
+    }
+
+    .gwm-eyebrow {
+        margin-top: 10px;
+    }
+
+    /* The intro restates what the first detail row already says, so it is the
+       one thing worth dropping when there is genuinely no room. */
+    .gwm-intro {
+        display: none;
+    }
+
+    .gwm-divider {
+        margin: 12px 0;
+    }
+
+    .gwm-details {
+        gap: 8px;
+    }
+
+    .gwm-footer {
+        margin-top: 14px;
+    }
+}
+
+/* TV 1080p — everything below is roughly 2x the base sheet for 10-foot viewing.
+   The hover/pointer test is load-bearing, not decoration: a desktop monitor is also
+   1920px wide, and without it this block fired in a normal browser window and blew
+   the card up to 920px with a 42px title. Only a coarse-pointer, hover-less device
+   at this width is a TV. */
+@media (min-width: 1920px) and (max-width: 3839px) and (hover: none) and (pointer: coarse) {
+    .gwm-modal {
+        max-width: 920px;
+        padding: 60px 60px 48px;
+        border-radius: 36px;
+    }
+
+    .gwm-icon {
+        width: 88px;
+        height: 88px;
+        border-radius: 26px;
+    }
+
+    .gwm-icon svg {
+        width: 40px;
+        height: 40px;
+    }
+
+    .gwm-eyebrow {
+        margin-top: 36px;
+        font-size: 20px;
+    }
+
+    .gwm-title {
+        margin-top: 14px;
+        font-size: 42px;
+    }
+
+    .gwm-intro {
+        margin-top: 22px;
+        font-size: 27px;
+    }
+
+    .gwm-divider {
+        margin: 40px 0;
+    }
+
+    .gwm-details {
+        gap: 28px;
+    }
+
+    .gwm-details li {
+        gap: 24px;
+    }
+
+    .gwm-detail-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+    }
+
+    .gwm-detail-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+    .gwm-detail-label {
+        font-size: 27px;
+    }
+
+    .gwm-detail-note {
+        font-size: 24px;
+    }
+
+    .gwm-footer {
+        margin-top: 48px;
+        gap: 32px;
+    }
+
+    .gwm-footer-text {
+        font-size: 25px;
+    }
+
+    .gwm-link svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .gwm-dismiss-btn {
+        gap: 14px;
+        padding: 20px 36px;
+        border-radius: 18px;
+        font-size: 27px;
+    }
+
+    .gwm-dismiss-btn svg {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* TV 4K */
+@media (min-width: 3840px) {
+    .gwm-modal {
+        max-width: 1840px;
+        padding: 120px 120px 96px;
+        border-radius: 72px;
+    }
+
+    .gwm-icon {
+        width: 176px;
+        height: 176px;
+        border-radius: 52px;
+    }
+
+    .gwm-icon svg {
+        width: 80px;
+        height: 80px;
+    }
+
+    .gwm-eyebrow {
+        margin-top: 72px;
+        font-size: 40px;
+    }
+
+    .gwm-title {
+        margin-top: 28px;
+        font-size: 84px;
+    }
+
+    .gwm-intro {
+        margin-top: 44px;
+        font-size: 54px;
+    }
+
+    .gwm-divider {
+        margin: 80px 0;
+    }
+
+    .gwm-details {
+        gap: 56px;
+    }
+
+    .gwm-details li {
+        gap: 48px;
+    }
+
+    .gwm-detail-icon {
+        width: 104px;
+        height: 104px;
+        border-radius: 32px;
+    }
+
+    .gwm-detail-icon svg {
+        width: 56px;
+        height: 56px;
+    }
+
+    .gwm-detail-label {
+        font-size: 54px;
+    }
+
+    .gwm-detail-note {
+        font-size: 48px;
+    }
+
+    .gwm-footer {
+        margin-top: 96px;
+        gap: 64px;
+    }
+
+    .gwm-footer-text {
+        font-size: 50px;
+    }
+
+    .gwm-link svg {
+        width: 52px;
+        height: 52px;
+    }
+
+    .gwm-dismiss-btn {
+        gap: 28px;
+        padding: 40px 72px;
+        border-radius: 36px;
+        font-size: 54px;
+    }
+
+    .gwm-dismiss-btn svg {
+        width: 60px;
+        height: 60px;
+    }
+}

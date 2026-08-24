@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { isTVUserAgent } from '../utils/platform';
 import { runAdblockBaitTest } from '../lib/adblockDetection';
 import { useAdFree } from '../contexts/AdFreeContext';
-import { AD_STATE_ADS } from '../utils/adGating';
+import { AD_STATE_ADS, ADFREE_PRICE_LABEL } from '../utils/adGating';
 import './AdblockModal.css';
 
 const SESSION_DISMISSED_KEY = 'streamflix_adblock_dismissed';
@@ -63,6 +63,23 @@ const AdblockModal = () => {
         setDismissed(true);
     };
 
+    /**
+     * Sends the user to Disable Ads instead of asking them to turn the blocker off.
+     *
+     * The overlay is z-index 99999 over the whole app and the Disable Ads pane lives
+     * in the navbar dropdown underneath it, so it has to be hidden before the panel
+     * can be reached — otherwise this button opens a panel the user cannot see.
+     *
+     * Hidden via state only, deliberately not written to sessionStorage: someone who
+     * opens the offer and does not buy should be asked again on their next load. A
+     * completed purchase flips the ad gate to `adfree` and the modal stops running
+     * detection at all, so a buyer is never re-prompted either way.
+     */
+    const handleGoAdFree = () => {
+        setDismissed(true);
+        window.dispatchEvent(new CustomEvent('streamflix:open-adfree-settings'));
+    };
+
     if (!adsAllowed || dismissed || !checkComplete || !adblockDetected) return null;
 
     // TV browsers often have built-in ad blocking the user can't disable —
@@ -99,6 +116,29 @@ const AdblockModal = () => {
                         </svg>
                         I've Disabled It - Refresh
                     </button>
+
+                    <div className="adblock-or" aria-hidden="true">
+                        <span>or</span>
+                    </div>
+
+                    {/* The paid way out. Deliberately not red: red is the warning above,
+                        and an upgrade offer that borrows it reads as a second alarm. */}
+                    <button className="adblock-adfree-btn" onClick={handleGoAdFree}>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+                            <path d="M20 3v4" />
+                            <path d="M22 5h-4" />
+                            <path d="M4 17v2" />
+                            <path d="M3 18h2" />
+                        </svg>
+                        <span className="adblock-adfree-text">
+                            <span className="adblock-adfree-label">Go Ad-Free</span>
+                            {/* Its own line so the price is read, not skimmed past — and so
+                                "one-time" lands before the user assumes a subscription. */}
+                            <span className="adblock-adfree-price">{ADFREE_PRICE_LABEL} one-time</span>
+                        </span>
+                    </button>
+
                     <button className="adblock-dismiss-btn" onClick={handleDismiss}>
                         Continue Anyway
                     </button>
