@@ -41,12 +41,19 @@ describe('servers configuration', () => {
         expect(ythdServer.isAdsFree).toBe(true);
     });
 
-    it('has Server 9 configured for cinesrc.st and flagged as isAdsFree', () => {
-        const cinesrcServer = serverConfig.find(s => s.name === 'Server 9');
+    it('has Server 2 configured for cinesrc.st', () => {
+        const cinesrcServer = serverConfig.find(s => s.name === 'Server 2');
         expect(cinesrcServer).toBeDefined();
         expect(cinesrcServer.baseUrl).toBe('https://cinesrc.st/embed/');
         expect(cinesrcServer.pattern).toBe('cinesrc');
-        expect(cinesrcServer.isAdsFree).toBe(true);
+    });
+
+    it('has Server 9 configured for vaplayer.ru and flagged as isAdsFree', () => {
+        const vaplayerServer = serverConfig.find(s => s.name === 'Server 9');
+        expect(vaplayerServer).toBeDefined();
+        expect(vaplayerServer.baseUrl).toBe('https://vaplayer.ru/embed/');
+        expect(vaplayerServer.pattern).toBe('default');
+        expect(vaplayerServer.isAdsFree).toBe(true);
     });
 
     it('has Server 12 configured for player.vidlove.cc and flagged as isAdsFree', () => {
@@ -78,17 +85,17 @@ describe('servers configuration', () => {
 
             // Movie URL
             const movieUrl = buildServerUrl(ythdServer, 'movie', 'tt22084616', 1, 1);
-            expect(movieUrl).toBe('https://ythd.org/embed/tt22084616/');
+            expect(movieUrl).toBe('https://ythd.org/embed/tt22084616/?autoplay=1');
 
             const tmdbMovieUrl = buildServerUrl(ythdServer, 'movie', 550, 1, 1);
-            expect(tmdbMovieUrl).toBe('https://ythd.org/embed/550/');
+            expect(tmdbMovieUrl).toBe('https://ythd.org/embed/550/?autoplay=1');
 
             // TV URL
             const tvUrl = buildServerUrl(ythdServer, 'tv', 'tt26545992', 1, 1);
-            expect(tvUrl).toBe('https://ythd.org/embed/tt26545992/1-1/');
+            expect(tvUrl).toBe('https://ythd.org/embed/tt26545992/1-1/?autoplay=1');
 
             const tmdbTvUrl = buildServerUrl(ythdServer, 'tv', 106379, 2, 4);
-            expect(tmdbTvUrl).toBe('https://ythd.org/embed/106379/2-4/');
+            expect(tmdbTvUrl).toBe('https://ythd.org/embed/106379/2-4/?autoplay=1');
         });
 
         it('builds correct movie and TV URLs for Server 12 (vidlove)', () => {
@@ -115,14 +122,14 @@ describe('servers configuration', () => {
             const filmuServer = serverConfig.find(s => s.name === 'Server 6');
 
             const movieUrl = buildServerUrl(filmuServer, 'movie', 969681, 1, 1);
-            expect(movieUrl).toBe('https://embed.filmu.in/embed/movie/969681');
+            expect(movieUrl).toBe('https://embed.filmu.in/embed/movie/969681?autoplay=1');
 
             const tvUrl = buildServerUrl(filmuServer, 'tv', 108978, 1, 1);
-            expect(tvUrl).toBe('https://embed.filmu.in/embed/tv/108978/1/1');
+            expect(tvUrl).toBe('https://embed.filmu.in/embed/tv/108978/1/1?autoplay=1');
         });
 
-        it('builds correct movie and TV URLs for Server 9 (cinesrc)', () => {
-            const cinesrcServer = serverConfig.find(s => s.name === 'Server 9');
+        it('builds correct movie and TV URLs for Server 2 (cinesrc)', () => {
+            const cinesrcServer = serverConfig.find(s => s.name === 'Server 2');
 
             const movieUrl = buildServerUrl(cinesrcServer, 'movie', 550, 1, 1);
             expect(movieUrl).toBe('https://cinesrc.st/embed/movie/550?autoplay=true&autonext=true');
@@ -131,10 +138,20 @@ describe('servers configuration', () => {
             expect(tvUrl).toBe('https://cinesrc.st/embed/tv/106379?s=2&e=4&autoplay=true&autonext=true');
         });
 
+        it('builds correct movie and TV URLs for Server 9 (vaplayer)', () => {
+            const vaplayerServer = serverConfig.find(s => s.name === 'Server 9');
+
+            const movieUrl = buildServerUrl(vaplayerServer, 'movie', 550, 1, 1);
+            expect(movieUrl).toBe('https://vaplayer.ru/embed/movie/550?autoplay=1&skin=cinematic&allowfullscreen=true');
+
+            const tvUrl = buildServerUrl(vaplayerServer, 'tv', 106379, 2, 4);
+            expect(tvUrl).toBe('https://vaplayer.ru/embed/tv/106379/2/4?autoplay=1&skin=cinematic&allowfullscreen=true');
+        });
+
         it('builds correct URLs for default pattern (Server 7)', () => {
             const defaultServer = serverConfig.find(s => s.name === 'Server 7');
-            expect(buildServerUrl(defaultServer, 'movie', 550, 1, 1)).toBe('https://api.cineby.homes/embed/movie/550');
-            expect(buildServerUrl(defaultServer, 'tv', 106379, 1, 2)).toBe('https://api.cineby.homes/embed/tv/106379/1/2');
+            expect(buildServerUrl(defaultServer, 'movie', 550, 1, 1)).toBe('https://api.cineby.homes/embed/movie/550?autoplay=1');
+            expect(buildServerUrl(defaultServer, 'tv', 106379, 1, 2)).toBe('https://api.cineby.homes/embed/tv/106379/1/2?autoplay=1');
         });
 
         it('builds correct movie and TV URLs for Server 3 (1embed)', () => {
