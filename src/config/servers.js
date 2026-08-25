@@ -8,6 +8,9 @@
  * removing it. Entries stay in the array so the indices persisted in
  * localStorage (`server-<tmdbId>`) keep pointing at the same server.
  *
+ * Set `isAdsFree: true` on an entry to restrict it to signed-in users with
+ * an active Ad-Free entitlement.
+ *
  * Set `mayRequireHevc: true` on an entry whose embed serves an HEVC/H.265-only
  * quality ladder for some titles. Browsers without an HEVC decoder get every
  * video rendition filtered out by the embed's own player and play audio with a
@@ -20,6 +23,8 @@
  * - 'tmdb-prefix': {baseUrl}{id}{suffix} (returns null for TV)
  * - 'primesrc'   : {baseUrl}{type}?tmdb={id}&season={s}&episode={e}
  * - 'vidsrc-xyz' : movie/{id} or tv?tmdb={id}&season={s}&episode={e}
+ * - 'ythd'       : {baseUrl}{id}/ for movie, {baseUrl}{id}/{season}-{episode}/ for TV
+ * - 'cinesrc'    : {baseUrl}movie/{id} for movie, {baseUrl}tv/{id}?s={s}&e={e} for TV
  */
 
 export const serverConfig = [
@@ -44,7 +49,7 @@ export const serverConfig = [
         suffix: '/en?autoplay=true',
         isRecommended: true,
         sandboxSupport: false,
-        hasAds: false,
+        hasAds: true,
         pattern: 'default',
         // Some titles resolve to an HEVC-only ladder here — audio plays, the
         // picture stays blank on browsers that can't decode it.
@@ -52,66 +57,37 @@ export const serverConfig = [
     },
     {
         name: 'Server 2',
-        description: 'Reliable Server',
-        baseUrl: 'https://api.cineby.homes/embed/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 3',
-        description: 'Reliable Server',
-        baseUrl: 'https://anyembed.xyz/embed/',
-        suffix: '',
+        description: 'Backup Server',
+        baseUrl: 'https://cinesrc.st/embed/',
+        suffix: '?autoplay=true&autonext=true',
         isRecommended: true,
         sandboxSupport: true,
         hasAds: false,
-        pattern: 'anyembed',
+        pattern: 'cinesrc',
     },
     {
-        name: 'Server 4',
-        description: 'Reliable Server',
-        baseUrl: 'https://vaplayer.ru/embed/',
-        suffix: '',
+        name: 'Server 3',
+        description: 'Backup Server',
+        baseUrl: 'https://1embed.cc/embed/',
+        suffix: '?autoplay=1',
         isRecommended: true,
         sandboxSupport: false,
-        hasAds: false,
+        hasAds: true,
         pattern: 'default',
     },
+
     {
-        name: 'Server 5',
+        name: 'Server 4',
         description: 'Reliable Server',
         baseUrl: 'https://www.vidking.net/embed/',
         suffix: '?autoPlay=true',
         isRecommended: true,
         sandboxSupport: false,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 6',
-        description: 'Reliable Server',
-        baseUrl: 'https://web.nxsha.app/embed/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: true,
         hasAds: true,
         pattern: 'default',
     },
     {
-        name: 'Server 7',
-        description: 'Reliable Server',
-        baseUrl: 'https://vidsync.xyz/embed/',
-        suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 8',
+        name: 'Server 5',
         description: 'Reliable Server',
         baseUrl: 'https://mapple.uk/watch/',
         suffix: '',
@@ -121,17 +97,105 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
+        name: 'Server 6',
+        description: 'Backup Server',
+        baseUrl: 'https://embed.filmu.in/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 7',
+        description: 'Premium Server',
+        baseUrl: 'https://api.cineby.homes/embed/',
+        suffix: '',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 8',
+        description: 'Premium Server',
+        baseUrl: 'https://ythd.org/embed/',
+        suffix: '',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'ythd',
+    },
+    {
         name: 'Server 9',
+        description: 'Premium Server',
+        baseUrl: 'https://vaplayer.ru/embed/',
+        suffix: '?autoplay=1&skin=cinematic&allowfullscreen=true',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: false,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 10',
+        description: 'Premium Server',
+        baseUrl: 'https://web.nxsha.app/embed/',
+        suffix: '',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: true,
+        hasAds: false,
+        pattern: 'default',
+    },
+
+    {
+        name: 'Server 11',
+        description: 'Premium Server',
+        baseUrl: 'https://player.videasy.net/',
+        suffix: '',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 12',
+        description: 'Premium Server',
+        baseUrl: 'https://player.vidlove.cc/embed/',
+        suffix: '?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&font=Roboto&fontcolor=ffffff&fontsize=20&opacity=0.5&secondarycolor=ffffff&server=Dark',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 13',
+        description: 'Premium Server',
+        baseUrl: 'https://player.cinezo.live/embed/',
+        suffix: '?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=e8b86d&secondarycolor=0a0a12&iconcolor=ffffff',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: false,
+        hasAds: true,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 14',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
         isRecommended: false,
         sandboxSupport: false,
-        hasAds: false,
+        hasAds: true,
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 10',
+        name: 'Server 15',
         description: 'Backup Server',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
@@ -141,60 +205,10 @@ export const serverConfig = [
         pattern: 'primesrc',
     },
     {
-        name: 'Server 11',
-        description: 'Backup Server',
-        baseUrl: 'https://vidlink.pro/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 12',
+        name: 'Server 16',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 13',
-        description: 'Backup Server',
-        baseUrl: 'https://vixsrc.to/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 14',
-        description: 'Backup Server',
-        baseUrl: 'https://player.videasy.net/',
-        suffix: '',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 15',
-        description: 'Backup Server',
-        baseUrl: 'https://www.zxcstream.xyz/embed/',
-        suffix: '?autoPlay=true',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: false,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 16',
-        description: 'Backup Server',
-        baseUrl: 'https://vidfast.vc/',
-        suffix: '',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
@@ -213,8 +227,8 @@ export const serverConfig = [
     {
         name: 'Server 18',
         description: 'Backup Server',
-        baseUrl: 'https://vidsrc.to/embed/',
-        suffix: '?autoPlay=1',
+        baseUrl: 'https://embedmaster.link/',
+        suffix: '',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
@@ -270,6 +284,21 @@ export function buildServerUrl(server, type, id, season, episode) {
             }
             return `${baseUrl}movie/${id}`;
 
+        case 'ythd':
+            // e.g., {baseUrl}{id}/ for movie, {baseUrl}{id}/{season}-{episode}/ for TV
+            if (type === 'tv') {
+                return `${baseUrl}${id}/${season}-${episode}/${suffix}`;
+            }
+            return `${baseUrl}${id}/${suffix}`;
+
+        case 'cinesrc':
+            // movie/{id} or tv/{id}?s={season}&e={episode}
+            if (type === 'tv') {
+                const extra = suffix ? (suffix.startsWith('?') ? '&' + suffix.slice(1) : (suffix.startsWith('&') ? suffix : '&' + suffix)) : '';
+                return `${baseUrl}tv/${id}?s=${season}&e=${episode}${extra}`;
+            }
+            return `${baseUrl}movie/${id}${suffix}`;
+
         case 'default':
         default:
             // Standard: {base}{type}/{id}{tvPath}{suffix}
@@ -279,21 +308,26 @@ export function buildServerUrl(server, type, id, season, episode) {
 
 /**
  * Whether a server index exists and is currently offered to viewers.
+ * When isAdFree is false, servers flagged with isAdsFree: true (or Premium Server) are not offered.
  * @param {number} index - Index into serverConfig
+ * @param {boolean} [isAdFree=false] - Whether the viewer has an active ad-free entitlement
  * @returns {boolean}
  */
-export function isServerEnabled(index) {
+export function isServerEnabled(index, isAdFree = false) {
     const server = serverConfig[index];
-    return Boolean(server) && !server.disabled;
+    if (!server || server.disabled) return false;
+    if ((server.isAdsFree || server.description === 'Premium Server') && !isAdFree) return false;
+    return true;
 }
 
 /**
  * Index of the first server still offered to viewers. Used as the default
- * pick when nothing is saved, or when a saved pick points at a disabled one.
+ * pick when nothing is saved, or when a saved pick points at a disabled/inaccessible one.
+ * @param {boolean} [isAdFree=false] - Whether the viewer has an active ad-free entitlement
  * @returns {number}
  */
-export function getFirstEnabledServerIndex() {
-    const index = serverConfig.findIndex(server => !server.disabled);
+export function getFirstEnabledServerIndex(isAdFree = false) {
+    const index = serverConfig.findIndex(server => !server.disabled && (!server.isAdsFree && server.description !== 'Premium Server' || isAdFree));
     return index === -1 ? 0 : index;
 }
 

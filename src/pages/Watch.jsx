@@ -13,6 +13,7 @@ import { generateContentMeta } from '../utils/metaUtils';
 import { episodeStill, cardBackdrop, posterAsBackdrop } from '../utils/images';
 import DirectPlayer from '../components/DirectPlayer';
 import { useProfiles } from '../contexts/ProfileContext';
+import { useAdFree } from '../contexts/AdFreeContext';
 import { maybeOpenSmartlinkAd } from '../utils/adGating';
 import { isHevcSupported } from '../utils/codecSupport';
 import { filterKidsCandidates } from '../lib/tmdbClient';
@@ -28,6 +29,7 @@ const Watch = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { isKidsMode } = useProfiles();
+  const { isAdFree, loading: isAdFreeLoading } = useAdFree();
   const searchParams = new URLSearchParams(location.search);
 
   const type = searchParams.get('type');
@@ -59,10 +61,10 @@ const Watch = () => {
       if (saved !== null) {
         const idx = parseInt(saved, 10);
         // A saved pick that has since been disabled falls through to the default.
-        if (Number.isFinite(idx) && isServerEnabled(idx)) return idx;
+        if (Number.isFinite(idx) && isServerEnabled(idx, true)) return idx;
       }
     } catch { /* localStorage unavailable */ }
-    return getFirstEnabledServerIndex();
+    return getFirstEnabledServerIndex(false);
   });
   const [currentSeason, setCurrentSeason] = useState(urlSeason ? parseInt(urlSeason) : 1);
   const [currentEpisode, setCurrentEpisode] = useState(urlEpisode ? parseInt(urlEpisode) : 1);
@@ -500,17 +502,32 @@ const Watch = () => {
     directPlayer: s.directPlayer || false,
     disabled: s.disabled || false,
     mayRequireHevc: s.mayRequireHevc || false,
+    isAdsFree: Boolean(s.isAdsFree || s.description === 'Premium Server'),
     getUrl: (season, episode) => buildServerUrl(s, type, id, season, episode)
   })), [type, id]);
 
-  // Only these are listed in the picker. Disabled servers keep their slot in
-  // `servers` so persisted indices stay valid, they just aren't offered.
+  // All enabled servers are listed in the picker.
+  // Premium servers (isAdsFree: true) are flagged as isLocked for non-Ad-Free viewers.
   const selectableServers = useMemo(
     () => servers
-      .map((server, index) => ({ server, index }))
+      .map((server, index) => ({
+        server,
+        index,
+        isLocked: !isServerEnabled(index, isAdFree)
+      }))
       .filter(({ server }) => !server.disabled),
-    [servers]
+    [servers, isAdFree]
   );
+
+  // Enforce Ad-Free requirement if current server is restricted to Ad-Free users
+  useEffect(() => {
+    if (!isAdFreeLoading && !isAdFree && servers[currentServer]?.isAdsFree) {
+      const fallbackIdx = getFirstEnabledServerIndex(false);
+      setCurrentServer(fallbackIdx);
+      setSandboxEnabled(servers[fallbackIdx]?.sandboxSupport ?? true);
+      try { localStorage.setItem(`server-${id}`, fallbackIdx); } catch { /* noop */ }
+    }
+  }, [isAdFree, isAdFreeLoading, currentServer, servers, id]);
 
   // Generate VideoObject schema for SEO (memoized) - must be before early returns
   const videoSchema = useMemo(() => {
@@ -763,7 +780,7 @@ const Watch = () => {
   // movies navigate to the next recommended movie (when one exists).
   const canGoNext = type === 'tv'
     ? (currentEpisode < episodes.length ||
-       seasons.findIndex(s => s.season_number === currentSeason) < seasons.length - 1)
+      seasons.findIndex(s => s.season_number === currentSeason) < seasons.length - 1)
     : type === 'movie'
       ? !!nextMovie
       : false;
@@ -921,6 +938,10 @@ const Watch = () => {
   };
 
   const handleServerSelect = (index) => {
+    if (!isServerEnabled(index, isAdFree)) {
+      showError('Server restricted to paid members');
+      return;
+    }
     const server = servers[index];
     setCurrentServer(index);
     setSandboxEnabled(server.sandboxSupport);
@@ -1689,13 +1710,15 @@ const Watch = () => {
               {/* Server List */}
               <div className="watch-server-list">
                 <p className="watch-server-list-title">Select Server</p>
-                {selectableServers.map(({ server, index }) => (
+                {selectableServers.map(({ server, index, isLocked }) => (
                   <div
                     key={server.name}
-                    className={`watch-server-card ${currentServer === index ? 'active' : ''}`}
+                    className={`watch-server-card ${currentServer === index ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
                     onClick={() => handleServerSelect(index)}
-                    tabIndex={0}
+                    tabIndex={isLocked ? -1 : 0}
                     role="button"
+                    aria-disabled={isLocked}
+                    title={isLocked ? 'Ad-Free membership required' : undefined}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
@@ -1704,26 +1727,45 @@ const Watch = () => {
                     }}
                   >
                     <div className="watch-server-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 32 32">
-                        <circle cx="16" cy="16" r="16" fill="#090A15" />
-                        <path
-                          fill="#fff"
-                          fillRule="evenodd"
-                          d="M8.004 19.728a.996.996 0 0 1-.008-1.054l7.478-12.199a.996.996 0 0 1 1.753.104l6.832 14.82a.996.996 0 0 1-.618 1.37l-10.627 3.189a.996.996 0 0 1-1.128-.42l-3.682-5.81Zm8.333-9.686a.373.373 0 0 1 .709-.074l4.712 10.904a.374.374 0 0 1-.236.506L14.18 23.57a.373.373 0 0 1-.473-.431l2.63-13.097Z"
-                          clipRule="evenodd"
-                        />
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="0">
+                        <path d="M4.08 5.227A3 3 0 0 1 6.979 3H17.02a3 3 0 0 1 2.9 2.227l2.113 7.926A5.228 5.228 0 0 0 18.75 12H5.25a5.228 5.228 0 0 0-3.284 1.153L4.08 5.227Z" />
+                        <path fillRule="evenodd" d="M5.25 13.5a3.75 3.75 0 1 0 0 7.5h13.5a3.75 3.75 0 1 0 0-7.5H5.25Zm10.5 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm3.75-.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" clipRule="evenodd" />
                       </svg>
+                      {isLocked && (
+                        <div className="watch-server-lock-badge" title="Ad-Free Required">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                     <div className="watch-server-details">
-                      <p className="watch-server-name">
-                        {server.name}
-                        {server.isRecommended && (
-                          <span className="watch-server-recommended"> (Recommended)</span>
-                        )}
-                        {server.hasAds && (
-                          <span className="watch-server-ads-badge"> (Ads)</span>
-                        )}
-                      </p>
+                      <div className="watch-server-header">
+                        <span className="watch-server-name">{server.name}</span>
+                        <div className="watch-server-badges">
+                          {server.isRecommended && (
+                            <span className="watch-server-badge badge-recommended">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                              Suggested
+                            </span>
+                          )}
+                          {server.isAdsFree && (
+                            <span className="watch-server-badge badge-premium" title="Premium Server">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z" />
+                              </svg>
+                            </span>
+                          )}
+                          {server.hasAds && (
+                            <span className="watch-server-badge badge-ads" title="Contains Ads">
+                              <i className="fa-solid fa-rectangle-ad"></i>
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <p className="watch-server-desc">{server.description}</p>
                     </div>
                   </div>
