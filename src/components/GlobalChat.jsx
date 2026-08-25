@@ -7,7 +7,7 @@ import { cardPoster } from '../utils/images';
 import { initFirebase } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalChatSignInWall from './GlobalChatSignInWall';
-import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
+import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, buildPinnedMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
 import { uploadToDrive, formatDriveUrl } from '../lib/globalChatUpload';
 import { summarizeUA } from '../lib/globalChatReports';
 import { normalizeAdminOverrides, resolveSenderIdentity, FALLBACK_AVATAR } from '../lib/globalChatAdminIdentity';
@@ -2426,14 +2426,10 @@ function GlobalChat() {
                                                     await dbRef.current.ref(chatPath('pinnedMessage')).remove();
                                                     setPinnedMessage(null);
                                                 } else {
-                                                    const pinData = {
-                                                        id: msg.id,
-                                                        text: msg.text || '[Media]',
-                                                        senderName: msg.senderName || msg.displayName || 'Admin',
-                                                        senderPhotoURL: msg.senderPhotoURL || msg.photoURL || null,
-                                                        pinnedAt: Date.now(),
-                                                        pinnedBy: currentUserRef.current.uid
-                                                    };
+                                                    const pinData = buildPinnedMessage({
+                                                        msg,
+                                                        adminUid: currentUserRef.current.uid
+                                                    });
                                                     await dbRef.current.ref(chatPath('pinnedMessage')).set(pinData);
                                                     setPinnedMessage(pinData);
                                                 }

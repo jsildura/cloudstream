@@ -2,8 +2,17 @@ import { defineConfig, loadEnv } from 'vite'
 import path from "path"
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa';
+import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
+// Partytown moved orgs: @builder.io/partytown is deprecated in favour of
+// @qwik.dev/partytown, which is where feature releases and fixes now land.
+// Same export surface, so this is an import-path swap only.
+import { partytownVite } from '@qwik.dev/partytown/utils';
+import { partytownSnippet } from '@qwik.dev/partytown/integration';
+import { visualizer } from 'rollup-plugin-visualizer';
+import Beasties from 'beasties';
 import http from 'http';
 import https from 'https';
+import fs from 'node:fs/promises';
 import { Readable } from 'node:stream';
 
 const corsProxyPlugin = () => ({
@@ -157,15 +166,135 @@ const corsProxyPlugin = () => ({
   }
 });
 
+// ─── Partytown snippet injection ──────────────────────────────────────────────
+// The snippet is what actually relocates <script type="text/partytown"> tags to
+// the worker. Two ordering constraints:
+//   1. It must run AFTER the `partytown = {...}` config block in index.html, or
+//      `forward` is unset and gtag/dataLayer calls are never proxied.
+//   2. It does NOT need to precede the tagged scripts — the browser ignores an
+//      unknown script type, so they sit inert in the DOM until the snippet
+//      collects them by query.
+// Appending to the end of <head> satisfies both. Injected from the package
+// rather than hard-coded so it tracks the installed Partytown version.
+const partytownSnippetPlugin = () => ({
+  name: 'streamflix-partytown-snippet',
+  transformIndexHtml() {
+    return [
+      {
+        tag: 'script',
+        children: partytownSnippet(),
+        injectTo: 'head',
+      },
+    ];
+  },
+});
+
+// ─── Critical CSS inlining (beasties) ─────────────────────────────────────────
+// index.css is ~259 KB and blocks first paint on every route, including the
+// inline-styled splash screen that exists precisely to cover that paint. This
+// extracts the rules the initial HTML actually needs, inlines them, and loads
+// the rest asynchronously via the media="print" onload swap.
+//
+// Runs in closeBundle so the CSS assets are already on disk. Must run BEFORE
+// vite-plugin-pwa computes its precache manifest, or the service worker caches
+// a revision hash for the pre-beasties index.html — VitePWA is pinned to
+// closeBundleOrder: 'post' below to guarantee that ordering.
+//
+// #root is empty at build time (client-rendered SPA), so what gets inlined is
+// the splash/document chrome. The deferred stylesheet is gated on load in
+// index.html's splash logic, so React never paints unstyled.
+const criticalCssPlugin = () => ({
+  name: 'streamflix-critical-css',
+  apply: 'build',
+  async closeBundle() {
+    const outDir = path.resolve(__dirname, 'dist');
+    const htmlPath = path.join(outDir, 'index.html');
+    let html;
+    try {
+      html = await fs.readFile(htmlPath, 'utf8');
+    } catch {
+      this.warn('critical-css: dist/index.html not found, skipping');
+      return;
+    }
+
+    const beasties = new Beasties({
+      path: outDir,
+      publicPath: '/',
+      // Inline what the initial document needs; async-load the remainder.
+      preload: 'swap',
+      // Keep @font-face and keyframes — the splash animation depends on them
+      // and dropping them causes a visible hitch on first paint.
+      inlineFonts: false,
+      preloadFonts: true,
+      pruneSource: false,
+      reduceInlineStyles: false,
+      mergeStylesheets: false,
+      logLevel: 'warn',
+    });
+
+    try {
+      const processed = await beasties.process(html);
+      await fs.writeFile(htmlPath, processed, 'utf8');
+      const inlined = (processed.match(/<style>/g) || []).length;
+      console.log(
+        `\n  critical-css: inlined ${inlined} <style> block(s), ` +
+        `index.html ${(html.length / 1024).toFixed(1)} KB -> ${(processed.length / 1024).toFixed(1)} KB`
+      );
+    } catch (err) {
+      // Never fail the build over an optimisation pass.
+      this.warn(`critical-css: skipped (${err.message})`);
+    }
+  },
+});
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const analyze = mode === 'analyze' || process.env.ANALYZE === 'true'
   return {
     plugins: [
       react(),
       corsProxyPlugin(),
+      // Copies the Partytown lib into dist/~partytown/ so the gtag snippet in
+      // index.html can run in a web worker instead of on the main thread.
+      partytownVite({
+        dest: path.join(__dirname, 'dist', '~partytown'),
+      }),
+      partytownSnippetPlugin(),
+      // Compresses images in the bundle AND in public/ (7 MB of mostly
+      // unoptimised PNG). Lossless-ish defaults; see scripts/optimize-images.mjs
+      // for the one-off WebP conversions of the worst offenders.
+      ViteImageOptimizer({
+        png: { quality: 80 },
+        jpeg: { quality: 80 },
+        jpg: { quality: 80 },
+        webp: { quality: 82 },
+        svg: {
+          multipass: true,
+          plugins: [
+            {
+              name: 'preset-default',
+              params: {
+                overrides: {
+                  // Keep viewBox — removing it breaks CSS-scaled icons.
+                  removeViewBox: false,
+                },
+              },
+            },
+          ],
+        },
+        // Icons and logos are referenced by exact byte size in the PWA manifest
+        // checks; skip the tiny ones where compression gains nothing.
+        exclude: /favicon\.ico$/,
+        logStats: true,
+      }),
+      criticalCssPlugin(),
       VitePWA({
         registerType: 'prompt',
         injectRegister: null,
+        // Force VitePWA's closeBundle to run after criticalCssPlugin's, so the
+        // precache manifest hashes the beasties-rewritten index.html rather than
+        // the original. Without this the SW serves a stale HTML revision.
+        integration: { closeBundleOrder: 'post' },
         includeAssets: ['icon/favicon.ico', 'offline.html'],
         manifest: {
           name: 'STREAMFLIX',
@@ -204,6 +333,15 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,jpg,jpeg,webp,svg,woff,woff2}'],
+          // Partytown ships a debug build alongside the production one. It is
+          // never requested at runtime, so precaching it just costs the user
+          // storage on service-worker install.
+          //
+          // stats.html is the rollup-plugin-visualizer report (~850 KB) that
+          // `npm run build:analyze` writes into dist/. It is a build artefact,
+          // not part of the app: precaching it would make every visitor of an
+          // accidentally-deployed analyze build download the whole module graph.
+          globIgnores: ['**/~partytown/debug/**', '**/stats.html'],
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           navigateFallback: '/index.html',
           // /paypal-return is a real static file, not an SPA route. Without it
@@ -262,7 +400,17 @@ export default defineConfig(({ mode }) => {
           ]
         }
       }),
-    ],
+      // Bundle analysis, opt-in only: `npm run build:analyze`. Writes an
+      // interactive treemap with gzip + brotli sizes per module. Kept out of
+      // normal builds so CI and deploys don't pay for it.
+      analyze && visualizer({
+        filename: 'dist/stats.html',
+        template: 'treemap',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
+    ].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),

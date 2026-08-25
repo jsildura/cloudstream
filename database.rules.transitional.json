@@ -400,10 +400,13 @@
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
           },
           "text": {
-            ".validate": "newData.isString() && newData.val().length <= 200"
+            ".validate": "newData.isString() && newData.val().length <= 2000"
           },
           "senderName": {
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80"
+          },
+          "senderPhotoURL": {
+            ".validate": "newData.isString() && newData.val().length <= 500 && newData.val().matches(/^https:\\/\\/.+/)"
           },
           "pinnedAt": {
             ".validate": "newData.isNumber() && newData.val() > 0"

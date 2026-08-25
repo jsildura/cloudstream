@@ -15,32 +15,32 @@ import './StreamingProviderPage.css';
 const PROVIDER_DATA = {
   netflix: {
     id: '8', region: 'US', color: '#e50914', colorRgb: '229, 9, 20',
-    name: 'Netflix', logo: '/provider/netflix.png',
+    name: 'Netflix', logo: '/provider/netflix.webp',
     subtitle: 'Popular movies and TV shows available on Netflix',
   },
   disney: {
     id: '337', region: 'US', color: '#113ccf', colorRgb: '17, 60, 207',
-    name: 'Disney+', logo: '/provider/disney_plus.png',
+    name: 'Disney+', logo: '/provider/disney_plus.webp',
     subtitle: 'Popular movies and TV shows available on Disney+',
   },
   'prime-video': {
     id: '9', region: 'US', color: '#00a8e1', colorRgb: '0, 168, 225',
-    name: 'Prime Video', logo: '/provider/prime_video.png',
+    name: 'Prime Video', logo: '/provider/prime_video.webp',
     subtitle: 'Popular movies and TV shows available on Prime Video',
   },
   'apple-tv': {
     id: '350', region: 'US', color: '#f5f5f7', colorRgb: '245, 245, 247',
-    name: 'Apple TV+', logo: '/provider/apple_tv_plus.png',
+    name: 'Apple TV+', logo: '/provider/apple_tv_plus.webp',
     subtitle: 'Popular movies and TV shows available on Apple TV',
   },
   hbo: {
     id: '1899|118', region: 'US', color: '#5822b4', colorRgb: '88, 34, 180',
-    name: 'HBO Max', logo: '/provider/hbo_max.png',
+    name: 'HBO Max', logo: '/provider/hbo_max.webp',
     subtitle: 'Popular movies and TV shows available on HBO Max',
   },
   viu: {
     id: '158', region: 'HK', color: '#ffc107', colorRgb: '255, 193, 7',
-    name: 'Viu', logo: '/provider/viu.png',
+    name: 'Viu', logo: '/provider/viu.webp',
     subtitle: 'Popular movies and TV shows available on VIU',
   },
   crunchyroll: {

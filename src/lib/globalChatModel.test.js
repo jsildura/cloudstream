@@ -5,6 +5,7 @@ import {
     buildChatProfile,
     buildChatMessage,
     buildTicketMessage,
+    buildPinnedMessage,
     MAX_NAME_LENGTH,
     MAX_TEXT_LENGTH,
     MAX_REC_NOTE_LENGTH,
@@ -268,4 +269,73 @@ describe('globalChatModel', () => {
             })).toThrow(/category/i);
         });
     });
+
+    describe('buildPinnedMessage', () => {
+        it('builds valid pin with sender photo and custom text', () => {
+            const pin = buildPinnedMessage({
+                msg: {
+                    id: 'msg-123',
+                    text: 'Important announcement',
+                    senderName: 'Alice',
+                    senderPhotoURL: 'https://lh3.googleusercontent.com/alice.jpg'
+                },
+                adminUid: 'admin-google-1',
+                timestamp
+            });
+
+            expect(pin).toEqual({
+                id: 'msg-123',
+                text: 'Important announcement',
+                senderName: 'Alice',
+                senderPhotoURL: 'https://lh3.googleusercontent.com/alice.jpg',
+                pinnedAt: timestamp,
+                pinnedBy: 'admin-google-1'
+            });
+        });
+
+        it('omits senderPhotoURL if msg has no photo or invalid URL', () => {
+            const pin = buildPinnedMessage({
+                msg: {
+                    id: 'msg-456',
+                    text: 'No photo pin',
+                    senderName: 'Bob',
+                    photoURL: null
+                },
+                adminUid: 'admin-google-1',
+                timestamp
+            });
+
+            expect(pin).toEqual({
+                id: 'msg-456',
+                text: 'No photo pin',
+                senderName: 'Bob',
+                pinnedAt: timestamp,
+                pinnedBy: 'admin-google-1'
+            });
+            expect('senderPhotoURL' in pin).toBe(false);
+        });
+
+        it('falls back to media / rec title placeholder if text is empty', () => {
+            const mediaPin = buildPinnedMessage({
+                msg: { id: 'msg-media', text: '', mediaUrl: 'https://img.test/pic.png' },
+                adminUid: 'admin-1',
+                timestamp
+            });
+            expect(mediaPin.text).toBe('[Media]');
+
+            const recPin = buildPinnedMessage({
+                msg: { id: 'msg-rec', text: '', recTitle: 'Inception' },
+                adminUid: 'admin-1',
+                timestamp
+            });
+            expect(recPin.text).toBe('🎬 Inception');
+        });
+
+        it('throws on missing message or missing adminUid', () => {
+            expect(() => buildPinnedMessage({ msg: null, adminUid: 'admin-1' })).toThrow(/message/i);
+            expect(() => buildPinnedMessage({ msg: { id: '' }, adminUid: 'admin-1' })).toThrow(/message/i);
+            expect(() => buildPinnedMessage({ msg: { id: 'msg-1' }, adminUid: '' })).toThrow(/adminUid/i);
+        });
+    });
 });
+

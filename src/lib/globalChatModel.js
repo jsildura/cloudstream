@@ -208,3 +208,47 @@ export function buildTicketMessage(input = {}) {
 
     return ticket;
 }
+
+/**
+ * Builds a deterministic v2 pinned message payload.
+ * 
+ * @param {Object} input
+ * @returns {Object}
+ */
+export function buildPinnedMessage(input = {}) {
+    const { msg, adminUid, timestamp = Date.now() } = input;
+
+    if (!msg || !msg.id || typeof msg.id !== 'string' || msg.id.trim().length === 0) {
+        throw new Error('Valid message with id is required to pin');
+    }
+
+    if (!adminUid || typeof adminUid !== 'string' || adminUid.trim().length === 0) {
+        throw new Error('Valid adminUid is required to pin');
+    }
+
+    const rawName = typeof msg.senderName === 'string'
+        ? msg.senderName
+        : (typeof msg.displayName === 'string' ? msg.displayName : 'Admin');
+    const senderName = rawName.trim().slice(0, MAX_NAME_LENGTH) || 'Admin';
+
+    const rawText = typeof msg.text === 'string' && msg.text.trim().length > 0
+        ? msg.text.trim()
+        : (msg.recTitle ? `🎬 ${msg.recTitle}` : '[Media]');
+    const text = rawText.slice(0, MAX_TEXT_LENGTH);
+
+    const pin = {
+        id: String(msg.id).trim().slice(0, 80),
+        text,
+        senderName,
+        pinnedAt: typeof timestamp === 'number' && timestamp > 0 ? timestamp : Date.now(),
+        pinnedBy: adminUid.trim()
+    };
+
+    const photoURL = msg.senderPhotoURL || msg.photoURL;
+    if (typeof photoURL === 'string' && /^https:\/\//i.test(photoURL.trim())) {
+        pin.senderPhotoURL = photoURL.trim().slice(0, 500);
+    }
+
+    return pin;
+}
+

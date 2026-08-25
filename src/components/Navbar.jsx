@@ -411,7 +411,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <img
-            src="/logo/streamflix-nav-logo.png"
+            src="/logo/streamflix-nav-logo.webp"
             alt="StreamFlix Logo"
             className="logo-image"
           />

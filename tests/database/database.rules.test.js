@@ -115,7 +115,9 @@ export function createValidIssueReportFixture(uid = 'google-user-1', overrides =
 
 export function createValidPinFixture(overrides = {}) {
   return {
-    messageId: 'msg-123',
+    id: 'msg-123',
+    text: 'Pinned announcement',
+    senderName: 'Admin Alice',
     pinnedAt: 1700000000000,
     pinnedBy: 'admin-google-1',
     ...overrides
@@ -1356,10 +1358,52 @@ describe('Firebase Realtime Database Security Rules', () => {
         id: 'msg-123',
         text: 'Community guidelines: be respectful!',
         senderName: 'Admin Alice',
+        senderPhotoURL: 'https://img.test/admin.jpg',
         pinnedAt: Date.now(),
         pinnedBy: 'admin-1'
       };
       await assertSucceeds(adminDb.ref('globalChat/v2/pinnedMessage').set(pin));
+
+      // Supports message without senderPhotoURL
+      const pinWithoutPhoto = {
+        id: 'msg-123',
+        text: 'Community guidelines without photo',
+        senderName: 'Admin Alice',
+        pinnedAt: Date.now(),
+        pinnedBy: 'admin-1'
+      };
+      await assertSucceeds(adminDb.ref('globalChat/v2/pinnedMessage').set(pinWithoutPhoto));
+
+      // Supports long message text up to 2000 chars
+      const longPin = {
+        id: 'msg-long',
+        text: 'a'.repeat(2000),
+        senderName: 'Admin Alice',
+        pinnedAt: Date.now(),
+        pinnedBy: 'admin-1'
+      };
+      await assertSucceeds(adminDb.ref('globalChat/v2/pinnedMessage').set(longPin));
+
+      // Rejects text exceeding 2000 chars
+      const tooLongPin = {
+        id: 'msg-too-long',
+        text: 'a'.repeat(2001),
+        senderName: 'Admin Alice',
+        pinnedAt: Date.now(),
+        pinnedBy: 'admin-1'
+      };
+      await assertFails(adminDb.ref('globalChat/v2/pinnedMessage').set(tooLongPin));
+
+      // Rejects invalid senderPhotoURL (non-https)
+      const invalidPhotoPin = {
+        id: 'msg-invalid-photo',
+        text: 'Invalid photo test',
+        senderName: 'Admin Alice',
+        senderPhotoURL: 'http://insecure.test/pic.jpg',
+        pinnedAt: Date.now(),
+        pinnedBy: 'admin-1'
+      };
+      await assertFails(adminDb.ref('globalChat/v2/pinnedMessage').set(invalidPhotoPin));
 
       // Denies setting pinnedBy to someone else
       const forgedPin = {

@@ -23,7 +23,7 @@ const MatchCard = ({ match }) => {
     const ASSET_BASE = 'https://streami.su';
 
     // Fallback sports background for cards without poster
-    const FALLBACK_BACKGROUND = '/img/sports.jpg';
+    const FALLBACK_BACKGROUND = '/img/sports.webp';
 
     // Construct poster URL - returns fallback if no poster
     const getPosterUrl = () => {

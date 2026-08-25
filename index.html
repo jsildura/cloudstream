@@ -2,19 +2,33 @@
 <html lang="en">
 
 <head>
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-XRVXFCP1FW"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ─── Partytown: run Google Analytics in a web worker ────────────────────
+       gtag used to execute on the main thread during the critical path. Both
+       scripts below are type="text/partytown", so Partytown relocates them to
+       a worker and the main thread stays free for React's first render.
+       No resolveUrl proxy is needed: googletagmanager.com reflects our Origin
+       in Access-Control-Allow-Origin and sets Cross-Origin-Resource-Policy:
+       cross-origin, so the worker can fetch gtag.js directly. -->
   <script>
+    partytown = {
+      lib: '/~partytown/',
+      forward: ['dataLayer.push', 'gtag']
+    };
+  </script>
+  <script type="text/partytown" async src="https://www.googletagmanager.com/gtag/js?id=G-XRVXFCP1FW"></script>
+  <script type="text/partytown">
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
 
     gtag('config', 'G-XRVXFCP1FW');
   </script>
-  <meta charset="UTF-8" />
 
   <title>StreamFlix - Watch Movies & TV Shows Online | Free Streaming</title>
   <link rel="icon" type="image/x-icon" href="/icon/favicon.ico" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description"
     content="StreamFlix - Your favorite destination for movies and TV shows. Stream the latest blockbusters, popular TV series, and anime all in one place." />
   <meta name="profiton-domain-verification" content="6758f26e47f2cd88b15a2120e7ca6b412f652ce4999ba1a7fa0c0094c374eab0" />
@@ -343,6 +357,43 @@
       }
     }
 
+    // ─── Async-stylesheet gate ────────────────────────────────────────────────
+    // beasties (see vite.config.js) inlines the critical rules and converts the
+    // ~259 KB main stylesheet into <link rel="preload" as="style" onload="...">
+    // so it no longer blocks first paint. The splash screen is styled by those
+    // inlined rules, so it paints immediately — but React can mount and fire
+    // 'app-ready' before the real stylesheet arrives. Hiding the splash then
+    // would expose unstyled content.
+    //
+    // So: hide only once BOTH the app is ready and the deferred stylesheet has
+    // loaded. In dev there is no preload link (Vite injects CSS directly), and
+    // on a warm cache the load event may already have fired before this runs —
+    // both cases resolve immediately via the sheet-count check below.
+    function cssReady() {
+      const links = document.querySelectorAll('link[rel="preload"][as="style"]');
+      if (links.length === 0) return Promise.resolve();
+
+      return Promise.all(Array.prototype.map.call(links, (link) => new Promise((resolve) => {
+        // Already applied: beasties' onload has flipped rel to "stylesheet",
+        // or the sheet is otherwise attached to the document.
+        if (link.rel === 'stylesheet' && link.sheet) return resolve();
+        link.addEventListener('load', resolve, { once: true });
+        // A failed stylesheet must not pin the splash open forever.
+        link.addEventListener('error', resolve, { once: true });
+      })));
+    }
+
+    let _appReady = false;
+    let _cssReady = false;
+    function maybeHide() {
+      if (_appReady && _cssReady) tryHideSplash();
+    }
+
+    cssReady().then(() => { _cssReady = true; maybeHide(); });
+    // Independent ceiling on the CSS wait: if the stylesheet is pathologically
+    // slow we would rather show styled-late content than hold a splash screen.
+    setTimeout(() => { _cssReady = true; maybeHide(); }, 3000);
+
     // For popunder windows, hide the splash as soon as possible without waiting
     // for the 'app-ready' event — React will still render normally underneath
     if (_isPopunderWindow) {
@@ -350,7 +401,7 @@
     }
 
     // Listen for React app ready event
-    window.addEventListener('app-ready', tryHideSplash);
+    window.addEventListener('app-ready', () => { _appReady = true; maybeHide(); });
 
     // Fallback: hide after 6 seconds if React never signals (safety net)
     setTimeout(hideSplashScreen, 6000);
