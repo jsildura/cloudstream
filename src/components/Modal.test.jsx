@@ -198,9 +198,8 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Season 4 Episodes/i)).toBeDefined();
+      expect(screen.getByText('8 episodes')).toBeDefined();
     });
-
-    expect(screen.getByText('8 episodes')).toBeDefined();
 
     // Verify hidden spoilers by default
     const hiddenLabels = screen.getAllByText('Spoiler Hidden');
@@ -239,6 +238,7 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Season 4 Episodes/i)).toBeDefined();
+      expect(screen.getByText('8 episodes')).toBeDefined();
     });
 
     const ep3 = screen.getByRole('button', { name: /Play Episode 3/i });
@@ -256,10 +256,11 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/Season 4 Episodes/i)).toBeDefined();
+      expect(screen.getByText('8 episodes')).toBeDefined();
     });
 
     // Expand all episodes so ep 7 and ep 8 (rating >= 7.0) are in the DOM
-    const showMoreBtn = screen.getByRole('button', { name: /Show More/i });
+    const showMoreBtn = await screen.findByRole('button', { name: /Show More/i });
     fireEvent.click(showMoreBtn);
 
     await waitFor(() => {
