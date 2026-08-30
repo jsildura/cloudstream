@@ -1054,7 +1054,6 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                           : rec.first_air_date
                           ? rec.first_air_date.slice(0, 4)
                           : null;
-                        const inRecWatchlist = isInWatchlist(rec);
 
                         return (
                           <div

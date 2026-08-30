@@ -14,7 +14,7 @@ describe('PopunderLoader Component', () => {
     document.head.querySelectorAll(SELECTOR).forEach((s) => s.remove());
     // Also clean up PopAds child scripts
     document.querySelectorAll(
-      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/GjCt"]'
+      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
     ).forEach((s) => s.remove());
     vi.spyOn(platformUtils, 'isTVDevice').mockReturnValue(false);
   });
@@ -43,6 +43,7 @@ describe('PopunderLoader Component', () => {
 
     const popads = document.head.querySelector('script[data-network="popads"]');
     expect(popads).not.toBeNull();
+    expect(popads.text).toContain('/*<![CDATA[/* */');
     expect(popads.text).toContain('a34232821fefdf3f931e52a459524310');
     expect(popads.getAttribute('data-cfasync')).toBe('false');
     expect(popads.getAttribute('data-streamflix-popunder')).toBe('true');

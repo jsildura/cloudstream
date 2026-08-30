@@ -110,14 +110,15 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     vi.clearAllMocks();
     mockFetchTVDetails.mockResolvedValue(tvDetailsMock);
     mockFetchSeasonEpisodes.mockResolvedValue(mockEpisodes);
-    global.fetch = vi.fn().mockResolvedValue({
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ results: [] })
-    });
+    }));
   });
 
   afterEach(() => {
     cleanup();
+    vi.unstubAllGlobals();
   });
 
   it('renders season selector before review-section-header for TV shows', async () => {

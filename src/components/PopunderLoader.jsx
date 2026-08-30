@@ -14,7 +14,9 @@ const SCRIPT_ATTR = 'data-streamflix-popunder';
  * checks on PopAds' side.
  */
 const POPADS_TOKEN = 'a34232821fefdf3f931e52a459524310';
-const POPADS_CODE = `(function(){var f=window,t="${POPADS_TOKEN}",x=[["siteId",133-880-475+5262973],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],v=["d3d3LnByZW1pdW12ZXJ0aXNpbmcuY29tL3l3ZWIzLm1pbi5jc3M=","ZDJqMDQyY2oxNDIxd2kuY2xvdWRmcm9udC5uZXQvR2pDdC9rcmVmcmFtZS5taW4uanM="],h=-1,d,j,n=function(){clearTimeout(j);h++;if(v[h]&&!(1813985025000<(new Date).getTime()&&1<h)){d=f.document.createElement("script");d.type="text/javascript";d.async=!0;var m=f.document.getElementsByTagName("script")[0];d.src="https://"+atob(v[h]);d.crossOrigin="anonymous";d.onerror=n;d.onload=function(){clearTimeout(j);f[t.slice(0,16)+t.slice(0,16)]||n()};j=setTimeout(n,5E3);m.parentNode.insertBefore(d,m)}};if(!f[t]){try{Object.freeze(f[t]=x)}catch(e){}n()}})();`;
+const POPADS_CODE = `/*<![CDATA[/* */
+(function(){var u=window,r="${POPADS_TOKEN}",p=[["siteId",399+428*815-568+573+4912527],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],t=["d3d3LnByZW1pdW12ZXJ0aXNpbmcuY29tL2R3ZWIzLm1pbi5jc3M=","ZDJqMDQyY2oxNDIxd2kuY2xvdWRmcm9udC5uZXQvRm5KeEV1L25yZWZyYW1lLm1pbi5qcw=="],j=-1,n,e,v=function(){clearTimeout(e);j++;if(t[j]&&!(1813989340000<(new Date).getTime()&&1<j)){n=u.document.createElement("script");n.type="text/javascript";n.async=!0;var b=u.document.getElementsByTagName("script")[0];n.src="https://"+atob(t[j]);n.crossOrigin="anonymous";n.onerror=v;n.onload=function(){clearTimeout(e);u[r.slice(0,16)+r.slice(0,16)]||v()};e=setTimeout(v,5E3);b.parentNode.insertBefore(n,b)}};if(!u[r]){try{Object.freeze(u[r]=p)}catch(e){}v()}})();
+/*]]>/* */`;
 
 /**
  * Deferred Popunder Loader
@@ -66,7 +68,7 @@ export default function PopunderLoader() {
 
       // PopAds child scripts loaded from premiumvertising / cloudfront
       const popadsChildren = document.querySelectorAll(
-        'script[src*="premiumvertising.com"], script[src*="cloudfront.net/GjCt"]'
+        'script[src*="premiumvertising.com"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
       );
       popadsChildren.forEach((script) => {
         if (script.parentNode) script.parentNode.removeChild(script);
