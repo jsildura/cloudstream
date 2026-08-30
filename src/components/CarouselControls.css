@@ -53,22 +53,11 @@
 }
 
 .control-icon-wrapper {
-    background: rgba(20, 20, 20, 0.6);
-    border-radius: 50%;
     width: 48px;
     height: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.carousel-control-btn:hover .control-icon-wrapper {
-    transform: scale(1.15);
-    background: #e50914; /* Streamflix red */
-    box-shadow: 0 6px 16px rgba(229, 9, 20, 0.4);
 }
 
 .carousel-control-btn svg {

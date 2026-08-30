@@ -27,6 +27,7 @@ export const AdFreeProvider = ({ children }) => {
   const { accountUser, isAuthLoading } = useAuth();
   const [adFreeData, setAdFreeData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadedUid, setLoadedUid] = useState(null);
   const [error, setError] = useState(null);
 
   // Subscribe to RTDB account entitlement
@@ -38,6 +39,7 @@ export const AdFreeProvider = ({ children }) => {
 
     if (!accountUser || !accountUser.uid) {
       setAdFreeData(null);
+      setLoadedUid(null);
       setLoading(false);
       setError(null);
       return;
@@ -60,6 +62,7 @@ export const AdFreeProvider = ({ children }) => {
         } else {
           setAdFreeData(null);
         }
+        setLoadedUid(accountUser.uid);
         setLoading(false);
         setError(null);
       };
@@ -68,6 +71,7 @@ export const AdFreeProvider = ({ children }) => {
         if (!isMounted) return;
         console.warn('AdFree subscription error:', err);
         setError(err.message || 'Failed to read ad-free status');
+        setLoadedUid(accountUser.uid);
         setLoading(false);
       };
 
@@ -287,10 +291,11 @@ export const AdFreeProvider = ({ children }) => {
 
   // A read failure leaves the entitlement genuinely unknown, so it counts as
   // unresolved: the gate stays `pending` and no ad action fires.
+  const isEntitlementPending = Boolean(accountUser && accountUser.uid && loadedUid !== accountUser.uid);
   const adGateState = resolveAdGateState({
     isAdFree,
     isAnonymous: !accountUser,
-    loading: loading || Boolean(error),
+    loading: loading || isEntitlementPending || Boolean(error),
     isAuthLoading
   });
 

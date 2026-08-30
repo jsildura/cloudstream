@@ -13,10 +13,6 @@ describe('PopunderLoader Component', () => {
     vi.useFakeTimers();
     vi.restoreAllMocks();
     document.head.querySelectorAll(SELECTOR).forEach((s) => s.remove());
-    // Also clean up PopAds child scripts
-    document.querySelectorAll(
-      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/n/"], script[src*="cloudfront.net/M/"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
-    ).forEach((s) => s.remove());
     vi.spyOn(platformUtils, 'isTVDevice').mockReturnValue(false);
   });
 
@@ -36,7 +32,7 @@ describe('PopunderLoader Component', () => {
     return existing;
   };
 
-  it('injects Adsterra immediately and PopAds after a 3s delay when gate resolves to ads', () => {
+  it('injects Adsterra popunder when gate resolves to ads', () => {
     mockGate(AD_STATE_ADS);
 
     render(<PopunderLoader />);
@@ -46,19 +42,6 @@ describe('PopunderLoader Component', () => {
     expect(adsterra).not.toBeNull();
     expect(adsterra.src).toContain('consumptionbackwardsentiments.com');
     expect(adsterra.getAttribute('data-streamflix-popunder')).toBe('true');
-
-    // PopAds should NOT be injected yet (staggered by 3s)
-    expect(document.head.querySelector('script[data-network="popads"]')).toBeNull();
-
-    // Advance timers to trigger PopAds injection
-    vi.advanceTimersByTime(3000);
-
-    const popads = document.head.querySelector('script[data-network="popads"]');
-    expect(popads).not.toBeNull();
-    expect(popads.text).toContain('/*<![CDATA[/* */');
-    expect(popads.text).toContain('a34232821fefdf3f931e52a459524310');
-    expect(popads.getAttribute('data-cfasync')).toBe('false');
-    expect(popads.getAttribute('data-streamflix-popunder')).toBe('true');
   });
 
   it('does NOT inject popunder scripts while the gate is pending', () => {
@@ -103,14 +86,9 @@ describe('PopunderLoader Component', () => {
     mockGate(AD_STATE_ADS);
 
     const { rerender } = render(<PopunderLoader />);
-
-    // Advance timers so PopAds fires
-    vi.advanceTimersByTime(3000);
-
     rerender(<PopunderLoader />);
 
-    // Adsterra + PopAds = 2 scripts with the popunder attr
-    expect(document.head.querySelectorAll(SELECTOR)).toHaveLength(2);
+    expect(document.head.querySelectorAll(SELECTOR)).toHaveLength(1);
   });
 
   it('does NOT inject popunder scripts on TV devices', () => {
@@ -119,26 +97,19 @@ describe('PopunderLoader Component', () => {
 
     render(<PopunderLoader />);
 
-    vi.advanceTimersByTime(3000);
-
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('cancels PopAds timer if user transitions to ad-free before delay expires', () => {
+  it('removes popunder script if user transitions to ad-free dynamically', () => {
     mockGate(AD_STATE_ADS);
 
     const { rerender } = render(<PopunderLoader />);
 
-    // Adsterra injected, PopAds timer started
     expect(document.head.querySelector('script[data-network="adsterra"]')).not.toBeNull();
-    expect(document.head.querySelector('script[data-network="popads"]')).toBeNull();
 
-    // User goes ad-free before the 3s delay
+    // User goes ad-free
     vi.spyOn(AdFreeContextModule, 'useAdFree').mockReturnValue({ adGateState: AD_STATE_ADFREE });
     rerender(<PopunderLoader />);
-
-    // Adsterra should be removed, PopAds timer should be cancelled
-    vi.advanceTimersByTime(3000);
 
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });

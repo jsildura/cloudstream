@@ -8,6 +8,7 @@ import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import AdblockModal from './components/AdblockModal';
 import PopunderLoader from './components/PopunderLoader';
+import SocialBarLoader from './components/SocialBarLoader';
 import BotProtection from './components/BotProtection';
 import Toast from './components/Toast';
 import PageLoader from './components/PageLoader';
@@ -142,6 +143,7 @@ function App() {
         <BotProtection />
         <AdblockModal />
         <PopunderLoader />
+        <SocialBarLoader />
         <ScrollToTop />
         <UpdatePrompt />
         {/* Hide ScrollToTopButton on music pages */}
