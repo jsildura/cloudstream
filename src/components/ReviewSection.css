@@ -14,9 +14,23 @@
 .review-section-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     margin-bottom: 10px;
     padding-top: 14px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.review-section-header:focus-visible {
+    outline: 2px solid rgba(229, 9, 20, 0.8);
+    outline-offset: 2px;
+}
+
+.review-section-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
@@ -38,6 +52,48 @@
     padding: 2px 7px;
     letter-spacing: 0.3px;
     white-space: nowrap;
+}
+
+.review-toggle-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+}
+
+.review-toggle-icon {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: rotate(0deg);
+}
+
+.review-toggle-icon.is-collapsed {
+    transform: rotate(-90deg);
+}
+
+.review-section.collapsed {
+    margin-bottom: 0;
+}
+
+.review-section.collapsed .review-section-header {
+    margin-bottom: 4px;
+}
+
+.review-section-content {
+    animation: reviewSectionFadeIn 0.2s ease-out;
+}
+
+@keyframes reviewSectionFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ── Score Summary ────────────────────────── */

@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { TV_BAR_CATEGORIES } from '../constants/genres';
+import React, { useState, useEffect, useRef } from 'react';
+import { TV_BAR_CATEGORIES, getCategoryColor } from '../constants/genres';
+import useGenreBackdrops from '../hooks/useGenreBackdrops';
+import CarouselControls from './CarouselControls';
+import { wsUrl } from '../utils/images';
 import './TVDiscoverFilterBar.css';
 
 // How many category pills fit beside the "More" button at each width, derived
@@ -40,9 +43,9 @@ const VISIBLE_STEPS = [
   { min: 1152, count: 9 },
   { min: 1024, count: 8 },
   { min: 900, count: 7 },
-  { min: 768, count: 6 },
-  { min: 600, count: 4 },
-  { min: 0, count: 3 }
+  { min: 769, count: 6 },
+  // Mobile tier (<= 768px): Show all genres so users can horizontally scroll through all categories
+  { min: 0, count: TV_BAR_CATEGORIES.length }
 ];
 
 const countForWidth = (width) =>
@@ -50,6 +53,39 @@ const countForWidth = (width) =>
 
 // Pseudo-random pill widths (em, so they scale with the TV/4K font tiers).
 const SKELETON_WIDTHS = ['5em', '6.5em', '4.5em', '7em', '5.5em', '6em', '4.8em', '6.8em'];
+
+const CardBackdrop = ({ backdropPath }) => {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [backdropPath]);
+
+  return (
+    <>
+      {(!backdropPath || !loaded) && (
+        <div className="tv-filter-pill-card-skeleton" aria-hidden="true" />
+      )}
+      {backdropPath && (
+        <img
+          className="tv-filter-pill-bg"
+          src={wsUrl(backdropPath, { w: 300 })}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          draggable="false"
+          onLoad={() => setLoaded(true)}
+          ref={(img) => {
+            if (img && img.complete && img.naturalWidth > 0 && !loaded) {
+              setLoaded(true);
+            }
+          }}
+          style={{ opacity: loaded ? 1 : 0 }}
+        />
+      )}
+    </>
+  );
+};
 
 // Resolved from matchMedia rather than a resize listener so the browser only
 // notifies us when a breakpoint is actually crossed.
@@ -73,8 +109,19 @@ const useVisibleCount = () => {
 
 // Netflix-style bar: top categories inline, everything else behind "More"
 // (FilterPanel).
-const TVDiscoverFilterBar = ({ filters, onMoreClick, onFilterChange, onClearFilters, activeFilterCount = 0, loading = false }) => {
+const TVDiscoverFilterBar = ({
+  filters,
+  onMoreClick,
+  onFilterChange,
+  onClearFilters,
+  activeFilterCount = 0,
+  loading = false,
+  variant = 'pills',
+  title = 'Genres',
+  subtitle = 'Find something by mood'
+}) => {
   const visibleCount = useVisibleCount();
+  const cards = variant === 'cards';
 
   // Split on either separator: genres join with "," and keywords with "|"
   // (see TV_BAR_BY_KEY in constants/genres.js), and a hand-edited URL may carry
@@ -95,84 +142,169 @@ const TVDiscoverFilterBar = ({ filters, onMoreClick, onFilterChange, onClearFilt
 
   const showClear = activeFilterCount > 0 && Boolean(onClearFilters);
 
+  const carouselRef = useRef(null);
+
   // Truncation must never hide an *active* pill — a genre selected in the panel
   // or restored from the URL would otherwise be impossible to switch off. Any
   // active overflow entry is appended, keeping the canonical order.
   //
   // VISIBLE_STEPS is measured against the "More" button alone, so the Clear pill
-  // costs one category slot while it is on screen.
-  const headCount = Math.max(1, visibleCount - (showClear ? 1 : 0));
+  // costs one category slot while it is on screen (except in cards mode or when
+  // all genres are visible).
+  const isAllVisible = cards || visibleCount >= TV_BAR_CATEGORIES.length;
+  const headCount = isAllVisible
+    ? TV_BAR_CATEGORIES.length
+    : Math.max(1, visibleCount - (showClear ? 1 : 0));
   const head = TV_BAR_CATEGORIES.slice(0, headCount);
   const pinnedOverflow = TV_BAR_CATEGORIES.slice(headCount).filter(isActive);
   const visibleCategories = [...head, ...pinnedOverflow];
 
-  return (
-    <div className="tv-discover-filterbar">
-      <div className="tv-filter-genres" role="group" aria-label="Categories" aria-busy={loading}>
-        {loading ? (
-          SKELETON_WIDTHS.map((width, i) => (
-            <span key={i} className="tv-filter-pill tv-filter-pill-skeleton" style={{ width }} />
-          ))
-        ) : (
-          visibleCategories.map(category => {
-            const active = isActive(category);
-            return (
-              <button
-                key={category.key}
-                type="button"
-                className={`tv-filter-pill ${active ? 'active' : ''}`}
-                aria-pressed={active}
-                onClick={() => handleCategoryClick(category)}
-              >
-                {category.name}
-              </button>
-            );
-          })
-        )}
-      </div>
+  // Card variant only: one representative backdrop per visible genre. No-op (and
+  // no requests) when variant === 'pills'.
+  const backdrops = useGenreBackdrops(visibleCategories, 'tv', cards);
 
-      {/* Pinned to the right edge so it stays reachable while genres scroll. */}
-      <div className="tv-filter-more-group">
-        {loading ? (
-          <span className="tv-filter-pill tv-filter-pill-skeleton" style={{ width: '7em' }} />
-        ) : (
-          <>
-            {showClear && (
-              <button
-                type="button"
-                className="tv-filter-pill tv-filter-clear"
-                onClick={onClearFilters}
-              >
-                Clear
-              </button>
-            )}
+  const renderMoreGroup = () => (
+    <div className="tv-filter-more-group">
+      {loading ? (
+        <span className="tv-filter-pill tv-filter-pill-skeleton" style={{ width: '7em' }} />
+      ) : (
+        <>
+          {showClear && (
             <button
               type="button"
-              className="tv-filter-pill tv-filter-more"
-              onClick={onMoreClick}
-              aria-haspopup="dialog"
+              className="tv-filter-pill tv-filter-clear"
+              onClick={onClearFilters}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="4" y1="21" x2="4" y2="14"></line>
-                <line x1="4" y1="10" x2="4" y2="3"></line>
-                <line x1="12" y1="21" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12" y2="3"></line>
-                <line x1="20" y1="21" x2="20" y2="16"></line>
-                <line x1="20" y1="12" x2="20" y2="3"></line>
-                <line x1="1" y1="14" x2="7" y2="14"></line>
-                <line x1="9" y1="8" x2="15" y2="8"></line>
-                <line x1="17" y1="16" x2="23" y2="16"></line>
-              </svg>
-              More
-              {activeFilterCount > 0 && (
-                <span className="tv-filter-more-badge" aria-label={`${activeFilterCount} active filters`}>
-                  {activeFilterCount}
-                </span>
-              )}
+              Clear
             </button>
-          </>
-        )}
-      </div>
+          )}
+          <button
+            type="button"
+            className="tv-filter-pill tv-filter-more"
+            onClick={onMoreClick}
+            aria-haspopup="dialog"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="4" y1="21" x2="4" y2="14"></line>
+              <line x1="4" y1="10" x2="4" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="3"></line>
+              <line x1="20" y1="21" x2="20" y2="16"></line>
+              <line x1="20" y1="12" x2="20" y2="3"></line>
+              <line x1="1" y1="14" x2="7" y2="14"></line>
+              <line x1="9" y1="8" x2="15" y2="8"></line>
+              <line x1="17" y1="16" x2="23" y2="16"></line>
+            </svg>
+            More
+            {activeFilterCount > 0 && (
+              <span className="tv-filter-more-badge" aria-label={`${activeFilterCount} active filters`}>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={`tv-discover-filterbar${cards ? ' tv-discover-filterbar--cards' : ''}`}>
+      {cards && (
+        <div className="tv-filter-header">
+          <div className="tv-filter-title-group">
+            <span className="tv-filter-title-indicator" aria-hidden="true" />
+            <div className="tv-filter-title-content">
+              <h2 className="tv-filter-title">
+                {title}
+                <svg
+                  className="tv-filter-title-chevron"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </h2>
+              {subtitle && <p className="tv-filter-subtitle">{subtitle}</p>}
+            </div>
+          </div>
+          {renderMoreGroup()}
+        </div>
+      )}
+      {cards ? (
+        <div className="tv-filter-carousel-wrapper carousel-container">
+          <div
+            ref={carouselRef}
+            className="tv-filter-genres tv-filter-genres--cards"
+            role="group"
+            aria-label="Categories"
+            aria-busy={loading}
+          >
+            {loading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <span key={i} className="tv-filter-pill tv-filter-pill--card tv-filter-pill-skeleton" />
+              ))
+            ) : (
+              visibleCategories.map(category => {
+                const active = isActive(category);
+                const backdropPath = backdrops[category.key];
+                const categoryColor = getCategoryColor(category);
+                return (
+                  <button
+                    key={category.key}
+                    type="button"
+                    className={`tv-filter-pill tv-filter-pill--card${active ? ' active' : ''}`}
+                    style={categoryColor ? {
+                      '--genre-color': categoryColor.hex,
+                      '--genre-rgb': categoryColor.rgb
+                    } : undefined}
+                    aria-pressed={active}
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    <CardBackdrop backdropPath={backdropPath} />
+                    <span className="tv-filter-pill-shade" aria-hidden="true" />
+                    <span className="tv-filter-pill-label">{category.name}</span>
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <CarouselControls carouselRef={carouselRef} />
+        </div>
+      ) : (
+        <>
+          <div className="tv-filter-genres" role="group" aria-label="Categories" aria-busy={loading}>
+            {loading ? (
+              SKELETON_WIDTHS.map((width, i) => (
+                <span key={i} className="tv-filter-pill tv-filter-pill-skeleton" style={{ width }} />
+              ))
+            ) : (
+              visibleCategories.map(category => {
+                const active = isActive(category);
+                return (
+                  <button
+                    key={category.key}
+                    type="button"
+                    className={`tv-filter-pill${active ? ' active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() => handleCategoryClick(category)}
+                  >
+                    {category.name}
+                  </button>
+                );
+              })
+            )}
+          </div>
+          {renderMoreGroup()}
+        </>
+      )}
     </div>
   );
 };

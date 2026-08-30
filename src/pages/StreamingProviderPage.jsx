@@ -214,7 +214,7 @@ const StreamingProviderPage = () => {
         return (
             <div className="streaming-provider-page" style={{ '--scoped-color': provider.color, '--scoped-color-rgb': provider.colorRgb }}>
                 <div className="streaming-provider-page-header">
-                    <Link to="/" className="back-button">
+                    <Link to="/" state={{ scrollToSection: 'streaming-providers' }} className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                         </svg>
@@ -231,6 +231,7 @@ const StreamingProviderPage = () => {
                         onMoreClick={() => setIsFilterPanelOpen(true)}
                         onClearFilters={handleClearFilters}
                         activeFilterCount={activeFilterCount}
+                        variant="cards"
                         loading
                     />
                 ) : (
@@ -240,6 +241,7 @@ const StreamingProviderPage = () => {
                         onMoreClick={() => setIsFilterPanelOpen(true)}
                         onClearFilters={handleClearFilters}
                         activeFilterCount={activeFilterCount}
+                        variant="cards"
                         loading
                     />
                 )}
@@ -254,7 +256,7 @@ const StreamingProviderPage = () => {
     return (
         <div className="streaming-provider-page" style={{ '--scoped-color': provider.color, '--scoped-color-rgb': provider.colorRgb }}>
             <div className="streaming-provider-page-header">
-                <Link to="/" className="back-button">
+                <Link to="/" state={{ scrollToSection: 'streaming-providers' }} className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                     </svg>
@@ -273,6 +275,7 @@ const StreamingProviderPage = () => {
                     onMoreClick={() => setIsFilterPanelOpen(true)}
                     onClearFilters={handleClearFilters}
                     activeFilterCount={activeFilterCount}
+                    variant="cards"
                 />
             ) : (
                 <TVDiscoverFilterBar
@@ -281,6 +284,7 @@ const StreamingProviderPage = () => {
                     onMoreClick={() => setIsFilterPanelOpen(true)}
                     onClearFilters={handleClearFilters}
                     activeFilterCount={activeFilterCount}
+                    variant="cards"
                 />
             )}
 

@@ -44,7 +44,7 @@ export const serverConfig = [
     },
     {
         name: 'Server 1',
-        description: 'Server 1',
+        description: 'Main Server',
         baseUrl: 'https://zxcstream.xyz/player/',
         suffix: '/en?autoplay=true',
         isRecommended: true,
@@ -186,6 +186,17 @@ export const serverConfig = [
     },
     {
         name: 'Server 14',
+        description: 'Premium Server',
+        baseUrl: 'https://nextbox.uno/jeeplayer/',
+        suffix: '?embedded=1',
+        isAdsFree: true,
+        isRecommended: true,
+        sandboxSupport: true,
+        hasAds: false,
+        pattern: 'default',
+    },
+    {
+        name: 'Server 15',
         description: 'Backup Server',
         baseUrl: 'https://vidsrc-embed.ru/embed/',
         suffix: '',
@@ -195,7 +206,7 @@ export const serverConfig = [
         pattern: 'vidsrc-xyz',
     },
     {
-        name: 'Server 15',
+        name: 'Server 16',
         description: 'Backup Server',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
@@ -205,7 +216,7 @@ export const serverConfig = [
         pattern: 'primesrc',
     },
     {
-        name: 'Server 16',
+        name: 'Server 17',
         description: 'Backup Server',
         baseUrl: 'https://vidfast.pro/',
         suffix: '?autoplay=true&autoNext=true',
@@ -215,7 +226,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 17',
+        name: 'Server 18',
         description: 'Backup Server',
         baseUrl: 'https://vidnest.fun/',
         suffix: '',
@@ -225,7 +236,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 18',
+        name: 'Server 19',
         description: 'Backup Server',
         baseUrl: 'https://embedmaster.link/',
         suffix: '',

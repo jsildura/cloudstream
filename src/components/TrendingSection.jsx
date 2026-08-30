@@ -255,7 +255,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
     const subtitle = timeWindow === 'day' ? "Watch the Best Today" : "Weekly Highlights";
 
     return (
-        <div className="trending-section" aria-live="polite" aria-busy={loading} data-nav-section="trending">
+        <div className="trending-section" aria-live="polite" aria-busy={loading} data-nav-section="trending" data-time-window={timeWindow}>
             {/* Header */}
             <div className="trending-section-header">
                 <div className="trending-section-header-left">

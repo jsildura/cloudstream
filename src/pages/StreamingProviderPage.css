@@ -138,8 +138,10 @@
 /* `spin` is defined once in styles/globals.css, which main.jsx imports on every
    route — no local copy needed. */
 
-/* Provider branding overrides */
-.streaming-provider-page .tv-filter-pill.active {
+/* Provider branding overrides — text-pill variant only. The card variant
+   (variant="cards") keeps its per-genre color + white active ring, matching
+   Discover / TV Shows, so it must not be repainted with the provider color. */
+.streaming-provider-page .tv-filter-pill.active:not(.tv-filter-pill--card) {
   background: var(--scoped-color, #e50914);
   color: #fff;
 }

@@ -6,16 +6,25 @@ const ScrollToTopButton = () => {
 
     useEffect(() => {
         const handleScroll = () => {
-            // Show button when user scrolls more than 10px
-            if (window.scrollY > 10) {
-                setIsVisible(true);
+            const contentRows = document.querySelector('.content-rows');
+            if (contentRows) {
+                const rect = contentRows.getBoundingClientRect();
+                // Show when the user starts to view div.content-rows
+                setIsVisible(rect.top <= window.innerHeight && window.scrollY > 0);
             } else {
-                setIsVisible(false);
+                // Fallback for pages without .content-rows
+                setIsVisible(window.scrollY > 150);
             }
         };
 
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        window.addEventListener('resize', handleScroll, { passive: true });
+        handleScroll();
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+            window.removeEventListener('resize', handleScroll);
+        };
     }, []);
 
     const scrollToTop = () => {

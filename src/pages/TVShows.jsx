@@ -165,6 +165,7 @@ const TVShows = () => {
         onMoreClick={() => setIsFilterPanelOpen(true)}
         onClearFilters={handleClearFilters}
         activeFilterCount={activeFilterCount}
+        variant="cards"
       />
 
       <div className="content-rows">

@@ -285,7 +285,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
     }
 
     return (
-        <div className="popular-streamflix-section">
+        <div className="popular-streamflix-section" data-nav-section="popular">
             <h2 className="popular-streamflix-title">
                 Popular on Streamflix
             </h2>

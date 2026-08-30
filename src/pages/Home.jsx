@@ -21,6 +21,7 @@ import { useTMDB } from '../hooks/useTMDB';
 import { useProfiles } from '../contexts/ProfileContext';
 import { useToast } from '../contexts/ToastContext';
 import { buildKidsCatalog } from '../lib/kidsCatalog';
+import SectionNav from '../components/SectionNav';
 import './Home.css';
 
 // Timezone to country code mapping for popular regions
@@ -131,6 +132,47 @@ const Home = () => {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Handle incoming scroll-to-section request (e.g. from StudioPage back button)
+  useEffect(() => {
+    const targetSection = location.state?.scrollToSection || (location.hash ? location.hash.replace('#', '') : null);
+    if (targetSection) {
+      // Clear navigation state so refresh doesn't trigger unwanted re-scroll
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      const scrollToTarget = (behavior = 'auto') => {
+        const selector = targetSection === 'studios'
+          ? 'section.movie-studios-section, [data-nav-section="studios"]'
+          : targetSection === 'collections'
+          ? 'div.popular-collections, [data-nav-section="collections"]'
+          : `[data-nav-section="${targetSection}"]`;
+        const el = document.querySelector(selector);
+        if (el) {
+          const navbarOffset = 76;
+          const rect = el.getBoundingClientRect();
+          const offsetTop = rect.top + window.scrollY - navbarOffset;
+          window.scrollTo({
+            top: Math.max(0, offsetTop),
+            behavior
+          });
+          return true;
+        }
+        return false;
+      };
+
+      // Immediate attempt
+      scrollToTarget('auto');
+
+      // Subsequent attempts as page components stabilize layout
+      const timer1 = setTimeout(() => scrollToTarget('smooth'), 120);
+      const timer2 = setTimeout(() => scrollToTarget('auto'), 400);
+
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [location.state, location.hash]);
 
   // Fetch content and open modal for redirected direct URL access
   const openModalForContent = async ({ type, id, season, episode }) => {
@@ -302,30 +344,42 @@ const Home = () => {
         ) : (
           <>
             {/* Popular on Streamflix */}
-            <PopularOnStreamflix onItemClick={handleItemClick} />
+            <div data-nav-section="popular">
+              <PopularOnStreamflix onItemClick={handleItemClick} />
+            </div>
 
             {/* Trending Today Section */}
-            <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+            <div data-nav-section="trending-today">
+              <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+            </div>
 
             {/* Trending This Week Section */}
-            <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+            <div data-nav-section="trending-week">
+              <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+            </div>
 
             {/* Trending Anime Section */}
-            <TrendingAnimeSection onItemClick={handleItemClick} />
+            <div data-nav-section="trending-anime">
+              <TrendingAnimeSection onItemClick={handleItemClick} />
+            </div>
 
             {/* Top 10 in Your Country Section */}
             {topTenMovies.length > 0 && (
-              <TopTenRow
-                items={topTenMovies}
-                onItemClick={handleItemClick}
-                countryName={userCountry.name}
-              />
+              <div data-nav-section="top-ten">
+                <TopTenRow
+                  items={topTenMovies}
+                  onItemClick={handleItemClick}
+                  countryName={userCountry.name}
+                />
+              </div>
             )}
 
             {/* Popular Collections Section */}
-            <LazyLoadSection minHeight="350px">
-              <PopularCollections />
-            </LazyLoadSection>
+            <div data-nav-section="collections">
+              <LazyLoadSection minHeight="350px">
+                <PopularCollections />
+              </LazyLoadSection>
+            </div>
 
             {/* Native Ad Section */}
             <LazyLoadSection minHeight="200px">
@@ -333,17 +387,24 @@ const Home = () => {
             </LazyLoadSection>
 
             {/* Movie Studios Section */}
-            <LazyLoadSection minHeight="300px">
-              <MovieStudios />
-            </LazyLoadSection>
+            <div data-nav-section="studios">
+              <LazyLoadSection minHeight="300px">
+                <MovieStudios />
+              </LazyLoadSection>
+            </div>
 
             {/* Streaming Providers Section */}
-            <LazyLoadSection minHeight="300px">
-              <StreamingProviders />
-            </LazyLoadSection>
+            <div data-nav-section="streaming-providers">
+              <LazyLoadSection minHeight="300px">
+                <StreamingProviders />
+              </LazyLoadSection>
+            </div>
           </>
         )}
       </div>
+
+      {/* Desktop vertical section navigation shortcut */}
+      {!isKidsMode && <SectionNav />}
 
       {isModalOpen && selectedItem && (
         <Modal item={selectedItem} onClose={closeModal} />

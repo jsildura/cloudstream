@@ -72,8 +72,16 @@ describe('servers configuration', () => {
         expect(cinezoServer.isAdsFree).toBe(true);
     });
 
-    it('has Server 18 configured for embedmaster.link', () => {
-        const embedmasterServer = serverConfig.find(s => s.name === 'Server 18');
+    it('has Server 14 configured for nextbox.uno and flagged as isAdsFree', () => {
+        const nextboxServer = serverConfig.find(s => s.name === 'Server 14');
+        expect(nextboxServer).toBeDefined();
+        expect(nextboxServer.baseUrl).toBe('https://nextbox.uno/jeeplayer/');
+        expect(nextboxServer.pattern).toBe('default');
+        expect(nextboxServer.isAdsFree).toBe(true);
+    });
+
+    it('has Server 19 configured for embedmaster.link', () => {
+        const embedmasterServer = serverConfig.find(s => s.name === 'Server 19');
         expect(embedmasterServer).toBeDefined();
         expect(embedmasterServer.baseUrl).toBe('https://embedmaster.link/');
         expect(embedmasterServer.pattern).toBe('default');
@@ -160,8 +168,14 @@ describe('servers configuration', () => {
             expect(buildServerUrl(embedServer, 'tv', 1399, 1, 1)).toBe('https://1embed.cc/embed/tv/1399/1/1?autoplay=1');
         });
 
-        it('builds correct movie and TV URLs for Server 18 (embedmaster)', () => {
-            const embedmasterServer = serverConfig.find(s => s.name === 'Server 18');
+        it('builds correct movie and TV URLs for Server 14 (nextbox)', () => {
+            const nextboxServer = serverConfig.find(s => s.name === 'Server 14');
+            expect(buildServerUrl(nextboxServer, 'movie', 1288445, 1, 1)).toBe('https://nextbox.uno/jeeplayer/movie/1288445?embedded=1');
+            expect(buildServerUrl(nextboxServer, 'tv', 95350, 1, 1)).toBe('https://nextbox.uno/jeeplayer/tv/95350/1/1?embedded=1');
+        });
+
+        it('builds correct movie and TV URLs for Server 19 (embedmaster)', () => {
+            const embedmasterServer = serverConfig.find(s => s.name === 'Server 19');
             expect(buildServerUrl(embedmasterServer, 'movie', 550, 1, 1)).toBe('https://embedmaster.link/movie/550');
             expect(buildServerUrl(embedmasterServer, 'tv', 106379, 2, 4)).toBe('https://embedmaster.link/tv/106379/2/4');
         });

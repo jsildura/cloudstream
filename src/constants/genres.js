@@ -220,3 +220,58 @@ export function resolveGenreQuery(query) {
   };
 }
 
+/**
+ * Curated dominant color palette per genre/category matching modern streaming
+ * aesthetics (e.g. Horror = purple, Romance = crimson red, Adventure = golden bronze).
+ */
+export const GENRE_COLORS = {
+  Horror: { hex: '#4a1259', rgb: '74, 18, 89' },
+  Romance: { hex: '#991b1b', rgb: '153, 27, 27' },
+  Adventure: { hex: '#854d0e', rgb: '133, 77, 14' },
+  Action: { hex: '#b91c1c', rgb: '185, 28, 28' },
+  'Action & Adventure': { hex: '#b91c1c', rgb: '185, 28, 28' },
+  Drama: { hex: '#1e3a8a', rgb: '30, 58, 138' },
+  Comedy: { hex: '#d97706', rgb: '217, 119, 6' },
+  'Sci-Fi & Fantasy': { hex: '#4338ca', rgb: '67, 56, 202' },
+  'Sci-Fi': { hex: '#4338ca', rgb: '67, 56, 202' },
+  Animation: { hex: '#7c3aed', rgb: '124, 58, 237' },
+  Mystery: { hex: '#3b0764', rgb: '59, 7, 100' },
+  Crime: { hex: '#701a2b', rgb: '112, 26, 43' },
+  Thriller: { hex: '#374151', rgb: '55, 65, 81' },
+  Fantasy: { hex: '#6b21a8', rgb: '107, 33, 168' },
+  Family: { hex: '#059669', rgb: '5, 150, 105' },
+  Documentary: { hex: '#3f6212', rgb: '63, 98, 18' },
+  Reality: { hex: '#be185d', rgb: '190, 24, 93' },
+  Kids: { hex: '#0284c7', rgb: '2, 132, 199' },
+  Soap: { hex: '#e11d48', rgb: '225, 29, 72' },
+  Talk: { hex: '#4f46e5', rgb: '79, 70, 229' },
+  'War & Politics': { hex: '#52525b', rgb: '82, 82, 91' },
+  War: { hex: '#52525b', rgb: '82, 82, 91' },
+  News: { hex: '#1d4ed8', rgb: '29, 78, 216' },
+  Western: { hex: '#713f12', rgb: '113, 63, 18' },
+  History: { hex: '#78350f', rgb: '120, 53, 15' },
+  Music: { hex: '#4f46e5', rgb: '79, 70, 229' },
+  'TV Movie': { hex: '#1e293b', rgb: '30, 41, 59' },
+  Anime: { hex: '#a21caf', rgb: '162, 28, 175' },
+  Sitcom: { hex: '#ea580c', rgb: '234, 88, 12' },
+  'High School': { hex: '#db2777', rgb: '219, 39, 119' },
+  Supernatural: { hex: '#134e4a', rgb: '19, 78, 74' },
+  Police: { hex: '#1e3a8a', rgb: '30, 58, 138' },
+  Historical: { hex: '#78350f', rgb: '120, 53, 15' },
+  Magic: { hex: '#7e22ce', rgb: '126, 34, 206' },
+  Superhero: { hex: '#e11d48', rgb: '225, 29, 72' },
+  'Time Travel': { hex: '#0f766e', rgb: '15, 118, 110' },
+  'Martial Arts': { hex: '#b91c1c', rgb: '185, 28, 28' },
+  Slasher: { hex: '#7f1d1d', rgb: '127, 29, 29' },
+  Spy: { hex: '#0f172a', rgb: '15, 23, 42' },
+  Heist: { hex: '#047857', rgb: '4, 120, 87' }
+};
+
+export const getCategoryColor = (category) => {
+  if (!category) return { hex: '#1e293b', rgb: '30, 41, 59' };
+  if (category.name && GENRE_COLORS[category.name]) {
+    return GENRE_COLORS[category.name];
+  }
+  return { hex: '#1e293b', rgb: '30, 41, 59' };
+};
+

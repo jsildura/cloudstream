@@ -1,0 +1,165 @@
+/* Vertical Section Navigation Shortcut - Inspired by .banner-indicators */
+.section-indicators {
+    position: fixed;
+    right: 20px;
+    width: 48px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem; /* Matches .banner-indicators gap */
+    z-index: 500;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.4s ease, visibility 0.4s;
+    user-select: none;
+}
+
+/* Same visible behavior as button.scroll-to-top-btn.visible */
+.section-indicators.visible {
+    opacity: 0.5; /* Matches .banner-indicators default opacity */
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* On hover over the navigation column, light up just like .banner-indicators:hover */
+.section-indicators.visible:hover {
+    opacity: 1;
+}
+
+/* Each pill indicator - based directly on .banner-indicator */
+.section-indicator {
+    height: 6px;
+    width: 6px;
+    border-radius: 9999px;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.4);
+    transition: all 0.4s ease; /* Matches .banner-indicator transition */
+    position: relative;
+    box-sizing: content-box;
+}
+
+/* Expanded invisible hit target for easy clicking of the 6px dot */
+.section-indicator::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    bottom: -5px;
+    left: -14px;
+    right: -14px;
+}
+
+.section-indicator:hover {
+    background-color: rgba(255, 255, 255, 0.75);
+}
+
+/* Active state: transforms into a 32px elongated vertical pill */
+.section-indicator.active {
+    height: 32px;
+    width: 6px;
+    background-color: var(--netflix-red, #e50914);
+    box-shadow: 0 0 10px rgba(229, 9, 20, 0.6);
+}
+
+.section-indicator.active:hover {
+    background-color: #ff2a34;
+    box-shadow: 0 0 14px rgba(229, 9, 20, 0.8);
+}
+
+.section-indicator:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 3px;
+}
+
+/* Tooltip on hover */
+.section-indicator-tooltip {
+    position: absolute;
+    right: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    white-space: nowrap;
+    padding: 5px 11px;
+    background: rgba(18, 18, 22, 0.94);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    transition: opacity 0.2s ease,
+                transform 0.2s ease,
+                visibility 0.2s;
+}
+
+/* Tooltip arrow pointing right toward the dot */
+.section-indicator-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -4px;
+    transform: translateY(-50%) rotate(45deg);
+    width: 7px;
+    height: 7px;
+    background: rgba(18, 18, 22, 0.94);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.section-indicator:hover .section-indicator-tooltip,
+.section-indicator:focus-visible .section-indicator-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(0);
+}
+
+.section-indicator.active .section-indicator-tooltip {
+    border-color: rgba(229, 9, 20, 0.4);
+}
+
+/* Desktop and large screens only */
+@media (max-width: 1024px) {
+    .section-indicators {
+        display: none !important;
+    }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .section-indicators {
+        display: none !important;
+    }
+}
+
+/* 4K TV scaling */
+@media (min-width: 3840px) {
+    .section-indicators {
+        right: 80px;
+        width: 96px;
+        gap: 1rem;
+    }
+
+    .section-indicator {
+        height: 12px;
+        width: 12px;
+    }
+
+    .section-indicator.active {
+        height: 64px;
+        width: 12px;
+    }
+
+    .section-indicator-tooltip {
+        font-size: 1.5rem;
+        padding: 10px 20px;
+        border-radius: 12px;
+    }
+}

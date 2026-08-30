@@ -36,6 +36,8 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     fetchTVRecommendations,
     fetchCredits,
     fetchContentRating,
+    fetchTVDetails,
+    fetchSeasonEpisodes,
     movieGenres,
     tvGenres
   } = useTMDB();
@@ -60,6 +62,33 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const [recsLoading, setRecsLoading] = useState(true);
   const { showSuccess, showError } = useToast();
   const [isClosing, setIsClosing] = useState(false);
+
+  const mediaType = item?.type || item?.media_type || (item?.first_air_date || (item?.name && !item?.title) ? 'tv' : 'movie');
+  const isTV = mediaType === 'tv';
+  const [seasons, setSeasons] = useState(item?.seasons || []);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
+  const [selectedSeason, setSelectedSeason] = useState(() => {
+    if (item?.lastSeason) return item.lastSeason;
+    if (Array.isArray(item?.seasons) && item.seasons.length > 0) {
+      const valid = item.seasons.filter(s => s.season_number > 0);
+      const list = valid.length > 0 ? valid : item.seasons;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const aired = list.filter(s => s.air_date && s.air_date <= todayStr && (s.episode_count ?? 1) > 0);
+      if (aired.length > 0) {
+        aired.sort((a, b) => {
+          if (a.air_date !== b.air_date) return b.air_date.localeCompare(a.air_date);
+          return b.season_number - a.season_number;
+        });
+        return aired[0].season_number;
+      }
+      return list[list.length - 1].season_number;
+    }
+    return 1;
+  });
+  const [episodes, setEpisodes] = useState([]);
+  const [episodesLoading, setEpisodesLoading] = useState(false);
+  const [showSpoilers, setShowSpoilers] = useState(false);
+  const [visibleEpisodesCount, setVisibleEpisodesCount] = useState(6);
 
   const inWatchlist = Boolean(item?.id && isInWatchlist(item.media_type || item.type || 'movie', item.id));
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
@@ -86,6 +115,11 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     return 'rating-badge-gray';
   };
 
+  const showErrorRef = useRef(showError);
+  showErrorRef.current = showError;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   // Fetch trailer, logo, cast, contentRating, and recommendations when item changes.
   // cast and contentRating are fetched lazily here so the parent can open the
   // modal immediately with basic data and let these arrive a moment later.
@@ -93,6 +127,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     const loadData = async () => {
       if (item?.id) {
         const type = item.media_type || item.type || 'movie';
+        const isTvItem = type === 'tv';
 
         // Reset states for new item
         setTrailerKey(null);
@@ -100,6 +135,10 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
         setLogoLoaded(false);
         setIsTrailerPlaying(false);
         setRecsLoading(true);
+        setSeasonsLoading(isTvItem);
+        if (!isTvItem) {
+          setSeasons([]);
+        }
         // Seed cast/rating from item if already enriched; clear otherwise
         setCast(item.cast || null);
         setContentRating(item.contentRating || null);
@@ -109,29 +148,65 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
           try {
             const check = await getKidsRating(type, item.id);
             if (!check.approved) {
-              showError('This title is not available in Kids mode.');
-              onClose();
+              showErrorRef.current?.('This title is not available in Kids mode.');
+              onCloseRef.current?.();
               return;
             }
           } catch {
-            showError('This title is not available in Kids mode.');
-            onClose();
+            showErrorRef.current?.('This title is not available in Kids mode.');
+            onCloseRef.current?.();
             return;
           }
         }
 
-        // Fetch trailer, logo, cast, and content rating in parallel
-        const [key, logo, fetchedCast, fetchedRating] = await Promise.all([
+        // Fetch trailer, logo, cast, content rating, and TV details in parallel
+        const [key, logo, fetchedCast, fetchedRating, tvDetails] = await Promise.all([
           fetchVideos(type, item.id),
           fetchLogo(type, item.id),
           item.cast ? Promise.resolve(null) : fetchCredits(type, item.id),
           item.contentRating ? Promise.resolve(null) : fetchContentRating(type, item.id),
+          isTvItem ? fetchTVDetails(item.id).catch(() => null) : Promise.resolve(null),
         ]);
         setTrailerKey(key);
         setLogoPath(logo);
         setLogoLoaded(true);
         if (fetchedCast) setCast(fetchedCast.join(', ') || 'N/A');
         if (fetchedRating) setContentRating(fetchedRating);
+
+        if (isTvItem) {
+          const rawSeasons = tvDetails?.seasons || item.seasons || [];
+          const validSeasons = rawSeasons.filter(s => s.season_number > 0);
+          const finalSeasons = validSeasons.length > 0 ? validSeasons : rawSeasons;
+          setSeasons(finalSeasons);
+          if (finalSeasons.length > 0) {
+            let defaultSeason;
+            // 1. Check last_episode_to_air from TMDB details
+            const lastAiredSeasonNum = tvDetails?.last_episode_to_air?.season_number;
+            if (lastAiredSeasonNum && finalSeasons.some(s => s.season_number === lastAiredSeasonNum)) {
+              defaultSeason = lastAiredSeasonNum;
+            } else {
+              // 2. Filter seasons that have already aired (air_date <= today)
+              const todayStr = new Date().toISOString().split('T')[0];
+              const airedSeasons = finalSeasons.filter(s => s.air_date && s.air_date <= todayStr && (s.episode_count ?? 1) > 0);
+              if (airedSeasons.length > 0) {
+                airedSeasons.sort((a, b) => {
+                  if (a.air_date !== b.air_date) {
+                    return b.air_date.localeCompare(a.air_date);
+                  }
+                  return b.season_number - a.season_number;
+                });
+                defaultSeason = airedSeasons[0].season_number;
+              } else if (item.lastSeason && finalSeasons.some(s => s.season_number === item.lastSeason)) {
+                defaultSeason = item.lastSeason;
+              } else {
+                // 3. Fallback to latest season in the list
+                defaultSeason = finalSeasons[finalSeasons.length - 1].season_number;
+              }
+            }
+            setSelectedSeason(defaultSeason);
+          }
+          setSeasonsLoading(false);
+        }
 
         // Fetch recommendations internally
         try {
@@ -164,7 +239,63 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
       }
     };
     loadData();
-  }, [item?.id, item?.media_type, item?.type, isKidsMode, onClose, showError, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchMovieRecommendations, fetchTVRecommendations]);
+  }, [item?.id, item?.media_type, item?.type, isKidsMode, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchTVDetails, fetchMovieRecommendations, fetchTVRecommendations]);
+
+  // Load episodes when selected season changes (for TV shows)
+  useEffect(() => {
+    if (!isTV || !item?.id || !selectedSeason) {
+      setEpisodes([]);
+      setEpisodesLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setEpisodesLoading(true);
+
+    fetchSeasonEpisodes(item.id, selectedSeason)
+      .then((epData) => {
+        if (!cancelled) {
+          setEpisodes(epData || []);
+          setEpisodesLoading(false);
+          setVisibleEpisodesCount(6);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('Failed to load season episodes:', err);
+          setEpisodes([]);
+          setEpisodesLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isTV, item?.id, selectedSeason, fetchSeasonEpisodes]);
+
+  const handleEpisodeClick = useCallback((episodeNumber) => {
+    maybeOpenSmartlinkAd();
+    navigate(`/watch?type=tv&id=${item.id}&season=${selectedSeason}&episode=${episodeNumber}`, {
+      state: { fromModal: true }
+    });
+    onClose();
+  }, [item?.id, selectedSeason, navigate, onClose]);
+
+  const toggleMoreEpisodes = useCallback(() => {
+    setVisibleEpisodesCount(prev => (prev >= episodes.length ? 6 : episodes.length));
+  }, [episodes.length]);
+
+  const formatAirDate = useCallback((dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const [y, m, d] = dateStr.split('-');
+      if (!y || !m || !d) return dateStr;
+      const date = new Date(Number(y), Number(m) - 1, Number(d));
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }, []);
 
   // Animated close handler
   const handleClose = useCallback(() => {
@@ -187,13 +318,16 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     maybeOpenSmartlinkAd();
 
     // Normal navigation to watch page (always happens)
-    let url = `/watch?type=${item.type}&id=${item.id}`;
-    if (item.type === 'tv' && item.lastSeason && item.lastEpisode) {
-      url += `&season=${item.lastSeason}&episode=${item.lastEpisode}`;
+    const effectiveMediaType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+    let url = `/watch?type=${effectiveMediaType}&id=${item.id}`;
+    if (effectiveMediaType === 'tv') {
+      const seasonToPlay = selectedSeason || item.lastSeason || 1;
+      const episodeToPlay = (seasonToPlay === item.lastSeason && item.lastEpisode) ? item.lastEpisode : 1;
+      url += `&season=${seasonToPlay}&episode=${episodeToPlay}`;
     }
     navigate(url, { state: { fromModal: true } });  // Use React Router navigation - NO page reload
     onClose();  // Close modal after navigation
-  }, [item.type, item.id, item.lastSeason, item.lastEpisode, navigate, onClose]);
+  }, [item.type, item.media_type, item.first_air_date, item.name, item.title, item.id, item.lastSeason, item.lastEpisode, selectedSeason, navigate, onClose]);
 
   const handleShare = useCallback(async () => {
     const shareData = {
@@ -658,6 +792,223 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                 </div>
               </div>
 
+              {/* Season Selector for TV Shows */}
+              {isTV && (seasons.length > 0 || seasonsLoading) && (
+                <div className="modal-seasons-section">
+                  <div className="modal-seasons-header">
+                    <div className="modal-seasons-title-row">
+                      <h3 className="modal-seasons-title">Seasons</h3>
+                      <div className="modal-seasons-divider" />
+                    </div>
+                    <span className="modal-seasons-count">
+                      {seasonsLoading
+                        ? 'Loading seasons...'
+                        : `${seasons.length} ${seasons.length === 1 ? 'season' : 'seasons'}`}
+                    </span>
+                  </div>
+
+                  <div className="modal-seasons-row" role="region" aria-label="Seasons">
+                    {seasonsLoading ? (
+                      [...Array(4)].map((_, i) => (
+                        <div key={i} className="modal-season-card skeleton">
+                          <div className="modal-season-skeleton" />
+                        </div>
+                      ))
+                    ) : (
+                      seasons.map((season) => {
+                        const isSelected = selectedSeason === season.season_number;
+                        const posterSrc = season.poster_path
+                          ? `${POSTER_URL}${season.poster_path}`
+                          : (item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/icons/placeholder.svg');
+
+                        return (
+                          <div
+                            key={season.id || season.season_number}
+                            className={`modal-season-card ${isSelected ? 'selected' : ''}`}
+                            onClick={() => setSelectedSeason(season.season_number)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setSelectedSeason(season.season_number);
+                              }
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-pressed={isSelected}
+                            aria-label={`${season.name || `Season ${season.season_number}`}${isSelected ? ' (Selected)' : ''}`}
+                            title={`${season.name || `Season ${season.season_number}`}${season.episode_count ? ` • ${season.episode_count} episodes` : ''}`}
+                          >
+                            <img
+                              src={posterSrc}
+                              alt={season.name || `Season ${season.season_number}`}
+                              className="modal-season-poster"
+                              loading="lazy"
+                            />
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Episodes Section for TV Shows */}
+              {isTV && (episodes.length > 0 || episodesLoading) && (
+                <div className="modal-episodes-section">
+                  <div className="modal-episodes-header">
+                    <div className="modal-episodes-title-row">
+                      <h3 className="modal-episodes-title">
+                        Season {selectedSeason} Episodes
+                      </h3>
+                      <div className="modal-episodes-divider" />
+                    </div>
+
+                    <div className="modal-episodes-subrow">
+                      <span className="modal-episodes-count">
+                        {episodesLoading
+                          ? 'Loading episodes...'
+                          : `${episodes.length} ${episodes.length === 1 ? 'episode' : 'episodes'}`}
+                      </span>
+
+                      <button
+                        type="button"
+                        className="modal-spoilers-btn"
+                        onClick={() => setShowSpoilers(prev => !prev)}
+                        aria-pressed={showSpoilers}
+                      >
+                        {showSpoilers ? (
+                          <>
+                            <svg className="modal-spoilers-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                              <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                            Hide Spoilers
+                          </>
+                        ) : (
+                          <>
+                            <svg className="modal-spoilers-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Show Spoilers
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="modal-episodes-grid" role="list">
+                    {episodesLoading ? (
+                      [...Array(6)].map((_, i) => (
+                        <div key={i} className="modal-episode-card skeleton" role="listitem">
+                          <div className="modal-episode-thumb-wrap">
+                            <div className="modal-episode-skeleton" />
+                          </div>
+                          <div className="modal-episode-meta-skeleton">
+                            <div className="modal-ep-line skeleton-title" />
+                            <div className="modal-ep-line skeleton-sub" />
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      episodes.slice(0, visibleEpisodesCount).map((ep) => {
+                        const stillSrc = ep.still_path
+                          ? `${BACKDROP_URL}${ep.still_path}`
+                          : (item.backdrop_path ? `${BACKDROP_URL}${item.backdrop_path}` : '/icons/placeholder.svg');
+                        const epTitle = ep.name && !ep.name.match(/^Episode \d+$/i)
+                          ? `Episode ${ep.episode_number}. ${ep.name}`
+                          : `Episode ${ep.episode_number}.`;
+                        const epDate = formatAirDate(ep.air_date);
+                        const epRuntime = ep.runtime ? `${ep.runtime} min` : '';
+                        const metaLine = [epDate, epRuntime].filter(Boolean).join(' • ');
+                        const epVote = typeof ep.vote_average === 'number' ? ep.vote_average : 0;
+                        const epRating = epVote > 0 ? epVote.toFixed(1) : null;
+                        const ratingTierClass = epVote >= 7.0
+                          ? 'rating-high'
+                          : (epVote >= 5.0 ? 'rating-mid' : 'rating-low');
+
+                        return (
+                          <div
+                            key={ep.id || ep.episode_number}
+                            className="modal-episode-card"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => handleEpisodeClick(ep.episode_number)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleEpisodeClick(ep.episode_number);
+                              }
+                            }}
+                            aria-label={`Play ${epTitle}`}
+                          >
+                            <div className={`modal-episode-thumb-wrap ${showSpoilers ? 'spoilers-revealed' : 'spoilers-hidden'}`}>
+                              <img
+                                src={stillSrc}
+                                alt={epTitle}
+                                className="modal-episode-still"
+                                loading="lazy"
+                              />
+
+                              {epRating && (
+                                <div className={`modal-episode-rating-badge ${ratingTierClass}`} title={`Rating: ${epRating}/10`}>
+                                  <span>{epRating}</span>
+                                </div>
+                              )}
+
+                              {!showSpoilers && (
+                                <div className="modal-episode-spoiler-overlay">
+                                  <svg className="modal-spoiler-hidden-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                                    <line x1="1" y1="1" x2="23" y2="23" />
+                                  </svg>
+                                  <span className="modal-spoiler-hidden-text">Spoiler Hidden</span>
+                                </div>
+                              )}
+
+                              <div className="modal-episode-play-hover" aria-hidden="true">
+                                <span className="modal-episode-play-icon">▶</span>
+                              </div>
+                            </div>
+
+                            <div className="modal-episode-info">
+                              <h4 className="modal-episode-title">{epTitle}</h4>
+                              {metaLine && (
+                                <span className="modal-episode-meta">{metaLine}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {episodes.length > 6 && !episodesLoading && (
+                    <div className="modal-episodes-more-wrap">
+                      <button
+                        type="button"
+                        className="modal-episodes-more-btn"
+                        onClick={toggleMoreEpisodes}
+                        aria-expanded={visibleEpisodesCount >= episodes.length}
+                      >
+                        <span>{visibleEpisodesCount >= episodes.length ? 'Show Less' : 'Show More'}</span>
+                        <svg
+                          className={`modal-episodes-more-chevron ${visibleEpisodesCount >= episodes.length ? 'expanded' : ''}`}
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Ratings & Reviews Section */}
               <ReviewSection
                 contentId={item.id}
@@ -697,31 +1048,41 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                         </div>
                       ))
                     ) : (
-                      internalRecs.map((rec) => (
-                        <div
-                          key={rec.id}
-                          className="modal-recommendation-item clickable"
-                          onClick={() => handleRecClick(rec)}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              handleRecClick(rec);
-                            }
-                          }}
-                        >
-                          <img
-                            src={cardPoster(rec.poster_path) ?? '/placeholder-poster.jpg'}
-                            alt={getPosterAlt(rec)}
-                            className="modal-recommendation-img"
-                            loading="lazy"
-                          />
-                          <div className="modal-recommendation-overlay">
-                            <span className="modal-recommendation-title">{rec.title || rec.name}</span>
+                      internalRecs.map((rec) => {
+                        const recYear = rec.release_date
+                          ? rec.release_date.slice(0, 4)
+                          : rec.first_air_date
+                          ? rec.first_air_date.slice(0, 4)
+                          : null;
+                        const inRecWatchlist = isInWatchlist(rec);
+
+                        return (
+                          <div
+                            key={rec.id}
+                            className="modal-recommendation-item clickable"
+                            onClick={() => handleRecClick(rec)}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={rec.title || rec.name}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleRecClick(rec);
+                              }
+                            }}
+                          >
+                            <img
+                              src={cardPoster(rec.poster_path) ?? '/placeholder-poster.jpg'}
+                              alt={getPosterAlt(rec)}
+                              className="modal-recommendation-img"
+                              loading="lazy"
+                            />
+                            {recYear && (
+                              <span className="modal-rec-badge-year">{recYear}</span>
+                            )}
                           </div>
-                        </div>
-                      ))
+                        );
+                      })
                     )}
                   </div>
                 </div>

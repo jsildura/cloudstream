@@ -103,7 +103,7 @@ const PopularCollections = () => {
     };
 
     return (
-        <div className="popular-collections">
+        <div className="popular-collections" data-nav-section="collections">
             <h2 className="popular-collections-title">Popular Collections</h2>
 
             <div

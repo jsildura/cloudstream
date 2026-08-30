@@ -64,4 +64,27 @@ describe('BannerSlider', () => {
     expect(screen.getByRole('heading', { name: 'Replacement 1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Go to slide 1' })).toHaveClass('active');
   });
+
+  it('renders h2.banner-title-new without span.title-highlight and displays plain title text', () => {
+    const movies = [{
+      id: 99,
+      title: 'Rage of Stars',
+      media_type: 'movie',
+      release_date: '2026-01-01',
+      backdrop_path: '/rage.jpg',
+      poster_path: '/rage-poster.jpg',
+    }];
+    render(
+      <MemoryRouter>
+        <BannerSlider movies={movies} onItemClick={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    const titleHeading = screen.getByRole('heading', { name: 'Rage of Stars' });
+    expect(titleHeading).toBeInTheDocument();
+    expect(titleHeading).toHaveClass('banner-title-new');
+    expect(titleHeading.querySelector('.title-highlight')).toBeNull();
+    expect(titleHeading.textContent).toBe('Rage of Stars');
+    expect(titleHeading.style.getPropertyValue('--poster-url')).toContain('/rage-poster.jpg');
+  });
 });

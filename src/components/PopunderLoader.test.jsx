@@ -12,6 +12,10 @@ describe('PopunderLoader Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     document.head.querySelectorAll(SELECTOR).forEach((s) => s.remove());
+    // Also clean up PopAds child scripts
+    document.querySelectorAll(
+      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/GjCt"]'
+    ).forEach((s) => s.remove());
     vi.spyOn(platformUtils, 'isTVDevice').mockReturnValue(false);
   });
 
@@ -27,17 +31,24 @@ describe('PopunderLoader Component', () => {
     return existing;
   };
 
-  it('injects popunder script once the gate resolves to ads', () => {
+  it('injects both Adsterra and PopAds scripts when gate resolves to ads', () => {
     mockGate(AD_STATE_ADS);
 
     render(<PopunderLoader />);
 
-    const script = document.head.querySelector(SELECTOR);
-    expect(script).not.toBeNull();
-    expect(script.src).toContain('consumptionbackwardsentiments.com');
+    const adsterra = document.head.querySelector('script[data-network="adsterra"]');
+    expect(adsterra).not.toBeNull();
+    expect(adsterra.src).toContain('consumptionbackwardsentiments.com');
+    expect(adsterra.getAttribute('data-streamflix-popunder')).toBe('true');
+
+    const popads = document.head.querySelector('script[data-network="popads"]');
+    expect(popads).not.toBeNull();
+    expect(popads.text).toContain('a34232821fefdf3f931e52a459524310');
+    expect(popads.getAttribute('data-cfasync')).toBe('false');
+    expect(popads.getAttribute('data-streamflix-popunder')).toBe('true');
   });
 
-  it('does NOT inject popunder script while the gate is pending', () => {
+  it('does NOT inject popunder scripts while the gate is pending', () => {
     mockGate(AD_STATE_PENDING);
 
     render(<PopunderLoader />);
@@ -45,7 +56,7 @@ describe('PopunderLoader Component', () => {
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('does NOT inject popunder script when user is confirmed ad-free', () => {
+  it('does NOT inject popunder scripts when user is confirmed ad-free', () => {
     mockGate(AD_STATE_ADFREE);
 
     render(<PopunderLoader />);
@@ -53,7 +64,7 @@ describe('PopunderLoader Component', () => {
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('removes popunder script if user transitions to ad-free', () => {
+  it('removes popunder scripts if user transitions to ad-free', () => {
     insertExistingScript();
     mockGate(AD_STATE_ADFREE);
 
@@ -62,7 +73,7 @@ describe('PopunderLoader Component', () => {
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('removes popunder script if the gate falls back to pending', () => {
+  it('removes popunder scripts if the gate falls back to pending', () => {
     insertExistingScript();
     mockGate(AD_STATE_PENDING);
 
@@ -71,16 +82,17 @@ describe('PopunderLoader Component', () => {
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
 
-  it('injects only one script across re-renders', () => {
+  it('does not duplicate scripts across re-renders', () => {
     mockGate(AD_STATE_ADS);
 
     const { rerender } = render(<PopunderLoader />);
     rerender(<PopunderLoader />);
 
-    expect(document.head.querySelectorAll(SELECTOR)).toHaveLength(1);
+    // Adsterra + PopAds = 2 scripts with the popunder attr
+    expect(document.head.querySelectorAll(SELECTOR)).toHaveLength(2);
   });
 
-  it('does NOT inject popunder script on TV devices', () => {
+  it('does NOT inject popunder scripts on TV devices', () => {
     vi.spyOn(platformUtils, 'isTVDevice').mockReturnValue(true);
     mockGate(AD_STATE_ADS);
 

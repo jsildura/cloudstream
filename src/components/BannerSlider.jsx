@@ -391,10 +391,12 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     navigate(`/watch?type=${type}&id=${currentMovie.id}`, { state: { fromModal: true } });
   };
 
-  // Split title for last word highlight
-  const titleWords = (currentMovie.title || currentMovie.name || '').split(' ');
-  const titleMain = titleWords.slice(0, -1).join(' ');
-  const titleHighlight = titleWords[titleWords.length - 1];
+  const movieTitle = currentMovie.title || currentMovie.name || '';
+  const currentPosterUrl = currentMovie?.poster_path
+    ? (currentMovie.poster_path.startsWith('http')
+      ? currentMovie.poster_path
+      : `${POSTER_URL}${currentMovie.poster_path}`)
+    : '';
 
   // Get media type badge text
   const mediaType = currentMovie.media_type === 'tv' ? 'TV' : 'Movie';
@@ -544,13 +546,25 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
                   e.target.nextElementSibling.style.display = 'block';
                 }}
               />
-              <h2 className="banner-title-new banner-title-fallback" style={{ display: 'none' }}>
-                {titleMain} <span className="title-highlight">{titleHighlight}</span>
+              <h2
+                className="banner-title-new banner-title-fallback"
+                style={{
+                  display: 'none',
+                  '--poster-url': currentPosterUrl ? `url("${currentPosterUrl}")` : 'none'
+                }}
+              >
+                {movieTitle}
               </h2>
             </div>
           ) : (
-            <h2 className="banner-title-new" key={`title-${activeSlide}`}>
-              {titleMain} <span className="title-highlight">{titleHighlight}</span>
+            <h2
+              className="banner-title-new"
+              key={`title-${activeSlide}`}
+              style={{
+                '--poster-url': currentPosterUrl ? `url("${currentPosterUrl}")` : 'none'
+              }}
+            >
+              {movieTitle}
             </h2>
           )}
 

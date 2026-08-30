@@ -164,6 +164,7 @@ const Discover = () => {
         onMoreClick={() => setIsFilterPanelOpen(true)}
         onClearFilters={handleClearFilters}
         activeFilterCount={activeFilterCount}
+        variant="cards"
       />
 
       <div className="content-rows">

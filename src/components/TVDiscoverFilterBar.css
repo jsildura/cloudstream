@@ -22,6 +22,7 @@
   overflow-x: auto;
   scrollbar-width: none;
   flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tv-filter-genres::-webkit-scrollbar {
@@ -115,6 +116,336 @@
   line-height: 1.5;
 }
 
+/* ─── Card variant (Discover + TV Shows only, via variant="cards") ───────────
+   Genre buttons become compact backdrop cards: a dimmed TMDB image fills the
+   button, a scrim keeps the label legible, and the label sits bottom-left.
+   The header contains the section title ("Popular Genres >", "Find something by mood")
+   on the left and the filter button group on the right, stacked above the cards row. */
+.tv-discover-filterbar--cards {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.tv-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 16px;
+}
+
+.tv-filter-title-group {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.tv-filter-title-indicator {
+  width: 3.5px;
+  background-color: #e50914;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tv-filter-title-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.tv-filter-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.tv-filter-title-chevron {
+  width: 15px;
+  height: 15px;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2.5;
+  flex-shrink: 0;
+}
+
+.tv-filter-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+  margin: 3px 0 0 0;
+  line-height: 1.3;
+}
+
+.tv-discover-filterbar--cards .tv-filter-more-group {
+  align-self: center;
+  padding-left: 0;
+  background: none;
+}
+
+.tv-filter-carousel-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.tv-filter-carousel-wrapper .carousel-control-btn {
+  width: 48px;
+  border-radius: 12px;
+}
+
+.tv-filter-carousel-wrapper .carousel-control-btn.left {
+  border-radius: 12px 0 0 12px;
+}
+
+.tv-filter-carousel-wrapper .carousel-control-btn.right {
+  border-radius: 0 12px 12px 0;
+}
+
+.tv-filter-carousel-wrapper .control-icon-wrapper {
+  width: 40px;
+  height: 40px;
+}
+
+.tv-filter-carousel-wrapper .control-icon-wrapper svg {
+  width: 24px;
+  height: 24px;
+}
+
+.tv-filter-genres--cards {
+  gap: 8px;
+  width: 100%;
+}
+
+.tv-filter-pill--card {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  min-width: 170px;
+  min-height: 82px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: var(--genre-color, #1e293b);
+  border: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Smooth semi-transparent dominant color shade on the left so backdrop is partially visible underneath */
+.tv-filter-pill-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(to right,
+      rgba(var(--genre-rgb, 30, 41, 59), 0.85) 0%,
+      rgba(var(--genre-rgb, 30, 41, 59), 0.8) 28%,
+      rgba(var(--genre-rgb, 30, 41, 59), 0.45) 52%,
+      rgba(var(--genre-rgb, 30, 41, 59), 0.1) 74%,
+      transparent 90%),
+    linear-gradient(to top,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.15) 35%,
+      transparent 65%);
+}
+
+.tv-filter-pill-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  opacity: 1;
+  pointer-events: none;
+  animation: tvPillBgFade 0.35s ease;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+@keyframes tvPillBgFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.tv-filter-pill-label {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+  letter-spacing: -0.01em;
+}
+
+.tv-filter-pill--card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.tv-filter-pill--card:hover .tv-filter-pill-bg {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+/* Bottom red border animation expanding from center to both sides on hover */
+.tv-filter-pill--card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: #e50914;
+  box-shadow: 0 0 10px rgba(229, 9, 20, 0.7), 0 -1px 6px rgba(229, 9, 20, 0.35);
+  opacity: 0;
+  transform: scaleX(0) translateZ(0);
+  transform-origin: 50% 50%;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 3;
+  pointer-events: none;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+.tv-filter-pill--card:hover::after {
+  opacity: 1;
+  transform: scaleX(1) translateZ(0);
+}
+
+/* Selected active card */
+.tv-filter-pill--card.active {
+  background-color: var(--genre-color, #1e293b);
+  border: none;
+  box-shadow: 0 0 0 2px #fff, 0 4px 18px rgba(0, 0, 0, 0.6);
+}
+
+.tv-filter-pill--card.active .tv-filter-pill-bg {
+  opacity: 1;
+}
+
+/* Card loading skeleton with trending shimmer animation */
+.tv-filter-pill-card-skeleton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(110deg,
+    rgba(35, 35, 40, 0.95) 0%,
+    rgba(35, 35, 40, 0.95) 40%,
+    rgba(55, 55, 65, 0.95) 50%,
+    rgba(35, 35, 40, 0.95) 60%,
+    rgba(35, 35, 40, 0.95) 100%);
+  background-size: 200% 100%;
+  animation: trending-shimmer 1.5s infinite ease-in-out;
+}
+
+.tv-filter-genres--cards .tv-filter-pill-skeleton {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  min-width: 170px;
+  min-height: 82px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(110deg,
+    rgba(35, 35, 40, 0.95) 0%,
+    rgba(35, 35, 40, 0.95) 40%,
+    rgba(55, 55, 65, 0.95) 50%,
+    rgba(35, 35, 40, 0.95) 60%,
+    rgba(35, 35, 40, 0.95) 100%);
+  background-size: 200% 100%;
+  animation: trending-shimmer 1.5s infinite ease-in-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes trending-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill {
+  min-height: 38px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill-skeleton {
+  min-height: 38px;
+  border-radius: 20px;
+}
+
+/* Mobile scaling for compact cards */
+@media (max-width: 768px) {
+  .tv-discover-filterbar--cards {
+    gap: 10px;
+  }
+
+  .tv-filter-genres--cards {
+    gap: 6px;
+  }
+
+  .tv-filter-pill--card,
+  .tv-filter-genres--cards .tv-filter-pill-skeleton {
+    min-width: 128px;
+    min-height: 60px;
+    padding: 7px 10px;
+    border-radius: 10px;
+  }
+
+  .tv-filter-pill--card .tv-filter-pill-label {
+    font-size: 0.8rem;
+  }
+
+  .tv-filter-title {
+    font-size: 1.05rem;
+  }
+
+  .tv-filter-subtitle {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 480px) {
+
+  .tv-filter-pill--card,
+  .tv-filter-genres--cards .tv-filter-pill-skeleton {
+    min-width: 126px;
+    min-height: 63px;
+    padding: 6px 9px;
+    border-radius: 9px;
+  }
+
+  .tv-filter-pill--card .tv-filter-pill-label {
+    font-size: 0.75rem;
+  }
+
+  .tv-filter-pill--card::after {
+    height: 2.5px;
+  }
+}
+
 /* 1080p TV scaling */
 @media (min-width: 1920px) {
   .tv-discover-filterbar {
@@ -130,6 +461,61 @@
     padding: 10px 24px;
     font-size: 1.1rem;
     border-radius: 30px;
+  }
+
+  .tv-discover-filterbar--cards {
+    gap: 18px;
+  }
+
+  .tv-filter-title-group {
+    gap: 14px;
+  }
+
+  .tv-filter-title-indicator {
+    width: 4.5px;
+    border-radius: 3px;
+  }
+
+  .tv-filter-title {
+    font-size: 1.55rem;
+    gap: 8px;
+  }
+
+  .tv-filter-title-chevron {
+    width: 19px;
+    height: 19px;
+  }
+
+  .tv-filter-subtitle {
+    font-size: 1rem;
+    margin-top: 5px;
+  }
+
+  .tv-filter-genres--cards {
+    gap: 12px;
+  }
+
+  .tv-filter-genres--cards .tv-filter-pill-skeleton {
+    min-width: 190px;
+    min-height: 92px;
+    border-radius: 16px;
+  }
+
+  .tv-filter-pill--card {
+    min-width: 190px;
+    min-height: 92px;
+    padding: 12px 18px;
+    border-radius: 16px;
+  }
+
+  .tv-filter-pill--card::after {
+    height: 4px;
+  }
+
+  .tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill,
+  .tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill-skeleton {
+    min-height: 48px;
+    border-radius: 24px;
   }
 
   .tv-filter-more {
@@ -157,6 +543,61 @@
     padding: 18px 40px;
     font-size: 1.8rem;
     border-radius: 50px;
+  }
+
+  .tv-discover-filterbar--cards {
+    gap: 28px;
+  }
+
+  .tv-filter-title-group {
+    gap: 22px;
+  }
+
+  .tv-filter-title-indicator {
+    width: 7px;
+    border-radius: 4px;
+  }
+
+  .tv-filter-title {
+    font-size: 2.4rem;
+    gap: 12px;
+  }
+
+  .tv-filter-title-chevron {
+    width: 28px;
+    height: 28px;
+  }
+
+  .tv-filter-subtitle {
+    font-size: 1.6rem;
+    margin-top: 8px;
+  }
+
+  .tv-filter-genres--cards {
+    gap: 18px;
+  }
+
+  .tv-filter-genres--cards .tv-filter-pill-skeleton {
+    min-width: 320px;
+    min-height: 140px;
+    border-radius: 24px;
+  }
+
+  .tv-filter-pill--card {
+    min-width: 320px;
+    min-height: 140px;
+    padding: 22px 32px;
+    border-radius: 24px;
+  }
+
+  .tv-filter-pill--card::after {
+    height: 6px;
+  }
+
+  .tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill,
+  .tv-discover-filterbar--cards .tv-filter-more-group .tv-filter-pill-skeleton {
+    min-height: 72px;
+    border-radius: 36px;
   }
 
   .tv-filter-more {

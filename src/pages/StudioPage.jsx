@@ -168,7 +168,7 @@ const StudioPage = () => {
         return (
             <div className="studio-page">
                 <div className="studio-page-header" style={{ '--studio-color': studioInfo.color, '--studio-color-rgb': studioInfo.colorRgb }}>
-                    <Link to="/" className="back-button">
+                    <Link to="/" state={{ scrollToSection: 'studios' }} className="back-button">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                         </svg>
@@ -185,6 +185,7 @@ const StudioPage = () => {
                         onMoreClick={() => setIsFilterPanelOpen(true)}
                         onClearFilters={handleClearFilters}
                         activeFilterCount={activeFilterCount}
+                        variant="cards"
                         loading
                     />
                 ) : (
@@ -194,6 +195,7 @@ const StudioPage = () => {
                         onMoreClick={() => setIsFilterPanelOpen(true)}
                         onClearFilters={handleClearFilters}
                         activeFilterCount={activeFilterCount}
+                        variant="cards"
                         loading
                     />
                 )}
@@ -208,7 +210,7 @@ const StudioPage = () => {
     return (
         <div className="studio-page">
             <div className="studio-page-header" style={{ '--studio-color': studioInfo.color, '--studio-color-rgb': studioInfo.colorRgb }}>
-                <Link to="/" className="back-button">
+                <Link to="/" state={{ scrollToSection: 'studios' }} className="back-button">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="m12 19-7-7 7-7" /><path d="M19 12H5" />
                     </svg>
@@ -227,6 +229,7 @@ const StudioPage = () => {
                     onMoreClick={() => setIsFilterPanelOpen(true)}
                     onClearFilters={handleClearFilters}
                     activeFilterCount={activeFilterCount}
+                    variant="cards"
                 />
             ) : (
                 <TVDiscoverFilterBar
@@ -235,6 +238,7 @@ const StudioPage = () => {
                     onMoreClick={() => setIsFilterPanelOpen(true)}
                     onClearFilters={handleClearFilters}
                     activeFilterCount={activeFilterCount}
+                    variant="cards"
                 />
             )}
 
