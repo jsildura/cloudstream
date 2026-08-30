@@ -15,7 +15,7 @@ describe('PopunderLoader Component', () => {
     document.head.querySelectorAll(SELECTOR).forEach((s) => s.remove());
     // Also clean up PopAds child scripts
     document.querySelectorAll(
-      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/M/"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
+      'script[src*="premiumvertising.com"], script[src*="cloudfront.net/n/"], script[src*="cloudfront.net/M/"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
     ).forEach((s) => s.remove());
     vi.spyOn(platformUtils, 'isTVDevice').mockReturnValue(false);
   });

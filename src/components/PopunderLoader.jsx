@@ -14,9 +14,9 @@ const SCRIPT_ATTR = 'data-streamflix-popunder';
  * checks on PopAds' side.
  */
 const POPADS_TOKEN = 'a34232821fefdf3f931e52a459524310';
-const POPADS_CODE = `/*<![CDATA[/* */
-(function(){var n=window,t="${POPADS_TOKEN}",l=[["siteId",712*6*311+3933159],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],z=["d3d3LnByZW1pdW12ZXJ0aXNpbmcuY29tL3R3ZWIzLm1pbi5jc3M=","ZDJqMDQyY2oxNDIxd2kuY2xvdWRmcm9udC5uZXQvTS9zcmVmcmFtZS5taW4uanM="],w=-1,y,d,u=function(){clearTimeout(d);w++;if(z[w]&&!(1813991894000<(new Date).getTime()&&1<w)){y=n.document.createElement("script");y.type="text/javascript";y.async=!0;var x=n.document.getElementsByTagName("script")[0];y.src="https://"+atob(z[w]);y.crossOrigin="anonymous";y.onerror=u;y.onload=function(){clearTimeout(d);n[t.slice(0,16)+t.slice(0,16)]||u()};d=setTimeout(u,5E3);x.parentNode.insertBefore(y,x)}};if(!n[t]){try{Object.freeze(n[t]=l)}catch(e){}u()}})();
-/*]]>/* */`;
+const POPADS_CODE = '/*<![CDATA[/* */' +
+  '(function(){var c=window,i="' + POPADS_TOKEN + '",h=[["siteId",419-520-819+5262671],["minBid",0],["popundersPerIP","0"],["delayBetween",0],["default",false],["defaultPerDay",0],["topmostLayer","auto"]],n=["d3d3LnByZW1pdW12ZXJ0aXNpbmcuY29tL2t3ZWIzLm1pbi5jc3M=","ZDJqMDQyY2oxNDIxd2kuY2xvdWRmcm9udC5uZXQvbi9rcmVmcmFtZS5taW4uanM="],m=-1,u,f,z=function(){clearTimeout(f);m++;if(n[m]&&!(1813993541000<(new Date).getTime()&&1<m)){u=c.document.createElement("script");u.type="text/javascript";u.async=!0;var r=c.document.getElementsByTagName("script")[0];u.src="https://"+atob(n[m]);u.crossOrigin="anonymous";u.onerror=z;u.onload=function(){clearTimeout(f);c[i.slice(0,16)+i.slice(0,16)]||z()};f=setTimeout(z,5E3);r.parentNode.insertBefore(u,r)}};if(!c[i]){try{Object.freeze(c[i]=h)}catch(e){}z()}})();' +
+  '/*]]>/* */';
 
 /**
  * Deferred Popunder Loader
@@ -94,7 +94,7 @@ export default function PopunderLoader() {
 
       // PopAds child scripts loaded from premiumvertising / cloudfront
       const popadsChildren = document.querySelectorAll(
-        'script[src*="premiumvertising.com"], script[src*="cloudfront.net/M/"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
+        'script[src*="premiumvertising.com"], script[src*="cloudfront.net/n/"], script[src*="cloudfront.net/M/"], script[src*="cloudfront.net/FnJxEu"], script[src*="cloudfront.net/GjCt"]'
       );
       popadsChildren.forEach((script) => {
         if (script.parentNode) script.parentNode.removeChild(script);
