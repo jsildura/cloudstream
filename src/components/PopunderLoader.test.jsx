@@ -113,4 +113,55 @@ describe('PopunderLoader Component', () => {
 
     expect(document.head.querySelector(SELECTOR)).toBeNull();
   });
+
+  it('strictly does NOT inject when isAdFree is true even if adGateState is ads', () => {
+    // The isAdFree short-circuit is independent of adGateState, so it needs its
+    // own case: mockGate leaves isAdFree undefined and would never exercise it.
+    vi.spyOn(AdFreeContextModule, 'useAdFree').mockReturnValue({
+      adGateState: AD_STATE_ADS,
+      isAdFree: true,
+      loading: false
+    });
+
+    render(<PopunderLoader />);
+
+    expect(document.head.querySelector(SELECTOR)).toBeNull();
+  });
+
+  it('does NOT inject while loading is true even if adGateState is ads', () => {
+    vi.spyOn(AdFreeContextModule, 'useAdFree').mockReturnValue({
+      adGateState: AD_STATE_ADS,
+      isAdFree: false,
+      loading: true
+    });
+
+    render(<PopunderLoader />);
+
+    expect(document.head.querySelector(SELECTOR)).toBeNull();
+  });
+
+  it('removes an existing script when isAdFree flips true while the gate still reads ads', () => {
+    insertExistingScript();
+    vi.spyOn(AdFreeContextModule, 'useAdFree').mockReturnValue({
+      adGateState: AD_STATE_ADS,
+      isAdFree: true,
+      loading: false
+    });
+
+    render(<PopunderLoader />);
+
+    expect(document.head.querySelector(SELECTOR)).toBeNull();
+  });
+
+  it('injects for a signed-in non-ad-free user', () => {
+    vi.spyOn(AdFreeContextModule, 'useAdFree').mockReturnValue({
+      adGateState: AD_STATE_ADS,
+      isAdFree: false,
+      loading: false
+    });
+
+    render(<PopunderLoader />);
+
+    expect(document.head.querySelector(SELECTOR)).not.toBeNull();
+  });
 });
