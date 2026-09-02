@@ -4122,7 +4122,7 @@ select.filter-dropdown {
   /* Watch Drawer - 1080p */
   .watch-drawer {
     max-width: 1200px !important;
-    border-radius: 12px 12px 0 0 !important;
+    border-radius: 24px 24px 0 0 !important;
     padding: 24px 32px 32px 32px !important;
   }
 
@@ -4140,7 +4140,7 @@ select.filter-dropdown {
   /* Sandbox Toggle Row - 1080p */
   .watch-sandbox-row {
     padding: 20px 24px !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     margin-bottom: 24px !important;
     gap: 24px !important;
   }
@@ -4162,7 +4162,7 @@ select.filter-dropdown {
   .watch-server-card {
     gap: 16px !important;
     padding: 18px 20px !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     border-width: 1px !important;
     min-height: 90px !important;
   }
@@ -4206,7 +4206,7 @@ select.filter-dropdown {
   /* Drawer Close Button - 1080p */
   .watch-drawer-close {
     padding: 18px 24px !important;
-    border-radius: 6px !important;
+    border-radius: 12px !important;
     font-size: 24px !important;
     border-width: 1px !important;
   }
@@ -5567,7 +5567,7 @@ select.filter-dropdown {
   .watch-server-card {
     gap: 32px !important;
     padding: 36px 40px !important;
-    border-radius: 12px !important;
+    border-radius: 24px !important;
     border-width: 2px !important;
     min-height: 180px !important;
   }
@@ -5611,7 +5611,7 @@ select.filter-dropdown {
   /* Drawer Close Button - 4K */
   .watch-drawer-close {
     padding: 36px 48px !important;
-    border-radius: 12px !important;
+    border-radius: 24px !important;
     font-size: 48px !important;
     border-width: 2px !important;
   }
@@ -6704,7 +6704,7 @@ select.filter-dropdown {
   max-width: 600px;
   max-height: 85vh;
   background: #181818;
-  border-radius: 8px 8px 0 0;
+  border-radius: 16px 16px 0 0;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -6764,7 +6764,7 @@ select.filter-dropdown {
   padding: 12px 14px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 4px;
+  border-radius: 8px;
   margin-bottom: 14px;
   gap: 14px;
 }
@@ -6865,7 +6865,7 @@ select.filter-dropdown {
   padding: 10px 12px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, border-color 0.15s ease;
   min-height: 58px;
@@ -7595,7 +7595,7 @@ select.filter-dropdown {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.25);
   color: #ffffff;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 0.88rem;
   font-weight: 600;
   letter-spacing: 0.2px;
@@ -7761,7 +7761,7 @@ select.filter-dropdown {
   padding: 8px 14px;
   background: rgba(20, 20, 20, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px;
+  border-radius: 12px;
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.82rem;
   font-weight: 400;
@@ -7803,7 +7803,7 @@ select.filter-dropdown {
     gap: 14px;
     margin-top: 16px;
     padding: 12px 22px;
-    border-radius: 12px;
+    border-radius: 16px;
     border-width: 1.5px;
     font-size: 1.25rem;
   }
