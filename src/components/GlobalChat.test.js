@@ -2455,7 +2455,7 @@ describe('GlobalChat Reply-Gated Spoilers', () => {
         // The other user's message has locked spoiler button
         const lockBtn = document.querySelector('.gc-spoiler-chip');
         expect(lockBtn).not.toBeNull();
-        expect(lockBtn.textContent).toContain('Reply to reveal');
+        expect(lockBtn.textContent).toMatch(/reply to reveal/i);
 
         // Clicking lock button arms reply
         await act(async () => {

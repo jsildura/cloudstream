@@ -13,7 +13,7 @@ import { summarizeUA } from '../lib/globalChatReports';
 import { normalizeAdminOverrides, resolveSenderIdentity, FALLBACK_AVATAR } from '../lib/globalChatAdminIdentity';
 import GlobalChatAdminBadge from './GlobalChatAdminBadge';
 import GlobalChatAdminDashboard from './GlobalChatAdminDashboard';
-import { isCommandInput, findCommandToken, filterCommands, matchCommand, buildHelpContent, buildRulesContent, buildFaqContent } from '../lib/chatCommands';
+import { findCommandToken, filterCommands, matchCommand, buildHelpContent, buildRulesContent, buildFaqContent } from '../lib/chatCommands';
 import { SPOILER_OPEN, SPOILER_CLOSE, extractSpoilers, splitSpoilerParts, hasSpoilerTokens, stripSpoilerTokens, buildSpoilerPayload } from '../lib/chatSpoilers';
 import './GlobalChat.css';
 
