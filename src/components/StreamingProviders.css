@@ -42,50 +42,50 @@
     display: none;
 }
 
-/* Provider Pill (New Design) */
+/* Provider Pill (Soft Brand Tile) */
 .provider-pill {
     flex: 0 0 auto;
-    height: 50px;
-    padding: 0 16px;
-    background: rgba(30, 30, 30, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 999px;
+    height: 52px;
+    padding: 0 18px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
     position: relative;
     overflow: hidden;
 }
 
 .provider-pill:hover {
-    background: rgba(50, 50, 50, 0.95);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.09);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: scale(1.04);
 }
 
-.provider-pill:focus {
-    outline: none;
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+.provider-pill:focus-visible {
+    outline: 3px solid #e50914;
+    outline-offset: 3px;
+    border-color: #e50914;
 }
 
 .provider-pill:active {
-    transform: translateY(0);
+    transform: scale(0.97);
 }
 
 /* Toggle Button */
 .provider-pill-toggle {
-    background: rgba(40, 40, 40, 0.95);
-    border-color: rgba(255, 255, 255, 0.2);
-    padding: 0 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.15);
+    padding: 0 14px;
     gap: 6px;
 }
 
 .provider-pill-toggle:hover {
-    background: rgba(60, 60, 60, 0.95);
+    background: rgba(255, 255, 255, 0.09);
 }
 
 .provider-toggle-icon {
@@ -96,40 +96,49 @@
 
 /* Provider Logo in Pill */
 .provider-pill-logo {
-    max-height: 35px;
-    max-width: 125px;
+    max-height: 32px;
+    max-width: 120px;
     width: auto;
     object-fit: contain;
-    /* Provider brand tiles are square artwork, unlike the wide studio wordmarks */
-    opacity: 0.6;
-    filter: grayscale(100%) brightness(1.2);
-    transition: all 0.3s ease;
+    opacity: 0.45;
+    filter: grayscale(100%);
+    transition: opacity 0.2s ease, filter 0.2s ease;
 }
 
 .provider-pill:hover .provider-pill-logo {
     opacity: 0.9;
-    filter: grayscale(0%) brightness(1);
+    filter: grayscale(0%) brightness(1.1);
 }
 
 /* Provider Name Fallback */
 .provider-pill-name {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     letter-spacing: 0.03em;
     white-space: nowrap;
+    transition: color 0.2s ease;
+}
+
+.provider-pill:hover .provider-pill-name {
+    color: #ffffff;
 }
 
 /* Active Provider Pill */
 .provider-pill-active {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.12);
+    border: 1.5px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
 }
 
 .provider-pill-active .provider-pill-logo {
     opacity: 1;
-    filter: grayscale(0%) brightness(1);
+    filter: grayscale(0%) brightness(1.1);
+}
+
+.provider-pill-active .provider-pill-name {
+    color: #ffffff;
 }
 
 /* ============================================
@@ -621,13 +630,13 @@
     .provider-pill {
         height: 80px;
         padding: 0 32px;
-        border-radius: 999px;
+        border-radius: 14px;
     }
 
     .provider-pill:focus-visible {
-        outline: 4px solid rgba(255, 255, 255, 0.5);
+        outline: 4px solid #e50914;
         outline-offset: 4px;
-        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+        border-color: #e50914;
     }
 
     .provider-pill-logo {
@@ -797,14 +806,14 @@
         height: 200px;
         padding: 0 64px;
         border-width: 4px;
-        border-radius: 4000px;
+        border-radius: 28px;
         gap: 32px;
     }
 
     .provider-pill:focus-visible {
-        outline: 8px solid rgba(255, 255, 255, 0.5);
+        outline: 8px solid #e50914;
         outline-offset: 8px;
-        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.1);
+        border-color: #e50914;
     }
 
     .provider-pill-logo {

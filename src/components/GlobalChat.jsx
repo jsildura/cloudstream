@@ -13,7 +13,8 @@ import { summarizeUA } from '../lib/globalChatReports';
 import { normalizeAdminOverrides, resolveSenderIdentity, FALLBACK_AVATAR } from '../lib/globalChatAdminIdentity';
 import GlobalChatAdminBadge from './GlobalChatAdminBadge';
 import GlobalChatAdminDashboard from './GlobalChatAdminDashboard';
-import { isCommandInput, filterCommands, matchCommand, buildHelpContent, buildRulesContent, buildFaqContent } from '../lib/chatCommands';
+import { isCommandInput, findCommandToken, filterCommands, matchCommand, buildHelpContent, buildRulesContent, buildFaqContent } from '../lib/chatCommands';
+import { SPOILER_OPEN, SPOILER_CLOSE, extractSpoilers, splitSpoilerParts, hasSpoilerTokens, stripSpoilerTokens, buildSpoilerPayload } from '../lib/chatSpoilers';
 import './GlobalChat.css';
 
 // Constants
@@ -82,7 +83,7 @@ const makeTicketNo = () => String(Date.now()).slice(-6);
 // carries its own copy of what was said.
 // eslint-disable-next-line react-refresh/only-export-components -- exported for unit tests
 export const buildMessageReport = (msg, reporter) => {
-    const rawText = (msg?.text || '').trim();
+    const rawText = stripSpoilerTokens(msg?.text || '').trim();
     const messageText = rawText.length > 200 ? rawText.slice(0, 200) : rawText;
 
     const rawSenderName = typeof (msg?.senderName || msg?.displayName || msg?.nickname) === 'string'
@@ -239,7 +240,7 @@ const ensureAudioUnlocked = () => {
         // is actually running so we never schedule sound on a silent context.
         if (broadcastAudioCtx.state === 'suspended') {
             const r = broadcastAudioCtx.resume();
-            if (r && r.catch) r.catch(() => {});
+            if (r && r.catch) r.catch(() => { });
         }
         if (broadcastAudioCtx.state === 'running') broadcastAudioUnlocked = true;
     } catch { /* audio unavailable — ignore */ }
@@ -275,7 +276,7 @@ const requestBroadcastNotificationPermission = () => {
     if (Notification.permission !== 'default') return;
     try {
         const p = Notification.requestPermission();
-        if (p && p.catch) p.catch(() => {});
+        if (p && p.catch) p.catch(() => { });
     } catch { /* older callback-style API — ignore */ }
 };
 
@@ -359,8 +360,16 @@ function GlobalChat() {
     const [dismissedComposeKey, setDismissedComposeKey] = useState(null); // which live link preview the user dismissed
 
     const [pinnedMessage, setPinnedMessage] = useState(null);
+    const [commandToken, setCommandToken] = useState(null);
+    const [spoilerCache, setSpoilerCache] = useState(new Map()); // msgId → { status, items }
+    const spoilerRequestedRef = useRef(new Set()); // dedupe in-flight/completed reads
+
     // Edit Message Handler
     const handleEditMessage = (msg) => {
+        if (hasSpoilerTokens(msg?.text || '')) {
+            alert('Messages with hidden content can\'t be edited. Delete and post it again instead.');
+            return;
+        }
         const now = Date.now();
         const msgTime = msg.createdAt || msg.timestamp || 0;
         if (now - msgTime > 3 * 60 * 1000) {
@@ -522,6 +531,8 @@ function GlobalChat() {
             setMessages([]);
             setAllUsers([]);
             setPinnedMessage(null);
+            setSpoilerCache(new Map());
+            spoilerRequestedRef.current = new Set();
             setStaleBroadcastIds(new Set());
             setReplyTo(null);
             setRecMovies([]);
@@ -543,6 +554,8 @@ function GlobalChat() {
         setMessages([]);
         setAllUsers([]);
         setPinnedMessage(null);
+        setSpoilerCache(new Map());
+        spoilerRequestedRef.current = new Set();
         setStaleBroadcastIds(new Set());
         setReplyTo(null);
         setRecMovies([]);
@@ -665,6 +678,16 @@ function GlobalChat() {
     const displayNameFor = (msg) =>
         resolveSenderIdentity({ msg, override: profilesByUid.get(msg?.uid) }).displayName;
 
+    // Who pinned the banner message — the admin who clicked Pin, not the author
+    // of the pinned message. The stored pin only carries the author's frozen
+    // `senderName` snapshot plus `pinnedBy` (the admin's uid), so the admin's
+    // chat name has to be resolved from the live profile overlay; falling back
+    // to the token displayName, then 'Admin' when the profile has not loaded.
+    const pinnedByName = useMemo(() => {
+        const profile = pinnedMessage?.pinnedBy ? profilesByUid.get(pinnedMessage.pinnedBy) : null;
+        return normalizeAdminOverrides(profile).adminName || profile?.displayName || 'Admin';
+    }, [pinnedMessage?.pinnedBy, profilesByUid]);
+
     // Load pinned message
     useEffect(() => {
         if (!dbRef.current || sessionState !== 'ready') return;
@@ -681,6 +704,91 @@ function GlobalChat() {
         pinnedRef.on('value', callback);
         listenersRef.current.push(() => pinnedRef.off('value', callback));
     }, [sessionState]);
+
+    // Seed the spoiler cache directly when author posts a message with spoilers
+    const seedSpoilerCache = useCallback((msgId, items) => {
+        if (!msgId) return;
+        spoilerRequestedRef.current.add(msgId);
+        setSpoilerCache(prev => {
+            const next = new Map(prev);
+            next.set(msgId, { status: 'ready', items: items || {} });
+            return next;
+        });
+    }, []);
+
+    // Fetch spoiler data for a message (read-gated node)
+    const requestSpoiler = useCallback(async (msgId, { force = false } = {}) => {
+        if (!msgId || !dbRef.current || !currentUserRef.current) return;
+        if (!force && spoilerRequestedRef.current.has(msgId)) return;
+
+        spoilerRequestedRef.current.add(msgId);
+        setSpoilerCache(prev => {
+            const next = new Map(prev);
+            const cur = next.get(msgId);
+            if (!cur || cur.status !== 'ready') {
+                next.set(msgId, { status: 'loading', items: {} });
+            }
+            return next;
+        });
+
+        const fetchOnce = async () => {
+            const snap = await dbRef.current.ref(chatPath('spoilers', msgId)).once('value');
+            if (snap.exists()) {
+                const val = snap.val();
+                return { status: 'ready', items: val?.items || {} };
+            }
+            return { status: 'missing', items: {} };
+        };
+
+        try {
+            const res = await fetchOnce();
+            setSpoilerCache(prev => {
+                const next = new Map(prev);
+                next.set(msgId, res);
+                return next;
+            });
+        } catch (err) {
+            const isPermDenied = err?.code === 'PERMISSION_DENIED' || /permission_denied/i.test(err?.message || '');
+            if (isPermDenied) {
+                // Self-heal: scan loaded messages for own reply to msgId
+                const myUid = currentUserRef.current?.uid;
+                const myReply = messages.find(m => m.uid === myUid && m.replyTo && (m.replyTo.messageId === msgId || m.replyTo.id === msgId));
+                if (myReply) {
+                    try {
+                        await dbRef.current.ref(chatPath('spoilerUnlocks', msgId, myUid)).set(myReply.id);
+                        const healedRes = await fetchOnce();
+                        setSpoilerCache(prev => {
+                            const next = new Map(prev);
+                            next.set(msgId, healedRes);
+                            return next;
+                        });
+                        return;
+                    } catch (healErr) {
+                        console.warn('Spoiler self-heal unlock failed:', healErr);
+                    }
+                }
+                setSpoilerCache(prev => {
+                    const next = new Map(prev);
+                    next.set(msgId, { status: 'locked', items: {} });
+                    return next;
+                });
+            } else {
+                setSpoilerCache(prev => {
+                    const next = new Map(prev);
+                    next.set(msgId, { status: 'error', items: {} });
+                    return next;
+                });
+            }
+        }
+    }, [messages]);
+
+    // Auto-fetch spoilers for messages with spoiler tokens
+    useEffect(() => {
+        if (sessionState !== 'ready') return;
+        messages.forEach(m => {
+            if (m.text && hasSpoilerTokens(m.text)) requestSpoiler(m.id);
+        });
+    }, [messages, sessionState, requestSpoiler]);
 
     // Backfill unread @everyone broadcasts
     useEffect(() => {
@@ -1096,7 +1204,10 @@ function GlobalChat() {
     const handleSendMessage = async () => {
         if (isSending) return;
         const text = messageText.trim();
-        if (!text && !pendingFile && recMovies.length === 0 && !recTitle.trim() && !recText.trim()) return;
+        const { text: outgoingText, items } = extractSpoilers(text);
+        const hasSpoilers = Object.keys(items).length > 0;
+
+        if (!outgoingText.trim() && !hasSpoilers && !pendingFile && recMovies.length === 0 && !recTitle.trim() && !recText.trim()) return;
         if (!currentUserRef.current || !dbRef.current) return;
 
         setIsSending(true);
@@ -1111,10 +1222,12 @@ function GlobalChat() {
             }
 
             const now = Date.now();
+            const replyPreviewText = replyTo ? stripSpoilerTokens(replyTo.text || (replyTo.recTitle ? `🎬 ${replyTo.recTitle}` : (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movies` : (replyTo.mediaUrl ? '📷 Media' : '')))).slice(0, MAX_REPLY_PREVIEW_LENGTH) : undefined;
+
             const message = buildChatMessage({
                 identity: currentUserRef.current,
                 isAdmin: isGlobalChatAdmin === true,
-                text,
+                text: outgoingText,
                 timestamp: now,
                 movies: recMovies.length ? recMovies : undefined,
                 recTitle: recTitle.trim() || undefined,
@@ -1124,12 +1237,41 @@ function GlobalChat() {
                 replyTo: replyTo ? {
                     messageId: replyTo.messageId || replyTo.id,
                     senderName: replyTo.senderName || 'Google User',
-                    text: (replyTo.text || (replyTo.recTitle ? `🎬 ${replyTo.recTitle}` : (replyTo.moviesCount ? `🎬 ${replyTo.moviesCount} movies` : (replyTo.mediaUrl ? '📷 Media' : '')))).slice(0, MAX_REPLY_PREVIEW_LENGTH)
+                    text: replyPreviewText
                 } : undefined
             });
 
             const newMessageRef = dbRef.current.ref(chatPath('messages')).push();
-            await newMessageRef.set(message);
+
+            if (hasSpoilers) {
+                await dbRef.current.ref(chatPath('spoilers', newMessageRef.key)).set(
+                    buildSpoilerPayload({ items, authorUid: currentUserRef.current.uid, timestamp: now })
+                );
+            }
+
+            try {
+                await newMessageRef.set(message);
+            } catch (err) {
+                if (hasSpoilers) {
+                    // Orphan cleanup — best effort.
+                    dbRef.current.ref(chatPath('spoilers', newMessageRef.key)).remove().catch(() => { });
+                }
+                throw err;
+            }
+
+            if (hasSpoilers) seedSpoilerCache(newMessageRef.key, items);
+
+            // Unlock write: after the message write succeeds
+            const targetId = replyTo?.messageId || replyTo?.id;
+            if (targetId && hasSpoilerTokens(messagesById.get(targetId)?.text || '')) {
+                try {
+                    await dbRef.current.ref(chatPath('spoilerUnlocks', targetId, currentUserRef.current.uid))
+                        .set(newMessageRef.key);
+                    requestSpoiler(targetId, { force: true });
+                } catch (err) {
+                    console.warn('Spoiler unlock write failed:', err);
+                }
+            }
 
             setMessageText('');
             setRecMovies([]);
@@ -1164,11 +1306,11 @@ function GlobalChat() {
         setMessageText(value);
 
         // Slash-command detection — takes priority over mentions.
-        // Only triggers when the ENTIRE input is a command-in-progress
-        // (e.g. "/f", "/faq") with no spaces.
-        if (isCommandInput(value)) {
-            const filtered = filterCommands(value.trim());
-            setCommandQuery(value.trim());
+        const token = findCommandToken(value, e.target.selectionStart);
+        if (token) {
+            const filtered = filterCommands(token.token, { allowRunnable: token.isWholeInput });
+            setCommandQuery(token.token);
+            setCommandToken(token);
             setShowCommandMenu(filtered.length > 0);
             setCommandActiveIndex(0);
             setShowMentionList(false);
@@ -1176,6 +1318,7 @@ function GlobalChat() {
         }
         setShowCommandMenu(false);
         setCommandQuery('');
+        setCommandToken(null);
 
         const cursorPos = e.target.selectionStart;
         const lastAt = value.lastIndexOf('@', cursorPos);
@@ -1263,16 +1406,33 @@ function GlobalChat() {
             if (!e.target.closest('.gc-command-menu') && !e.target.closest('.gc-msg-input')) {
                 setShowCommandMenu(false);
                 setCommandQuery('');
+                setCommandToken(null);
             }
         };
         document.addEventListener('mousedown', onDocDown);
         return () => document.removeEventListener('mousedown', onDocDown);
     }, [showCommandMenu]);
 
-    // Execute a slash command — builds the local-only response card.
+    // Execute a slash command — builds the local-only response card or inserts tags.
     const executeCommand = useCallback((cmd) => {
+        if (cmd.type === 'insert') {
+            const { start = 0, end = messageText.length } = commandToken || {};
+            const next = messageText.slice(0, start) + SPOILER_OPEN + SPOILER_CLOSE + messageText.slice(end);
+            const caret = start + SPOILER_OPEN.length; // land between the tags
+            setMessageText(next);
+            setShowCommandMenu(false);
+            setCommandQuery('');
+            setCommandToken(null);
+            requestAnimationFrame(() => {
+                inputRef.current?.focus();
+                inputRef.current?.setSelectionRange(caret, caret);
+            });
+            return;
+        }
+
         setShowCommandMenu(false);
         setCommandQuery('');
+        setCommandToken(null);
         setMessageText('');
 
         switch (cmd.command) {
@@ -1288,12 +1448,12 @@ function GlobalChat() {
             default:
                 break;
         }
-    }, [faqItems]);
+    }, [faqItems, messageText, commandToken]);
 
     // Filtered commands for the autocomplete popup.
     const filteredCommands = useMemo(
-        () => filterCommands(commandQuery),
-        [commandQuery]
+        () => filterCommands(commandQuery, { allowRunnable: commandToken?.isWholeInput ?? true }),
+        [commandQuery, commandToken?.isWholeInput]
     );
 
     // Cache the most recent DirectPlayer fallback (playback → iframe switch)
@@ -1696,6 +1856,11 @@ function GlobalChat() {
                     // messages and unpins it if pinned, so even clients that
                     // connect after the deletion see nothing referencing it.
                     await purgeMessageReferences(target.id);
+                    dbRef.current.ref(chatPath('spoilers', target.id)).remove().catch(() => { });
+                    dbRef.current.ref(chatPath('spoilerUnlocks', target.id)).remove().catch(() => { });
+                    if (target.replyTo?.messageId && target.uid) {
+                        dbRef.current.ref(chatPath('spoilerUnlocks', target.replyTo.messageId, target.uid)).remove().catch(() => { });
+                    }
                 }
             } else {
                 // Soft delete for regular users — leaves the "unsent" placeholder
@@ -1704,6 +1869,10 @@ function GlobalChat() {
                     deletedForAll: true,
                     deletedAt: Date.now()
                 });
+                dbRef.current.ref(chatPath('spoilers', target.id)).remove().catch(() => { });
+                if (target.replyTo?.messageId && target.uid) {
+                    dbRef.current.ref(chatPath('spoilerUnlocks', target.replyTo.messageId, target.uid)).remove().catch(() => { });
+                }
             }
         }
 
@@ -1861,22 +2030,93 @@ function GlobalChat() {
         }
     };
 
-    // Render message text with URLs as clickable links (see splitChatLinks).
-    // /watch links render as rich preview cards (or a "▶ Watch Now" pill
-    // while they load); every other URL keeps its text + an external-site
-    // icon and opens in a new tab after the one-time guard.
-    const renderMessageText = (text) => {
-        if (!text) return null;
-        const parts = splitChatLinks(text);
+    // Render spoiler chips based on status in spoilerCache
+    const renderSpoilerChip = (spoilerIndex, msg, keySuffix = 0) => {
+        const msgId = msg?.id;
+        const entry = msgId ? spoilerCache.get(msgId) : null;
+        const status = entry?.status || 'locked';
+
+        if (status === 'ready') {
+            const val = entry.items?.[String(spoilerIndex)] ?? entry.items?.[spoilerIndex] ?? '';
+            return (
+                <span key={`spoiler-${keySuffix}-${spoilerIndex}`} className="gc-spoiler-revealed">
+                    {val}
+                </span>
+            );
+        }
+
+        if (status === 'loading') {
+            return (
+                <span key={`spoiler-${keySuffix}-${spoilerIndex}`} className="gc-spoiler-chip is-loading">
+                    🔒 …
+                </span>
+            );
+        }
+
+        if (status === 'missing') {
+            return (
+                <span key={`spoiler-${keySuffix}-${spoilerIndex}`} className="gc-spoiler-missing">
+                    🔒 Spoiler unavailable
+                </span>
+            );
+        }
+
+        if (status === 'error') {
+            return (
+                <button
+                    key={`spoiler-${keySuffix}-${spoilerIndex}`}
+                    type="button"
+                    className="gc-spoiler-chip"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (msgId) requestSpoiler(msgId, { force: true });
+                    }}
+                >
+                    🔒 Tap to retry
+                </button>
+            );
+        }
+
+        // 'locked' or absent
+        return (
+            <button
+                key={`spoiler-${keySuffix}-${spoilerIndex}`}
+                type="button"
+                className="gc-spoiler-chip"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (msg) {
+                        setReplyTo({
+                            id: msg.id,
+                            messageId: msg.id,
+                            senderName: displayNameFor(msg) || 'Google User',
+                            text: msg.text || '',
+                            uid: msg.uid,
+                            moviesCount: msg.movies?.length || 0,
+                            recTitle: msg.recTitle || null
+                        });
+                        inputRef.current?.focus();
+                    }
+                }}
+            >
+                Spoiler, reply to reveal.
+            </button>
+        );
+    };
+
+    // Render text with clickable links
+    const renderLinksInSegment = (segment, keyPrefix = 0) => {
+        const parts = splitChatLinks(segment);
         if (parts.length === 1 && typeof parts[0] === 'string') return parts[0];
 
         return parts.map((part, i) => {
+            const key = `${keyPrefix}-${i}`;
             if (typeof part === 'string') return part;
             const watch = parseWatchLink(part.url);
             if (watch) {
                 return (
                     <ChatLinkPreview
-                        key={i}
+                        key={key}
                         watch={watch}
                         url={part.url}
                         onOpen={handleChatLinkClick}
@@ -1885,7 +2125,7 @@ function GlobalChat() {
             }
             return (
                 <a
-                    key={i}
+                    key={key}
                     className="gc-chat-link gc-chat-link-external"
                     href={part.url}
                     target="_blank"
@@ -1899,22 +2139,37 @@ function GlobalChat() {
         });
     };
 
+    // Render message text with spoilers and clickable links.
+    const renderMessageText = (text, msg) => {
+        if (!text) return null;
+        const spoilerParts = splitSpoilerParts(text);
+        if (spoilerParts.length === 1 && typeof spoilerParts[0] === 'string') {
+            return renderLinksInSegment(spoilerParts[0], 'single');
+        }
+
+        return spoilerParts.map((spPart, spIdx) => {
+            if (typeof spPart !== 'string') {
+                return renderSpoilerChip(spPart.spoilerIndex, msg, spIdx);
+            }
+            return renderLinksInSegment(spPart, spIdx);
+        });
+    };
+
     // Render message text as block structure: paragraphs and bullet lists
-    // (see splitMessageBlocks). Chat links are resolved per block so link
-    // previews keep working inside formatted messages.
-    const renderFormattedText = (text) => {
+    // (see splitMessageBlocks). Chat links and spoilers are resolved per block.
+    const renderFormattedText = (text, msg) => {
         if (!text) return null;
         return splitMessageBlocks(text).map((block, i) => {
             if (block.type === 'ul') {
                 return (
                     <ul key={i} className="gc-msg-list">
                         {block.items.map((item, j) => (
-                            <li key={j}>{renderMessageText(item)}</li>
+                            <li key={j}>{renderMessageText(item, msg)}</li>
                         ))}
                     </ul>
                 );
             }
-            return <p key={i} className="gc-msg-para">{renderMessageText(block.text)}</p>;
+            return <p key={i} className="gc-msg-para">{renderMessageText(block.text, msg)}</p>;
         });
     };
 
@@ -2201,7 +2456,7 @@ function GlobalChat() {
                                 <div className="gc-reply-text">
                                     {msg.replyTo.recTitle
                                         ? `🎬 ${msg.replyTo.recTitle}`
-                                        : (msg.replyTo.text
+                                        : (stripSpoilerTokens(msg.replyTo.text)
                                             || (msg.replyTo.moviesCount ? `🎬 ${msg.replyTo.moviesCount} movie${msg.replyTo.moviesCount > 1 ? 's' : ''}` : '📷 Media'))}
                                 </div>
                             </div>
@@ -2220,7 +2475,7 @@ function GlobalChat() {
                             )}
                             {msg.text && (
                                 <div className="gc-msg-text">
-                                    {renderFormattedText(msg.text)}
+                                    {renderFormattedText(msg.text, msg)}
                                     {msg.isEdited && <span className="gc-edited-label"> (edited)</span>}
                                 </div>
                             )}
@@ -2556,8 +2811,8 @@ function GlobalChat() {
                                     <i className="fa-solid fa-thumbtack"></i>
                                 </div>
                                 <div className="gc-pinned-content">
-                                    <span className="gc-pinned-label">Pinned by {pinnedMessage.senderName || pinnedMessage.displayName || 'Admin'}</span>
-                                    <span className="gc-pinned-text">{pinnedMessage.text}</span>
+                                    <span className="gc-pinned-label">Pinned by {pinnedByName}</span>
+                                    <span className="gc-pinned-text">{stripSpoilerTokens(pinnedMessage.text)}</span>
                                 </div>
                                 {isGlobalChatAdmin && (
                                     <button
@@ -2701,41 +2956,41 @@ function GlobalChat() {
                         {/* Selected movie recommendations (chips) */}
                         {recMovies.length > 0 && (
                             <>
-                            <div className="gc-rec-chips">
-                                {recMovies.map(m => (
-                                    <span key={`${m.type}-${m.id}`} className="gc-rec-chip">
-                                        {m.poster
-                                            ? <img src={cardPoster(m.poster)} alt="" className="gc-rec-chip-img" />
-                                            : <span className="gc-rec-chip-img gc-rec-chip-img-fallback">🎬</span>}
-                                        <span className="gc-rec-chip-title">{m.title}</span>
-                                        <button
-                                            className="gc-rec-chip-x"
-                                            onClick={() => removeRecMovie(m.type, m.id)}
-                                            aria-label="Remove from list"
-                                        >
-                                            ✕
-                                        </button>
-                                    </span>
-                                ))}
-                                <button className="gc-rec-chip-clear" onClick={() => { setRecMovies([]); setRecTitle(''); setRecText(''); }}>Clear</button>
-                            </div>
-                            {/* Optional custom title + note attached to the recommendation */}
-                            <div className="gc-rec-details">
-                                <input
-                                    className="gc-rec-detail-input"
-                                    placeholder="Add a title to your recommendation…"
-                                    value={recTitle}
-                                    onChange={(e) => setRecTitle(e.target.value)}
-                                    maxLength={60}
-                                />
-                                <input
-                                    className="gc-rec-detail-input"
-                                    placeholder="Add a note — why should they watch it?…"
-                                    value={recText}
-                                    onChange={(e) => setRecText(e.target.value)}
-                                    maxLength={200}
-                                />
-                            </div>
+                                <div className="gc-rec-chips">
+                                    {recMovies.map(m => (
+                                        <span key={`${m.type}-${m.id}`} className="gc-rec-chip">
+                                            {m.poster
+                                                ? <img src={cardPoster(m.poster)} alt="" className="gc-rec-chip-img" />
+                                                : <span className="gc-rec-chip-img gc-rec-chip-img-fallback">🎬</span>}
+                                            <span className="gc-rec-chip-title">{m.title}</span>
+                                            <button
+                                                className="gc-rec-chip-x"
+                                                onClick={() => removeRecMovie(m.type, m.id)}
+                                                aria-label="Remove from list"
+                                            >
+                                                ✕
+                                            </button>
+                                        </span>
+                                    ))}
+                                    <button className="gc-rec-chip-clear" onClick={() => { setRecMovies([]); setRecTitle(''); setRecText(''); }}>Clear</button>
+                                </div>
+                                {/* Optional custom title + note attached to the recommendation */}
+                                <div className="gc-rec-details">
+                                    <input
+                                        className="gc-rec-detail-input"
+                                        placeholder="Add a title to your recommendation…"
+                                        value={recTitle}
+                                        onChange={(e) => setRecTitle(e.target.value)}
+                                        maxLength={60}
+                                    />
+                                    <input
+                                        className="gc-rec-detail-input"
+                                        placeholder="Add a note — why should they watch it?…"
+                                        value={recText}
+                                        onChange={(e) => setRecText(e.target.value)}
+                                        maxLength={200}
+                                    />
+                                </div>
                             </>
                         )}
 

@@ -53,15 +53,15 @@ const StarRow = ({ rating, outOf5 = true, size = 13 }) => {
                         <defs>
                             {half && (
                                 <linearGradient id={`half-${i}`} x1="0" x2="1" y1="0" y2="0">
-                                    <stop offset="50%" stopColor="#FFC107" />
+                                    <stop offset="50%" stopColor="#E5A00D" />
                                     <stop offset="50%" stopColor="transparent" />
                                 </linearGradient>
                             )}
                         </defs>
                         <polygon
                             points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                            fill={filled ? '#FFC107' : half ? `url(#half-${i})` : 'none'}
-                            stroke={filled || half ? '#FFC107' : 'rgba(255,255,255,0.18)'}
+                            fill={filled ? '#E5A00D' : half ? `url(#half-${i})` : 'none'}
+                            stroke={filled || half ? '#E5A00D' : 'rgba(255,255,255,0.2)'}
                             strokeWidth="1.5"
                         />
                     </svg>

@@ -206,75 +206,79 @@
 
 .iptv-watch-lazy-content {
     position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
     text-align: center;
-    padding: 20px;
-    z-index: 1;
+    gap: 12px;
+    padding: 24px;
+    max-width: 640px;
 }
 
 .iptv-watch-play-button {
-    width: 100px;
-    height: 100px;
+    width: 88px;
+    height: 88px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.15);
-    border: 3px solid rgba(255, 255, 255, 0.8);
-    color: white;
+    background: rgba(30, 30, 30, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.85);
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-    margin-bottom: 16px;
-    animation: iptvPulse 2s ease-in-out infinite;
-}
-
-@keyframes iptvPulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-    }
-
-    50% {
-        box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
-    }
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease, color 0.15s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin-bottom: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
 .iptv-watch-play-button:hover {
-    transform: scale(1.1);
-    background: rgba(255, 255, 255, 0.25);
-    border-color: white;
-    animation: none;
+    transform: scale(1.08);
+    background: #ffffff;
+    color: #141414;
+    border-color: #ffffff;
 }
 
 .iptv-watch-play-button:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.iptv-watch-play-button:focus-visible {
+    outline: 4px solid #e50914;
+    outline-offset: 4px;
+    transform: scale(1.05);
+    background: #ffffff;
+    color: #141414;
+    border-color: #ffffff;
+    box-shadow: 0 0 32px rgba(229, 9, 20, 0.5);
 }
 
 .iptv-watch-play-button svg {
-    width: 44px;
-    height: 44px;
-    color: white;
-    margin-left: 4px;
+    width: 38px;
+    height: 38px;
+    fill: currentColor;
 }
 
 .iptv-watch-lazy-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: white;
+    color: #ffffff;
+    font-size: clamp(1.4rem, 1.1rem + 1.2vw, 2rem);
+    font-weight: 700;
     margin: 0;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
     max-width: 600px;
+    letter-spacing: -0.3px;
+    line-height: 1.25;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
 }
 
 .iptv-watch-lazy-hint {
-    font-size: 14px;
-    color: rgba(255, 255, 255, 0.5);
-    margin: 8px 0 0 0;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 400;
+    margin: 0;
+    letter-spacing: 0.1px;
 }
 
 /* CSS Fullscreen Mode */

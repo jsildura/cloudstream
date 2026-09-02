@@ -31,6 +31,13 @@ export const CHAT_COMMANDS = [
         description: 'View the community chat guidelines',
         icon: '📝',
         type: 'static'
+    },
+    {
+        command: '/spoiler',
+        label: 'Hide message',
+        description: 'Hide content until a recipient replies',
+        icon: '🔒',
+        type: 'insert'
     }
 ];
 
@@ -46,23 +53,64 @@ export function isCommandInput(text) {
 }
 
 /**
+ * Find a slash-command token at caret position (e.g. "/spoiler" in mid-message).
+ * Scans backward to whitespace or string start and forward to whitespace or string end.
+ *
+ * @param {string} text
+ * @param {number} caretPos
+ * @returns {{ token: string, start: number, end: number, isWholeInput: boolean } | null}
+ */
+export function findCommandToken(text, caretPos) {
+    if (!text || typeof text !== 'string') return null;
+    const pos = typeof caretPos === 'number' ? caretPos : text.length;
+    if (pos < 0 || pos > text.length) return null;
+
+    // Scan backward to previous whitespace/newline or start of string
+    let start = pos;
+    while (start > 0 && !/\s/.test(text[start - 1])) {
+        start--;
+    }
+
+    // Scan forward from pos to whitespace or end of string
+    let end = pos;
+    while (end < text.length && !/\s/.test(text[end])) {
+        end++;
+    }
+
+    const token = text.slice(start, end);
+    if (!/^\/[a-z]*$/i.test(token)) {
+        return null;
+    }
+
+    const isWholeInput = text.trim() === token;
+    return { token, start, end, isWholeInput };
+}
+
+/**
  * Filter the command registry by a partial input string.
  * Input may or may not include the leading `/`.
+ * When allowRunnable is false, returns only 'insert' commands.
  *
  *   filterCommands('/f')   → [ { command: '/faq', … } ]
  *   filterCommands('he')   → [ { command: '/help', … } ]
  *   filterCommands('')     → all commands
  *
  * @param {string} input
+ * @param {{ allowRunnable?: boolean }} [options={}]
  * @returns {Array}
  */
-export function filterCommands(input) {
+export function filterCommands(input, { allowRunnable = true } = {}) {
     const raw = (input || '').trim().toLowerCase();
     const query = raw.startsWith('/') ? raw : `/${raw}`;
 
-    if (query === '/') return CHAT_COMMANDS;
+    let commands = CHAT_COMMANDS;
+    if (!allowRunnable) {
+        commands = commands.filter(cmd => cmd.type === 'insert');
+    }
 
-    return CHAT_COMMANDS.filter(cmd =>
+    if (query === '/') return commands;
+
+    return commands.filter(cmd =>
         cmd.command.startsWith(query)
     );
 }

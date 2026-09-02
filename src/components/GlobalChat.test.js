@@ -726,7 +726,17 @@ describe('GlobalChat Google Identity Rendering', () => {
         expect(janeAvatar.src).not.toContain('ui-avatars.com');
     });
 
-    it('renders pinned message banner with senderName', async () => {
+    it('labels the pinned banner with the pinning admin chat name, not the author or their Google name', async () => {
+        // The pin payload freezes the *author's* Google-token senderName. The
+        // banner must instead name whoever pinned it (`pinnedBy`), resolved
+        // through the admin identity overlay.
+        mockData['globalChat/v2/profiles'] = {
+            'mod-uid-1': {
+                displayName: 'Joelito Sildura (Jay)',
+                adminName: 'Nightwatch'
+            }
+        };
+
         mockData['globalChat/v2/pinnedMessage'] = {
             id: 'msg_pinned_1',
             text: 'Welcome to the new chat!',
@@ -742,8 +752,55 @@ describe('GlobalChat Google Identity Rendering', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText(/pinned by alice mod/i)).toBeInTheDocument();
+            expect(screen.getByText(/pinned by nightwatch/i)).toBeInTheDocument();
             expect(screen.getByText('Welcome to the new chat!')).toBeInTheDocument();
+        });
+
+        expect(screen.queryByText(/pinned by alice mod/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/pinned by joelito/i)).not.toBeInTheDocument();
+    });
+
+    it('falls back to the pinner Google name, then Admin, when no chat name override exists', async () => {
+        mockData['globalChat/v2/profiles'] = {
+            'mod-uid-1': { displayName: 'Plain Moderator' }
+        };
+
+        mockData['globalChat/v2/pinnedMessage'] = {
+            id: 'msg_pinned_2',
+            text: 'Second pin',
+            senderName: 'Alice Mod',
+            pinnedBy: 'mod-uid-1',
+            pinnedAt: Date.now()
+        };
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText(/pinned by plain moderator/i)).toBeInTheDocument();
+        });
+    });
+
+    it('labels the pinned banner Admin when the pinner profile is unknown', async () => {
+        mockData['globalChat/v2/pinnedMessage'] = {
+            id: 'msg_pinned_3',
+            text: 'Orphan pin',
+            senderName: 'Alice Mod',
+            pinnedBy: 'deleted-uid',
+            pinnedAt: Date.now()
+        };
+
+        render(React.createElement(GlobalChat));
+
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText(/pinned by admin/i)).toBeInTheDocument();
         });
     });
 
@@ -2149,7 +2206,7 @@ describe('GlobalChat Slash Commands', () => {
         const textarea = await openComposer();
 
         type(textarea, '/');
-        expect(commandNames()).toEqual(['/faq', '/help', '/rules']);
+        expect(commandNames()).toEqual(['/faq', '/help', '/rules', '/spoiler']);
 
         type(textarea, '/f');
         expect(commandNames()).toEqual(['/faq']);
@@ -2225,6 +2282,250 @@ describe('GlobalChat Slash Commands', () => {
         expect(document.querySelector('.gc-command-menu')).toBeNull();
         expect(textarea.value).toBe('/f');
         expect(document.querySelector('.gc-command-card')).toBeNull();
+    });
+});
+
+describe('GlobalChat Reply-Gated Spoilers', () => {
+    let mockDb;
+    let mockData = {};
+    let registeredListeners = [];
+    const regularUser = {
+        uid: 'user-alice-1',
+        displayName: 'Alice',
+        email: 'alice@example.com',
+        photoURL: 'https://img.test/alice.jpg'
+    };
+
+    const createMockRef = (path) => {
+        const refObj = {
+            path,
+            key: path.split('/').pop(),
+            once: vi.fn().mockImplementation((event, cb) => {
+                const data = mockData[path];
+                const snap = {
+                    exists: () => data !== undefined && data !== null,
+                    val: () => data ?? null,
+                    key: path.split('/').pop(),
+                    forEach: (iter) => {
+                        if (data && typeof data === 'object') {
+                            Object.entries(data).forEach(([k, v]) => {
+                                iter({ key: k, val: () => v });
+                            });
+                        }
+                    }
+                };
+                if (typeof event === 'function') event(snap);
+                if (cb) cb(snap);
+                return Promise.resolve(snap);
+            }),
+            set: vi.fn().mockImplementation((val) => {
+                mockData[path] = val;
+                return Promise.resolve();
+            }),
+            update: vi.fn().mockImplementation((val) => {
+                mockData[path] = { ...(mockData[path] || {}), ...val };
+                return Promise.resolve();
+            }),
+            remove: vi.fn().mockImplementation(() => {
+                delete mockData[path];
+                return Promise.resolve();
+            }),
+            on: vi.fn().mockImplementation((event, cb) => {
+                registeredListeners.push({ path, event, cb });
+                const data = mockData[path];
+                const snap = {
+                    exists: () => data !== undefined && data !== null,
+                    val: () => data ?? null,
+                    key: path.split('/').pop(),
+                    forEach: (iter) => {
+                        if (data && typeof data === 'object') {
+                            Object.entries(data).forEach(([k, v]) => {
+                                iter({ key: k, val: () => v });
+                            });
+                        }
+                    }
+                };
+                if (event === 'value') {
+                    cb(snap);
+                }
+                return cb;
+            }),
+            off: vi.fn().mockImplementation((event, cb) => {
+                registeredListeners = registeredListeners.filter(l => l.path !== path || l.cb !== cb);
+            }),
+            orderByKey: vi.fn().mockReturnThis(),
+            orderByChild: vi.fn().mockReturnThis(),
+            equalTo: vi.fn().mockReturnThis(),
+            limitToLast: vi.fn().mockReturnThis(),
+            endAt: vi.fn().mockReturnThis(),
+            push: vi.fn().mockImplementation(() => {
+                const pushKey = `msg_${Date.now()}`;
+                const pushPath = `${path}/${pushKey}`;
+                const pushRef = createMockRef(pushPath);
+                pushRef.key = pushKey;
+                return pushRef;
+            })
+        };
+        return refObj;
+    };
+
+    beforeEach(() => {
+        mockData = {};
+        registeredListeners = [];
+        mockDb = {
+            ref: vi.fn((path = '') => createMockRef(path))
+        };
+
+        window.firebase = {
+            database: Object.assign(() => mockDb, {
+                ServerValue: { TIMESTAMP: { '.sv': 'timestamp' } }
+            }),
+            auth: () => ({
+                currentUser: regularUser,
+                onAuthStateChanged: (cb) => {
+                    cb(regularUser);
+                    return () => {};
+                }
+            })
+        };
+
+        vi.spyOn(FirebaseModule, 'initFirebase').mockReturnValue({
+            auth: window.firebase.auth(),
+            db: mockDb,
+            storage: {}
+        });
+
+        vi.spyOn(AuthContextModule, 'useAuth').mockReturnValue({
+            chatIdentity: regularUser,
+            isSignedIn: true,
+            isAuthLoading: false,
+            isGlobalChatAdmin: false,
+            signInWithGoogle: vi.fn()
+        });
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('inserts [spoiler][/spoiler] on selecting /spoiler command', async () => {
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('.gc-msg-input')).toBeInTheDocument();
+        });
+
+        const textarea = document.querySelector('.gc-msg-input');
+
+        // Type /spoiler
+        fireEvent.change(textarea, { target: { value: '/sp' } });
+        expect(document.querySelector('.gc-command-menu')).not.toBeNull();
+
+        // Click /spoiler in menu
+        const spoilerItem = document.querySelector('.gc-command-item');
+        await act(async () => {
+            fireEvent.click(spoilerItem);
+        });
+
+        expect(textarea.value).toBe('[spoiler][/spoiler]');
+    });
+
+    it('renders lock chip for locked user and reveals secret when unlocked', async () => {
+        mockData['globalChat/v2/messages'] = {
+            msg_other: {
+                uid: 'other-user-99',
+                senderName: 'Bob',
+                text: 'Drop: [[spoiler:1]]',
+                createdAt: Date.now() - 5000
+            }
+        };
+
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_other')).toBeInTheDocument();
+        });
+
+        // The other user's message has locked spoiler button
+        const lockBtn = document.querySelector('.gc-spoiler-chip');
+        expect(lockBtn).not.toBeNull();
+        expect(lockBtn.textContent).toContain('Reply to reveal');
+
+        // Clicking lock button arms reply
+        await act(async () => {
+            fireEvent.click(lockBtn);
+        });
+        const replyBar = document.querySelector('.gc-reply-bar');
+        expect(replyBar).not.toBeNull();
+    });
+
+    it('renders revealed secret for message when spoiler is ready in cache', async () => {
+        mockData['globalChat/v2/messages'] = {
+            msg_unlocked: {
+                uid: 'other-user-99',
+                senderName: 'Bob',
+                text: 'Key: [[spoiler:1]]',
+                createdAt: Date.now() - 5000
+            }
+        };
+        mockData['globalChat/v2/spoilers/msg_unlocked'] = {
+            authorUid: 'other-user-99',
+            createdAt: Date.now() - 5000,
+            items: { '1': 'SECRET-REVEALED-KEY' }
+        };
+
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            const revealed = document.querySelector('.gc-spoiler-revealed');
+            expect(revealed).not.toBeNull();
+            expect(revealed.textContent).toBe('SECRET-REVEALED-KEY');
+        });
+    });
+
+    it('blocks editing a message containing spoiler tokens', async () => {
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+        mockData['globalChat/v2/messages'] = {
+            msg_own: {
+                uid: regularUser.uid,
+                senderName: regularUser.displayName,
+                text: 'Secret drop: [[spoiler:1]]',
+                createdAt: Date.now() - 5000
+            }
+        };
+
+        render(React.createElement(GlobalChat));
+        act(() => {
+            window.dispatchEvent(new CustomEvent('streamflix:open-global-chat'));
+        });
+
+        await waitFor(() => {
+            expect(document.querySelector('#msg-msg_own')).toBeInTheDocument();
+        });
+
+        // Trigger context menu / action sheet on own message
+        const bubble = document.querySelector('#msg-msg_own .gc-msg-bubble');
+        expect(bubble).not.toBeNull();
+
+        // Right click opens action sheet
+        fireEvent.contextMenu(bubble);
+
+        const editBtn = Array.from(document.querySelectorAll('.gc-sheet-btn')).find(el => el.textContent.includes('Edit'));
+        if (editBtn) {
+            await act(async () => {
+                fireEvent.click(editBtn);
+            });
+            expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining("Messages with hidden content can't be edited"));
+        }
     });
 });
 

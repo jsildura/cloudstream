@@ -67,6 +67,17 @@ export function createValidMovieFixture(overrides = {}) {
   };
 }
 
+export function createValidSpoilerFixture(uid = 'google-user-1', overrides = {}) {
+  return {
+    authorUid: uid,
+    createdAt: 1700000000000,
+    items: {
+      '1': 'Secret Key SFX-123'
+    },
+    ...overrides
+  };
+}
+
 export function createValidTicketFixture(uid = 'google-user-1', overrides = {}) {
   const ticket = {
     uid,
@@ -1414,6 +1425,178 @@ describe('Firebase Realtime Database Security Rules', () => {
 
       // Admin can remove / unpin
       await assertSucceeds(adminDb.ref('globalChat/v2/pinnedMessage').remove());
+    });
+  });
+
+  describe('globalChat/v2/spoilers and spoilerUnlocks', () => {
+    it('denies unauthenticated and anonymous access to spoilers and spoilerUnlocks', async () => {
+      const unauthDb = await createUnauthenticatedContext();
+      const anonDb = await createAnonymousContext();
+
+      const spoiler = createValidSpoilerFixture('google-user-1');
+      await assertFails(unauthDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+      await assertFails(unauthDb.ref('globalChat/v2/spoilers/msg-1').once('value'));
+      await assertFails(anonDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+      await assertFails(anonDb.ref('globalChat/v2/spoilers/msg-1').once('value'));
+
+      await assertFails(unauthDb.ref('globalChat/v2/spoilerUnlocks/msg-1/google-user-1').set('reply-msg-1'));
+      await assertFails(unauthDb.ref('globalChat/v2/spoilerUnlocks/msg-1/google-user-1').once('value'));
+      await assertFails(anonDb.ref('globalChat/v2/spoilerUnlocks/msg-1/google-user-1').set('reply-msg-1'));
+      await assertFails(anonDb.ref('globalChat/v2/spoilerUnlocks/msg-1/google-user-1').once('value'));
+    });
+
+    it('allows author to create and read their own spoilers/$msgId', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').once('value'));
+    });
+
+    it('allows claims admin to read spoilers/$msgId', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const adminDb = await createGoogleAdminContext('google-admin-1', { name: 'Admin Alice' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+      await assertSucceeds(adminDb.ref('globalChat/v2/spoilers/msg-1').once('value'));
+    });
+
+    it('denies unrelated user from reading spoilers/$msgId without unlock', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const user2Db = await createGoogleContext('google-user-2', { name: 'Bob' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+      await assertFails(user2Db.ref('globalChat/v2/spoilers/msg-1').once('value'));
+    });
+
+    it('denies listing or reading entire spoilers node', async () => {
+      const userDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      await assertFails(userDb.ref('globalChat/v2/spoilers').once('value'));
+    });
+
+    it('enforces create-only on spoilers (cannot overwrite), but allows delete by author and admin', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const adminDb = await createGoogleAdminContext('google-admin-1', { name: 'Admin Alice' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').set(spoiler));
+
+      // Overwrite by author fails (create-only)
+      const updatedSpoiler = { ...spoiler, items: { '1': 'Changed secret' } };
+      await assertFails(authorDb.ref('globalChat/v2/spoilers/msg-1').set(updatedSpoiler));
+
+      // Author can delete
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-1').remove());
+
+      // Re-create and test admin delete
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-2').set(createValidSpoilerFixture('google-user-1')));
+      await assertSucceeds(adminDb.ref('globalChat/v2/spoilers/msg-2').remove());
+    });
+
+    it('validates spoiler items: rejects >500 char value, non-numeric index, extra fields, invalid authorUid', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+
+      // Rejects item with >500 chars
+      const tooLongSpoiler = createValidSpoilerFixture('google-user-1', {
+        items: { '1': 'x'.repeat(501) }
+      });
+      await assertFails(authorDb.ref('globalChat/v2/spoilers/msg-1').set(tooLongSpoiler));
+
+      // Rejects non-numeric index
+      const badIndexSpoiler = createValidSpoilerFixture('google-user-1', {
+        items: { 'abc': 'Secret' }
+      });
+      await assertFails(authorDb.ref('globalChat/v2/spoilers/msg-2').set(badIndexSpoiler));
+
+      // Rejects forged authorUid
+      const forgedAuthorSpoiler = createValidSpoilerFixture('google-user-2');
+      await assertFails(authorDb.ref('globalChat/v2/spoilers/msg-3').set(forgedAuthorSpoiler));
+
+      // Rejects extra fields ($other)
+      const extraFieldSpoiler = createValidSpoilerFixture('google-user-1', {
+        extraField: 'not allowed'
+      });
+      await assertFails(authorDb.ref('globalChat/v2/spoilers/msg-4').set(extraFieldSpoiler));
+    });
+
+    it('enforces spoilerUnlocks validation: fails when pointing to message of someone else or replyTo pointing to different msgId', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const user2Db = await createGoogleContext('google-user-2', { name: 'Bob' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      // Post original spoiler message
+      const origMsg = createValidMessageFixture('google-user-1', {
+        text: 'Drop: [[spoiler:1]]'
+      });
+      await assertSucceeds(authorDb.ref('globalChat/v2/messages/msg-orig-1').set(origMsg));
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-orig-1').set(spoiler));
+
+      // User 2 cannot read spoiler yet
+      await assertFails(user2Db.ref('globalChat/v2/spoilers/msg-orig-1').once('value'));
+
+      // User 2 tries to unlock using author's original message id (authored by someone else) -> fails
+      await assertFails(user2Db.ref('globalChat/v2/spoilerUnlocks/msg-orig-1/google-user-2').set('msg-orig-1'));
+
+      // User 2 posts a reply to a DIFFERENT message (msg-other)
+      const badReplyMsg = createValidMessageFixture('google-user-2', {
+        text: 'Thanks!',
+        senderName: 'Bob',
+        replyTo: createValidReplyFixture({ messageId: 'msg-different-999' })
+      });
+      await assertSucceeds(user2Db.ref('globalChat/v2/messages/reply-bad-1').set(badReplyMsg));
+
+      // User 2 tries to use reply-bad-1 to unlock msg-orig-1 -> fails because replyTo.messageId does not match
+      await assertFails(user2Db.ref('globalChat/v2/spoilerUnlocks/msg-orig-1/google-user-2').set('reply-bad-1'));
+
+      // User 2 tries to write unlock for someone else's uid -> fails
+      await assertFails(user2Db.ref('globalChat/v2/spoilerUnlocks/msg-orig-1/google-user-1').set('reply-bad-1'));
+
+      // User 2 posts a genuine reply to msg-orig-1
+      const goodReplyMsg = createValidMessageFixture('google-user-2', {
+        text: 'Got it thanks!',
+        senderName: 'Bob',
+        replyTo: createValidReplyFixture({ messageId: 'msg-orig-1' })
+      });
+      await assertSucceeds(user2Db.ref('globalChat/v2/messages/reply-good-1').set(goodReplyMsg));
+
+      // User 2 writes unlock referencing reply-good-1 -> succeeds!
+      await assertSucceeds(user2Db.ref('globalChat/v2/spoilerUnlocks/msg-orig-1/google-user-2').set('reply-good-1'));
+
+      // Now User 2 can read the spoiler!
+      await assertSucceeds(user2Db.ref('globalChat/v2/spoilers/msg-orig-1').once('value'));
+    });
+
+    it('allows claims admin to hard delete message with spoiler, reply to spoiler, and spoiler/spoilerUnlock nodes', async () => {
+      const authorDb = await createGoogleContext('google-user-1', { name: 'Alice' });
+      const user2Db = await createGoogleContext('google-user-2', { name: 'Bob' });
+      const adminDb = await createGoogleAdminContext('google-admin-1', { name: 'Admin Alice' });
+      const spoiler = createValidSpoilerFixture('google-user-1');
+
+      // Post spoiler message
+      const origMsg = createValidMessageFixture('google-user-1', { text: 'Drop: [[spoiler:1]]' });
+      await assertSucceeds(authorDb.ref('globalChat/v2/messages/msg-spoiler-1').set(origMsg));
+      await assertSucceeds(authorDb.ref('globalChat/v2/spoilers/msg-spoiler-1').set(spoiler));
+
+      // User 2 replies
+      const replyMsg = createValidMessageFixture('google-user-2', {
+        text: 'Tell me!',
+        senderName: 'Bob',
+        replyTo: createValidReplyFixture({ messageId: 'msg-spoiler-1' })
+      });
+      await assertSucceeds(user2Db.ref('globalChat/v2/messages/reply-to-spoiler-1').set(replyMsg));
+      await assertSucceeds(user2Db.ref('globalChat/v2/spoilerUnlocks/msg-spoiler-1/google-user-2').set('reply-to-spoiler-1'));
+
+      // Admin deletes the reply message
+      await assertSucceeds(adminDb.ref('globalChat/v2/messages/reply-to-spoiler-1').remove());
+
+      // Admin deletes the spoiler message and spoiler node
+      await assertSucceeds(adminDb.ref('globalChat/v2/messages/msg-spoiler-1').remove());
+      await assertSucceeds(adminDb.ref('globalChat/v2/spoilers/msg-spoiler-1').remove());
+
+      // Admin deletes spoilerUnlocks for msg-spoiler-1
+      await assertSucceeds(adminDb.ref('globalChat/v2/spoilerUnlocks/msg-spoiler-1').remove());
     });
   });
 });

@@ -66,14 +66,16 @@
    anchored to this wrapper — no clipping, and it paints above the button. */
 .gc-fab-wrap {
     position: relative;
-    margin-top: 10px; /* was on .gc-fab */
+    margin-top: 10px;
+    /* was on .gc-fab */
 }
 
 .gc-fab-wrap .gc-badge {
     position: absolute;
     top: -5px;
     right: -5px;
-    z-index: 10001; /* above the FAB's own z-index: 10000 */
+    z-index: 10001;
+    /* above the FAB's own z-index: 10000 */
 }
 
 /* Animated gradient border - mapple.uk style */
@@ -940,7 +942,8 @@
    base .gc-msg-group rules stays, leaving the buttons room even when a bubble
    fills the row. Don't let the native iOS callout/selection UI intercept the
    long-press. */
-@media (hover: none), (pointer: coarse) {
+@media (hover: none),
+(pointer: coarse) {
     .gc-msg-bubble {
         -webkit-touch-callout: none;
         -webkit-user-select: none;
@@ -1415,6 +1418,7 @@
         opacity: 0;
         transform: translateY(6px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1483,6 +1487,7 @@
         opacity: 0;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -2227,8 +2232,10 @@
 .gc-reports-list {
     flex: 1;
     overflow-y: auto;
-    min-height: 0; /* let the list shrink inside the flex column so it scrolls */
-    pointer-events: auto; /* .gc-wrapper is pointer-events:none; re-enable for scrolling */
+    min-height: 0;
+    /* let the list shrink inside the flex column so it scrolls */
+    pointer-events: auto;
+    /* .gc-wrapper is pointer-events:none; re-enable for scrolling */
     padding: 10px;
 }
 
@@ -2293,6 +2300,7 @@
 
 /* === TV 1080p RESPONSIVENESS (1920px - 2559px) === */
 @media (min-width: 1920px) and (max-width: 2559px) and (hover: none) and (pointer: coarse) {
+
     /* Main Wrapper Positioning */
     .gc-wrapper {
         bottom: 30px !important;
@@ -2416,6 +2424,7 @@
 
 /* === 4K TV RESPONSIVENESS (3840px and up) === */
 @media (min-width: 3840px) {
+
     /* Main Wrapper Positioning */
     .gc-wrapper {
         bottom: 80px !important;
@@ -2765,8 +2774,10 @@
 .gc-reports-list {
     flex: 1;
     overflow-y: auto;
-    min-height: 0; /* let the list shrink inside the flex column so it scrolls */
-    pointer-events: auto; /* .gc-wrapper is pointer-events:none; re-enable for scrolling */
+    min-height: 0;
+    /* let the list shrink inside the flex column so it scrolls */
+    pointer-events: auto;
+    /* .gc-wrapper is pointer-events:none; re-enable for scrolling */
     padding: 10px;
 }
 
@@ -3046,10 +3057,12 @@
 }
 
 @keyframes gc-badge-pulse {
+
     0%,
     100% {
         box-shadow: 0 0 0 0 rgba(255, 77, 90, 0.45);
     }
+
     50% {
         box-shadow: 0 0 0 6px rgba(255, 77, 90, 0);
     }
@@ -3102,6 +3115,80 @@
 
 .gc-msg-text .gc-msg-list li:last-child {
     margin-bottom: 0;
+}
+
+/* === SPOILER SYSTEM (Reply-Gated Secret Tokens) === */
+.gc-spoiler-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    margin: 2px 2px;
+    font-size: 0.88em;
+    font-weight: 500;
+    color: #e0e6ed;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px dashed rgba(255, 255, 255, 0.28);
+    border-radius: 6px;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    user-select: none;
+    line-height: 1.4;
+}
+
+.gc-spoiler-chip:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.gc-spoiler-chip:focus-visible {
+    outline: 2px solid #ff4d5a;
+    outline-offset: 2px;
+}
+
+.gc-spoiler-chip.is-loading {
+    cursor: default;
+    opacity: 0.65;
+    pointer-events: none;
+}
+
+.gc-spoiler-revealed {
+    display: inline;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+    word-break: break-all;
+    user-select: all;
+    vertical-align: baseline;
+}
+
+.gc-spoiler-missing {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 0.88em;
+    font-style: italic;
+    color: #8fa0b3;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
+/* Own bubble overrides for contrast against red background */
+.gc-msg.gc-own .gc-spoiler-chip {
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.22);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.gc-msg.gc-own .gc-spoiler-chip:hover {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.65);
+}
+
+.gc-msg.gc-own .gc-spoiler-revealed {
+    color: #ffffff;
 }
 
 /* === MOVIE RECOMMENDATION LISTS ===

@@ -148,6 +148,14 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     const seasonCards = screen.getAllByRole('button', { name: /Season/i });
     expect(seasonCards).toHaveLength(4);
 
+    // Verify season badges are rendered with Netflix design system
+    const badges = document.querySelectorAll('.modal-season-badge');
+    expect(badges).toHaveLength(4);
+    expect(badges[0].textContent.trim()).toBe('S1');
+    expect(badges[1].textContent.trim()).toBe('S2');
+    expect(badges[2].textContent.trim()).toBe('S3');
+    expect(badges[3].textContent.trim()).toBe('S4');
+
     // Season 4 is the latest aired season and should be selected by default
     expect(seasonCards[3].classList.contains('selected')).toBe(true);
     expect(seasonCards[3]).toHaveAttribute('aria-pressed', 'true');

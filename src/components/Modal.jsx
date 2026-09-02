@@ -622,7 +622,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                   {/* Action Buttons Row */}
                   <div className="modal-actions-row">
                     <button onClick={playButtonClick} className="modal-btn-play">
-                      <span className="modal-btn-icon">▷</span>
+                      <span className="modal-btn-icon">▶</span>
                       Watch Now
                     </button>
                     <button
@@ -700,7 +700,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                       <>
                         <span className="meta-dot">·</span>
                         <span className="modal-rating">
-                          <span className="star-icon">☆</span>
+                          <span className="star-icon">★</span>
                           {rating}
                         </span>
                       </>
@@ -815,11 +815,14 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                         </div>
                       ))
                     ) : (
-                      seasons.map((season) => {
+                      seasons.map((season, index) => {
                         const isSelected = selectedSeason === season.season_number;
                         const posterSrc = season.poster_path
                           ? `${POSTER_URL}${season.poster_path}`
                           : (item.poster_path ? `${POSTER_URL}${item.poster_path}` : '/icons/placeholder.svg');
+                        const seasonBadgeText = season.season_number === 0
+                          ? 'SP'
+                          : (season.season_number != null ? `S${season.season_number}` : `S${index + 1}`);
 
                         return (
                           <div
@@ -838,6 +841,9 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                             aria-label={`${season.name || `Season ${season.season_number}`}${isSelected ? ' (Selected)' : ''}`}
                             title={`${season.name || `Season ${season.season_number}`}${season.episode_count ? ` • ${season.episode_count} episodes` : ''}`}
                           >
+                            <span className="modal-season-badge" aria-hidden="true">
+                              {seasonBadgeText}
+                            </span>
                             <img
                               src={posterSrc}
                               alt={season.name || `Season ${season.season_number}`}

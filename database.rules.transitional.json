@@ -301,6 +301,37 @@
             }
           }
         },
+        "spoilers": {
+          "$msgId": {
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && (data.child('authorUid').val() === auth.uid || auth.token.globalChatAdmin === true || root.child('globalChat/v2/spoilerUnlocks').child($msgId).child(auth.uid).exists())",
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && (!data.exists() ? (newData.exists() && newData.child('authorUid').val() === auth.uid) : (!newData.exists() && (data.child('authorUid').val() === auth.uid || auth.token.globalChatAdmin === true)))",
+            ".validate": "newData.exists() ? newData.hasChildren(['authorUid', 'createdAt', 'items']) : true",
+            "authorUid": {
+              ".validate": "newData.val() === auth.uid"
+            },
+            "createdAt": {
+              ".validate": "newData.isNumber() && newData.val() > 0"
+            },
+            "items": {
+              "$index": {
+                ".validate": "$index.matches(/^[1-9][0-9]?$/) && newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "spoilerUnlocks": {
+          "$msgId": {
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && (!newData.exists() && auth.token.globalChatAdmin === true)",
+            "$uid": {
+              ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.uid === $uid",
+              ".write": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && ((auth.uid === $uid && !data.exists() && newData.exists()) || (!newData.exists() && auth.token.globalChatAdmin === true))",
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 80 && root.child('globalChat/v2/messages').child(newData.val()).child('uid').val() === auth.uid && root.child('globalChat/v2/messages').child(newData.val()).child('replyTo').child('messageId').val() === $msgId"
+            }
+          }
+        },
         "reports": {
           ".read": "auth != null && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.globalChatAdmin === true",
           "$reportId": {

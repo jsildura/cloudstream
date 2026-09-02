@@ -60,40 +60,47 @@
 }
 
 .mylist-custom-select-trigger {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    color: #fff;
-    padding: 9px 14px;
-    font-size: 0.875rem;
+    height: 38px;
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: #ffffff;
+    padding: 0 14px;
+    font-size: 0.85rem;
     font-weight: 500;
+    line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     user-select: none;
 }
 
 .mylist-custom-select-trigger:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
 .mylist-custom-select-trigger.open {
-    border-color: #e50914;
-    background: rgba(255, 255, 255, 0.12);
+    border-color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .mylist-custom-select-trigger:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline: 3px solid #e50914;
     outline-offset: 2px;
+    border-color: #e50914;
 }
 
 .mylist-select-arrow {
+    width: 16px;
+    height: 16px;
     color: rgba(255, 255, 255, 0.6);
-    transition: transform 0.2s ease;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
 }
 
 .mylist-custom-select-trigger.open .mylist-select-arrow {
@@ -102,72 +109,82 @@
 
 .mylist-custom-select-options {
     position: absolute;
-    top: calc(100% + 8px);
+    top: calc(100% + 6px);
     left: 0;
     min-width: 100%;
-    background: #1f1f1f;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
+    background: #181818;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
     z-index: 50;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
     overflow: hidden;
-    animation: mylistDropdownSlide 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: mylistDropdownSlide 0.15s ease-out;
 }
 
 @keyframes mylistDropdownSlide {
-    from { opacity: 0; transform: translateY(-8px); }
+    from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .mylist-custom-option {
-    padding: 12px 16px;
+    padding: 10px 14px;
     color: rgba(255, 255, 255, 0.8);
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     white-space: nowrap;
-    transition: background 0.15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .mylist-custom-option:hover {
     background: rgba(255, 255, 255, 0.08);
-    color: #fff;
+    color: #ffffff;
 }
 
 .mylist-custom-option.selected {
-    background: rgba(229, 9, 20, 0.12);
-    color: #fff;
-    font-weight: 500;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-weight: 600;
 }
 
 .mylist-check-icon {
     color: #e50914;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 /* ---- Clear All ---- */
 
 .mylist-clear-btn {
-    background: rgba(229, 9, 20, 0.12);
-    border: 1px solid rgba(229, 9, 20, 0.5);
-    border-radius: 8px;
-    color: #ff6b6b;
-    padding: 9px 16px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    height: 38px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0 14px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1;
     cursor: pointer;
-    transition: background 0.2s ease, border-color 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .mylist-clear-btn:hover {
-    background: rgba(229, 9, 20, 0.25);
+    background: rgba(229, 9, 20, 0.15);
     border-color: #e50914;
+    color: #ffffff;
 }
 
 .mylist-clear-btn:focus-visible {
-    outline: 2px solid #e50914;
+    outline: 3px solid #e50914;
     outline-offset: 2px;
 }
 
@@ -240,6 +257,8 @@
 
 /* Remove button — revealed on hover on pointer devices, always visible on
    touch screens so mobile users can actually remove items. */
+/* Remove button — revealed on hover on pointer devices, always visible on
+   touch screens so mobile users can actually remove items. */
 .mylist-remove-btn {
     position: absolute;
     top: 8px;
@@ -247,17 +266,24 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(20, 20, 20, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: rgba(255, 255, 255, 0.85);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transform: scale(0.85);
-    transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    transform: scale(0.9);
+    transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     z-index: 2;
+}
+
+.mylist-remove-btn svg {
+    width: 16px;
+    height: 16px;
 }
 
 .mylist-card:hover .mylist-remove-btn,
@@ -268,40 +294,64 @@
 
 .mylist-remove-btn:hover {
     background: #e50914;
+    border-color: #e50914;
+    color: #ffffff;
+    transform: scale(1.08);
+}
+
+.mylist-remove-btn:focus-visible {
+    outline: 3px solid #e50914;
+    outline-offset: 2px;
+    background: #e50914;
+    border-color: #e50914;
+    color: #ffffff;
 }
 
 .mylist-card-type {
     position: absolute;
     bottom: 8px;
     left: 8px;
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: rgba(255, 255, 255, 0.9);
     font-size: 0.65rem;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 4px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
     text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.6px;
+    line-height: 1.2;
 }
 
 .mylist-card-info {
-    padding: 0 2px;
+    padding: 2px 2px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .mylist-card-title {
     font-size: 0.875rem;
-    font-weight: 500;
-    color: #fff;
-    margin: 0 0 4px 0;
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: -0.1px;
+    line-height: 1.25;
 }
 
 .mylist-card-rating {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #ffc107;
+    color: #E5A00D;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    letter-spacing: 0.2px;
 }
 
 /* ---- Empty state ---- */
@@ -454,11 +504,11 @@
     .mylist-title::after { width: 72px; height: 5px; margin-top: 16px; }
     .mylist-count { font-size: 1.4rem; margin-bottom: 28px; }
     .mylist-custom-select { min-width: 220px; }
-    .mylist-custom-select-trigger { padding: 14px 24px; font-size: 1.5rem; border-radius: 12px; }
-    .mylist-custom-select-options { border-radius: 14px; }
+    .mylist-custom-select-trigger { padding: 14px 24px; font-size: 1.5rem; border-radius: 8px; }
+    .mylist-custom-select-options { border-radius: 8px; }
     .mylist-custom-option { padding: 18px 24px; font-size: 1.4rem; }
     .mylist-check-icon { width: 24px; height: 24px; }
-    .mylist-clear-btn { padding: 14px 28px; font-size: 1.5rem; border-radius: 12px; }
+    .mylist-clear-btn { padding: 14px 28px; font-size: 1.5rem; border-radius: 8px; }
     .mylist-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 28px; }
     .mylist-card-image-container { border-radius: 16px; margin-bottom: 16px; }
     .mylist-card-title { font-size: 1.5rem; margin-bottom: 6px; }
