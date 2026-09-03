@@ -24,6 +24,9 @@ const PROVIDERS = [
 
 const StreamingProviders = () => {
     const navigate = useNavigate();
+    const sectionRef = useRef(null);
+    const scrollAnchorPosRef = useRef(null);
+    const lastInteractionTimeRef = useRef(0);
     const gridRef = useRef(null);
     const moviesGridRef = useRef(null);
     const [imageErrors, setImageErrors] = useState({});
@@ -115,6 +118,9 @@ const StreamingProviders = () => {
 
                 const topMovies = results.slice(0, 10);
                 setProviderMovies(topMovies);
+                if (moviesGridRef.current) {
+                    moviesGridRef.current.scrollTo({ left: 0, behavior: 'instant' });
+                }
 
                 // Fetch logos for all items in parallel
                 const logoPromises = topMovies.map(item =>
@@ -136,17 +142,37 @@ const StreamingProviders = () => {
 
         fetchProviderContent();
     }, [selectedProvider, fetchDiscoverMovies, fetchDiscoverTV, fetchLogo, mediaType]);
+
     const handleProviderClick = (provider) => {
+        if (sectionRef.current) {
+            const rect = sectionRef.current.getBoundingClientRect();
+            scrollAnchorPosRef.current = {
+                sectionTop: rect.top,
+                scrollY: window.scrollY
+            };
+            lastInteractionTimeRef.current = Date.now();
+        }
+
         if (selectedProvider?.id === provider.id) {
             // Toggle off if clicking the same provider
             setSelectedProvider(null);
+            setProviderMovies([]);
+            setIsLoadingMovies(false);
         } else {
+            setIsLoadingMovies(true);
             setSelectedProvider(provider);
         }
     };
 
+    const handleMediaTypeChange = (type) => {
+        if (type !== mediaType) {
+            setIsLoadingMovies(true);
+            setMediaType(type);
+        }
+    };
+
     const handleMovieClick = async (movie) => {
-        closeNow(); // dismiss the hover preview before the modal opens
+        closeNow(800); // dismiss the hover preview before the modal opens
         const genreNames = movie.genre_ids?.map(id => movieGenres.get(id)).filter(Boolean) || [];
         const [cast, contentRating] = await Promise.all([
             fetchCredits(mediaType, movie.id),
@@ -314,7 +340,17 @@ const StreamingProviders = () => {
     const handleMovieCardFocus = useCallback((index) => {
         setMoviesInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
         setFocusedMovieIndex(index);
-        movieCardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        if (moviesGridRef.current && movieCardRefs.current[index]) {
+            const container = moviesGridRef.current;
+            const card = movieCardRefs.current[index];
+            const cardLeft = card.offsetLeft;
+            const cardWidth = card.offsetWidth;
+            const containerWidth = container.clientWidth;
+            container.scrollTo({
+                left: cardLeft - (containerWidth / 2) + (cardWidth / 2),
+                behavior: 'smooth'
+            });
+        }
     }, []);
 
     const handleMovieKeyDown = useCallback((e, index) => {
@@ -348,7 +384,7 @@ const StreamingProviders = () => {
 
     return (
         <>
-            <section className="streaming-providers-section" data-nav-section="streaming-providers">
+            <section ref={sectionRef} className="streaming-providers-section" data-nav-section="streaming-providers">
                 <div className="streaming-providers-header">
                     <h2 className="streaming-providers-title">Streaming Providers</h2>
                     <p className="streaming-providers-subtitle">Find shows and movies from your favorite streaming services</p>
@@ -407,7 +443,7 @@ const StreamingProviders = () => {
                                 <div className="streaming-media-filters">
                                     <button
                                         className={`streaming-media-btn ${mediaType === 'movie' ? 'active' : ''}`}
-                                        onClick={() => setMediaType('movie')}
+                                        onClick={() => handleMediaTypeChange('movie')}
                                         style={{ '--accent-color': '#e50914' }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -424,7 +460,7 @@ const StreamingProviders = () => {
                                     </button>
                                     <button
                                         className={`streaming-media-btn ${mediaType === 'tv' ? 'active' : ''}`}
-                                        onClick={() => setMediaType('tv')}
+                                        onClick={() => handleMediaTypeChange('tv')}
                                         style={{ '--accent-color': '#e50914' }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -445,28 +481,24 @@ const StreamingProviders = () => {
                                 </button>
                             </div>
                         </div>
-                        {isLoadingMovies ? (
-                            <div className="provider-movies-loading">
-                                <div className="provider-movies-skeleton">
-                                    {[...Array(5)].map((_, i) => (
+                        <div className={`carousel-container ${isLoadingMovies ? 'is-loading' : ''}`}>
+                            <div
+                                className="provider-movies-grid"
+                                ref={moviesGridRef}
+                                onMouseEnter={handleMoviesMouseEnter}
+                                onMouseLeave={handleMoviesMouseLeave}
+                                onMouseDown={handleMoviesMouseDown}
+                                onMouseUp={handleMoviesMouseUp}
+                                onMouseMove={handleMoviesMouseMove}
+                                onTouchStart={handleMoviesTouchStart}
+                                onTouchEnd={handleMoviesTouchEnd}
+                            >
+                                {isLoadingMovies ? (
+                                    [...Array(6)].map((_, i) => (
                                         <div key={i} className="provider-movie-card-skeleton" />
-                                    ))}
-                                </div>
-                            </div>
-                        ) : providerMovies.length > 0 ? (
-                            <div className="carousel-container">
-                                <div
-                                    className="provider-movies-grid"
-                                    ref={moviesGridRef}
-                                    onMouseEnter={handleMoviesMouseEnter}
-                                    onMouseLeave={handleMoviesMouseLeave}
-                                    onMouseDown={handleMoviesMouseDown}
-                                    onMouseUp={handleMoviesMouseUp}
-                                    onMouseMove={handleMoviesMouseMove}
-                                    onTouchStart={handleMoviesTouchStart}
-                                    onTouchEnd={handleMoviesTouchEnd}
-                                >
-                                {providerMovies.map((movie, index) => {
+                                    ))
+                                ) : providerMovies.length > 0 ? (
+                                    providerMovies.map((movie, index) => {
                                     const { isPaused, isKeyboardNav } = moviesInteractionState;
                                     const isFocused = (isKeyboardNav || !isPaused) && focusedMovieIndex === index;
                                     // Logos are fetched into a side map keyed by id, so fold the
@@ -549,15 +581,15 @@ const StreamingProviders = () => {
                                             </div>
                                         </div>
                                     );
-                                })}
-                                </div>
-                                <CarouselControls carouselRef={moviesGridRef} />
+                                })
+                                ) : (
+                                    <div className="provider-movies-empty">
+                                        No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this provider
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="provider-movies-empty">
-                                No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this provider
-                            </div>
-                        )}
+                            {providerMovies.length > 0 && <CarouselControls carouselRef={moviesGridRef} />}
+                        </div>
                     </div>
                 )}
             </section>

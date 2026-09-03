@@ -29,6 +29,9 @@ const STUDIOS = [
 
 const MovieStudios = () => {
     const navigate = useNavigate();
+    const sectionRef = useRef(null);
+    const scrollAnchorPosRef = useRef(null);
+    const lastInteractionTimeRef = useRef(0);
     const gridRef = useRef(null);
     const moviesGridRef = useRef(null);
     const [imageErrors, setImageErrors] = useState({});
@@ -96,6 +99,9 @@ const MovieStudios = () => {
 
                 const topMovies = movies.slice(0, 10);
                 setStudioMovies(topMovies);
+                if (moviesGridRef.current) {
+                    moviesGridRef.current.scrollTo({ left: 0, behavior: 'instant' });
+                }
 
                 // Fetch logos for all items in parallel
                 const logoPromises = topMovies.map(item =>
@@ -119,16 +125,35 @@ const MovieStudios = () => {
     }, [selectedStudio, fetchDiscoverMovies, fetchDiscoverTV, fetchLogo, mediaType]);
 
     const handleStudioClick = (studio) => {
+        if (sectionRef.current) {
+            const rect = sectionRef.current.getBoundingClientRect();
+            scrollAnchorPosRef.current = {
+                sectionTop: rect.top,
+                scrollY: window.scrollY
+            };
+            lastInteractionTimeRef.current = Date.now();
+        }
+
         if (selectedStudio?.id === studio.id) {
             // Toggle off if clicking the same studio
             setSelectedStudio(null);
+            setStudioMovies([]);
+            setIsLoadingMovies(false);
         } else {
+            setIsLoadingMovies(true);
             setSelectedStudio(studio);
         }
     };
 
+    const handleMediaTypeChange = (type) => {
+        if (type !== mediaType) {
+            setIsLoadingMovies(true);
+            setMediaType(type);
+        }
+    };
+
     const handleMovieClick = async (movie) => {
-        closeNow(); // dismiss the hover preview before the modal opens
+        closeNow(800); // dismiss the hover preview before the modal opens
         const genreNames = movie.genre_ids?.map(id => movieGenres.get(id)).filter(Boolean) || [];
         const [cast, contentRating] = await Promise.all([
             fetchCredits(mediaType, movie.id),
@@ -288,7 +313,17 @@ const MovieStudios = () => {
     const handleMovieCardFocus = useCallback((index) => {
         setMoviesInteractionState(prev => ({ ...prev, isKeyboardNav: true, isPaused: true }));
         setFocusedMovieIndex(index);
-        movieCardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        if (moviesGridRef.current && movieCardRefs.current[index]) {
+            const container = moviesGridRef.current;
+            const card = movieCardRefs.current[index];
+            const cardLeft = card.offsetLeft;
+            const cardWidth = card.offsetWidth;
+            const containerWidth = container.clientWidth;
+            container.scrollTo({
+                left: cardLeft - (containerWidth / 2) + (cardWidth / 2),
+                behavior: 'smooth'
+            });
+        }
     }, []);
 
     const handleMovieKeyDown = useCallback((e, index) => {
@@ -322,7 +357,7 @@ const MovieStudios = () => {
 
     return (
         <>
-            <section className="movie-studios-section" data-nav-section="studios">
+            <section ref={sectionRef} className="movie-studios-section" data-nav-section="studios">
                 <div className="movie-studios-header">
                     <h2 className="movie-studios-title">Studios</h2>
                     <p className="movie-studios-subtitle">Find shows and movies from your favorite studios</p>
@@ -381,7 +416,7 @@ const MovieStudios = () => {
                                 <div className="streaming-media-filters">
                                     <button
                                         className={`streaming-media-btn ${mediaType === 'movie' ? 'active' : ''}`}
-                                        onClick={() => setMediaType('movie')}
+                                        onClick={() => handleMediaTypeChange('movie')}
                                         style={{ '--accent-color': '#e50914' }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -398,7 +433,7 @@ const MovieStudios = () => {
                                     </button>
                                     <button
                                         className={`streaming-media-btn ${mediaType === 'tv' ? 'active' : ''}`}
-                                        onClick={() => setMediaType('tv')}
+                                        onClick={() => handleMediaTypeChange('tv')}
                                         style={{ '--accent-color': '#e50914' }}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -419,28 +454,24 @@ const MovieStudios = () => {
                                 </button>
                             </div>
                         </div>
-                        {isLoadingMovies ? (
-                            <div className="studio-movies-loading">
-                                <div className="studio-movies-skeleton">
-                                    {[...Array(5)].map((_, i) => (
+                        <div className={`carousel-container ${isLoadingMovies ? 'is-loading' : ''}`}>
+                            <div
+                                className="studio-movies-grid"
+                                ref={moviesGridRef}
+                                onMouseEnter={handleMoviesMouseEnter}
+                                onMouseLeave={handleMoviesMouseLeave}
+                                onMouseDown={handleMoviesMouseDown}
+                                onMouseUp={handleMoviesMouseUp}
+                                onMouseMove={handleMoviesMouseMove}
+                                onTouchStart={handleMoviesTouchStart}
+                                onTouchEnd={handleMoviesTouchEnd}
+                            >
+                                {isLoadingMovies ? (
+                                    [...Array(6)].map((_, i) => (
                                         <div key={i} className="studio-movie-card-skeleton" />
-                                    ))}
-                                </div>
-                            </div>
-                        ) : studioMovies.length > 0 ? (
-                            <div className="carousel-container">
-                                <div
-                                    className="studio-movies-grid"
-                                    ref={moviesGridRef}
-                                    onMouseEnter={handleMoviesMouseEnter}
-                                    onMouseLeave={handleMoviesMouseLeave}
-                                    onMouseDown={handleMoviesMouseDown}
-                                    onMouseUp={handleMoviesMouseUp}
-                                    onMouseMove={handleMoviesMouseMove}
-                                    onTouchStart={handleMoviesTouchStart}
-                                    onTouchEnd={handleMoviesTouchEnd}
-                                >
-                                {studioMovies.map((movie, index) => {
+                                    ))
+                                ) : studioMovies.length > 0 ? (
+                                    studioMovies.map((movie, index) => {
                                     const { isPaused, isKeyboardNav } = moviesInteractionState;
                                     const isFocused = (isKeyboardNav || !isPaused) && focusedMovieIndex === index;
                                     // Logos are fetched into a side map keyed by id, so fold the
@@ -523,15 +554,15 @@ const MovieStudios = () => {
                                             </div>
                                         </div>
                                     );
-                                })}
-                                </div>
-                                <CarouselControls carouselRef={moviesGridRef} />
+                                })
+                                ) : (
+                                    <div className="studio-movies-empty">
+                                        No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this studio
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="studio-movies-empty">
-                                No {mediaType === 'movie' ? 'movies' : 'TV shows'} found for this studio
-                            </div>
-                        )}
+                            {studioMovies.length > 0 && <CarouselControls carouselRef={moviesGridRef} />}
+                        </div>
                     </div>
                 )}
             </section>

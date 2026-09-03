@@ -6740,7 +6740,7 @@
   padding: 0.1rem 0.5rem 1rem 0.5rem;
   width: 100%;
   font-size: 0.75rem;
-  margin-top: 2rem;
+  margin-top: 1rem;
   margin-bottom: 0;
   position: relative;
   overflow: hidden;
@@ -7810,17 +7810,22 @@
     transform: translateZ(0);
     will-change: transform, opacity;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.035) 45%, rgba(8, 8, 12, 0.16)),
-      rgba(22, 22, 28, 0.58);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.04) 35%, rgba(0, 0, 0, 0.28) 70%, rgba(255, 255, 255, 0.06) 100%),
+      radial-gradient(110% 120% at 50% -10%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 60%),
+      rgba(10, 12, 18, 0.48);
+    border: 1px solid rgba(255, 255, 255, 0.28);
     border-radius: 999px;
     box-shadow:
-      0 12px 34px rgba(0, 0, 0, 0.34),
-      0 2px 10px rgba(0, 0, 0, 0.24),
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(26px) saturate(165%) contrast(105%);
-    -webkit-backdrop-filter: blur(26px) saturate(165%) contrast(105%);
+      0 14px 40px rgba(0, 0, 0, 0.45),
+      0 4px 14px rgba(0, 0, 0, 0.28),
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.55),
+      inset 0 -1.5px 1px rgba(255, 255, 255, 0.2),
+      inset 0 0 16px 1px rgba(255, 255, 255, 0.08),
+      inset 0 8px 16px -4px rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px) saturate(200%) contrast(110%);
+    -webkit-backdrop-filter: blur(20px) saturate(200%) contrast(110%);
+    backdrop-filter: url(#bottom-sheet-liquid-refract);
+    -webkit-backdrop-filter: url(#bottom-sheet-liquid-refract);
     animation: bottomNavDockIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
@@ -7833,11 +7838,11 @@
     content: "";
     position: absolute;
     z-index: -1;
-    inset: 1px 9px auto;
-    height: 46%;
+    inset: 1px 12px auto;
+    height: 48%;
     border-radius: 999px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
-    opacity: 0.7;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0) 100%);
+    opacity: 0.85;
     pointer-events: none;
   }
 
@@ -7847,7 +7852,10 @@
     z-index: -1;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 0 18px rgba(255, 255, 255, 0.035);
+    background: radial-gradient(ellipse at 50% 120%, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 65%);
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.25),
+      inset 0 -2px 6px rgba(0, 0, 0, 0.25);
     pointer-events: none;
   }
 
@@ -7866,7 +7874,7 @@
     border: 0;
     border-radius: 999px;
     background: transparent;
-    color: rgba(255, 255, 255, 0.52);
+    color: rgba(255, 255, 255, 0.92);
     cursor: pointer;
     font: inherit;
     text-decoration: none;
@@ -7889,8 +7897,8 @@
     width: 19px;
     height: 19px;
     flex: 0 0 auto;
-    stroke-width: 1.8;
-    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.2));
+    stroke-width: 2.1;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95)) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.75));
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), stroke-width 0.25s ease;
   }
 
@@ -7899,16 +7907,18 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 9px;
-    font-weight: 500;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.15px;
     line-height: 1.15;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95), 0 2px 5px rgba(0, 0, 0, 0.75);
   }
 
   .bottom-sheet-item:hover,
   .bottom-sheet-item:focus-visible {
-    color: rgba(255, 255, 255, 0.92);
-    background: rgba(255, 255, 255, 0.09);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
     transform: translateY(-1px);
   }
 
@@ -7918,20 +7928,26 @@
   }
 
   .bottom-sheet-item.active {
-    color: #fff;
+    color: #ffffff;
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)),
-      rgba(255, 255, 255, 0.035);
+      linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.08) 100%),
+      rgba(255, 255, 255, 0.08);
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.05),
-      0 3px 10px rgba(0, 0, 0, 0.16);
+      inset 0 1.5px 0.5px rgba(255, 255, 255, 0.5),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.25),
+      0 4px 12px rgba(0, 0, 0, 0.35);
     transform: translateY(-2px);
   }
 
   .bottom-sheet-item.active svg {
-    stroke-width: 2.3;
+    stroke-width: 2.4;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 2px 8px rgba(0, 0, 0, 0.8));
     transform: scale(1.06);
+  }
+
+  .bottom-sheet-item.active span {
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.98), 0 2px 6px rgba(0, 0, 0, 0.85);
   }
 
   .bottom-sheet-item .bottom-sheet-chat-badge {

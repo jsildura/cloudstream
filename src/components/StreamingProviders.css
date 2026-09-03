@@ -2,6 +2,7 @@
 .streaming-providers-section {
     padding: 24px 0;
     margin-bottom: 20px;
+    overflow-anchor: auto;
 }
 
 .streaming-providers-header {
@@ -147,18 +148,18 @@
 
 .provider-movies-section {
     margin-top: 20px;
+    min-height: 280px;
+    overflow-anchor: none;
     animation: providerFadeSlideIn 0.3s ease-out;
 }
 
 @keyframes providerFadeSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -225,6 +226,12 @@
 
 .provider-movies-view-all:hover svg {
     transform: translateX(2px);
+}
+
+.carousel-container.is-loading .provider-movies-grid {
+    opacity: 0.45;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
 .provider-movies-grid {
@@ -447,7 +454,7 @@
 
 .provider-movie-card-skeleton {
     flex: 0 0 auto;
-    width: 280px;
+    width: 380px;
     aspect-ratio: 16 / 9;
     background: linear-gradient(110deg,
             rgba(35, 35, 40, 0.95) 0%,
@@ -523,6 +530,7 @@
     /* Provider Content Mobile */
     .provider-movies-section {
         margin-top: 14px;
+        min-height: 200px;
     }
 
     .provider-movies-title {
@@ -599,6 +607,10 @@
     .provider-pill-logo {
         max-height: 20px;
         max-width: 90px;
+    }
+
+    .provider-movies-section {
+        min-height: 240px;
     }
 }
 

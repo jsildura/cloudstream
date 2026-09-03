@@ -57,6 +57,12 @@ export default function UpdatePrompt() {
   const handleUpdate = () => {
     if (reloadedRef.current) return;
 
+    try {
+      localStorage.setItem('streamflix_just_updated', 'true');
+    } catch {
+      // ignore storage errors
+    }
+
     // Reload the moment the new SW actually takes control (bypasses isUpdate).
     controllerHandlerRef.current = () => {
       if (!reloadedRef.current) {

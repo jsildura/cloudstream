@@ -24,6 +24,7 @@ const PopularOnStreamflix = ({ onItemClick }) => {
     // Refs
     const carouselRef = useRef(null);
     const cardRefs = useRef([]);
+    const enrichmentMapRef = useRef(new Map());
     const touchEndTimeoutRef = useRef(null);
     const isTVMode = useTVDetect();
 
@@ -62,10 +63,10 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                 const enrichedItems = await Promise.all(
                     popularContent.map(async (item) => {
                         try {
-                            // One bundled call for the logo and the rating that
-                            // used to take a separate details request.
+                            // One bundled call for details + logo + rating + cast
                             const type = item.type || 'movie';
-                            const data = await fetchItemBundle(type, item.id, ['images']);
+                            const ratingAppend = type === 'tv' ? 'content_ratings' : 'release_dates';
+                            const data = await fetchItemBundle(type, item.id, ['images', 'credits', ratingAppend]);
 
                             // Get English logo or first available
                             const logos = data.images?.logos || [];
@@ -77,16 +78,34 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                 backdrop_path = data.images.backdrops[0].file_path;
                             }
 
-                            return {
+                            const genreNames = data.genres?.map(g => g.name) || [];
+                            const cast = data.credits?.cast?.slice(0, 5).map(a => a.name) || [];
+                            const contentRating = parseContentRating(
+                                type,
+                                type === 'tv' ? data.content_ratings : data.release_dates
+                            );
+
+                            const enriched = {
                                 ...item,
+                                ...data,
+                                type,
+                                media_type: type,
+                                overview: data.overview || item.overview || '',
+                                release_date: data.release_date || item.release_date || '',
+                                first_air_date: data.first_air_date || item.first_air_date || '',
+                                genres: genreNames.length ? genreNames : (item.genres || []),
+                                cast: cast.join(', ') || 'N/A',
+                                contentRating,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
-                                // Bug 3 fix: preserve existing vote_average (e.g. from Firebase
-                                // tracking) rather than blindly overwriting with the bundle value.
+                                // Preserve existing vote_average if present
                                 vote_average: item.vote_average !== undefined
                                     ? item.vote_average
                                     : data.vote_average,
                             };
+
+                            enrichmentMapRef.current.set(item.id, enriched);
+                            return enriched;
                         } catch {
                             return item;
                         }
@@ -210,45 +229,18 @@ const PopularOnStreamflix = ({ onItemClick }) => {
         cardRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }, []);
 
-    // Handle item click — one bundled call covers details + credits + content rating.
-    // Previously three sequential/parallel requests; now a single fetchItemBundle.
-    const handleItemClick = useCallback(async (item) => {
+    // Handle item click — delegates immediately with pre-enriched details (overview, year, genres, cast)
+    const handleItemClick = useCallback((item) => {
         if (isDragging) return;
-        closeNow(); // dismiss the hover preview before the modal opens
+        closeNow(800); // dismiss the hover preview before the modal opens
 
-        try {
-            const type = item.type || 'movie';
-            // Bundle: details (top level) + credits + age rating in one /api/ call.
-            const ratingAppend = type === 'tv' ? 'content_ratings' : 'release_dates';
-            const data = await fetchItemBundle(type, item.id, ['credits', ratingAppend]);
+        // Check if we have the fully enriched item (with overview, year, genres, cast)
+        const fullItem = enrichmentMapRef.current.get(item.id) || item;
 
-            const genreNames = data.genres?.map(g => g.name) || [];
-            // credits are nested under data.credits when appended
-            const cast = data.credits?.cast?.slice(0, 4).map(a => a.name) || [];
-            const contentRating = parseContentRating(
-                type,
-                type === 'tv' ? data.content_ratings : data.release_dates
-            );
-
-            onItemClick({
-                ...data,
-                type,
-                genres: genreNames,
-                cast: cast.join(', ') || 'N/A',
-                contentRating
-            });
-        } catch (error) {
-            console.error('Failed to fetch content details:', error);
-            // Fallback to basic info
-            onItemClick({
-                id: item.id,
-                title: item.title,
-                poster_path: item.poster_path,
-                backdrop_path: item.backdrop_path,
-                type: item.type
-            });
+        if (onItemClick) {
+            onItemClick(fullItem);
         }
-    }, [isDragging, closeNow, fetchItemBundle, onItemClick]);
+    }, [isDragging, closeNow, onItemClick]);
 
     const handleKeyDown = useCallback((e, index) => {
         const itemsLength = displayContent?.length || 0;

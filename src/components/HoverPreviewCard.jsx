@@ -13,7 +13,7 @@ import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import { maybeOpenSmartlinkAd } from '../utils/adGating';
-import { previewBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
+import { previewBackdrop, posterAsBackdrop, cardBackdrop, cardLogo } from '../utils/images';
 import YouTubePlayer from './YouTubePlayer';
 import './HoverPreviewCard.css';
 
@@ -45,7 +45,7 @@ const bodyHeightFor = (vw) => {
     return 132;
 };
 
-const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) => {
+const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false, initialBackdropSrc = null }) => {
     const navigate = useNavigate();
     const { fetchItemBundle, movieGenres, tvGenres } = useTMDB();
     const { isInWatchlist, toggleWatchlist } = useWatchlist();
@@ -196,11 +196,13 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false }) =
     // owner component - as clicking the card without the preview.
     const handleMoreInfo = useCallback((e) => {
         e.stopPropagation();
-        closeNow();
+        closeNow(800);
         onMoreInfo?.(item);
     }, [item, onMoreInfo, closeNow]);
 
-    const backdropSrc = previewBackdrop(item.backdrop_path)
+    const backdropSrc = initialBackdropSrc
+        ?? cardBackdrop(item.backdrop_path)
+        ?? previewBackdrop(item.backdrop_path)
         ?? posterAsBackdrop(item.poster_path)
         ?? '/icons/placeholder.svg';
     // Decorative fallback art — render it letterboxed/contained, not stretched

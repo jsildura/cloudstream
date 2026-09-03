@@ -805,6 +805,22 @@ const Navbar = () => {
           )}
         </div>
 
+        {/* Liquid Refraction SVG Filter for Bottom Sheet */}
+        <svg
+          className="bottom-sheet-liquid-svg-filter"
+          aria-hidden="true"
+          style={{ position: 'fixed', top: 0, left: 0, width: 0, height: 0, pointerEvents: 'none', zIndex: -1 }}
+        >
+          <defs>
+            <filter id="bottom-sheet-liquid-refract" x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
+              <feTurbulence type="fractalNoise" baseFrequency="0.018 0.024" numOctaves="3" result="fluidNoise" seed="23" />
+              <feDisplacementMap in="SourceGraphic" in2="fluidNoise" scale="28" xChannelSelector="R" yChannelSelector="G" result="disp" />
+              <feGaussianBlur in="disp" stdDeviation="1.8" result="blurred" />
+              <feColorMatrix in="blurred" type="saturate" values="1.6" />
+            </filter>
+          </defs>
+        </svg>
+
         {/* Mobile Bottom Sheet Navigation */}
         <div className={`bottom-sheet-menu ${isKidsMode ? 'kids-mode' : ''}`} aria-label="Primary mobile navigation">
           <NavLink to="/" end className="bottom-sheet-item bottom-sheet-link">

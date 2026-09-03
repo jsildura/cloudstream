@@ -38,6 +38,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     fetchContentRating,
     fetchTVDetails,
     fetchSeasonEpisodes,
+    fetchItemBundle,
     movieGenres,
     tvGenres
   } = useTMDB();
@@ -93,9 +94,9 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const inWatchlist = Boolean(item?.id && isInWatchlist(item.media_type || item.type || 'movie', item.id));
   const [isTrailerPlaying, setIsTrailerPlaying] = useState(false);
   const [trailerKey, setTrailerKey] = useState(null);
-  const [logoPath, setLogoPath] = useState(null);
-  const [logoLoaded, setLogoLoaded] = useState(false);
-  const [contentRating, setContentRating] = useState(null);
+  const [logoPath, setLogoPath] = useState(initialItem?.logo_path || null);
+  const [logoLoaded, setLogoLoaded] = useState(Boolean(initialItem?.logo_path));
+  const [contentRating, setContentRating] = useState(initialItem?.contentRating || null);
   // Lazily-loaded cast — populated from item.cast if present, otherwise fetched.
   const [cast, setCast] = useState(initialItem?.cast || null);
 
@@ -131,8 +132,8 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
 
         // Reset states for new item
         setTrailerKey(null);
-        setLogoPath(null);
-        setLogoLoaded(false);
+        setLogoPath(item.logo_path || null);
+        setLogoLoaded(Boolean(item.logo_path));
         setIsTrailerPlaying(false);
         setRecsLoading(true);
         setSeasonsLoading(isTvItem);
@@ -159,19 +160,36 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
           }
         }
 
+        const needsDetails = !item.overview || !item.genres?.length || (!item.release_date && !item.first_air_date);
+
         // Fetch trailer, logo, cast, content rating, and TV details in parallel
-        const [key, logo, fetchedCast, fetchedRating, tvDetails] = await Promise.all([
+        const [key, logo, fetchedCast, fetchedRating, tvDetails, fetchedDetails] = await Promise.all([
           fetchVideos(type, item.id),
-          fetchLogo(type, item.id),
+          item.logo_path ? Promise.resolve(item.logo_path) : fetchLogo(type, item.id),
           item.cast ? Promise.resolve(null) : fetchCredits(type, item.id),
           item.contentRating ? Promise.resolve(null) : fetchContentRating(type, item.id),
           isTvItem ? fetchTVDetails(item.id).catch(() => null) : Promise.resolve(null),
+          needsDetails ? fetchItemBundle(type, item.id).catch(() => null) : Promise.resolve(null),
         ]);
         setTrailerKey(key);
-        setLogoPath(logo);
+        if (logo) {
+          setLogoPath(logo);
+          setLogoLoaded(true);
+        }
         setLogoLoaded(true);
         if (fetchedCast) setCast(fetchedCast.join(', ') || 'N/A');
         if (fetchedRating) setContentRating(fetchedRating);
+        if (fetchedDetails) {
+          const fallbackGenres = fetchedDetails.genres?.map(g => g.name) || [];
+          setItem(prev => ({
+            ...fetchedDetails,
+            ...prev,
+            overview: prev.overview || fetchedDetails.overview || '',
+            release_date: prev.release_date || fetchedDetails.release_date || '',
+            first_air_date: prev.first_air_date || fetchedDetails.first_air_date || '',
+            genres: (prev.genres && prev.genres.length > 0) ? prev.genres : fallbackGenres,
+          }));
+        }
 
         if (isTvItem) {
           const rawSeasons = tvDetails?.seasons || item.seasons || [];
@@ -602,7 +620,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                 <div className="modal-logo-overlay">
                   {logoPath ? (
                     <img
-                      src={`${POSTER_URL}${logoPath}`}
+                      src={logoPath.startsWith('http') ? logoPath : `${POSTER_URL}${logoPath}`}
                       alt={`${item.title || item.name} logo`}
                       className="modal-logo-img"
                     />

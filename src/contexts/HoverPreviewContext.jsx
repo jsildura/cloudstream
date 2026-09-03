@@ -28,6 +28,7 @@ export const HoverPreviewProvider = ({ children }) => {
     const closeTimer = useRef(null);
     const canHover = useRef(false);
     const exitTimer = useRef(null);
+    const blockUntil = useRef(0);
 
     const clearTimers = useCallback(() => {
         if (openTimer.current) { clearTimeout(openTimer.current); openTimer.current = null; }
@@ -48,10 +49,13 @@ export const HoverPreviewProvider = ({ children }) => {
         }, EXIT_ANIMATION_MS);
     }, []);
 
-    const closeNow = useCallback(() => {
+    const closeNow = useCallback((blockDuration = 0) => {
         clearTimers();
         setIsClosing(false);
         setPreview(null);
+        if (blockDuration > 0) {
+            blockUntil.current = Date.now() + blockDuration;
+        }
     }, [clearTimers]);
 
     // Pointer-capability gate: never run this on touch or TV, where there is
@@ -90,17 +94,21 @@ export const HoverPreviewProvider = ({ children }) => {
     }, [location.pathname, location.search, closeNow]);
 
     const openPreview = useCallback((element, item, type, onMoreInfo) => {
-        if (!canHover.current || !element || !item?.id) return;
+        if (!canHover.current || !element || !item?.id || Date.now() < blockUntil.current) return;
         clearTimers();
         setIsClosing(false); // cancel any outgoing exit animation
         openTimer.current = setTimeout(() => {
             openTimer.current = null;
             const r = element.getBoundingClientRect();
+            const imgEl = element.querySelector('.trending-card-backdrop img, .popular-streamflix-backdrop img, .top-ten-backdrop img, .provider-movie-backdrop img, .studio-movie-backdrop img, img');
+            const initialBackdropSrc = imgEl?.currentSrc || imgEl?.src || null;
+
             setPreview({
                 item,
                 type: type || resolvePreviewType(item),
                 onMoreInfo,
                 rect: { top: r.top, left: r.left, width: r.width, height: r.height },
+                initialBackdropSrc,
             });
         }, OPEN_DELAY);
     }, [clearTimers]);
@@ -152,6 +160,7 @@ export const HoverPreviewProvider = ({ children }) => {
                     rect={preview.rect}
                     onMoreInfo={preview.onMoreInfo}
                     isClosing={isClosing}
+                    initialBackdropSrc={preview.initialBackdropSrc}
                 />
             )}
         </HoverPreviewContext.Provider>

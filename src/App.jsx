@@ -13,6 +13,7 @@ import BotProtection from './components/BotProtection';
 import Toast from './components/Toast';
 import PageLoader from './components/PageLoader';
 import UpdatePrompt from './components/UpdatePrompt';
+import UpdateModal from './components/UpdateModal';
 import KidsFeatureGuard from './components/KidsFeatureGuard';
 import KidsRatedWatchGuard from './components/KidsRatedWatchGuard';
 
@@ -146,6 +147,7 @@ function App() {
         <SocialBarLoader />
         <ScrollToTop />
         <UpdatePrompt />
+        <UpdateModal />
         {/* Hide ScrollToTopButton on music pages */}
         {!location.pathname.startsWith('/music') && <ScrollToTopButton />}
         <Toast />

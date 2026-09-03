@@ -2,6 +2,7 @@
 .movie-studios-section {
     padding: 24px 0;
     margin-bottom: 20px;
+    overflow-anchor: auto;
 }
 
 .movie-studios-header {
@@ -147,18 +148,18 @@
 
 .studio-movies-section {
     margin-top: 20px;
+    min-height: 280px;
+    overflow-anchor: none;
     animation: fadeSlideIn 0.3s ease-out;
 }
 
 @keyframes fadeSlideIn {
     from {
         opacity: 0;
-        transform: translateY(-10px);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
     }
 }
 
@@ -225,6 +226,12 @@
 
 .studio-movies-view-all:hover svg {
     transform: translateX(2px);
+}
+
+.carousel-container.is-loading .studio-movies-grid {
+    opacity: 0.45;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
 }
 
 .studio-movies-grid {
@@ -447,7 +454,7 @@
 
 .studio-movie-card-skeleton {
     flex: 0 0 auto;
-    width: 280px;
+    width: 380px;
     aspect-ratio: 16 / 9;
     background: linear-gradient(110deg,
             rgba(35, 35, 40, 0.95) 0%,
@@ -523,6 +530,7 @@
     /* Studio Movies Mobile */
     .studio-movies-section {
         margin-top: 14px;
+        min-height: 200px;
     }
 
     .studio-movies-title {
@@ -599,6 +607,10 @@
     .studio-pill-logo {
         max-height: 20px;
         max-width: 90px;
+    }
+
+    .studio-movies-section {
+        min-height: 240px;
     }
 }
 

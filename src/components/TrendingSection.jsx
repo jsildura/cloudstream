@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Modal from './Modal';
-import { useTMDB } from '../hooks/useTMDB';
+import { useTMDB, parseContentRating } from '../hooks/useTMDB';
 import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { getPosterAlt } from '../utils/altTextUtils';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
@@ -46,6 +46,7 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
     // Data enrichment state (logos & backdrops)
     const [enrichedContent, setEnrichedContent] = useState([]);
     const [, setIsEnriching] = useState(false);
+    const enrichmentMapRef = useRef(new Map());
 
     // Drag state for horizontal scroll
     const carouselRef = useRef(null);
@@ -96,9 +97,8 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                     content.map(async (item) => {
                         try {
                             const type = mediaType;
-                            // One bundled call instead of a bare /images hit — see
-                            // fetchItemBundle: appended data is nested under `images`.
-                            const data = await fetchItemBundle(type, item.id, ['images']);
+                            const ratingAppend = type === 'tv' ? 'content_ratings' : 'release_dates';
+                            const data = await fetchItemBundle(type, item.id, ['images', 'credits', ratingAppend]);
 
                             // Get English logo or first available
                             const logos = data.images?.logos || [];
@@ -110,11 +110,21 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                 backdrop_path = data.images.backdrops[0].file_path;
                             }
 
-                            return {
+                            const cast = data.credits?.cast?.slice(0, 5).map(a => a.name) || [];
+                            const contentRating = parseContentRating(
+                                type,
+                                type === 'tv' ? data.content_ratings : data.release_dates
+                            );
+
+                            const enriched = {
                                 ...item,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path,
+                                cast: cast.join(', ') || 'N/A',
+                                contentRating,
                             };
+                            enrichmentMapRef.current.set(item.id, enriched);
+                            return enriched;
                         } catch {
                             return item;
                         }
@@ -204,13 +214,15 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
 
     const handleItemClick = async (item) => {
         if (isDragging) return;
-        closeNow(); // dismiss the hover preview before the modal opens
+        closeNow(800); // dismiss the hover preview before the modal opens
+
+        // Check if we have the fully enriched item (with logo_path, cast, contentRating)
+        const fullItem = enrichmentMapRef.current.get(item.id) || item;
 
         // When a parent onItemClick is provided (e.g. Home page), delegate
-        // immediately so the parent's own enrichment handles credits / rating.
-        // Doing a local await here AND in the parent doubles the round-trips.
+        // immediately so the parent's modal opens with all pre-loaded metadata.
         if (onItemClick) {
-            onItemClick(item);
+            onItemClick(fullItem);
             return;
         }
 
