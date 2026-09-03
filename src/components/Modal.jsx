@@ -169,7 +169,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
           item.cast ? Promise.resolve(null) : fetchCredits(type, item.id),
           item.contentRating ? Promise.resolve(null) : fetchContentRating(type, item.id),
           isTvItem ? fetchTVDetails(item.id).catch(() => null) : Promise.resolve(null),
-          needsDetails ? fetchItemBundle(type, item.id).catch(() => null) : Promise.resolve(null),
+          (needsDetails && typeof fetchItemBundle === 'function') ? fetchItemBundle(type, item.id).catch(() => null) : Promise.resolve(null),
         ]);
         setTrailerKey(key);
         if (logo) {

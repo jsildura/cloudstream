@@ -16,6 +16,7 @@ const mockFetchCredits = vi.fn().mockResolvedValue(['Alan Ritchson', 'Malcolm Go
 const mockFetchContentRating = vi.fn().mockResolvedValue('TV-MA');
 const mockFetchMovieRecs = vi.fn().mockResolvedValue([]);
 const mockFetchTVRecs = vi.fn().mockResolvedValue([]);
+const mockFetchItemBundle = vi.fn().mockResolvedValue(null);
 
 vi.mock('../hooks/useTMDB', () => ({
   useTMDB: () => ({
@@ -29,6 +30,7 @@ vi.mock('../hooks/useTMDB', () => ({
     fetchSeasonEpisodes: mockFetchSeasonEpisodes,
     fetchMovieRecommendations: mockFetchMovieRecs,
     fetchTVRecommendations: mockFetchTVRecs,
+    fetchItemBundle: mockFetchItemBundle,
     movieGenres: [],
     tvGenres: []
   })
