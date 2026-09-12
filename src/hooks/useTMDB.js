@@ -102,6 +102,27 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000);
 
+/**
+ * Retrieve cached logo path synchronously without making TMDB network requests.
+ * Checks in-memory apiCache first, then sessionStorage.
+ */
+export const getCachedLogo = (type, id) => {
+  if (!type || !id) return null;
+  try {
+    const cached = apiCache.get(`logo_${type}_${id}`);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.data) {
+      return cached.data;
+    }
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const sessionVal = window.sessionStorage.getItem(`tmdb_logo_${type}_${id}`);
+      if (sessionVal) return sessionVal;
+    }
+  } catch {
+    // sessionStorage unavailable or restricted
+  }
+  return null;
+};
+
 // ===== SHARED GENRE MAPS =====
 // Module-level so ALL useTMDB instances share the same Maps.
 // Once any component fetches genres (e.g. Home on mount), every
@@ -451,7 +472,13 @@ export const useTMDB = () => {
         }
 
         const data = await res.json();
-        return pickLogoPath(data.logos || []);
+        const logo = pickLogoPath(data.logos || []);
+        if (logo && typeof window !== 'undefined' && window.sessionStorage) {
+          try {
+            window.sessionStorage.setItem(`tmdb_logo_${type}_${id}`, logo);
+          } catch {}
+        }
+        return logo;
       } catch (error) {
         console.error("Failed to fetch logo:", error);
         return null;
@@ -580,6 +607,7 @@ export const useTMDB = () => {
     fetchTVRecommendations,
     fetchVideos,
     fetchLogo,
+    getCachedLogo,
     fetchItemBundle,
     fetchPopularByRegion,
     ...constants

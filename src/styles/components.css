@@ -5038,6 +5038,7 @@
   align-items: center;
   justify-content: flex-start;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .modal-btn-play {
@@ -6106,6 +6107,17 @@
   border-color: #e50914;
 }
 
+/* Active / Selected Episode */
+.modal-episode-card.selected .modal-episode-thumb-wrap {
+  outline: 2px solid #e50914;
+  outline-offset: -2px;
+  box-shadow: 0 0 16px rgba(229, 9, 20, 0.45), 0 6px 20px rgba(0, 0, 0, 0.7);
+}
+
+.modal-episode-card.selected .modal-episode-title {
+  color: #ff3344;
+}
+
 /* Play icon on hover */
 .modal-episode-play-hover {
   position: absolute;
@@ -6117,9 +6129,11 @@
   opacity: 0;
   transition: opacity 0.22s ease;
   z-index: 4;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
+.modal-episode-card:hover .modal-episode-play-hover,
 .modal-episode-thumb-wrap.spoilers-revealed:hover .modal-episode-play-hover {
   opacity: 1;
 }

@@ -144,8 +144,15 @@ const HoverPreviewCard = ({ item, type, rect, onMoreInfo, isClosing = false, ini
         maybeOpenSmartlinkAd();
 
         closeNow();
-        navigate(`/watch?type=${type}&id=${item.id}`, { state: { fromModal: true } });
-    }, [navigate, type, item.id, closeNow]);
+        navigate(`/watch?type=${type}&id=${item.id}`, {
+            state: {
+                fromModal: true,
+                logoPath: item.logo_path || null,
+                backdropTitle: item.logo_path || null,
+                title
+            }
+        });
+    }, [navigate, type, item.id, item.logo_path, title, closeNow]);
 
     const handleShare = useCallback(async (e) => {
         e.stopPropagation();

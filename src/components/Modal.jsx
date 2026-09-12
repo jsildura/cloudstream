@@ -24,7 +24,7 @@ const GENRE_SEARCH_ALIASES = {
   'TV Movie':          'TV Movie',
 };
 
-const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
+const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload }) => {
   const navigate = useNavigate();
   const { isKidsMode } = useProfiles();
   const {
@@ -86,6 +86,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     }
     return 1;
   });
+  const [selectedEpisode, setSelectedEpisode] = useState(() => item?.lastEpisode || 1);
   const [episodes, setEpisodes] = useState([]);
   const [episodesLoading, setEpisodesLoading] = useState(false);
   const [showSpoilers, setShowSpoilers] = useState(false);
@@ -140,6 +141,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
         if (!isTvItem) {
           setSeasons([]);
         }
+        setSelectedEpisode(item.lastEpisode || 1);
         // Seed cast/rating from item if already enriched; clear otherwise
         setCast(item.cast || null);
         setContentRating(item.contentRating || null);
@@ -222,6 +224,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
               }
             }
             setSelectedSeason(defaultSeason);
+            setSelectedEpisode(defaultSeason === item?.lastSeason && item?.lastEpisode ? item.lastEpisode : 1);
           }
           setSeasonsLoading(false);
         }
@@ -259,6 +262,19 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     loadData();
   }, [item?.id, item?.media_type, item?.type, isKidsMode, fetchVideos, fetchLogo, fetchCredits, fetchContentRating, fetchTVDetails, fetchMovieRecommendations, fetchTVRecommendations]);
 
+  // Persist resolved logo path to sessionStorage so the watch page lazy overlay
+  // can reuse it synchronously without refetching from TMDB.
+  useEffect(() => {
+    if (logoPath && item?.id) {
+      try {
+        const effectiveMediaType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(`tmdb_logo_${effectiveMediaType}_${item.id}`, logoPath);
+        }
+      } catch {}
+    }
+  }, [logoPath, item?.id, item?.type, item?.media_type, item?.first_air_date, item?.name, item?.title]);
+
   // Load episodes when selected season changes (for TV shows)
   useEffect(() => {
     if (!isTV || !item?.id || !selectedSeason) {
@@ -273,9 +289,16 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     fetchSeasonEpisodes(item.id, selectedSeason)
       .then((epData) => {
         if (!cancelled) {
-          setEpisodes(epData || []);
+          const list = epData || [];
+          setEpisodes(list);
           setEpisodesLoading(false);
           setVisibleEpisodesCount(6);
+          if (list.length > 0) {
+            setSelectedEpisode(prev => {
+              if (list.some(ep => ep.episode_number === prev)) return prev;
+              return list[0].episode_number;
+            });
+          }
         }
       })
       .catch((err) => {
@@ -294,10 +317,15 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
   const handleEpisodeClick = useCallback((episodeNumber) => {
     maybeOpenSmartlinkAd();
     navigate(`/watch?type=tv&id=${item.id}&season=${selectedSeason}&episode=${episodeNumber}`, {
-      state: { fromModal: true }
+      state: {
+        fromModal: true,
+        logoPath: logoPath || null,
+        backdropTitle: logoPath || null,
+        title: item.title || item.name
+      }
     });
     onClose();
-  }, [item?.id, selectedSeason, navigate, onClose]);
+  }, [item?.id, item?.title, item?.name, selectedSeason, navigate, onClose, logoPath]);
 
   const toggleMoreEpisodes = useCallback(() => {
     setVisibleEpisodesCount(prev => (prev >= episodes.length ? 6 : episodes.length));
@@ -339,13 +367,20 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
     const effectiveMediaType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
     let url = `/watch?type=${effectiveMediaType}&id=${item.id}`;
     if (effectiveMediaType === 'tv') {
-      const seasonToPlay = selectedSeason || item.lastSeason || 1;
-      const episodeToPlay = (seasonToPlay === item.lastSeason && item.lastEpisode) ? item.lastEpisode : 1;
+      const seasonToPlay = selectedSeason != null ? selectedSeason : (item.lastSeason != null ? item.lastSeason : 1);
+      const episodeToPlay = selectedEpisode != null ? selectedEpisode : ((seasonToPlay === item.lastSeason && item.lastEpisode) ? item.lastEpisode : 1);
       url += `&season=${seasonToPlay}&episode=${episodeToPlay}`;
     }
-    navigate(url, { state: { fromModal: true } });  // Use React Router navigation - NO page reload
+    navigate(url, {
+      state: {
+        fromModal: true,
+        logoPath: logoPath || null,
+        backdropTitle: logoPath || null,
+        title: item.title || item.name
+      }
+    });  // Use React Router navigation - NO page reload
     onClose();  // Close modal after navigation
-  }, [item.type, item.media_type, item.first_air_date, item.name, item.title, item.id, item.lastSeason, item.lastEpisode, selectedSeason, navigate, onClose]);
+  }, [item.type, item.media_type, item.first_air_date, item.name, item.title, item.id, item.lastSeason, item.lastEpisode, selectedSeason, selectedEpisode, navigate, onClose, logoPath]);
 
   const handleShare = useCallback(async () => {
     const shareData = {
@@ -371,6 +406,29 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
       }
     }
   }, [item.title, item.name, item.type, item.id]);
+
+  const handleDownload = useCallback(() => {
+    if (!item?.id) return;
+    maybeOpenSmartlinkAd();
+
+    const effectiveMediaType = item.type || item.media_type || (item.first_air_date || (item.name && !item.title) ? 'tv' : 'movie');
+    const isTvItem = effectiveMediaType === 'tv';
+
+    const seasonNum = selectedSeason != null ? selectedSeason : (item.lastSeason != null ? item.lastSeason : 1);
+    const episodeNum = selectedEpisode != null ? selectedEpisode : ((seasonNum === item.lastSeason && item.lastEpisode) ? item.lastEpisode : 1);
+
+    const downloadUrl = isTvItem
+      ? `https://vidvault.ru/tv/${item.id}/${seasonNum}/${episodeNum}`
+      : `https://vidvault.ru/movie/${item.id}`;
+
+    if (typeof onDownload === 'function') {
+      onDownload({ ...item, downloadUrl, season: seasonNum, episode: episodeNum });
+    }
+
+    if (typeof window !== 'undefined' && typeof window.open === 'function') {
+      window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, [item, selectedSeason, selectedEpisode, onDownload]);
 
   // Handle clicking a recommendation card - update modal to show that content
   const handleRecClick = useCallback((recItem) => {
@@ -709,6 +767,18 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                         </svg>
                       )}
                     </button>
+                    <button
+                      onClick={handleDownload}
+                      className="modal-btn-icon-only"
+                      title="Download"
+                      aria-label="Download"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <path d="m7 10 5 5 5-5"></path>
+                        <path d="M12 15V3"></path>
+                      </svg>
+                    </button>
                   </div>
 
                   {/* Metadata Row */}
@@ -846,11 +916,15 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                           <div
                             key={season.id || season.season_number}
                             className={`modal-season-card ${isSelected ? 'selected' : ''}`}
-                            onClick={() => setSelectedSeason(season.season_number)}
+                            onClick={() => {
+                              setSelectedSeason(season.season_number);
+                              setSelectedEpisode(1);
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
                                 setSelectedSeason(season.season_number);
+                                setSelectedEpisode(1);
                               }
                             }}
                             tabIndex={0}
@@ -950,21 +1024,23 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                         const ratingTierClass = epVote >= 7.0
                           ? 'rating-high'
                           : (epVote >= 5.0 ? 'rating-mid' : 'rating-low');
+                        const isSelected = selectedEpisode === ep.episode_number;
 
                         return (
                           <div
                             key={ep.id || ep.episode_number}
-                            className="modal-episode-card"
+                            className={`modal-episode-card ${isSelected ? 'selected' : ''}`}
                             role="button"
                             tabIndex={0}
-                            onClick={() => handleEpisodeClick(ep.episode_number)}
+                            onClick={() => setSelectedEpisode(ep.episode_number)}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
-                                handleEpisodeClick(ep.episode_number);
+                                setSelectedEpisode(ep.episode_number);
                               }
                             }}
-                            aria-label={`Play ${epTitle}`}
+                            aria-pressed={isSelected}
+                            aria-label={`${epTitle}${isSelected ? ' (Selected)' : ''}`}
                           >
                             <div className={`modal-episode-thumb-wrap ${showSpoilers ? 'spoilers-revealed' : 'spoilers-hidden'}`}>
                               <img
@@ -984,13 +1060,30 @@ const Modal = memo(({ item: initialItem, onClose, collection = [] }) => {
                                 <div className="modal-episode-spoiler-overlay">
                                   <svg className="modal-spoiler-hidden-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                                    <line x1="1" y1="1" x2="23" y2="23" />
                                   </svg>
                                   <span className="modal-spoiler-hidden-text">Spoiler Hidden</span>
                                 </div>
                               )}
 
-                              <div className="modal-episode-play-hover" aria-hidden="true">
+                              <div
+                                className="modal-episode-play-hover"
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Play ${epTitle}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEpisode(ep.episode_number);
+                                  handleEpisodeClick(ep.episode_number);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setSelectedEpisode(ep.episode_number);
+                                    handleEpisodeClick(ep.episode_number);
+                                  }
+                                }}
+                              >
                                 <span className="modal-episode-play-icon">▶</span>
                               </div>
                             </div>

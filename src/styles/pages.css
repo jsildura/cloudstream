@@ -4102,6 +4102,15 @@ select.filter-dropdown {
     /* 44px × 2 */
   }
 
+  .watch-lazy-title-logo-wrap {
+    max-width: 900px !important;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 220px !important;
+    filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.85)) !important;
+  }
+
   .watch-lazy-title {
     font-size: 48px !important;
     /* 24px × 2 */
@@ -5444,6 +5453,15 @@ select.filter-dropdown {
     /* 44px × 4 */
   }
 
+  .watch-lazy-title-logo-wrap {
+    max-width: 1600px !important;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 400px !important;
+    filter: drop-shadow(0 16px 64px rgba(0, 0, 0, 0.85)) !important;
+  }
+
   .watch-lazy-title {
     font-size: 96px !important;
     /* 24px × 4 */
@@ -6168,6 +6186,136 @@ select.filter-dropdown {
   -webkit-user-select: none;
   touch-action: none;
 }
+
+/* ===== VIDEO ZOOM GESTURE SYSTEM ===== */
+
+/* Viewport wrapping the scalable player */
+.watch-player-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: width 0.3s ease-in-out;
+  z-index: 1;
+}
+
+/* Match video player width adjustments when sidebar is visible */
+.watch-fullscreen.sidebar-visible:not(.css-fullscreen-mode):not(:fullscreen) .watch-player-viewport {
+  width: calc(100% - var(--watch-control-bar-width));
+}
+
+/* Scaler container that receives transform scale and pan */
+.watch-player-scaler {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: center center;
+  will-change: transform;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Video player fills the scaler container completely */
+.watch-player-scaler .watch-video-player,
+.watch-player-scaler .direct-player-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Touch & Mouse Gesture Layer */
+.watch-zoom-gesture-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  background: transparent;
+  cursor: default;
+}
+
+.watch-zoom-gesture-layer.is-zoomed {
+  cursor: grab;
+}
+
+.watch-zoom-gesture-layer.is-dragging {
+  cursor: grabbing;
+}
+
+/* Safe-center mode: when scale is 1 and controls are visible, leave top & bottom safe zones for iframe controls */
+.watch-zoom-gesture-layer.safe-center-only {
+  top: clamp(40px, 9vh, 55px);
+  bottom: clamp(50px, 11vh, 65px);
+  left: 0;
+  right: 0;
+}
+
+/* Floating Zoom Indicator Pill Badge */
+.watch-zoom-badge {
+  position: absolute;
+  top: clamp(14px, 3vh, 24px);
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(14, 14, 14, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(-6px) scale(0.95);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+}
+
+.watch-zoom-badge.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+
+.watch-zoom-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.watch-zoom-badge-text {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.watch-zoom-badge-text .scale-val {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.watch-zoom-badge-text .fit-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
 
 /* Title badge: shows the playing content while controls are visible */
 .watch-title-badge {
@@ -7724,6 +7872,85 @@ select.filter-dropdown {
   border-radius: 12px;
 }
 
+/* Backdrop Title Logo Overlay & Text Fallback */
+.watch-lazy-title-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.watch-lazy-title-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.85));
+  animation: watchLazyLogoFadeIn 0.3s ease-out;
+}
+
+@keyframes watchLazyLogoFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (min-width: 1440px) {
+  .watch-lazy-title-logo-wrap {
+    max-width: 520px;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 130px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .watch-lazy-title-logo-wrap {
+    max-width: 400px;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 95px;
+  }
+}
+
+@media (max-width: 480px) {
+  .watch-lazy-title-logo-wrap {
+    max-width: 260px;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 65px;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .watch-lazy-content {
+    gap: 6px !important;
+    padding: 12px !important;
+  }
+
+  .watch-lazy-title-logo-wrap {
+    max-width: 220px;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 50px;
+  }
+}
+
 /* Title text */
 .watch-lazy-title {
   color: #ffffff;
@@ -7915,6 +8142,15 @@ select.filter-dropdown {
   .watch-play-button svg {
     width: 36px;
     height: 36px;
+  }
+
+  .watch-lazy-title-logo-wrap {
+    max-width: 340px;
+  }
+
+  .watch-lazy-title-logo {
+    max-height: 80px;
+    filter: drop-shadow(0 3px 12px rgba(0, 0, 0, 0.85));
   }
 
   .watch-lazy-title {

@@ -17,6 +17,7 @@ import { useAdFree } from '../contexts/AdFreeContext';
 import { maybeOpenSmartlinkAd } from '../utils/adGating';
 import { isHevcSupported } from '../utils/codecSupport';
 import { filterKidsCandidates } from '../lib/tmdbClient';
+import { useVideoZoom } from '../hooks/useVideoZoom';
 
 // How long after a flagged embed loads before the HEVC warning appears. The
 // embed still has to boot its player, fetch the manifest and filter renditions
@@ -130,7 +131,34 @@ const Watch = () => {
   const isEpisodeDragging = useRef(false);
   const episodeDrawerTranslateRef = useRef(0);
 
-  const { POSTER_URL } = useTMDB();
+  const { POSTER_URL, getCachedLogo } = useTMDB();
+  const [logoPath, setLogoPath] = useState(() => {
+    return (
+      location.state?.logoPath ||
+      location.state?.backdropTitle ||
+      location.state?.logo ||
+      (getCachedLogo ? getCachedLogo(type, id) : null) ||
+      null
+    );
+  });
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  // Sync logoPath if incoming state changes, if cached in TMDB hook, or when contentInfo arrives
+  useEffect(() => {
+    const cached =
+      location.state?.logoPath ||
+      location.state?.backdropTitle ||
+      location.state?.logo ||
+      (getCachedLogo ? getCachedLogo(type, id) : null);
+    if (cached) {
+      setLogoPath(cached);
+      setLogoFailed(false);
+    } else if (contentInfo?.logo_path) {
+      setLogoPath(contentInfo.logo_path);
+      setLogoFailed(false);
+    }
+  }, [type, id, location.state, getCachedLogo, contentInfo?.logo_path]);
+
   const { showNowPlaying, showSuccess, showError, showWarning } = useToast();
   const { addToHistory, updateProgress, getLastWatched, flushPendingHistory } = useWatchHistory();
   const getLastWatchedRef = useRef(getLastWatched);
@@ -437,6 +465,24 @@ const Watch = () => {
       setControlsVisible(false);
     }, 3000);
   };
+
+  const {
+    isZoomEnabled,
+    scale: zoomScale,
+    pan: zoomPan,
+    isInteracting: isZoomInteracting,
+    badge: zoomBadge,
+    gestureHandlers: zoomGestureHandlers,
+  } = useVideoZoom({
+    isFullscreen,
+    currentSeason,
+    currentEpisode,
+    currentServer,
+    id,
+    type,
+    containerRef: watchContainerRef,
+    onSingleTap: resetHideTimer,
+  });
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -750,7 +796,13 @@ const Watch = () => {
     if (type === 'movie') {
       if (!nextMovie) return;
       navigate(`/watch?type=movie&id=${nextMovie.id}`, {
-        state: { fromModal: true, autoPlay: true },
+        state: {
+          fromModal: true,
+          autoPlay: true,
+          logoPath: nextMovie.logo_path || null,
+          backdropTitle: nextMovie.logo_path || null,
+          title: nextMovie.title || nextMovie.name || ''
+        },
       });
       return;
     }
@@ -1122,9 +1174,20 @@ const Watch = () => {
         >
           <div className="watch-lazy-gradient"></div>
           <div className="watch-lazy-content">
-            <p className="watch-lazy-title">
-              {contentInfo?.title || contentInfo?.name || 'Content'}
-            </p>
+            {logoPath && !logoFailed ? (
+              <div className="watch-lazy-title-logo-wrap">
+                <img
+                  src={logoPath.startsWith('http') ? logoPath : `${POSTER_URL}${logoPath}`}
+                  alt={`${contentInfo?.title || contentInfo?.name || location.state?.title || 'Content'} logo`}
+                  className="watch-lazy-title-logo"
+                  onError={() => setLogoFailed(true)}
+                />
+              </div>
+            ) : (
+              <p className="watch-lazy-title">
+                {contentInfo?.title || contentInfo?.name || location.state?.title || 'Content'}
+              </p>
+            )}
             {type === 'tv' && (
               <p className="watch-lazy-episode">Season {currentSeason} • Episode {currentEpisode}</p>
             )}
@@ -1159,67 +1222,123 @@ const Watch = () => {
         {/* Video Player - Lazy Loaded */}
         {playerLoaded ? (
           <>
-            {servers[currentServer].directPlayer ? (
-              <DirectPlayer
-                type={type}
-                id={id}
-                season={currentSeason}
-                episode={currentEpisode}
-                title={contentInfo?.title || contentInfo?.name}
-                year={contentInfo?.release_date?.slice(0, 4) || contentInfo?.first_air_date?.slice(0, 4)}
-                date={contentInfo?.release_date || contentInfo?.first_air_date}
-                runtime={contentInfo?.runtime || contentInfo?.episode_run_time?.[0]}
-                onFallback={() => {
-                  // Direct resolution failed (e.g. the zxcstream backend is
-                  // rate-limiting our resolver). Fall back to Server 2 — the
-                  // zxcstream iframe — which plays from the browser's own IP
-                  // and usually still works when the direct path is throttled.
-                  const nextServer = servers.findIndex(
-                    (s, i) => i > currentServer && !s.disabled
-                  );
-                  if (nextServer !== -1) {
-                    // Let GlobalChat's Report Issue auto-attach what the user
-                    // was watching and which server failed — the user only has
-                    // to pick a category and describe what happened.
-                    window.dispatchEvent(new CustomEvent('streamflix:playback-issue', {
-                      detail: {
-                        title: contentInfo?.title || contentInfo?.name || '',
-                        tmdbId: id,
-                        mediaType: type,
-                        season: currentSeason,
-                        episode: currentEpisode,
-                        fromServer: servers[currentServer]?.name || '',
-                        toServer: servers[nextServer]?.name || '',
-                      },
-                    }));
-                    setCurrentServer(nextServer);
-                    try { localStorage.setItem(`server-${id}`, nextServer); } catch { /* noop */ }
-                  }
+            <div className="watch-player-viewport">
+              <div
+                className="watch-player-scaler"
+                style={{
+                  transform: `translate(${zoomPan.x}px, ${zoomPan.y}px) scale(${zoomScale})`,
+                  transition: isZoomInteracting ? 'none' : 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)',
                 }}
-                showControls={!controlsLocked}
-                backdrop={getBackdropUrl()}
-                onProgress={handlePlayerProgress}
-                resumeTime={resumeTime}
-                onEnded={handleVideoEnded}
-                onPlayStateChange={handlePlayStateChange}
-              />
-            ) : (
-              <iframe
-                key={`${currentServer}-${currentSeason}-${currentEpisode}-${sandboxEnabled}`}
-                src={getVideoUrl()}
-                onLoad={handleEmbedLoad}
-                className="watch-video-player"
-                allowFullScreen
-                title="Video Player"
-                referrerPolicy="no-referrer"
-                allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                {...(sandboxEnabled && {
-                  sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
-                })}
+              >
+                {servers[currentServer].directPlayer ? (
+                  <DirectPlayer
+                    type={type}
+                    id={id}
+                    season={currentSeason}
+                    episode={currentEpisode}
+                    title={contentInfo?.title || contentInfo?.name}
+                    year={contentInfo?.release_date?.slice(0, 4) || contentInfo?.first_air_date?.slice(0, 4)}
+                    date={contentInfo?.release_date || contentInfo?.first_air_date}
+                    runtime={contentInfo?.runtime || contentInfo?.episode_run_time?.[0]}
+                    onFallback={() => {
+                      // Direct resolution failed (e.g. the zxcstream backend is
+                      // rate-limiting our resolver). Fall back to Server 2 — the
+                      // zxcstream iframe — which plays from the browser's own IP
+                      // and usually still works when the direct path is throttled.
+                      const nextServer = servers.findIndex(
+                        (s, i) => i > currentServer && !s.disabled
+                      );
+                      if (nextServer !== -1) {
+                        // Let GlobalChat's Report Issue auto-attach what the user
+                        // was watching and which server failed — the user only has
+                        // to pick a category and describe what happened.
+                        window.dispatchEvent(new CustomEvent('streamflix:playback-issue', {
+                          detail: {
+                            title: contentInfo?.title || contentInfo?.name || '',
+                            tmdbId: id,
+                            mediaType: type,
+                            season: currentSeason,
+                            episode: currentEpisode,
+                            fromServer: servers[currentServer]?.name || '',
+                            toServer: servers[nextServer]?.name || '',
+                          },
+                        }));
+                        setCurrentServer(nextServer);
+                        try { localStorage.setItem(`server-${id}`, nextServer); } catch { /* noop */ }
+                      }
+                    }}
+                    showControls={!controlsLocked}
+                    backdrop={getBackdropUrl()}
+                    onProgress={handlePlayerProgress}
+                    resumeTime={resumeTime}
+                    onEnded={handleVideoEnded}
+                    onPlayStateChange={handlePlayStateChange}
+                  />
+                ) : (
+                  <iframe
+                    key={`${currentServer}-${currentSeason}-${currentEpisode}-${sandboxEnabled}`}
+                    src={getVideoUrl()}
+                    onLoad={handleEmbedLoad}
+                    className="watch-video-player"
+                    allowFullScreen
+                    title="Video Player"
+                    referrerPolicy="no-referrer"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    {...(sandboxEnabled && {
+                      sandbox: "allow-scripts allow-same-origin allow-forms allow-presentation"
+                    })}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Gesture Layer for pinch-to-zoom (touch) & mouse scroll zoom (desktop) */}
+            {isZoomEnabled && (
+              <div
+                className={`watch-zoom-gesture-layer${zoomScale > 1 ? ' is-zoomed' : ''}${isZoomInteracting && zoomScale > 1 ? ' is-dragging' : ''}${zoomScale === 1 && controlsVisible ? ' safe-center-only' : ''}`}
+                {...zoomGestureHandlers}
               />
             )}
-            {/* Invisible overlay to capture touch/mouse when controls are hidden */}
-            {!controlsVisible && (
+
+            {/* Zoom Indicator Pill Badge */}
+            {isZoomEnabled && (
+              <div
+                className={`watch-zoom-badge${zoomBadge.visible ? ' visible' : ''}`}
+                role="status"
+                aria-live="polite"
+              >
+                <div className="watch-zoom-badge-icon" aria-hidden="true">
+                  {zoomBadge.scale <= 1.02 ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <line x1="11" y1="8" x2="11" y2="14" />
+                      <line x1="8" y1="11" x2="14" y2="11" />
+                    </svg>
+                  )}
+                </div>
+                <div className="watch-zoom-badge-text">
+                  {zoomBadge.scale <= 1.02 ? (
+                    <span className="fit-label">Original Fit</span>
+                  ) : (
+                    <>
+                      <span>Zoom</span>
+                      <span className="scale-val">{Math.round(zoomBadge.scale * 100)}%</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Invisible overlay to capture touch/mouse when controls are hidden (fallback when zoom layer not active) */}
+            {!controlsVisible && !isZoomEnabled && (
               <div
                 className="watch-mouse-capture"
                 onMouseMove={resetHideTimer}
@@ -1421,9 +1540,20 @@ const Watch = () => {
                   <path d="M8 5v14l11-7z" />
                 </svg>
               </button>
-              <p className="watch-lazy-title">
-                {contentInfo?.title || contentInfo?.name || 'Loading...'}
-              </p>
+              {logoPath && !logoFailed ? (
+                <div className="watch-lazy-title-logo-wrap">
+                  <img
+                    src={logoPath.startsWith('http') ? logoPath : `${POSTER_URL}${logoPath}`}
+                    alt={`${contentInfo?.title || contentInfo?.name || location.state?.title || 'Content'} logo`}
+                    className="watch-lazy-title-logo"
+                    onError={() => setLogoFailed(true)}
+                  />
+                </div>
+              ) : (
+                <p className="watch-lazy-title">
+                  {contentInfo?.title || contentInfo?.name || location.state?.title || (loading ? 'Loading...' : 'Content')}
+                </p>
+              )}
               {type === 'tv' && (
                 <p className="watch-lazy-episode">Season {currentSeason} • Episode {currentEpisode}</p>
               )}

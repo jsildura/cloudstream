@@ -199,7 +199,9 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith(
       '/watch?type=tv&id=108978&season=4&episode=1',
-      { state: { fromModal: true } }
+      expect.objectContaining({
+        state: expect.objectContaining({ fromModal: true })
+      })
     );
   });
 
@@ -209,6 +211,7 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     await waitFor(() => {
       expect(screen.getByText(/Season 4 Episodes/i)).toBeDefined();
       expect(screen.getByText('8 episodes')).toBeDefined();
+      expect(screen.queryByText('Loading episodes...')).toBeNull();
     });
 
     // Verify hidden spoilers by default
@@ -256,7 +259,9 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith(
       '/watch?type=tv&id=108978&season=4&episode=3',
-      { state: { fromModal: true } }
+      expect.objectContaining({
+        state: expect.objectContaining({ fromModal: true })
+      })
     );
     expect(mockOnClose).toHaveBeenCalled();
   });
@@ -326,4 +331,125 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     expect(screen.queryByText('Seasons')).toBeNull();
     expect(screen.queryByText(/Episodes/i)).toBeNull();
   });
+
+  it('renders download button right after play trailer button in modal actions row', async () => {
+    const mockOnDownload = vi.fn();
+    render(<Modal item={tvItem} onClose={mockOnClose} onDownload={mockOnDownload} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Watch Now/i })).toBeDefined();
+    });
+
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    expect(downloadBtn).toBeDefined();
+    expect(downloadBtn.classList.contains('modal-btn-icon-only')).toBe(true);
+    expect(downloadBtn.querySelector('svg')).toBeDefined();
+
+    fireEvent.click(downloadBtn);
+    expect(mockOnDownload).toHaveBeenCalledWith(expect.objectContaining({ id: tvItem.id }));
+  });
+
+  it('opens new tab to vidvault movie URL when clicking download for a movie', async () => {
+    const movieItem = {
+      id: 550,
+      title: 'Fight Club',
+      type: 'movie',
+      overview: 'An insomniac office worker...'
+    };
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(<Modal item={movieItem} onClose={mockOnClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Watch Now/i })).toBeDefined();
+    });
+
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    fireEvent.click(downloadBtn);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://vidvault.ru/movie/550',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
+
+  it('opens new tab to vidvault tv URL with selected season and default episode', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(<Modal item={tvItem} onClose={mockOnClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('4 seasons')).toBeDefined();
+    });
+
+    // Default season is Season 4, default episode is 1
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    fireEvent.click(downloadBtn);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://vidvault.ru/tv/108978/4/1',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
+
+  it('updates download URL when switching seasons in div.modal-seasons-section', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(<Modal item={tvItem} onClose={mockOnClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('4 seasons')).toBeDefined();
+    });
+
+    // Click Season 2 card in modal-seasons-section
+    const seasonCards = screen.getAllByRole('button', { name: /Season/i });
+    fireEvent.click(seasonCards[1]); // Season 2
+
+    await waitFor(() => {
+      expect(seasonCards[1].classList.contains('selected')).toBe(true);
+    });
+
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    fireEvent.click(downloadBtn);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://vidvault.ru/tv/108978/2/1',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
+
+  it('updates download URL when selecting a specific episode in div.modal-episodes-section', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+    render(<Modal item={tvItem} onClose={mockOnClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Season 4 Episodes/i)).toBeDefined();
+    });
+
+    // Find Episode 3 card and click to select it
+    const ep3Card = screen.getByText('Episode 3. Spoonful').closest('.modal-episode-card');
+    expect(ep3Card).toBeDefined();
+    fireEvent.click(ep3Card);
+
+    expect(ep3Card.classList.contains('selected')).toBe(true);
+
+    const downloadBtn = screen.getByRole('button', { name: /Download/i });
+    fireEvent.click(downloadBtn);
+
+    expect(openSpy).toHaveBeenCalledWith(
+      'https://vidvault.ru/tv/108978/4/3',
+      '_blank',
+      'noopener,noreferrer'
+    );
+    openSpy.mockRestore();
+  });
 });
+
+

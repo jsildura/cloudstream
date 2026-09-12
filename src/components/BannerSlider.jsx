@@ -386,9 +386,15 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
     // Shared smartlink gate: no-op while pending or ad-free.
     maybeOpenSmartlinkAd();
 
-    // Normal navigation to watch page
     const type = currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv');
-    navigate(`/watch?type=${type}&id=${currentMovie.id}`, { state: { fromModal: true } });
+    navigate(`/watch?type=${type}&id=${currentMovie.id}`, {
+      state: {
+        fromModal: true,
+        logoPath: currentLogoPath || null,
+        backdropTitle: currentLogoPath || null,
+        title: currentMovie.title || currentMovie.name || ''
+      }
+    });
   };
 
   const movieTitle = currentMovie.title || currentMovie.name || '';
