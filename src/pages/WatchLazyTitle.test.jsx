@@ -56,12 +56,10 @@ vi.mock('../hooks/useTMDB', () => ({
 }));
 
 describe('Watch Lazy Title Overlay', () => {
-  const originalFetch = global.fetch;
-
   beforeEach(() => {
     vi.clearAllMocks();
     sessionStorage.clear();
-    global.fetch = vi.fn().mockImplementation((url) => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url) => {
       if (url.includes('/api/tv/71914') || url.includes('/api/movie/71914')) {
         return Promise.resolve({
           ok: true,
@@ -77,11 +75,11 @@ describe('Watch Lazy Title Overlay', () => {
         ok: true,
         json: () => Promise.resolve({})
       });
-    });
+    }));
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
+    vi.unstubAllGlobals();
     sessionStorage.clear();
   });
 

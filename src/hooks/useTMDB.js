@@ -476,7 +476,9 @@ export const useTMDB = () => {
         if (logo && typeof window !== 'undefined' && window.sessionStorage) {
           try {
             window.sessionStorage.setItem(`tmdb_logo_${type}_${id}`, logo);
-          } catch {}
+          } catch {
+            // ignore storage quota errors
+          }
         }
         return logo;
       } catch (error) {

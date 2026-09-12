@@ -179,7 +179,6 @@ pnpm-lock.yaml
 **/*.orig
 
 # Lock files
-package-lock.json
 **/yarn.lock
 **/pnpm-lock.yaml
 

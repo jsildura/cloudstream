@@ -271,7 +271,9 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
         if (typeof window !== 'undefined' && window.sessionStorage) {
           window.sessionStorage.setItem(`tmdb_logo_${effectiveMediaType}_${item.id}`, logoPath);
         }
-      } catch {}
+      } catch {
+        // ignore storage quota errors
+      }
     }
   }, [logoPath, item?.id, item?.type, item?.media_type, item?.first_air_date, item?.name, item?.title]);
 

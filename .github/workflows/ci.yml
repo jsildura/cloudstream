@@ -26,17 +26,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          # No `cache: npm` here: setup-node hard-errors when no lockfile is
-          # present, and package-lock.json is intentionally gitignored in this
-          # repo. Committing the lockfile would enable deterministic installs
-          # (npm ci) plus the cache.
+          cache: npm
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
-      - run: npm install
+      - run: npm ci
 
       - name: Run unit tests
         run: npm test
@@ -61,7 +58,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - run: npm install
+      - run: npm ci
 
       - run: npm run lint
