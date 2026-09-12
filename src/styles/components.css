@@ -5038,7 +5038,7 @@
   align-items: center;
   justify-content: flex-start;
   margin-bottom: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .modal-btn-play {
@@ -5058,6 +5058,8 @@
   font-weight: 700;
   letter-spacing: 0.2px;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
@@ -5132,6 +5134,59 @@
   border-color: #ffffff;
   background: rgba(229, 9, 20, 0.25);
   box-shadow: 0 0 15px rgba(229, 9, 20, 0.3);
+}
+
+/* Mobile Responsiveness for Modal Action Buttons (<= 480px) */
+@media (max-width: 480px) {
+  .modal-actions-row {
+    gap: 8px;
+  }
+
+  .modal-btn-play {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 0.88rem;
+    gap: 6px;
+  }
+
+  .modal-btn-icon-only {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+  }
+
+  .modal-btn-icon-only svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Small Mobile Screens (<= 360px) */
+@media (max-width: 360px) {
+  .modal-body-new {
+    padding: 14px 12px 20px;
+  }
+
+  .modal-actions-row {
+    gap: 6px;
+  }
+
+  .modal-btn-play {
+    height: 36px;
+    padding: 0 10px;
+    font-size: 0.82rem;
+    gap: 4px;
+  }
+
+  .modal-btn-icon-only {
+    width: 36px;
+    height: 36px;
+  }
+
+  .modal-btn-icon-only svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 /* Metadata Row */
