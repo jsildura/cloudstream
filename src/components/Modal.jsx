@@ -456,6 +456,9 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
   // Ref to track if user manually toggled the trailer (to prevent auto-play interference)
   const userToggledTrailerRef = useRef(false);
   const autoPlayTimerRef = useRef(null);
+  // Flag: only scroll the selected season card into view when the user
+  // explicitly picks a different season (not on every re-render).
+  const shouldScrollSeasonRef = useRef(false);
   // Track if user has interacted with page (required for browser autoplay policy)
   const [userHasInteracted, setUserHasInteracted] = useState(false);
 
@@ -919,9 +922,20 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                         return isSelected ? (
                           <div
                             key={season.id || season.season_number}
-                            ref={(el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })}
+                            ref={(el) => {
+                              if (el && shouldScrollSeasonRef.current) {
+                                shouldScrollSeasonRef.current = false;
+                                // Scroll only the horizontal seasons row, not the entire modal
+                                const row = el.closest('.modal-seasons-row');
+                                if (row) {
+                                  const scrollLeft = el.offsetLeft - row.offsetLeft - (row.clientWidth / 2) + (el.offsetWidth / 2);
+                                  row.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+                                }
+                              }
+                            }}
                             className="modal-season-card selected"
                             onClick={() => {
+                              shouldScrollSeasonRef.current = true;
                               setSelectedSeason(season.season_number);
                               setSelectedEpisode(1);
                             }}
@@ -952,12 +966,14 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                             key={season.id || season.season_number}
                             className="modal-season-card"
                             onClick={() => {
+                              shouldScrollSeasonRef.current = true;
                               setSelectedSeason(season.season_number);
                               setSelectedEpisode(1);
                             }}
                             onKeyDown={(e) => {
                               if (e.key === 'Enter' || e.key === ' ') {
                                 e.preventDefault();
+                                shouldScrollSeasonRef.current = true;
                                 setSelectedSeason(season.season_number);
                                 setSelectedEpisode(1);
                               }
