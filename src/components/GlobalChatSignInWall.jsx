@@ -8,9 +8,10 @@ export default function GlobalChatSignInWall() {
         <div className="globalchat-signin-icon-wrap">
           <MessageSquare className="globalchat-signin-hero-icon" />
         </div>
-        <h2 className="globalchat-signin-title">Join the Conversation</h2>
+        <span className="globalchat-signin-badge">COMMUNITY CHAT</span>
+        <h2 className="globalchat-signin-title">Sign in to take part in GlobalChat</h2>
         <p className="globalchat-signin-desc">
-          Chat live with viewers and share what you're watching.
+          Share what you're watching, recommend your favorites, report playback issues, and chat with the community.
         </p>
       </div>
 

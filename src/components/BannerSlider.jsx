@@ -30,7 +30,7 @@ const TRAILER_END_GRACE = 2000;
 // ≥1920px, so gating on it would disable autoplay on ordinary 1080p monitors.
 const DESKTOP_TRAILER_MQ = '(min-width: 1025px) and (hover: hover) and (pointer: fine)';
 
-const BannerSlider = ({ movies, onItemClick, loading = false }) => {
+const BannerSlider = ({ movies, onItemClick: _onItemClick, loading = false }) => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [progress, setProgress] = useState(0);
