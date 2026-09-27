@@ -1,4 +1,4 @@
 export const RECENT_UPDATE = {
-  version: '1.3.0',
-  highlight: 'Added movie/show episode downloads, fullscreen zoom in/out (landscape) and some UI improvements.',
+  version: '1.3.1',
+  highlight: 'Refined backdrops, smoother animations, and enhanced mobile responsiveness.',
 };

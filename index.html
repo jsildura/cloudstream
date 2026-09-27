@@ -31,7 +31,8 @@
   <link rel="icon" type="image/x-icon" href="/icon/favicon.ico" />
   <meta name="description"
     content="StreamFlix - Your favorite destination for movies and TV shows. Stream the latest blockbusters, popular TV series, and anime all in one place." />
-  <meta name="profiton-domain-verification" content="6758f26e47f2cd88b15a2120e7ca6b412f652ce4999ba1a7fa0c0094c374eab0" />
+  <meta name="profiton-domain-verification"
+    content="6758f26e47f2cd88b15a2120e7ca6b412f652ce4999ba1a7fa0c0094c374eab0" />
 
   <meta name="keywords" content="movies, TV shows, streaming, anime, entertainment, watch online, StreamFlix">
   <meta name="author" content="StreamFlix">
@@ -103,7 +104,6 @@
     }
     </script>
 
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
@@ -129,11 +129,11 @@
   <meta name="msapplication-TileImage" content="/icons/ms-icon-144x144.png">
   <meta name="theme-color" content="#141414" />
 
-  <!-- Firebase SDK for Global Chat -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <!-- Firebase SDK for Global Chat (deferred to avoid blocking critical rendering path) -->
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
   <style>
     * {
@@ -287,6 +287,19 @@
         margin-top: 48px;
       }
     }
+
+    /* Reduced motion override for vestibular accessibility */
+    @media (prefers-reduced-motion: reduce) {
+
+      .netflix-logo,
+      .loading-bar {
+        animation: none !important;
+      }
+
+      .loading-screen {
+        transition: none !important;
+      }
+    }
   </style>
 </head>
 
@@ -408,6 +421,6 @@
   </script>
   <!-- Service Worker registration is handled by vite-plugin-pwa (see src/components/UpdatePrompt.jsx). -->
   <script type="module" src="/src/main.jsx"></script>
-</body>
+  </body>
 
 </html>

@@ -5,7 +5,6 @@ import useSwipe from '../hooks/useSwipe';
 import useWatchlist from '../hooks/useWatchlist';
 import { useToast } from '../contexts/ToastContext';
 import { maybeOpenSmartlinkAd } from '../utils/adGating';
-import { getPosterAlt } from '../utils/altTextUtils';
 import useTVDetect from '../hooks/useTVDetect';
 import YouTubePlayer from './YouTubePlayer';
 
@@ -404,9 +403,6 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
       : `${POSTER_URL}${currentMovie.poster_path}`)
     : '';
 
-  // Get media type badge text
-  const mediaType = currentMovie.media_type === 'tv' ? 'TV' : 'Movie';
-
   // Get year
   const year = currentMovie.release_date?.substring(0, 4) ||
     currentMovie.first_air_date?.substring(0, 4) || 'N/A';
@@ -427,11 +423,6 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
   const runtimeData = runtimeCache[currentLogoKey];
   const formattedRuntime = formatRuntime(runtimeData?.runtime);
   const isTV = (currentMovie.media_type || (currentMovie.release_date ? 'movie' : 'tv')) === 'tv';
-
-  // Get adjacent slides for 3D card effect
-  const getSlideIndex = (offset) => {
-    return (activeSlide + offset + movies.length) % movies.length;
-  };
 
   // Swipe handlers with momentum - longer swipes move more slides
   const swipeHandlers = useSwipe({
@@ -641,6 +632,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             </button>
 
             {/* Watch Now Button */}
+
             <button
               className="banner-watch-btn"
               onClick={handleWatchNow}
@@ -650,6 +642,7 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
               </svg>
               Watch now
             </button>
+
 
             {/* Share Button */}
             <button
@@ -752,68 +745,6 @@ const BannerSlider = ({ movies, onItemClick, loading = false }) => {
             </button>
           )}
           <span className="banner-age-badge">{contentRating}</span>
-        </div>
-
-        {/* Mobile Poster Carousel - Visible only on Mobile */}
-        <div className="mobile-poster-carousel">
-          {/* Stacked Cards */}
-          <div className="mobile-cards-container">
-            {/* Far Left Card */}
-            <div className="mobile-poster-card card-far-prev">
-              <img
-                src={`${POSTER_URL}${movies[getSlideIndex(-2)]?.poster_path}`}
-                alt={getPosterAlt(movies[getSlideIndex(-2)])}
-              />
-            </div>
-            {/* Previous Card */}
-            <div className="mobile-poster-card card-prev">
-              <img
-                src={`${POSTER_URL}${movies[getSlideIndex(-1)]?.poster_path}`}
-                alt={getPosterAlt(movies[getSlideIndex(-1)])}
-              />
-            </div>
-            {/* Active Card */}
-            <div className="mobile-poster-card card-active">
-              <img
-                src={`${POSTER_URL}${currentMovie.poster_path}`}
-                alt={getPosterAlt(currentMovie)}
-                fetchPriority="high"
-                loading="eager"
-              />
-            </div>
-            {/* Next Card */}
-            <div className="mobile-poster-card card-next">
-              <img
-                src={`${POSTER_URL}${movies[getSlideIndex(1)]?.poster_path}`}
-                alt={getPosterAlt(movies[getSlideIndex(1)])}
-              />
-            </div>
-            {/* Far Right Card */}
-            <div className="mobile-poster-card card-far-next">
-              <img
-                src={`${POSTER_URL}${movies[getSlideIndex(2)]?.poster_path}`}
-                alt={getPosterAlt(movies[getSlideIndex(2)])}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Controls at Bottom - Visible only on Mobile */}
-        <div className="mobile-banner-controls">
-          <div className="mobile-badges-grid">
-            <span className="mobile-badge">{mediaType}</span>
-            <span className="mobile-badge">{year}</span>
-            <span className="mobile-badge">{contentRating}</span>
-          </div>
-          <button
-            className="mobile-watch-btn"
-            onClick={() => onItemClick(currentMovie)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="6 3 20 12 6 21 6 3"></polygon>
-            </svg>
-            Watch Now
-          </button>
         </div>
 
         {/* Carousel Indicators - Mapple.uk style pills */}

@@ -104,11 +104,12 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 14px;
-    padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin-bottom: 8px;
+    padding: 0 0 16px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0;
     flex-wrap: wrap;
 }
 
@@ -152,22 +153,27 @@
 .reviews-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 0;
 }
 
 /* ── Review card ──────────────────────────── */
 
 .review-card {
-    padding: 12px 14px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    transition: background-color 0.15s ease, border-color 0.15s ease;
+    padding: 16px 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    transition: border-color 0.15s ease;
+}
+
+.review-card:last-child {
+    border-bottom: none;
 }
 
 .review-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 /* Header: avatar | meta | right-col */
@@ -183,7 +189,7 @@
 .review-avatar {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.08);
     flex-shrink: 0;
     object-fit: cover;

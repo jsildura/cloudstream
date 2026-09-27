@@ -338,6 +338,8 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country', title, su
                                             src={logoSrc}
                                             alt={title}
                                             draggable="false"
+                                            loading="lazy"
+                                            decoding="async"
                                         />
                                     </div>
                                 ) : (

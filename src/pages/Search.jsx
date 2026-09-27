@@ -168,12 +168,12 @@ const Search = () => {
           {/* Inline list, not chips: "Top Searches: a | b | c". The
               separators are decorative, so they sit outside the buttons. */}
           <p className="search-page-top">
-            <span className="search-page-top-label">Top Searches:</span>
+            <span className="search-page-top-label">Top Searches</span>
             {topSearches.map((item, i) => {
               const label = item.title || item.name;
               return (
                 <React.Fragment key={`${item.media_type}-${item.id}`}>
-                  {i > 0 && <span className="search-page-top-sep" aria-hidden="true">|</span>}
+                  {i > 0 && <span className="search-page-top-sep" aria-hidden="true">•</span>}
                   <button className="search-page-top-link" onClick={() => runQuery(label)}>
                     {label}
                   </button>

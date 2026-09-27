@@ -113,6 +113,7 @@ const MyList = () => {
                     <p>
                         Keep your movies and TV shows synchronized across all your devices and profiles.
                     </p>
+
                     <button
                         className="mylist-empty-cta"
                         onClick={async () => {
@@ -131,6 +132,7 @@ const MyList = () => {
                         </svg>
                         <span>Sign In with Google</span>
                     </button>
+
                 </div>
             </div>
         );

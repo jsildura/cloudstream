@@ -144,7 +144,7 @@
 .nav-link.active {
   color: #ffffff;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 999px;
 }
 
@@ -4233,8 +4233,7 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  background-color: #b91c1c;
-  /* Redflix red */
+  background-color: var(--netflix-red, #e50914);
   color: white;
   border: none;
   display: flex;
@@ -4257,8 +4256,8 @@
 
 .play-hover-btn:hover {
   transform: scale(1.1) !important;
-  background-color: #dc2626;
-  box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+  background-color: var(--netflix-red-hover, #b2070f);
+  box-shadow: 0 12px 40px rgba(229, 9, 20, 0.4);
 }
 
 .play-hover-btn .play-icon {
@@ -4927,6 +4926,8 @@
   object-fit: cover;
   mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 60%, #02020214 100%);
+  /* Filter — Contrast +10 · Highlights -5 · Saturation +10 · Warmth +5 · Sharpness +3 */
+  filter: contrast(1.10) brightness(0.95) saturate(1.10) sepia(0.05);
 }
 
 /* Placeholder fallback art: the placeholder.svg is decorative, not a real
@@ -5780,20 +5781,54 @@
   transform: translateY(-4px);
 }
 
-/* Active / Selected Season - Matches Red Border Highlight in Screenshot when not hovered */
+/* Active / Selected Season - Matches Red Border Highlight with centered scroll and info overlay */
 .modal-season-card.selected {
+  flex: 0 0 145px;
+  width: 145px;
+  scroll-snap-align: center;
+  scroll-margin: 0 24px;
+  z-index: 10;
   outline: 2px solid #e50914;
-  outline-offset: -2px;
-  box-shadow: 0 0 14px rgba(229, 9, 20, 0.4), 0 4px 16px rgba(0, 0, 0, 0.7);
+  outline-offset: -1px;
+  box-shadow: 0 0 24px rgba(229, 9, 20, 0.5), 0 8px 28px rgba(0, 0, 0, 0.85);
+  transform: translateY(-3px);
 }
 
 .modal-season-card.selected:hover {
-  outline: none;
+  outline: 2px solid #ff0019;
   box-shadow:
     0 16px 32px -4px rgba(0, 0, 0, 0.85),
     0 8px 16px -2px rgba(0, 0, 0, 0.6),
     0 4px 16px rgba(255, 0, 25, 0.4),
-    0 0 18px rgba(229, 9, 20, 0.55);
+    0 0 24px rgba(229, 9, 20, 0.6);
+}
+
+.modal-season-card-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 24px 8px 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 60%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.modal-season-card-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.modal-season-card-episodes {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .modal-season-poster {

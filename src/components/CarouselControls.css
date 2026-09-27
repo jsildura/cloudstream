@@ -45,11 +45,13 @@
     opacity: 1;
 }
 
-/* For keyboard accessibility, ensure they show on focus */
+/* For keyboard & TV remote accessibility, ensure they show on focus */
 .carousel-control-btn:focus-visible {
     opacity: 1;
     visibility: visible;
-    outline: 2px solid #e50914;
+    outline: 3px solid var(--netflix-red, #e50914);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.25);
 }
 
 .control-icon-wrapper {
@@ -61,7 +63,15 @@
 }
 
 .carousel-control-btn svg {
-    transition: transform 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.carousel-control-btn:hover .control-icon-wrapper svg {
+    transform: scale(1.15);
+}
+
+.carousel-control-btn:active .control-icon-wrapper svg {
+    transform: scale(0.95);
 }
 
 /* Hide on mobile devices since they use touch swipe */

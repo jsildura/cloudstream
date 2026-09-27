@@ -421,7 +421,9 @@ const Navbar = () => {
         </Link>
 
         <div className="navbar-links">
+
           <NavLink to="/" end className="nav-link">Home</NavLink>
+
 
           {/* In Kids mode, hide Shows and TV */}
           {!isKidsMode && (

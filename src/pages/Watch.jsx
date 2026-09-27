@@ -1891,7 +1891,12 @@ const Watch = () => {
                           )}
                           {server.hasAds && (
                             <span className="watch-server-badge badge-ads" title="Contains Ads">
-                              <i className="fa-solid fa-rectangle-ad"></i>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect width="20" height="14" x="2" y="5" rx="2" />
+                                <path d="M7 15h2l1-4h-4l1 4" />
+                                <path d="M14 11v4" />
+                                <path d="M14 13h2a2 2 0 0 0 0-4h-2" />
+                              </svg>
                             </span>
                           )}
                         </div>
@@ -1932,10 +1937,12 @@ const Watch = () => {
 
               {/* Header */}
               <div className="watch-episode-drawer-header">
-                <div className="watch-episode-drawer-title">
+
+                  <div className="watch-episode-drawer-title">
                   <h2>Episodes</h2>
                   <span className="watch-episode-count">{episodes.length}</span>
                 </div>
+
               </div>
 
               {/* Season Selector */}
@@ -2011,77 +2018,89 @@ const Watch = () => {
 
                     return false;
                   })
-                  .map(episode => (
-                    <div
-                      key={episode.episode_number}
-                      className={`watch-episode-item ${currentEpisode === episode.episode_number ? 'active' : ''}`}
-                      onClick={() => {
-                        setCurrentEpisode(episode.episode_number);
-                        setEpisodeDrawerOpen(false);
-                        setEpisodeSearchQuery('');
-                      }}
-                    >
-                      {/* Thumbnail */}
-                      <div className="watch-episode-thumbnail">
-                        {episode.still_path ? (
-                          <img
-                            src={episodeStill(episode.still_path)}
-                            alt={episode.name}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="watch-episode-thumbnail-placeholder">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="m22 8-6 4 6 4V8Z"></path>
-                              <rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
-                            </svg>
-                          </div>
-                        )}
-                        {currentEpisode === episode.episode_number && (
-                          <div className="watch-episode-play-overlay">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M8 5v14l11-7z"></path>
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Content */}
-                      <div className="watch-episode-content">
-                        <div className="watch-episode-badges">
-                          <span className="watch-episode-number">EP {episode.episode_number}</span>
-                          {currentEpisode === episode.episode_number && (
-                            <span className="watch-episode-playing">Playing</span>
+                  .map(episode => {
+                    const isActive = currentEpisode === episode.episode_number;
+                    return (
+                      <div
+                        key={episode.episode_number}
+                        className={`watch-episode-item ${isActive ? 'active' : ''}`}
+                        onClick={() => {
+                          setCurrentEpisode(episode.episode_number);
+                          setEpisodeDrawerOpen(false);
+                          setEpisodeSearchQuery('');
+                        }}
+                      >
+                        {/* Thumbnail */}
+                        <div className="watch-episode-thumbnail">
+                          {episode.still_path ? (
+                            <img
+                              src={episodeStill(episode.still_path)}
+                              alt={episode.name}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="watch-episode-thumbnail-placeholder">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="m22 8-6 4 6 4V8Z"></path>
+                                <rect width="14" height="12" x="2" y="6" rx="2" ry="2"></rect>
+                              </svg>
+                            </div>
+                          )}
+                          {isActive && (
+                            <div className="watch-episode-play-overlay">
+                              <div className="watch-episode-play-beacon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M8 5v14l11-7z"></path>
+                                </svg>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <h3 className="watch-episode-title">{episode.name || `Episode ${episode.episode_number}`}</h3>
-                        {episode.overview && (
-                          <p className="watch-episode-overview">{episode.overview}</p>
-                        )}
-                      </div>
 
-                      {/* Meta */}
-                      <div className="watch-episode-meta">
-                        {episode.vote_average > 0 && (
-                          <span className="watch-episode-rating">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                            </svg>
-                            {episode.vote_average.toFixed(1)}
-                          </span>
-                        )}
-                        {episode.runtime && (
-                          <span className="watch-episode-duration">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <polyline points="12 6 12 12 16 14"></polyline>
-                            </svg>
-                            {episode.runtime} min
-                          </span>
-                        )}
+                        {/* Content */}
+                        <div className="watch-episode-content">
+                          <div className="watch-episode-badges">
+                            <span className="watch-episode-number">EP {episode.episode_number}</span>
+                            {isActive && (
+                              <span className="watch-episode-playing">
+                                <span className="watch-episode-equalizer">
+                                  <span className="watch-episode-eq-bar watch-episode-eq-1" />
+                                  <span className="watch-episode-eq-bar watch-episode-eq-2" />
+                                  <span className="watch-episode-eq-bar watch-episode-eq-3" />
+                                </span>
+                                Playing
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="watch-episode-title">{episode.name || `Episode ${episode.episode_number}`}</h3>
+                          {episode.overview && (
+                            <p className="watch-episode-overview">{episode.overview}</p>
+                          )}
+                        </div>
+
+                        {/* Meta */}
+                        <div className="watch-episode-meta">
+                          {episode.vote_average > 0 && (
+                            <span className="watch-episode-rating">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                              </svg>
+                              {episode.vote_average.toFixed(1)}
+                            </span>
+                          )}
+                          {episode.runtime && (
+                            <span className="watch-episode-duration">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
+                              {episode.runtime} min
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
               </div>
             </div>
           </div>

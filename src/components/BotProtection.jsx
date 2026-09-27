@@ -176,7 +176,7 @@ const BotProtection = () => {
                     disableCopy: false,          // Allow copying
                     disableCut: false,           // Allow cutting
                     disablePaste: false,         // Allow pasting
-                    interval: 200,               // Check interval in ms
+                    interval: 1000,              // Check interval in ms (balanced between security and idle CPU)
                     // Use all detection methods for maximum coverage
                     detectors: [
                         0,  // RegToString

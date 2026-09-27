@@ -798,9 +798,11 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                     {contentRating && (
                       <>
                         <span className="meta-dot">·</span>
-                        <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
+
+                            <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
                           {contentRating}
                         </span>
+
                       </>
                     )}
                   </div>
@@ -914,10 +916,41 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                           ? 'SP'
                           : (season.season_number != null ? `S${season.season_number}` : `S${index + 1}`);
 
-                        return (
+                        return isSelected ? (
                           <div
                             key={season.id || season.season_number}
-                            className={`modal-season-card ${isSelected ? 'selected' : ''}`}
+                            ref={(el) => el && el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })}
+                            className="modal-season-card selected"
+                            onClick={() => {
+                              setSelectedSeason(season.season_number);
+                              setSelectedEpisode(1);
+                            }}
+                            tabIndex={0}
+                            role="button"
+                            aria-pressed={true}
+                            aria-label={`${season.name || `Season ${season.season_number}`} (Selected)`}
+                            title={`${season.name || `Season ${season.season_number}`}${season.episode_count ? ` • ${season.episode_count} episodes` : ''}`}
+                          >
+                            <span className="modal-season-badge" aria-hidden="true">
+                              {seasonBadgeText}
+                            </span>
+                            <img
+                              src={posterSrc}
+                              alt={season.name || `Season ${season.season_number}`}
+                              className="modal-season-poster"
+                              loading="lazy"
+                            />
+                            <div className="modal-season-card-footer">
+                              <span className="modal-season-card-name">{season.name || `Season ${season.season_number}`}</span>
+                              {season.episode_count && (
+                                <span className="modal-season-card-episodes">{season.episode_count} eps</span>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            key={season.id || season.season_number}
+                            className="modal-season-card"
                             onClick={() => {
                               setSelectedSeason(season.season_number);
                               setSelectedEpisode(1);
@@ -931,8 +964,8 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                             }}
                             tabIndex={0}
                             role="button"
-                            aria-pressed={isSelected}
-                            aria-label={`${season.name || `Season ${season.season_number}`}${isSelected ? ' (Selected)' : ''}`}
+                            aria-pressed={false}
+                            aria-label={season.name || `Season ${season.season_number}`}
                             title={`${season.name || `Season ${season.season_number}`}${season.episode_count ? ` • ${season.episode_count} episodes` : ''}`}
                           >
                             <span className="modal-season-badge" aria-hidden="true">

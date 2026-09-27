@@ -257,3 +257,9 @@ docs/plans/*
 database-debug.log
 firebase-debug.log
 ui-debug.log
+
+# Impeccable resources
+.impeccable/
+DESIGN.md
+PRODUCT.md
+

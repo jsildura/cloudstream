@@ -481,6 +481,7 @@
 }
 
 .banner-indicator {
+  position: relative;
   height: 6px;
   width: 6px;
   border-radius: 9999px;
@@ -491,13 +492,30 @@
   transition: all 0.4s ease;
 }
 
+/* Expanded invisible hit target for easy tapping/clicking */
+.banner-indicator::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 32px;
+  min-height: 32px;
+}
+
 .banner-indicator:hover {
   background-color: rgba(255, 255, 255, 0.6);
 }
 
+.banner-indicator:focus-visible {
+  outline: 2px solid var(--netflix-red, #e50914);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.35);
+}
+
 .banner-indicator.active {
   width: 32px;
-  background-color: var(--netflix-red);
+  background-color: var(--netflix-red, #e50914);
 }
 
 /* Mobile: smaller indicators, tighter gap */
@@ -549,7 +567,7 @@
 
 .banner-progress-fill {
   height: 100%;
-  background: #ff0000;
+  background: var(--netflix-red, #e50914);
   transition: width 0.05s linear;
 }
 
@@ -566,6 +584,7 @@
   left: 0;
   width: 100%;
   height: 120%;
+  filter: blur(0.3px);
 }
 
 .banner-backdrop::after {
@@ -586,6 +605,8 @@
   height: 100%;
   object-fit: cover;
   object-position: center 40%;
+  /* Filter — Contrast +10 · Highlights -5 · Saturation +10 · Warmth +5 · Sharpness +3 */
+  filter: contrast(1.15) brightness(0.95) saturate(1.10) sepia(0.05);
 }
 
 .banner-slide:hover .banner-backdrop {
@@ -1035,17 +1056,29 @@
 }
 
 .banner-action-icon {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: #fff;
   cursor: pointer;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+/* Minimum 44x44px accessible touch target */
+.banner-action-icon::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .banner-action-icon:hover {
@@ -1083,11 +1116,58 @@
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  line-height: 1;
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
+.banner-watch-btn::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(115deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.25) 35%,
+      rgba(229, 9, 20, 0.25) 50%,
+      rgba(255, 255, 255, 0.25) 65%,
+      rgba(255, 255, 255, 0.1) 100%);
+  background-size: 250% 100%;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: banner-watch-glint 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
 .banner-watch-btn:hover {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-watch-btn::before {
+    animation: none;
+  }
+}
+
+@keyframes banner-watch-glint {
+
+  0%,
+  15% {
+    background-position: 200% 0;
+  }
+
+  50%,
+  65% {
+    background-position: -50% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .banner-watch-btn svg {
@@ -1217,7 +1297,7 @@
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   color: #fff;
@@ -1237,14 +1317,56 @@
 }
 
 .banner-age-badge {
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
   font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.35rem 0.75rem;
-  letter-spacing: 0.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1;
+  backdrop-filter: none;
+  background-image: linear-gradient(90deg,
+      #ffffff 0%,
+      rgba(255, 255, 255, 0.35) 25%,
+      #ffffff 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      #ffffff 100%);
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: banner-age-shimmer 3.5s linear infinite;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.banner-age-badge:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner-age-badge {
+    animation: none !important;
+    color: #ffffff;
+    background-image: none;
+  }
+}
+
+@keyframes banner-age-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+
+  100% {
+    background-position: 0% center;
+  }
 }
 
 /* Mobile hide for bottom controls */
@@ -1505,9 +1627,11 @@
   }
 
   .banner-age-badge {
-    font-size: 1.1rem;
-    padding: 0.58rem 1.1rem;
-    border-radius: 20px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0 18px;
+    font-size: 1rem;
+    border-radius: 24px;
   }
 
   /* Banner slide padding - maintain alignment with content sections */
@@ -1522,23 +1646,10 @@
   }
 }
 
-/* ===== MOBILE POSTER CAROUSEL ===== */
 
-
-/* Hide mobile elements on desktop */
-.mobile-poster-carousel,
-.mobile-banner-controls {
-  display: none;
-}
 
 /* Mobile styles */
 @media (max-width: 1024px) {
-
-  /* Blur backdrop on mobile */
-  .banner-backdrop {
-    filter: blur(1px);
-    opacity: 0.7;
-  }
 
   /* Show desktop content on mobile - redesigned layout */
   .banner-desktop-content {
@@ -1712,15 +1823,7 @@
     opacity: 0.6;
   }
 
-  /* Hide poster carousel since we show full content */
-  .mobile-poster-carousel {
-    display: none !important;
-  }
 
-  /* Hide old mobile controls - using action buttons instead */
-  .mobile-banner-controls {
-    display: none !important;
-  }
 
   /* Hide bottom controls on mobile */
   .banner-bottom-controls {
@@ -7384,24 +7487,43 @@ select.filter-dropdown {
 
 .watch-episode-season-select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e50914' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding: 11px 38px 11px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .watch-episode-season-select:hover {
-  border-color: rgba(255, 255, 255, 0.3);
+  background-color: #222222;
+  border-color: rgba(229, 9, 20, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 0 12px rgba(229, 9, 20, 0.2);
+}
+
+.watch-episode-season-select:focus-visible {
+  border-color: #e50914;
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.35);
 }
 
 .watch-episode-season-select option {
   background: #1a1a1a;
   color: white;
+  padding: 10px;
 }
 
 /* Search Input */
@@ -7431,38 +7553,96 @@ select.filter-dropdown {
   color: rgba(255, 255, 255, 0.4);
 }
 
+@keyframes eqBar1 {
+
+  0%,
+  100% {
+    height: 4px;
+  }
+
+  50% {
+    height: 12px;
+  }
+}
+
+@keyframes eqBar2 {
+
+  0%,
+  100% {
+    height: 12px;
+  }
+
+  50% {
+    height: 5px;
+  }
+}
+
+@keyframes eqBar3 {
+
+  0%,
+  100% {
+    height: 7px;
+  }
+
+  50% {
+    height: 14px;
+  }
+}
+
+@keyframes pulseRingPlay {
+  0% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.6);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(229, 9, 20, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 9, 20, 0);
+  }
+}
+
 /* Episode List */
 .watch-episode-list {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Episode Item */
 .watch-episode-item {
   display: flex;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 12px;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
   border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+  position: relative;
 }
 
 .watch-episode-item:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateX(4px);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .watch-episode-item.active {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(90deg, rgba(229, 9, 20, 0.16) 0%, rgba(229, 9, 20, 0.03) 100%);
+  border: 1px solid rgba(229, 9, 20, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 12px rgba(229, 9, 20, 0.06);
 }
 
 /* Thumbnail */
 .watch-episode-thumbnail {
   position: relative;
-  width: 120px;
-  height: 68px;
+  width: 124px;
+  height: 70px;
   flex-shrink: 0;
   border-radius: 8px;
   overflow: hidden;
@@ -7473,6 +7653,11 @@ select.filter-dropdown {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.watch-episode-item:hover .watch-episode-thumbnail img {
+  transform: scale(1.05);
 }
 
 .watch-episode-thumbnail-placeholder {
@@ -7487,11 +7672,23 @@ select.filter-dropdown {
 .watch-episode-play-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.watch-episode-play-beacon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e50914;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  animation: pulseRingPlay 2s infinite;
 }
 
 /* Content */
@@ -7519,12 +7716,42 @@ select.filter-dropdown {
 }
 
 .watch-episode-playing {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(229, 9, 20, 0.2);
+  color: #ff4d58;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
   padding: 3px 8px;
   border-radius: 4px;
+  border: 1px solid rgba(229, 9, 20, 0.35);
+  letter-spacing: 0.03em;
+}
+
+.watch-episode-equalizer {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.watch-episode-eq-bar {
+  width: 2.5px;
+  background: #ff4d58;
+  border-radius: 1px;
+}
+
+.watch-episode-eq-1 {
+  animation: eqBar1 0.8s infinite ease-in-out;
+}
+
+.watch-episode-eq-2 {
+  animation: eqBar2 0.7s infinite ease-in-out;
+}
+
+.watch-episode-eq-3 {
+  animation: eqBar3 0.9s infinite ease-in-out;
 }
 
 .watch-episode-title {
@@ -7770,13 +7997,15 @@ select.filter-dropdown {
   align-items: center;
   justify-content: center;
   z-index: 5;
+  /* Filter — Contrast +10 · Highlights -5 · Saturation +10 · Warmth +5 · Sharpness +3 */
+  filter: contrast(1.10) brightness(0.95) saturate(1.10) sepia(0.05);
 }
 
 /* Gradient overlay for better text visibility */
 .watch-lazy-gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.85) 100%);
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.55) 100%);
   pointer-events: none;
 }
 
@@ -7900,6 +8129,7 @@ select.filter-dropdown {
     opacity: 0;
     transform: scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: scale(1);

@@ -300,77 +300,95 @@ const Home = () => {
           <>
             {/* Top 10 for Kids */}
             {hasKidsTopTen && (
-              <TopTenRow
-                items={kidsTopTen}
-                onItemClick={handleItemClick}
-                title="Top 10 for Kids"
-                subtitle="Most watched by kids"
-              />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TopTenRow
+                  items={kidsTopTen}
+                  onItemClick={handleItemClick}
+                  title="Top 10 for Kids"
+                  subtitle="Most watched by kids"
+                />
+              </LazyLoadSection>
             )}
 
             {/* Trending for Kids */}
             {hasKidsFamilyShows && (
-              <TopTenRow
-                title="Trending for Kids"
-                subtitle="Shows kids are watching now"
-                items={kidsFamilyShows}
-                onItemClick={handleItemClick}
-                showRanks={false}
-              />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TopTenRow
+                  title="Trending for Kids"
+                  subtitle="Shows kids are watching now"
+                  items={kidsFamilyShows}
+                  onItemClick={handleItemClick}
+                  showRanks={false}
+                />
+              </LazyLoadSection>
             )}
 
             {/* Animated Favorites */}
             {hasKidsAnimationMovies && (
-              <TopTenRow
-                title="Animated Favorites"
-                subtitle="Colorful adventures for every age"
-                items={kidsAnimationMovies}
-                onItemClick={handleItemClick}
-                showRanks={false}
-              />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TopTenRow
+                  title="Animated Favorites"
+                  subtitle="Colorful adventures for every age"
+                  items={kidsAnimationMovies}
+                  onItemClick={handleItemClick}
+                  showRanks={false}
+                />
+              </LazyLoadSection>
             )}
 
             {/* Kids Shows */}
             {hasKidsShows && (
-              <TopTenRow
-                title="Kids Shows"
-                subtitle="More series picked for kids"
-                items={kidsShows}
-                onItemClick={handleItemClick}
-                showRanks={false}
-              />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TopTenRow
+                  title="Kids Shows"
+                  subtitle="More series picked for kids"
+                  items={kidsShows}
+                  onItemClick={handleItemClick}
+                  showRanks={false}
+                />
+              </LazyLoadSection>
             )}
           </>
         ) : (
           <>
             {/* Popular on Streamflix */}
             <div data-nav-section="popular">
-              <PopularOnStreamflix onItemClick={handleItemClick} />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <PopularOnStreamflix onItemClick={handleItemClick} />
+              </LazyLoadSection>
             </div>
 
             {/* Trending Today Section */}
             <div data-nav-section="trending-today">
-              <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TrendingSection timeWindow="day" onItemClick={handleItemClick} />
+              </LazyLoadSection>
             </div>
 
             {/* Trending This Week Section */}
             <div data-nav-section="trending-week">
-              <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TrendingSection timeWindow="week" onItemClick={handleItemClick} />
+              </LazyLoadSection>
             </div>
 
             {/* Trending Anime Section */}
             <div data-nav-section="trending-anime">
-              <TrendingAnimeSection onItemClick={handleItemClick} />
+              <LazyLoadSection minHeight="280px" rootMargin="350px">
+                <TrendingAnimeSection onItemClick={handleItemClick} />
+              </LazyLoadSection>
             </div>
 
             {/* Top 10 in Your Country Section */}
             {topTenMovies.length > 0 && (
               <div data-nav-section="top-ten">
-                <TopTenRow
-                  items={topTenMovies}
-                  onItemClick={handleItemClick}
-                  countryName={userCountry.name}
-                />
+                <LazyLoadSection minHeight="280px" rootMargin="350px">
+                  <TopTenRow
+                    items={topTenMovies}
+                    onItemClick={handleItemClick}
+                    countryName={userCountry.name}
+                  />
+                </LazyLoadSection>
               </div>
             )}
 

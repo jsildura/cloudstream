@@ -371,6 +371,8 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                                 src={logoSrc}
                                                 alt={itemTitle}
                                                 draggable="false"
+                                                loading="lazy"
+                                                decoding="async"
                                             />
                                         </div>
                                     ) : (

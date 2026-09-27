@@ -71,8 +71,9 @@
 }
 
 .section-indicator:focus-visible {
-    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline: 2px solid var(--netflix-red, #e50914);
     outline-offset: 3px;
+    box-shadow: 0 0 0 4px rgba(229, 9, 20, 0.35);
 }
 
 /* Tooltip on hover */

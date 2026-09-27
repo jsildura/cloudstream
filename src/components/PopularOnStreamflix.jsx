@@ -361,6 +361,8 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                                 src={logoSrc}
                                                 alt={item.title || 'Content logo'}
                                                 draggable="false"
+                                                loading="lazy"
+                                                decoding="async"
                                             />
                                         </div>
                                     ) : (

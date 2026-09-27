@@ -102,6 +102,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    filter: contrast(1.05) brightness(0.95) saturate(1.10) sepia(0.05);
 }
 
 /* Hover Overlay - Redflix Style */
@@ -125,8 +126,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: #b91c1c;
-    /* Redflix red */
+    background-color: var(--netflix-red, #e50914);
     color: white;
     border: none;
     display: flex;
@@ -146,8 +146,8 @@
 
 .top-ten-play-btn:hover {
     transform: scale(1.1) !important;
-    background-color: #dc2626;
-    box-shadow: 0 0 20px rgba(220, 38, 38, 0.5);
+    background-color: var(--netflix-red-hover, #b2070f);
+    box-shadow: 0 12px 40px rgba(229, 9, 20, 0.4);
 }
 
 /* Rank Number (Inside Card) */
@@ -464,6 +464,7 @@
         height: 96px;
     }
 }
+
 /* ===== Hover-capable pointers: the Interactive Preview Card owns the click =====
    Where a real pointer exists, hovering a card opens the preview, and every
    action (Watch now / Share / My List / More info) lives inside it. Leaving this

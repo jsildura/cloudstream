@@ -2471,7 +2471,7 @@ function GlobalChat() {
                             onContextMenu={(e) => handleMessageInteraction(e, msg, 'contextmenu')}
                         >
                             {msg.broadcast && (
-                                <div className="gc-broadcast-label">📢 Announcement</div>
+                                <div className="gc-broadcast-label">Announcement</div>
                             )}
                             {msg.text && (
                                 <div className="gc-msg-text">

@@ -1271,12 +1271,12 @@ const IPTV = () => {
   }, []);
 
   // --- Channel Scanner Logic ---
-  
+
   const runScan = useCallback((scanType) => {
     if (!channels || channels.length === 0 || scanInProgressRef.current) return;
 
     const currentOffline = loadOfflineChannels();
-    const channelsToScan = scanType === 'offline' 
+    const channelsToScan = scanType === 'offline'
       ? channels.filter(c => currentOffline.includes(c.id))
       : scanType === 'online'
         ? channels.filter(c => !currentOffline.includes(c.id))
@@ -1299,14 +1299,14 @@ const IPTV = () => {
 
     worker.onmessage = (event) => {
       const { type, scanned, total, online, offline, scanType: workerScanType } = event.data;
-      
+
       if (type === 'SCAN_PROGRESS') {
         setScanProgress(prev => prev ? { ...prev, scanned, total } : null);
       } else if (type === 'SCAN_COMPLETE') {
         const now = Date.now();
         scanInProgressRef.current = false;
         setScanProgress(null);
-        
+
         // Update timestamps via refs + state + localStorage
         if (workerScanType === 'offline' || workerScanType === 'all') {
           lastOfflineScanRef.current = now;
@@ -1322,17 +1322,17 @@ const IPTV = () => {
         // Merge offline channel results
         setOfflineChannels(prev => {
           let newOffline = [...prev];
-          
+
           // Add channels that failed during scan
           offline.forEach(id => {
             if (!newOffline.includes(id)) newOffline.push(id);
           });
-          
+
           // Remove channels that succeeded during scan
           online.forEach(id => {
             newOffline = newOffline.filter(offlineId => offlineId !== id);
           });
-          
+
           saveOfflineChannels(newOffline);
           return newOffline;
         });
@@ -1359,7 +1359,7 @@ const IPTV = () => {
     if (!lastOffline || now - lastOffline > OFFLINE_SCAN_INTERVAL) {
       scanToRun = 'offline';
     }
-    
+
     if (!lastOnline || now - lastOnline > ONLINE_SCAN_INTERVAL) {
       scanToRun = scanToRun === 'offline' ? 'all' : 'online';
     }
@@ -1382,7 +1382,7 @@ const IPTV = () => {
       clearInterval(onlineIntervalId);
     };
   }, [channels.length, runScan]); // Only re-run when channel count changes, not on timestamp updates
-  
+
   // Cleanup worker on unmount
   useEffect(() => {
     return () => {
@@ -1443,10 +1443,10 @@ const IPTV = () => {
 
     return priorityList.map((def) => {
       // Find an online channel that matches the recommended name
-      const matchedChannel = onlineChannels.find(c => 
+      const matchedChannel = onlineChannels.find(c =>
         c.name && c.name.toLowerCase().replace(/[^a-z0-9]/g, '') === def.name.toLowerCase().replace(/[^a-z0-9]/g, '')
       );
-      
+
       if (matchedChannel) {
         return { ...def, channelObj: matchedChannel };
       }
@@ -1894,9 +1894,11 @@ const IPTV = () => {
               </div>
               <div className="iptv-channel-info">
                 <h3 className="iptv-channel-name">{channel.name}</h3>
-                {(() => { const epg = getEpgForChannel(channel); return epg ? (
-                  <p className="iptv-channel-epg">▶ {epg.title}</p>
-                ) : null; })()}
+                {(() => {
+                  const epg = getEpgForChannel(channel); return epg ? (
+                    <p className="iptv-channel-epg">▶ {epg.title}</p>
+                  ) : null;
+                })()}
               </div>
             </div>
           );
