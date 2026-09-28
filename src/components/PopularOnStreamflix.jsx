@@ -11,6 +11,8 @@ import useTVDetect from '../hooks/useTVDetect';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './PopularOnStreamflix.css';
 import CarouselControls from './CarouselControls';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 const PopularOnStreamflix = ({ onItemClick }) => {
     const { popularContent, loading } = usePopularTracking();
@@ -346,6 +348,12 @@ const PopularOnStreamflix = ({ onItemClick }) => {
                                             </svg>
                                         </button>
                                     </div>
+
+                                    {/* New Episode Badge on Top-Left */}
+                                    {isRecentEpisode(item) && (
+                                        <NewEpisodeBadge />
+                                    )}
+
                                     <div className="popular-streamflix-rank">{index + 1}</div>
                                     {item.vote_average > 0 && (
                                         <div className="popular-streamflix-rating">

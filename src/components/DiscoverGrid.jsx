@@ -5,6 +5,8 @@ import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { SKELETON_COUNT } from '../hooks/useDiscoverFeed';
 import './TrendingSection.css';
 import './DiscoverGrid.css';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 const DiscoverGrid = ({
   items,
@@ -62,9 +64,7 @@ const DiscoverGrid = ({
           // Enrichment lives in a side Map, so fold it back onto the item for
           // anything downstream that reads `logo_path`/`backdrop_path` off the
           // item directly — the hover preview does, for both.
-          const previewItem = enriched.logo_path || enriched.backdrop_path
-            ? { ...item, ...enriched }
-            : item;
+          const previewItem = { ...item, ...enriched, type: itemType };
 
           return (
             <div
@@ -102,6 +102,11 @@ const DiscoverGrid = ({
                     </svg>
                   </span>
                 </div>
+
+                {/* New Episode Badge on Top-Left */}
+                {isRecentEpisode(previewItem) && (
+                  <NewEpisodeBadge />
+                )}
 
                 {item.vote_average > 0 && (
                   <div className="trending-card-rating">

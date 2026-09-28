@@ -10,6 +10,8 @@ import { getPosterAlt } from '../utils/altTextUtils';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
 import CarouselControls from './CarouselControls';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 // Media type icons
 const MEDIA_ICONS = {
@@ -122,6 +124,9 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                 backdrop_path: backdrop_path || item.poster_path,
                                 cast: cast.join(', ') || 'N/A',
                                 contentRating,
+                                last_air_date: data.last_air_date,
+                                last_episode_to_air: data.last_episode_to_air,
+                                status: data.status,
                             };
                             enrichmentMapRef.current.set(item.id, enriched);
                             return enriched;
@@ -353,6 +358,11 @@ const TrendingSection = memo(({ timeWindow = 'week', onItemClick }) => {
                                             </svg>
                                         </button>
                                     </div>
+
+                                    {/* New Episode Badge on Top-Left */}
+                                    {isRecentEpisode({ ...item, type: mediaType }) && (
+                                        <NewEpisodeBadge />
+                                    )}
 
                                     {/* Rating */}
                                     {item.vote_average > 0 && (

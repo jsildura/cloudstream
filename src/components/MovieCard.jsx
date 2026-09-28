@@ -3,6 +3,8 @@ import { getPosterAlt } from '../utils/altTextUtils';
 import { cardBackdrop, posterAsBackdrop, cardLogo } from '../utils/images';
 import { useTMDB } from '../hooks/useTMDB';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 const MovieCard = memo(({ item, onClick }) => {
   const { fetchItemBundle } = useTMDB();
@@ -23,7 +25,11 @@ const MovieCard = memo(({ item, onClick }) => {
           ...item,
           backdrop_path: item.backdrop_path || data.backdrop_path || data.images?.backdrops?.[0]?.file_path,
           logo_path: item.logo_path || logo?.file_path || null,
-          vote_average: item.vote_average ?? data.vote_average
+          vote_average: item.vote_average ?? data.vote_average,
+          last_air_date: data.last_air_date,
+          last_episode_to_air: data.last_episode_to_air,
+          status: data.status,
+          type
         });
       })
       .catch(() => {});
@@ -78,6 +84,11 @@ const MovieCard = memo(({ item, onClick }) => {
             Play
           </button>
         </div>
+
+        {/* New Episode Badge on Top-Left */}
+        {isRecentEpisode(enrichedItem) && (
+          <NewEpisodeBadge />
+        )}
 
         {enrichedItem.vote_average > 0 && (
           <div className="card-rating">

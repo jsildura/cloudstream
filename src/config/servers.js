@@ -51,9 +51,6 @@ export const serverConfig = [
         sandboxSupport: false,
         hasAds: true,
         pattern: 'default',
-        // Some titles resolve to an HEVC-only ladder here — audio plays, the
-        // picture stays blank on browsers that can't decode it.
-        mayRequireHevc: true,
     },
     {
         name: 'Server 2',

@@ -10,6 +10,8 @@ import { getPosterAlt } from '../utils/altTextUtils';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TrendingSection.css';
 import CarouselControls from './CarouselControls';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 // Anime type icons
 const ANIME_ICONS = {
@@ -143,6 +145,9 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                                 backdrop_path: backdrop_path || item.poster_path,
                                 cast: cast.join(', ') || 'N/A',
                                 contentRating,
+                                last_air_date: data.last_air_date,
+                                last_episode_to_air: data.last_episode_to_air,
+                                status: data.status,
                             };
                             enrichmentMapRef.current.set(item.id, enriched);
                             return enriched;
@@ -370,6 +375,11 @@ const TrendingAnimeSection = memo(({ onItemClick }) => {
                                             </svg>
                                         </button>
                                     </div>
+
+                                    {/* New Episode Badge on Top-Left */}
+                                    {isRecentEpisode({ ...item, type: animeType }) && (
+                                        <NewEpisodeBadge />
+                                    )}
 
                                     {/* Rating */}
                                     {item.vote_average > 0 && (

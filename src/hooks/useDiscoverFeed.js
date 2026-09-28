@@ -214,7 +214,10 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
         for (let attempt = 0; attempt < ENRICH_ATTEMPTS; attempt++) {
           if (isCancelled) return;
           try {
-            const response = await fetch(`/api/${mediaType}/${item.id}/images`);
+            const enrichUrl = mediaType === 'tv'
+              ? `/api/tv/${item.id}?append_to_response=images&include_image_language=en,null`
+              : `/api/movie/${item.id}/images`;
+            const response = await fetch(enrichUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             imagesData = await response.json();
             lastError = null;
@@ -230,14 +233,19 @@ export function useDiscoverFeed({ mediaType, filters, extraParams }) {
         if (isCancelled) return;
         if (lastError) throw lastError;
 
-        const logos = imagesData.logos || [];
+        const logos = imagesData.images?.logos || imagesData.logos || [];
         const englishLogo = logos.find(l => l.iso_639_1 === 'en') || logos[0];
-        const backdrop = item.backdrop_path || imagesData.backdrops?.[0]?.file_path;
+        const backdrop = item.backdrop_path
+          || imagesData.images?.backdrops?.[0]?.file_path
+          || imagesData.backdrops?.[0]?.file_path;
 
         enrichFailuresRef.current.delete(item.id);
         enrichedMapRef.current.set(item.id, {
           logo_path: englishLogo?.file_path || null,
-          backdrop_path: backdrop || item.poster_path || null
+          backdrop_path: backdrop || item.poster_path || null,
+          last_air_date: imagesData.last_air_date,
+          last_episode_to_air: imagesData.last_episode_to_air,
+          status: imagesData.status
         });
       } catch {
         // Record a backdrop so the card still renders, but only commit to the

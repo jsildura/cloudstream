@@ -9,7 +9,7 @@
 /* Header with branding */
 .trending-section-header {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     margin-bottom: 16px;
 }
 
@@ -51,13 +51,13 @@
     color: rgba(255, 255, 255, 0.7);
     border: none;
     border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    padding: 8px 16px;
+    padding: 4px 14px;
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
-    height: 40px;
+    height: 32px;
     box-sizing: border-box;
 }
 
@@ -213,23 +213,42 @@
     box-shadow: 0 12px 40px rgba(229, 9, 20, 0.4);
 }
 
-/* Rating Badge */
+/* Rating Badge - Bookmark Ribbon */
 .trending-card-rating {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
+    top: 0;
+    right: 12px;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    padding: 3px 6px;
-    border-radius: 8px;
+    justify-content: center;
+    gap: 2.5px;
+    background: linear-gradient(180deg, var(--netflix-red, #e50914) 0%, #b2070f 100%);
     color: #fff;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 3px 5px 6.5px 5px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 4.5px), 0 100%);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
     z-index: 20;
+    pointer-events: none;
+    user-select: none;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+.trending-card-rating svg {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    display: block;
+    filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.25));
 }
 
 /* Logo Overlay - Right Side */
@@ -369,6 +388,50 @@
     .trending-card-skeleton {
         border-radius: 8px;
     }
+
+    .trending-card-rating {
+        top: 0;
+        right: 10px;
+        gap: 2px;
+        padding: 2.5px 4.5px 5.5px 4.5px;
+        font-size: 0.52rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 3.5px), 0 100%);
+    }
+
+    .trending-card-rating svg {
+        width: 7.5px;
+        height: 7.5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .trending-card-rating {
+        right: 8px;
+        gap: 1.5px;
+        padding: 2px 4px 4.8px 4px;
+        font-size: 0.46rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 3px), 0 100%);
+    }
+
+    .trending-card-rating svg {
+        width: 6.5px;
+        height: 6.5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .trending-card-rating {
+        right: 6px;
+        padding: 1.5px 3.5px 4.2px 3.5px;
+        gap: 1.2px;
+        font-size: 0.42rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 2.5px), 0 100%);
+    }
+
+    .trending-card-rating svg {
+        width: 5.5px;
+        height: 5.5px;
+    }
 }
 
 /* Tablet: 768px to 1023px */
@@ -438,17 +501,18 @@
     }
 
     .trending-card-rating {
-        top: 16px;
-        right: 16px;
-        gap: 8px;
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 1.6rem;
+        top: 0;
+        right: 24px;
+        gap: 5px;
+        padding: 6px 10px 16px 10px;
+        border-radius: 0;
+        font-size: 1.3rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%);
     }
 
     .trending-card-rating svg {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
     }
 
     /* Logo & Title Overlays */
@@ -557,17 +621,18 @@
     }
 
     .trending-card-rating {
-        top: 32px;
-        right: 32px;
-        gap: 16px;
-        padding: 12px 24px;
-        border-radius: 32px;
-        font-size: 3.2rem;
+        top: 0;
+        right: 48px;
+        gap: 10px;
+        padding: 12px 20px 32px 20px;
+        border-radius: 0;
+        font-size: 2.6rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 20px), 0 100%);
     }
 
     .trending-card-rating svg {
-        width: 48px;
-        height: 48px;
+        width: 36px;
+        height: 36px;
     }
 
     .trending-logo-overlay {

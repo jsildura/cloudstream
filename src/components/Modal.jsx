@@ -17,11 +17,11 @@ import { cardPoster } from '../utils/images';
 // recognises (see constants/genres.js). Any genre not listed here is passed
 // through as-is (which already works for "Action", "Drama", etc.).
 const GENRE_SEARCH_ALIASES = {
-  'Science Fiction':    'Sci-Fi',
-  'Sci-Fi & Fantasy':  'Sci-Fi & Fantasy',
+  'Science Fiction': 'Sci-Fi',
+  'Sci-Fi & Fantasy': 'Sci-Fi & Fantasy',
   'Action & Adventure': 'Action & Adventure',
-  'War & Politics':    'War & Politics',
-  'TV Movie':          'TV Movie',
+  'War & Politics': 'War & Politics',
+  'TV Movie': 'TV Movie',
 };
 
 const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload }) => {
@@ -162,7 +162,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
           }
         }
 
-        const needsDetails = !item.overview || !item.genres?.length || (!item.release_date && !item.first_air_date);
+        const needsDetails = !item.overview || !item.genres?.length || (!item.release_date && !item.first_air_date) || !item.production_companies;
 
         // Fetch trailer, logo, cast, content rating, and TV details in parallel
         const [key, logo, fetchedCast, fetchedRating, tvDetails, fetchedDetails] = await Promise.all([
@@ -190,6 +190,14 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
             release_date: prev.release_date || fetchedDetails.release_date || '',
             first_air_date: prev.first_air_date || fetchedDetails.first_air_date || '',
             genres: (prev.genres && prev.genres.length > 0) ? prev.genres : fallbackGenres,
+          }));
+        }
+        // Merge production_companies / networks from tvDetails as fallback
+        if (isTvItem && tvDetails) {
+          setItem(prev => ({
+            ...prev,
+            production_companies: prev.production_companies || tvDetails.production_companies || [],
+            networks: prev.networks || tvDetails.networks || [],
           }));
         }
 
@@ -802,7 +810,7 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                       <>
                         <span className="meta-dot">·</span>
 
-                            <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
+                        <span className={`content-rating-badge ${getRatingBadgeClass(contentRating)}`}>
                           {contentRating}
                         </span>
 
@@ -884,6 +892,47 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                     <span className="modal-info-label">Status:</span>
                     <span className="modal-info-value">{item.status || 'Released'}</span>
                   </div>
+
+                  {/* Studio & Network/Provider Logos */}
+                  {(() => {
+                    const dedupe = (arr) => [...new Map(arr.map(x => [x.name, x])).values()];
+                    const allStudios = dedupe((item.production_companies || []).filter(c => c.logo_path));
+                    const allNetworks = dedupe((item.networks || []).filter(n => n.logo_path));
+                    // Budget: 1 network + 1 studio by default
+                    // No network → 2 studios; no studio → up to 2 networks
+                    let showNetworks, showStudios;
+                    if (allNetworks.length === 0) {
+                      showNetworks = [];
+                      showStudios = allStudios.slice(0, 2);
+                    } else if (allStudios.length === 0) {
+                      showStudios = [];
+                      showNetworks = allNetworks.slice(0, 2);
+                    } else {
+                      showNetworks = allNetworks.slice(0, 1);
+                      showStudios = allStudios.slice(0, 1);
+                    }
+                    if (showStudios.length === 0 && showNetworks.length === 0) return null;
+                    const renderChip = (item) => (
+                      <div key={item.id} className="modal-logo-chip" title={item.name}>
+                        <img
+                          src={`https://image.tmdb.org/t/p/w154${item.logo_path}`}
+                          alt={item.name}
+                          className="modal-company-logo"
+                          loading="lazy"
+                          onError={(e) => { e.target.style.display = 'none'; if (e.target.nextSibling) e.target.nextSibling.style.display = 'inline'; }}
+                        />
+                        <span className="modal-logo-fallback" style={{ display: 'none' }}>{item.name}</span>
+                      </div>
+                    );
+                    return (
+                      <div className="modal-info-item modal-logos-section">
+                        <div className="modal-logos-row">
+                          {showNetworks.map(renderChip)}
+                          {showStudios.map(renderChip)}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1220,8 +1269,8 @@ const Modal = memo(({ item: initialItem, onClose, collection = [], onDownload })
                         const recYear = rec.release_date
                           ? rec.release_date.slice(0, 4)
                           : rec.first_air_date
-                          ? rec.first_air_date.slice(0, 4)
-                          : null;
+                            ? rec.first_air_date.slice(0, 4)
+                            : null;
 
                         return (
                           <div

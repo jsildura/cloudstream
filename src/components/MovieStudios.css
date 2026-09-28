@@ -292,22 +292,88 @@
     filter: contrast(1.05) brightness(0.95) saturate(1.10) sepia(0.05);
 }
 
+/* Rating Badge - Bookmark Ribbon */
 .studio-movie-rating {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    display: flex;
+    top: 0;
+    right: 12px;
+    display: inline-flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(1px);
-    -webkit-backdrop-filter: blur(1px);
-    padding: 3px 6px;
-    border-radius: 8px;
+    justify-content: center;
+    gap: 2.5px;
+    background: linear-gradient(180deg, var(--netflix-red, #e50914) 0%, #b2070f 100%);
     color: #fff;
-    font-size: 0.8rem;
-    font-weight: 600;
+    padding: 3px 5px 6.5px 5px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 4.5px), 0 100%);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
     z-index: 20;
+    pointer-events: none;
+    user-select: none;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+.studio-movie-rating svg {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    display: block;
+    filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.25));
+}
+
+@media (max-width: 767px) {
+    .studio-movie-rating {
+        top: 0;
+        right: 10px;
+        gap: 2px;
+        padding: 2.5px 4.5px 5.5px 4.5px;
+        font-size: 0.52rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 3.5px), 0 100%);
+    }
+
+    .studio-movie-rating svg {
+        width: 7.5px;
+        height: 7.5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .studio-movie-rating {
+        right: 8px;
+        gap: 1.5px;
+        padding: 2px 4px 4.8px 4px;
+        font-size: 0.46rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 3px), 0 100%);
+    }
+
+    .studio-movie-rating svg {
+        width: 6.5px;
+        height: 6.5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .studio-movie-rating {
+        right: 6px;
+        padding: 1.5px 3.5px 4.2px 3.5px;
+        gap: 1.2px;
+        font-size: 0.42rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 2.5px), 0 100%);
+    }
+
+    .studio-movie-rating svg {
+        width: 5.5px;
+        height: 5.5px;
+    }
 }
 
 /* Hover Overlay - Redflix Style */
@@ -738,17 +804,18 @@
     }
 
     .studio-movie-rating {
-        top: 16px;
-        right: 16px;
-        gap: 8px;
-        padding: 6px 12px;
-        border-radius: 16px;
-        font-size: 1.6rem;
+        top: 0;
+        right: 24px;
+        gap: 5px;
+        padding: 6px 10px 16px 10px;
+        border-radius: 0;
+        font-size: 1.3rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 10px), 0 100%);
     }
 
     .studio-movie-rating svg {
-        width: 24px;
-        height: 24px;
+        width: 18px;
+        height: 18px;
     }
 
     .studio-movie-logo-overlay {
@@ -903,17 +970,18 @@
     }
 
     .studio-movie-rating {
-        top: 32px;
-        right: 32px;
-        gap: 16px;
-        padding: 12px 24px;
-        border-radius: 32px;
-        font-size: 3.2rem;
+        top: 0;
+        right: 48px;
+        gap: 10px;
+        padding: 12px 20px 32px 20px;
+        border-radius: 0;
+        font-size: 2.6rem;
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 20px), 0 100%);
     }
 
     .studio-movie-rating svg {
-        width: 48px;
-        height: 48px;
+        width: 36px;
+        height: 36px;
     }
 
     .studio-movie-hover-overlay {

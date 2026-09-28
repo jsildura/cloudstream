@@ -6,6 +6,8 @@ import useTVDetect from '../hooks/useTVDetect';
 import { useHoverPreview } from '../contexts/HoverPreviewContext';
 import './TopTenRow.css';
 import CarouselControls from './CarouselControls';
+import NewEpisodeBadge from './NewEpisodeBadge';
+import { isRecentEpisode } from '../utils/tvBadgeUtils';
 
 const TopTenRow = ({ items, onItemClick, countryName = 'Your Country', title, subtitle, showRanks = true }) => {
     const { fetchItemBundle } = useTMDB();
@@ -80,7 +82,10 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country', title, su
                                 type,
                                 logo_path: englishLogo?.file_path || null,
                                 backdrop_path: backdrop_path || item.poster_path, // Fallback to poster if really no backdrop
-                                vote_average: rating
+                                vote_average: rating,
+                                last_air_date: data.last_air_date,
+                                last_episode_to_air: data.last_episode_to_air,
+                                status: data.status
                             };
                         } catch {
                             return item;
@@ -318,6 +323,11 @@ const TopTenRow = ({ items, onItemClick, countryName = 'Your Country', title, su
                                         </svg>
                                     </button>
                                 </div>
+
+                                {/* New Episode Badge on Top-Left */}
+                                {isRecentEpisode(enrichedItem) && (
+                                    <NewEpisodeBadge />
+                                )}
 
                                 {showRanks && <div className="top-ten-rank">{index + 1}</div>}
 
