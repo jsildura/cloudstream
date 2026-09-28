@@ -438,7 +438,9 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     expect(ep3Card).toBeDefined();
     fireEvent.click(ep3Card);
 
-    expect(ep3Card.classList.contains('selected')).toBe(true);
+    await waitFor(() => {
+      expect(ep3Card.classList.contains('selected')).toBe(true);
+    });
 
     const downloadBtn = screen.getByRole('button', { name: /Download/i });
     fireEvent.click(downloadBtn);
