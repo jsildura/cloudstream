@@ -152,7 +152,7 @@ const Watch = () => {
     }
   }, [type, id, location.state, getCachedLogo, contentInfo?.logo_path]);
 
-  const { showNowPlaying, showSuccess, showError, showWarning } = useToast();
+  const { showNowPlaying, showSuccess, showError } = useToast();
   const { addToHistory, updateProgress, getLastWatched, flushPendingHistory } = useWatchHistory();
   const getLastWatchedRef = useRef(getLastWatched);
   getLastWatchedRef.current = getLastWatched;
