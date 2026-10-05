@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
-    initFirebase,
     loadFirebase,
     isGoogleAccount,
     createGoogleProvider,

@@ -10,7 +10,6 @@ import { partytownVite } from '@qwik.dev/partytown/utils';
 import { partytownSnippet } from '@qwik.dev/partytown/integration';
 import { visualizer } from 'rollup-plugin-visualizer';
 import Beasties from 'beasties';
-import http from 'http';
 import https from 'https';
 import fs from 'node:fs/promises';
 import { Readable } from 'node:stream';

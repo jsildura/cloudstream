@@ -77,7 +77,7 @@ describe('signMediaToken and verifyMediaToken HMAC verification', () => {
 
   it('rejects verification if signature was tampered with', async () => {
     const { exp, sig } = await signMediaToken(targetUrl, secret, 60000);
-    const tamperedSig = sig.slice(0, -2) + 'aa';
+    const tamperedSig = (sig[0] === 'a' ? 'b' : 'a') + sig.slice(1);
     const isValid = await verifyMediaToken(targetUrl, exp, tamperedSig, secret);
     expect(isValid).toBe(false);
   });

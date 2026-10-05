@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
-import React, { memo, useRef } from 'react';
-import { render, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import React, { memo } from 'react';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HoverPreviewProvider, useHoverPreview } from './HoverPreviewContext';
 
@@ -43,7 +43,7 @@ describe('HoverPreviewContext - Re-render stability', () => {
     let renderCount = 0;
 
     const MemoizedRow = memo(() => {
-      const { getPreviewProps } = useHoverPreview();
+      useHoverPreview();
       renderCount++;
       return <div data-testid="row">Row rendered {renderCount}</div>;
     });
@@ -62,7 +62,7 @@ describe('HoverPreviewContext - Re-render stability', () => {
       );
     };
 
-    const { getByTestId, rerender } = render(
+    const { rerender } = render(
       <MemoryRouter>
         <HoverPreviewProvider>
           <MemoizedRow />

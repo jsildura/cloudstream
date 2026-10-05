@@ -497,7 +497,7 @@ function GlobalChat() {
             dbRef.current = fb.db;
             storageRef.current = fb.storage;
             return dbRef.current;
-        } catch (e) {
+        } catch {
             if (typeof window !== 'undefined' && !dbRef.current && import.meta.env?.MODE !== 'test') {
                 loadFirebase().then((fb) => {
                     authRef.current = fb.auth;

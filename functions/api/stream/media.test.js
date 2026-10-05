@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { onRequestOptions, onRequestGet, onRequestHead } from './media.js';
+import { onRequestOptions, onRequestGet } from './media.js';
 
 describe('functions/api/stream/media.js Cloudflare handler', () => {
   it('rejects CORS preflight OPTIONS from untrusted origin with 403', async () => {

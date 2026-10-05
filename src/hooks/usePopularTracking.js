@@ -4,7 +4,7 @@
  * Automatically cleans up data older than 8 weeks (runs once per 3 days globally)
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { initFirebase, loadFirebase } from '../lib/firebase';
+import { loadFirebase } from '../lib/firebase';
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
 
