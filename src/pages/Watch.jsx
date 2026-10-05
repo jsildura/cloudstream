@@ -1844,10 +1844,10 @@ const Watch = () => {
                           {server.hasAds && (
                             <span className="watch-server-badge badge-ads" title="Contains Ads">
                               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <rect width="20" height="14" x="2" y="5" rx="2" />
-                                <path d="M7 15h2l1-4h-4l1 4" />
-                                <path d="M14 11v4" />
-                                <path d="M14 13h2a2 2 0 0 0 0-4h-2" />
+                                <rect width="22" height="16" x="1" y="4" rx="2.5" />
+                                <path d="M5 16l3-8 3 8" />
+                                <path d="M6 13.5h4" />
+                                <path d="M14 8v8h2a4 4 0 0 0 0-8h-2" />
                               </svg>
                             </span>
                           )}
