@@ -43,36 +43,110 @@ const corsProxyPlugin = () => ({
       res.end(JSON.stringify({ success: true }));
     });
 
-    // General proxy endpoint
+    // General proxy endpoint (hardened)
+    const ALLOWED_PROXY_DOMAINS = new Set(['resources.tidal.com', 'i.scdn.co']);
+    const MAX_PROXY_SIZE = 5 * 1024 * 1024; // 5 MB
+
     server.middlewares.use('/api/proxy', (req, res, _next) => {
+      const origin = req.headers.origin || `http://${req.headers.host}`;
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+
+      if (req.method === 'OPTIONS') {
+        res.statusCode = 204;
+        res.end();
+        return;
+      }
+
+      if (req.method !== 'GET') {
+        res.statusCode = 405;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Method not allowed' }));
+        return;
+      }
+
       const urlObj = new URL(req.url, `http://${req.headers.host}`);
       const targetUrl = urlObj.searchParams.get('url');
 
       if (!targetUrl) {
         res.statusCode = 400;
-        res.end('Missing url parameter');
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Missing url parameter' }));
         return;
       }
 
-      const client = targetUrl.startsWith('https') ? https : http;
+      let parsedUrl;
+      try {
+        parsedUrl = new URL(targetUrl);
+      } catch {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Invalid url parameter' }));
+        return;
+      }
 
-      const proxyReq = client.get(targetUrl, (proxyRes) => {
+      if (parsedUrl.protocol !== 'https:') {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Only HTTPS URLs are allowed' }));
+        return;
+      }
+
+      if (!ALLOWED_PROXY_DOMAINS.has(parsedUrl.hostname.toLowerCase())) {
+        res.statusCode = 403;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: 'Domain not allowed' }));
+        return;
+      }
+
+      const proxyReq = https.get(targetUrl, (proxyRes) => {
+        if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400) {
+          res.statusCode = 502;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Upstream redirect not permitted' }));
+          return;
+        }
+
+        const cl = proxyRes.headers['content-length'];
+        if (cl && parseInt(cl, 10) > MAX_PROXY_SIZE) {
+          res.statusCode = 413;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Payload too large' }));
+          return;
+        }
+
         res.statusCode = proxyRes.statusCode;
 
-        // Copy headers but handle CORS
-        Object.keys(proxyRes.headers).forEach(key => {
-          res.setHeader(key, proxyRes.headers[key]);
-        });
+        let ct = proxyRes.headers['content-type'] || 'application/octet-stream';
+        if (ct.includes('text/html') || ct.includes('text/xml')) {
+          ct = 'application/octet-stream';
+        }
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Content-Type', ct);
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+
+        let bytes = 0;
+        proxyRes.on('data', (chunk) => {
+          bytes += chunk.length;
+          if (bytes > MAX_PROXY_SIZE) {
+            proxyReq.destroy();
+            res.destroy();
+          }
+        });
 
         proxyRes.pipe(res);
       });
 
       proxyReq.on('error', (err) => {
         console.error('Proxy error:', err);
-        res.statusCode = 500;
-        res.end('Proxy failed');
+        if (!res.headersSent) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Proxy failed: ' + err.message }));
+        }
       });
     });
 
@@ -119,7 +193,7 @@ const corsProxyPlugin = () => ({
           const { resolveStream } = await import('./src/api/stream/zxcstream.js');
           const { routeSources } = await import('./src/api/stream/routing.js');
           const result = await resolveStream(meta, ZXC_SECRET);
-          const routed = routeSources(result);
+          const routed = await routeSources(result, ZXC_SECRET);
           devResolveCache.set(key, {
             body: routed,
             at: Date.now(),
@@ -136,23 +210,50 @@ const corsProxyPlugin = () => ({
       });
     });
 
-    // Media proxy endpoint (dev only) — thin adapter over the shared proxy.
+    // Media proxy endpoint (dev only) — thin adapter over the shared hardened proxy.
     server.middlewares.use('/api/stream/media', async (req, res, next) => {
+      const { getMediaCors, handleMediaRequest } = await import('./src/api/stream/media-core.js');
+      const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost:5173'}`);
+      const fakeReq = {
+        url: reqUrl.toString(),
+        headers: req.headers,
+        method: req.method,
+      };
+
       if (req.method === 'OPTIONS') {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', '*');
+        const { headers, isOriginAllowed } = getMediaCors(fakeReq, {
+          ALLOWED_ORIGIN: `http://${req.headers.host}`,
+        });
+        if (!isOriginAllowed) {
+          res.statusCode = 403;
+          res.end('Forbidden origin');
+          return;
+        }
+        Object.entries(headers).forEach(([k, v]) => res.setHeader(k, v));
+        res.statusCode = 204;
         res.end();
         return;
       }
+
       if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+
       try {
-        const { handleMediaRequest } = await import('./src/api/stream/media-core.js');
-        const u = new URL(req.url, `http://${req.headers.host}`).searchParams.get('u') || '';
-        const resp = await handleMediaRequest(u, req.headers.range || '');
+        const u = reqUrl.searchParams.get('u') || '';
+        const exp = reqUrl.searchParams.get('exp') || '';
+        const sig = reqUrl.searchParams.get('sig') || '';
+
+        const resp = await handleMediaRequest(u, req.headers.range || '', {
+          request: fakeReq,
+          env: { ZXC_STREAM_SECRET: ZXC_SECRET },
+          method: req.method,
+          exp,
+          sig,
+          secret: ZXC_SECRET,
+        });
+
         resp.headers.forEach((value, key) => res.setHeader(key, value));
         res.statusCode = resp.status;
-        if (resp.body) {
+        if (resp.body && req.method !== 'HEAD') {
           Readable.fromWeb(resp.body).on('error', () => res.destroy()).pipe(res);
         } else {
           res.end();

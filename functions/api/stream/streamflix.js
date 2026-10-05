@@ -81,7 +81,7 @@ export async function onRequestPost(context) {
     }
 
     const result = await resolveStream(meta, context.env.ZXC_STREAM_SECRET);
-    const body = routeSources(result);
+    const body = await routeSources(result, context.env.ZXC_STREAM_SECRET);
     await cachePut(key, body, result.success ? CACHE_TTL_MS : FAIL_TTL_MS);
     return Response.json(body, { headers: cors });
   } catch {

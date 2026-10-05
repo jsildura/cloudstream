@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
+import './ErrorBoundary.css';
 
 /**
- * Error Boundary component to catch JavaScript errors in child components
- * Displays a friendly error message instead of crashing the entire app
+ * Error Boundary component to catch JavaScript errors in child components.
+ * Displays a friendly error message and retry affordance instead of crashing the entire tree.
  */
 class ErrorBoundary extends Component {
     constructor(props) {
@@ -23,9 +24,15 @@ class ErrorBoundary extends Component {
         // Log error details for debugging
         console.error('ErrorBoundary caught an error:', error, errorInfo);
         this.setState({ errorInfo });
+        if (typeof this.props.onError === 'function') {
+            this.props.onError(error, errorInfo);
+        }
     }
 
     handleRetry = () => {
+        if (typeof this.props.onRetry === 'function') {
+            this.props.onRetry();
+        }
         this.setState({
             hasError: false,
             error: null,
@@ -35,8 +42,8 @@ class ErrorBoundary extends Component {
 
     render() {
         if (this.state.hasError) {
-            // Custom fallback UI
-            if (this.props.fallback) {
+            // Custom fallback UI (supports fallback={null} for silent isolation)
+            if (this.props.fallback !== undefined) {
                 return this.props.fallback;
             }
 

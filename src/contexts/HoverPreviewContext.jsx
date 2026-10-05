@@ -5,7 +5,7 @@
  * registers hover intent here; the preview itself is rendered once, in a
  * portal, so it can grow outside the carousels' `overflow-x: auto` clipping.
  */
-import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import HoverPreviewCard from '../components/HoverPreviewCard';
 
@@ -141,13 +141,13 @@ export const HoverPreviewProvider = ({ children }) => {
         onMouseLeave: closePreview,
     }), [openPreview, closePreview]);
 
-    const value = {
+    const value = useMemo(() => ({
         openPreview,
         closePreview,
         keepPreview,
         closeNow,
         getPreviewProps,
-    };
+    }), [openPreview, closePreview, keepPreview, closeNow, getPreviewProps]);
 
     return (
         <HoverPreviewContext.Provider value={value}>

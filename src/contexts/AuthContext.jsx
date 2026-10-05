@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
     initFirebase,
+    loadFirebase,
     isGoogleAccount,
     createGoogleProvider,
     syncGoogleProfileToUserRecord,
@@ -166,10 +167,13 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         isMountedRef.current = true;
         let unsubscribe = () => {};
+        let idleCallbackId = null;
+        let timeoutId = null;
 
-        const setupAuth = () => {
+        const setupAuth = async () => {
             try {
-                const { auth } = initFirebase();
+                const { auth } = await loadFirebase();
+                if (!isMountedRef.current) return;
                 authInstanceRef.current = auth;
 
                 // Set local persistence
@@ -276,10 +280,26 @@ export const AuthProvider = ({ children }) => {
             }
         };
 
-        setupAuth();
+        const runSetup = () => {
+            setupAuth();
+        };
+
+        if (import.meta.env?.MODE === 'test') {
+            runSetup();
+        } else if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+            idleCallbackId = window.requestIdleCallback(runSetup, { timeout: 1500 });
+        } else {
+            timeoutId = setTimeout(runSetup, 0);
+        }
 
         return () => {
             isMountedRef.current = false;
+            if (idleCallbackId !== null && typeof window !== 'undefined' && typeof window.cancelIdleCallback === 'function') {
+                window.cancelIdleCallback(idleCallbackId);
+            }
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId);
+            }
             unsubscribe();
         };
     }, [ensureAnonymousUser, publishPrincipal]);
@@ -297,6 +317,15 @@ export const AuthProvider = ({ children }) => {
             };
         }
 
+        if (!authInstanceRef.current) {
+            try {
+                const fb = await loadFirebase();
+                authInstanceRef.current = fb.auth;
+            } catch {
+                // fall through to !auth check
+            }
+        }
+
         const auth = authInstanceRef.current;
         if (!auth) {
             return {
@@ -311,6 +340,7 @@ export const AuthProvider = ({ children }) => {
 
         let provider;
         try {
+            await loadFirebase();
             provider = createGoogleProvider();
         } catch (err) {
             return {

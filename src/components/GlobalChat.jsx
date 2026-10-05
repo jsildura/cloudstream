@@ -4,7 +4,7 @@ import useTVDetect from '../hooks/useTVDetect';
 import ChatLinkPreview from './ChatLinkPreview';
 import MovieRecRow from './MovieRecRow';
 import { cardPoster } from '../utils/images';
-import { initFirebase } from '../lib/firebase';
+import { initFirebase, loadFirebase } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import GlobalChatSignInWall from './GlobalChatSignInWall';
 import { chatPath, buildChatProfile, buildChatMessage, buildTicketMessage, buildPinnedMessage, MAX_TEXT_LENGTH, MAX_REPLY_PREVIEW_LENGTH } from '../lib/globalChatModel';
@@ -498,7 +498,15 @@ function GlobalChat() {
             storageRef.current = fb.storage;
             return dbRef.current;
         } catch (e) {
-            console.warn('Firebase init error in GlobalChat:', e);
+            if (typeof window !== 'undefined' && !dbRef.current && import.meta.env?.MODE !== 'test') {
+                loadFirebase().then((fb) => {
+                    authRef.current = fb.auth;
+                    dbRef.current = fb.db;
+                    storageRef.current = fb.storage;
+                }).catch((loadErr) => {
+                    console.warn('Firebase load error in GlobalChat:', loadErr);
+                });
+            }
             return null;
         }
     }, []);

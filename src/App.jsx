@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
+import { lazyRetry } from './utils/lazyRetry';
 
 // Core components - always loaded (small, needed immediately)
 import Navbar from './components/Navbar';
@@ -18,7 +20,7 @@ import KidsFeatureGuard from './components/KidsFeatureGuard';
 import KidsRatedWatchGuard from './components/KidsRatedWatchGuard';
 
 // Deferred — pulls in Firebase, only needed after first paint
-const GlobalChat = lazy(() => import('./components/GlobalChat'));
+const GlobalChat = lazyRetry(() => import('./components/GlobalChat'));
 
 // Context providers - always loaded
 import { ViewerCountProvider } from './contexts/ViewerCountContext';
@@ -68,9 +70,9 @@ const unlockAudio = () => {
 // =============================================
 
 // Main pages (frequently visited)
-const Home = lazy(() => import('./pages/Home'));
-const Watch = lazy(() => import('./pages/Watch'));
-const MyList = lazy(() => import('./pages/MyList'));
+const Home = lazyRetry(() => import('./pages/Home'));
+const Watch = lazyRetry(() => import('./pages/Watch'));
+const MyList = lazyRetry(() => import('./pages/MyList'));
 
 // Watch is keyed by URL so navigating watch → watch (movie auto-next) mounts
 // a fresh instance. Without a key React reuses the mounted component and the
@@ -81,43 +83,43 @@ const KeyedWatch = () => {
 };
 
 // Movie category pages
-const Discover = lazy(() => import('./pages/Discover'));
+const Discover = lazyRetry(() => import('./pages/Discover'));
 
 // TV category pages
-const TVShows = lazy(() => import('./pages/TVShows'));
+const TVShows = lazyRetry(() => import('./pages/TVShows'));
 
 // Streaming service pages
-const StreamingProviderPage = lazy(() => import('./pages/StreamingProviderPage'));
+const StreamingProviderPage = lazyRetry(() => import('./pages/StreamingProviderPage'));
 
 // Collection & Studio pages
-const CollectionDetails = lazy(() => import('./pages/CollectionDetails'));
-const StudioPage = lazy(() => import('./pages/StudioPage'));
+const CollectionDetails = lazyRetry(() => import('./pages/CollectionDetails'));
+const StudioPage = lazyRetry(() => import('./pages/StudioPage'));
 
 // IPTV pages (heavy - includes shaka-player)
-const IPTV = lazy(() => import('./pages/IPTV'));
-const IPTVWatch = lazy(() => import('./pages/IPTVWatch'));
+const IPTV = lazyRetry(() => import('./pages/IPTV'));
+const IPTVWatch = lazyRetry(() => import('./pages/IPTVWatch'));
 
 // Sports pages
-const Sports = lazy(() => import('./pages/Sports'));
-const SportsWatch = lazy(() => import('./pages/SportsWatch'));
+const Sports = lazyRetry(() => import('./pages/Sports'));
+const SportsWatch = lazyRetry(() => import('./pages/SportsWatch'));
 
 // Music pages (native React port of tidal-ui)
-const MusicApp = lazy(() => import('./pages/music/MusicApp'));
-const MusicHome = lazy(() => import('./pages/music/MusicHome'));
-const MusicAlbum = lazy(() => import('./pages/music/MusicAlbum'));
-const MusicArtist = lazy(() => import('./pages/music/MusicArtist'));
-const MusicTrack = lazy(() => import('./pages/music/MusicTrack'));
-const MusicPlaylist = lazy(() => import('./pages/music/MusicPlaylist'));
+const MusicApp = lazyRetry(() => import('./pages/music/MusicApp'));
+const MusicHome = lazyRetry(() => import('./pages/music/MusicHome'));
+const MusicAlbum = lazyRetry(() => import('./pages/music/MusicAlbum'));
+const MusicArtist = lazyRetry(() => import('./pages/music/MusicArtist'));
+const MusicTrack = lazyRetry(() => import('./pages/music/MusicTrack'));
+const MusicPlaylist = lazyRetry(() => import('./pages/music/MusicPlaylist'));
 
 // Info pages (rarely visited)
-const About = lazy(() => import('./pages/About'));
-const Disclaimer = lazy(() => import('./pages/Disclaimer'));
-const DataPolicy = lazy(() => import('./pages/DataPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const Contact = lazy(() => import('./pages/Contact'));
-const Search = lazy(() => import('./pages/Search'));
-const PersonPage = lazy(() => import('./pages/PersonPage'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+const About = lazyRetry(() => import('./pages/About'));
+const Disclaimer = lazyRetry(() => import('./pages/Disclaimer'));
+const DataPolicy = lazyRetry(() => import('./pages/DataPolicy'));
+const TermsOfService = lazyRetry(() => import('./pages/TermsOfService'));
+const Contact = lazyRetry(() => import('./pages/Contact'));
+const Search = lazyRetry(() => import('./pages/Search'));
+const PersonPage = lazyRetry(() => import('./pages/PersonPage'));
+const NotFound = lazyRetry(() => import('./pages/NotFound'));
 
 
 import { useProfiles } from './contexts/ProfileContext';
@@ -159,41 +161,43 @@ function App() {
           )}
 
         <main>
-          {/* Suspense wrapper for lazy-loaded routes */}
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/my-list" element={<MyList />} />
-              <Route path="/tv-shows" element={<TVShows />} />
-              <Route path="/discover" element={<Discover />} />
-              <Route path="/watch" element={<KidsRatedWatchGuard><KeyedWatch /></KidsRatedWatchGuard>} />
-              <Route path="/about" element={<About />} />
-              <Route path="/disclaimer" element={<Disclaimer />} />
-              <Route path="/privacy" element={<DataPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/collection/:id" element={<CollectionDetails />} />
-              {['netflix', 'disney', 'prime-video', 'apple-tv', 'hbo', 'viu', 'crunchyroll', 'peacock']
-                .map(path => <Route key={path} path={`/${path}`} element={<StreamingProviderPage />} />)}
-              <Route path="/studio/:id" element={<StudioPage />} />
-              <Route path="/iptv" element={<KidsFeatureGuard><IPTV /></KidsFeatureGuard>} />
-              <Route path="/iptv/watch/:channelId" element={<KidsFeatureGuard><IPTVWatch /></KidsFeatureGuard>} />
-              {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
-              <Route path="/sports/watch/:matchId" element={<KidsFeatureGuard><SportsWatch /></KidsFeatureGuard>} />
-              {/* Temporarily disabled - Music routes
-              <Route path="/music" element={<MusicApp />}>
-                <Route index element={<MusicHome />} />
-                <Route path="album/:id" element={<MusicAlbum />} />
-                <Route path="artist/:id" element={<MusicArtist />} />
-                <Route path="track/:id" element={<MusicTrack />} />
-                <Route path="playlist/:id" element={<MusicPlaylist />} />
-              </Route>
-              */}
-              <Route path="/search" element={<Search />} />
-              <Route path="/person/:id" element={<KidsFeatureGuard><PersonPage /></KidsFeatureGuard>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
+          {/* Suspense wrapper for lazy-loaded routes guarded by ErrorBoundary keyed by pathname */}
+          <ErrorBoundary key={location.pathname}>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/my-list" element={<MyList />} />
+                <Route path="/tv-shows" element={<TVShows />} />
+                <Route path="/discover" element={<Discover />} />
+                <Route path="/watch" element={<KidsRatedWatchGuard><KeyedWatch /></KidsRatedWatchGuard>} />
+                <Route path="/about" element={<About />} />
+                <Route path="/disclaimer" element={<Disclaimer />} />
+                <Route path="/privacy" element={<DataPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/collection/:id" element={<CollectionDetails />} />
+                {['netflix', 'disney', 'prime-video', 'apple-tv', 'hbo', 'viu', 'crunchyroll', 'peacock']
+                  .map(path => <Route key={path} path={`/${path}`} element={<StreamingProviderPage />} />)}
+                <Route path="/studio/:id" element={<StudioPage />} />
+                <Route path="/iptv" element={<KidsFeatureGuard><IPTV /></KidsFeatureGuard>} />
+                <Route path="/iptv/watch/:channelId" element={<KidsFeatureGuard><IPTVWatch /></KidsFeatureGuard>} />
+                {/* Temporarily disabled - <Route path="/sports" element={<Sports />} /> */}
+                <Route path="/sports/watch/:matchId" element={<KidsFeatureGuard><SportsWatch /></KidsFeatureGuard>} />
+                {/* Temporarily disabled - Music routes
+                <Route path="/music" element={<MusicApp />}>
+                  <Route index element={<MusicHome />} />
+                  <Route path="album/:id" element={<MusicAlbum />} />
+                  <Route path="artist/:id" element={<MusicArtist />} />
+                  <Route path="track/:id" element={<MusicTrack />} />
+                  <Route path="playlist/:id" element={<MusicPlaylist />} />
+                </Route>
+                */}
+                <Route path="/search" element={<Search />} />
+                <Route path="/person/:id" element={<KidsFeatureGuard><PersonPage /></KidsFeatureGuard>} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </main>
 
         {/* Hide Footer on watch/music pages for focused viewing */}
@@ -210,9 +214,11 @@ function App() {
           !location.pathname.startsWith('/music') &&
           !location.pathname.includes('/iptv/watch') &&
           !location.pathname.includes('/sports/watch') && (
-            <Suspense fallback={null}>
-              <GlobalChat />
-            </Suspense>
+            <ErrorBoundary fallback={null}>
+              <Suspense fallback={null}>
+                <GlobalChat />
+              </Suspense>
+            </ErrorBoundary>
           )}
       </div>
       </HoverPreviewProvider>

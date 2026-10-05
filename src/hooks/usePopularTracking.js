@@ -4,7 +4,7 @@
  * Automatically cleans up data older than 8 weeks (runs once per 3 days globally)
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { initFirebase } from '../lib/firebase';
+import { initFirebase, loadFirebase } from '../lib/firebase';
 
 const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
 
@@ -71,14 +71,20 @@ const usePopularTracking = () => {
 
     // Initialize Firebase connection
     useEffect(() => {
-        try {
-            const firebase = initFirebase();
-            if (firebase?.db) {
-                setDbRef(firebase.db);
-            }
-        } catch (e) {
-            console.warn('Popular tracking skipped:', e?.message || e);
-        }
+        let mounted = true;
+        loadFirebase()
+            .then((firebase) => {
+                if (mounted && firebase?.db) {
+                    setDbRef(firebase.db);
+                }
+            })
+            .catch((e) => {
+                console.warn('Popular tracking skipped:', e?.message || e);
+            });
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     /**

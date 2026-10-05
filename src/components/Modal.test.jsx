@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import Modal from './Modal';
+import { maybeOpenSmartlinkAd } from '../utils/adGating';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', () => ({
@@ -346,6 +347,7 @@ describe('Modal - Season & Episode Selector for TV Shows', () => {
     expect(downloadBtn.querySelector('svg')).toBeDefined();
 
     fireEvent.click(downloadBtn);
+    expect(maybeOpenSmartlinkAd).toHaveBeenCalled();
     expect(mockOnDownload).toHaveBeenCalledWith(expect.objectContaining({ id: tvItem.id }));
   });
 

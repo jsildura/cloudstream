@@ -129,11 +129,8 @@
   <meta name="msapplication-TileImage" content="/icons/ms-icon-144x144.png">
   <meta name="theme-color" content="#141414" />
 
-  <!-- Firebase SDK for Global Chat (deferred to avoid blocking critical rendering path) -->
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <!-- DNS prefetch for Firebase CDN; scripts are loaded on demand after first paint via loadFirebase() -->
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
 
   <style>
     * {

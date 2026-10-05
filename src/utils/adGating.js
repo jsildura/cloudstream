@@ -23,8 +23,8 @@ export const GATE_GLOBAL_KEY = '__STREAMFLIX_AD_STATE';
 
 /** Adsterra smartlink shared by every play / watch-now surface. */
 export const AD_URL =
-  'https://consumptionbackwardsentiments.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
-export const AD_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
+  'https://www.profitableratecpmnetwork.com/kjy2d6bi?key=b2d063ec2be89ba5e928fdd367071bbd';
+export const AD_COOLDOWN_MS = 1 * 60 * 1000; // 1 minute
 
 /**
  * The displayed price. Must match ADFREE_PRICE in functions/lib/paypal.js.

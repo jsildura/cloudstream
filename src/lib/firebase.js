@@ -90,10 +90,209 @@ export function createGoogleProvider() {
 }
 
 let emulatorConnected = false;
+let firebaseLoadPromise = null;
+let storageLoadPromise = null;
+
+const FIREBASE_SCRIPTS = {
+    app: 'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+    auth: 'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js',
+    database: 'https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js',
+    storage: 'https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js'
+};
+
+/**
+ * Dynamically injects a script tag and returns a Promise that settles when loaded.
+ * Idempotent: reuses an existing matching script tag if present.
+ *
+ * @param {string} src Script source URL
+ * @param {number} [timeoutMs=15000] Timeout before rejecting
+ * @returns {Promise<void>}
+ */
+function loadScript(src, timeoutMs = 15000) {
+    return new Promise((resolve, reject) => {
+        if (typeof document === 'undefined') {
+            return reject(new FirebaseInitializationError('sdk-unavailable', 'Document not available for script loading'));
+        }
+
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing) {
+            if (existing.dataset.loaded === 'true') {
+                return resolve();
+            }
+            existing.addEventListener('load', () => resolve(), { once: true });
+            existing.addEventListener('error', (e) => reject(new FirebaseInitializationError('sdk-network-error', `Failed to load script: ${src}`, e)), { once: true });
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+
+        let timer = null;
+        if (timeoutMs > 0) {
+            timer = setTimeout(() => {
+                script.onerror = null;
+                script.onload = null;
+                reject(new FirebaseInitializationError('sdk-timeout', `Timeout loading script: ${src}`));
+            }, timeoutMs);
+        }
+
+        script.onload = () => {
+            if (timer) clearTimeout(timer);
+            script.dataset.loaded = 'true';
+            resolve();
+        };
+
+        script.onerror = (e) => {
+            if (timer) clearTimeout(timer);
+            try { script.remove(); } catch { /* ignore */ }
+            reject(new FirebaseInitializationError('sdk-network-error', `Failed to load script: ${src}`, e));
+        };
+
+        try {
+            document.head.appendChild(script);
+        } catch (err) {
+            if (timer) clearTimeout(timer);
+            reject(new FirebaseInitializationError('sdk-unavailable', `Failed to inject script: ${src}`, err));
+        }
+    });
+}
+
+let lastWindowFirebase = null;
+let cachedResolvedPromise = null;
+
+/**
+ * Asynchronously loads Firebase SDK scripts on demand and returns the initialized singleton.
+ * Idempotent: multiple callers receive the exact same singleton promise.
+ *
+ * @returns {Promise<{ firebase: object, app: object, auth: object, db: object, storage: object|null }>}
+ */
+export function loadFirebase() {
+    if (typeof window === 'undefined') {
+        return Promise.reject(new FirebaseInitializationError('sdk-unavailable', 'Firebase SDK requires a window environment'));
+    }
+
+    if (window.firebase && (
+        window.firebase.apps ||
+        typeof window.firebase.initializeApp === 'function' ||
+        typeof window.firebase.auth === 'function' ||
+        typeof window.firebase.database === 'function'
+    )) {
+        if (window.firebase === lastWindowFirebase && cachedResolvedPromise) {
+            return cachedResolvedPromise;
+        }
+        try {
+            const initialized = initFirebase();
+            lastWindowFirebase = window.firebase;
+            cachedResolvedPromise = Promise.resolve(initialized);
+            return cachedResolvedPromise;
+        } catch (e) {
+            return Promise.reject(e);
+        }
+    }
+
+    // In unit test environments without window.firebase mocked, fail fast rather than attempting real network fetches
+    if (import.meta.env?.MODE === 'test') {
+        lastWindowFirebase = null;
+        cachedResolvedPromise = null;
+        return Promise.reject(new FirebaseInitializationError('sdk-unavailable', 'Firebase SDK not loaded on window'));
+    }
+
+    if (firebaseLoadPromise) {
+        return firebaseLoadPromise;
+    }
+
+    firebaseLoadPromise = (async () => {
+        try {
+            // 1. firebase-app.js must load and execute first to create window.firebase
+            await loadScript(FIREBASE_SCRIPTS.app);
+
+            if (!window.firebase) {
+                throw new FirebaseInitializationError('sdk-unavailable', 'Firebase App SDK loaded but window.firebase is missing');
+            }
+
+            // 2. Load auth and database in parallel
+            await Promise.all([
+                loadScript(FIREBASE_SCRIPTS.auth),
+                loadScript(FIREBASE_SCRIPTS.database)
+            ]);
+
+            const initialized = initFirebase();
+            lastWindowFirebase = window.firebase;
+            cachedResolvedPromise = Promise.resolve(initialized);
+            return initialized;
+        } catch (err) {
+            lastWindowFirebase = null;
+            cachedResolvedPromise = null;
+            if (err instanceof FirebaseInitializationError) {
+                throw err;
+            }
+            throw new FirebaseInitializationError('init-failed', err?.message || 'Failed to load Firebase scripts', err);
+        } finally {
+            firebaseLoadPromise = null;
+        }
+    })();
+
+    return firebaseLoadPromise;
+}
+
+/**
+ * On-demand loader for Firebase Storage SDK (firebase-storage.js).
+ * Only loaded when storage operations are explicitly triggered.
+ *
+ * @returns {Promise<object>} Firebase storage instance
+ */
+export async function loadFirebaseStorage() {
+    await loadFirebase();
+
+    if (typeof window.firebase?.storage === 'function') {
+        return window.firebase.storage();
+    }
+
+    if (storageLoadPromise) {
+        return storageLoadPromise;
+    }
+
+    storageLoadPromise = (async () => {
+        try {
+            await loadScript(FIREBASE_SCRIPTS.storage);
+            if (typeof window.firebase?.storage !== 'function') {
+                throw new FirebaseInitializationError('storage-unavailable', 'Firebase storage failed to initialize');
+            }
+            return window.firebase.storage();
+        } catch (err) {
+            storageLoadPromise = null;
+            if (err instanceof FirebaseInitializationError) throw err;
+            throw new FirebaseInitializationError('storage-failed', err?.message || 'Failed to load Firebase storage', err);
+        }
+    })();
+
+    return storageLoadPromise;
+}
+
+/**
+ * Creates and configures a GoogleAuthProvider instance after ensuring Firebase Auth is loaded.
+ * @returns {Promise<object>} GoogleAuthProvider instance
+ */
+export async function getGoogleAuthProvider() {
+    await loadFirebase();
+    return createGoogleProvider();
+}
+
+/**
+ * Reset loader promises (for test isolation only).
+ */
+export function _resetFirebaseLoaderForTests() {
+    firebaseLoadPromise = null;
+    storageLoadPromise = null;
+    lastWindowFirebase = null;
+    cachedResolvedPromise = null;
+}
 
 /**
  * Initialize Firebase singleton if not already initialized.
- * @returns {{ firebase: object, app: object, auth: object, db: object, storage: object }}
+ * @returns {{ firebase: object, app: object, auth: object, db: object, storage: object|null }}
  */
 export function initFirebase() {
     if (typeof window === 'undefined' || typeof window.firebase === 'undefined') {
@@ -101,27 +300,38 @@ export function initFirebase() {
     }
 
     try {
-        let app;
-        if (!window.firebase.apps || !window.firebase.apps.length) {
-            app = window.firebase.initializeApp(firebaseConfig);
-        } else {
+        let app = null;
+        if (typeof window.firebase.initializeApp === 'function') {
+            if (!window.firebase.apps || !window.firebase.apps.length) {
+                app = window.firebase.initializeApp(firebaseConfig);
+            } else if (typeof window.firebase.app === 'function') {
+                app = window.firebase.app();
+            }
+        } else if (typeof window.firebase.app === 'function') {
             app = window.firebase.app();
+        } else if (Array.isArray(window.firebase.apps) && window.firebase.apps.length > 0) {
+            app = window.firebase.apps[0];
         }
 
-        const auth = window.firebase.auth();
-        const db = window.firebase.database();
-        const storage = window.firebase.storage();
+        const auth = typeof window.firebase.auth === 'function' ? window.firebase.auth() : null;
+        const db = typeof window.firebase.database === 'function' ? window.firebase.database() : null;
+        // Storage is deferred and optional; only invoke if available
+        const storage = typeof window.firebase.storage === 'function' ? window.firebase.storage() : null;
 
         if (import.meta.env?.VITE_USE_FIREBASE_EMULATORS === 'true' && !emulatorConnected) {
-            try {
-                auth.useEmulator('http://127.0.0.1:9099');
-            } catch {
-                // Ignore if already connected
+            if (auth?.useEmulator) {
+                try {
+                    auth.useEmulator('http://127.0.0.1:9099');
+                } catch {
+                    // Ignore if already connected
+                }
             }
-            try {
-                db.useEmulator('127.0.0.1', 9000);
-            } catch {
-                // Ignore if already connected
+            if (db?.useEmulator) {
+                try {
+                    db.useEmulator('127.0.0.1', 9000);
+                } catch {
+                    // Ignore if already connected
+                }
             }
             emulatorConnected = true;
         }
@@ -138,3 +348,4 @@ export function initFirebase() {
         throw new FirebaseInitializationError('init-failed', e.message || 'Firebase initialization failed', e);
     }
 }
+

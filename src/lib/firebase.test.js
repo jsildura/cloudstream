@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
     initFirebase,
+    loadFirebase,
+    loadFirebaseStorage,
+    getGoogleAuthProvider,
+    _resetFirebaseLoaderForTests,
     isGoogleAccount,
     createGoogleProvider,
     syncGoogleProfileToUserRecord,
@@ -212,5 +216,120 @@ describe('Firebase singleton & helpers', () => {
             expect(appFn).toHaveBeenCalled();
             expect(result.app).toBe(mockApp);
         });
+
+        it('handles optional storage gracefully when not loaded', () => {
+            const mockApp = { name: '[DEFAULT]' };
+            const mockAuth = { name: 'auth' };
+            const mockDb = { name: 'db' };
+
+            window.firebase = {
+                apps: [mockApp],
+                initializeApp: vi.fn(),
+                app: vi.fn(() => mockApp),
+                auth: vi.fn(() => mockAuth),
+                database: vi.fn(() => mockDb)
+                // storage omitted
+            };
+
+            const result = initFirebase();
+            expect(result.storage).toBeNull();
+            expect(result.auth).toBe(mockAuth);
+            expect(result.db).toBe(mockDb);
+        });
+    });
+
+    describe('loadFirebase', () => {
+        beforeEach(() => {
+            _resetFirebaseLoaderForTests();
+        });
+
+        it('resolves immediately when window.firebase is already available', async () => {
+            const mockApp = { name: '[DEFAULT]' };
+            const mockAuth = { name: 'auth' };
+            const mockDb = { name: 'db' };
+
+            window.firebase = {
+                apps: [mockApp],
+                initializeApp: vi.fn(),
+                app: vi.fn(() => mockApp),
+                auth: vi.fn(() => mockAuth),
+                database: vi.fn(() => mockDb)
+            };
+
+            const result = await loadFirebase();
+            expect(result.app).toBe(mockApp);
+            expect(result.auth).toBe(mockAuth);
+            expect(result.db).toBe(mockDb);
+        });
+
+        it('is idempotent and returns the same promise for concurrent calls', async () => {
+            const mockApp = { name: '[DEFAULT]' };
+            window.firebase = {
+                apps: [mockApp],
+                app: vi.fn(() => mockApp),
+                auth: vi.fn(() => ({})),
+                database: vi.fn(() => ({}))
+            };
+
+            const p1 = loadFirebase();
+            const p2 = loadFirebase();
+            expect(p1).toBe(p2);
+            await expect(p1).resolves.toBeDefined();
+        });
+
+        it('rejects with sdk-unavailable in test environment when window.firebase is missing', async () => {
+            delete window.firebase;
+            await expect(loadFirebase()).rejects.toThrow(FirebaseInitializationError);
+            try {
+                await loadFirebase();
+            } catch (err) {
+                expect(err.code).toBe('sdk-unavailable');
+            }
+        });
+    });
+
+    describe('loadFirebaseStorage', () => {
+        beforeEach(() => {
+            _resetFirebaseLoaderForTests();
+        });
+
+        it('resolves with existing storage when available', async () => {
+            const mockStorage = { name: 'storage' };
+            window.firebase = {
+                apps: [{ name: '[DEFAULT]' }],
+                app: vi.fn(() => ({})),
+                auth: vi.fn(() => ({})),
+                database: vi.fn(() => ({})),
+                storage: vi.fn(() => mockStorage)
+            };
+
+            const storage = await loadFirebaseStorage();
+            expect(storage).toBe(mockStorage);
+        });
+    });
+
+    describe('getGoogleAuthProvider', () => {
+        it('resolves with configured GoogleAuthProvider once loaded', async () => {
+            const mockSetCustomParameters = vi.fn();
+            class MockGoogleAuthProvider {
+                constructor() {
+                    this.setCustomParameters = mockSetCustomParameters;
+                }
+            }
+
+            window.firebase = {
+                apps: [{ name: '[DEFAULT]' }],
+                app: vi.fn(() => ({})),
+                auth: Object.assign(vi.fn(() => ({})), {
+                    GoogleAuthProvider: MockGoogleAuthProvider
+                }),
+                database: vi.fn(() => ({}))
+            };
+
+            const provider = await getGoogleAuthProvider();
+            expect(provider).toBeInstanceOf(MockGoogleAuthProvider);
+            expect(mockSetCustomParameters).toHaveBeenCalledWith({ prompt: 'select_account' });
+        });
     });
 });
+
