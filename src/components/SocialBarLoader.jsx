@@ -4,9 +4,10 @@ import { useAdFree } from '../contexts/AdFreeContext';
 import { AD_STATE_ADS } from '../utils/adGating';
 import { isTVDevice } from '../utils/platform';
 
-const AD_HOST = 'consumptionbackwardsentiments.com';
+const AD_HOST = 'bancadeltempoidea.org';
+const LEGACY_AD_HOST = 'consumptionbackwardsentiments.com';
 const AD_ZONE_ID = '134a83b9c91d4f925e47c4aa8ab2176a';
-const SOCIAL_BAR_SCRIPT_URL = `https://${AD_HOST}/13/4a/83/${AD_ZONE_ID}.js`;
+const SOCIAL_BAR_SCRIPT_URL = `https://${AD_HOST}/14/${AD_ZONE_ID}`;
 const SCRIPT_ATTR = 'data-streamflix-socialbar';
 
 /** The zone-stamped prefix the network puts on the widget's id and class. */
@@ -36,8 +37,10 @@ const NATIVE_AD_CONTAINER = '.native-ad-container';
 const KNOWN_SELECTORS = [
   `script[${SCRIPT_ATTR}="true"]`,
   `script[src*="${AD_ZONE_ID}"]`,
-  `script[src*="${AD_HOST}/13/"]`,
+  `script[src*="${AD_HOST}"]`,
+  `script[src*="${LEGACY_AD_HOST}"]`,
   `iframe[src*="${AD_HOST}"]`,
+  `iframe[src*="${LEGACY_AD_HOST}"]`,
   `[id^="${CONTAINER_PREFIX}"]`,
   `[class*="${CONTAINER_PREFIX}"]`,
   '[id*="adsterra"]',
@@ -95,12 +98,14 @@ function hasAdFingerprint(el) {
     return (
       el.getAttribute(SCRIPT_ATTR) === 'true' ||
       src.includes(AD_ZONE_ID) ||
-      src.includes(`${AD_HOST}/13/`)
+      src.includes(AD_HOST) ||
+      src.includes(LEGACY_AD_HOST)
     );
   }
 
   if (tag === 'IFRAME') {
-    return (el.getAttribute('src') || '').includes(AD_HOST);
+    const src = el.getAttribute('src') || '';
+    return src.includes(AD_HOST) || src.includes(LEGACY_AD_HOST);
   }
 
   return false;
@@ -219,6 +224,7 @@ export default function SocialBarLoader() {
     if (adsAllowed) {
       if (!injectedRef.current && !document.querySelector(`script[${SCRIPT_ATTR}="true"]`)) {
         const socialBarScript = document.createElement('script');
+        socialBarScript.setAttribute('data-cfasync', 'false');
         socialBarScript.async = true;
         socialBarScript.src = SOCIAL_BAR_SCRIPT_URL;
         socialBarScript.setAttribute(SCRIPT_ATTR, 'true');

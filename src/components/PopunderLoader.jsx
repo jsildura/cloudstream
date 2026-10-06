@@ -4,7 +4,7 @@ import { AD_STATE_ADS } from '../utils/adGating';
 import { isTVDevice } from '../utils/platform';
 
 const ADSTERRA_SCRIPT_URL =
-  'https://consumptionbackwardsentiments.com/e0/e4/eb/e0e4eb2ac0c806edf748f372d994a9e1.js';
+  'https://aarems.org/1/e0e4eb2ac0c806edf748f372d994a9e1';
 const SCRIPT_ATTR = 'data-streamflix-popunder';
 
 /**
@@ -27,6 +27,7 @@ export default function PopunderLoader() {
       if (!injectedRef.current && !document.querySelector(`script[${SCRIPT_ATTR}="true"]`)) {
         // Adsterra Popunder (external script)
         const adsterraScript = document.createElement('script');
+        adsterraScript.setAttribute('data-cfasync', 'false');
         adsterraScript.async = true;
         adsterraScript.src = ADSTERRA_SCRIPT_URL;
         adsterraScript.setAttribute(SCRIPT_ATTR, 'true');

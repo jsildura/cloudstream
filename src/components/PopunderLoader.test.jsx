@@ -40,8 +40,9 @@ describe('PopunderLoader Component', () => {
     // Adsterra should be injected immediately
     const adsterra = document.head.querySelector('script[data-network="adsterra"]');
     expect(adsterra).not.toBeNull();
-    expect(adsterra.src).toContain('consumptionbackwardsentiments.com');
+    expect(adsterra.src).toContain('aarems.org/1/e0e4eb2ac0c806edf748f372d994a9e1');
     expect(adsterra.getAttribute('data-streamflix-popunder')).toBe('true');
+    expect(adsterra.getAttribute('data-cfasync')).toBe('false');
   });
 
   it('does NOT inject popunder scripts while the gate is pending', () => {

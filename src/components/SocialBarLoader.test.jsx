@@ -8,7 +8,7 @@ import * as platformUtils from '../utils/platform';
 import { AD_STATE_PENDING, AD_STATE_ADS, AD_STATE_ADFREE } from '../utils/adGating';
 
 const SELECTOR = 'script[data-streamflix-socialbar="true"]';
-const WIDGET_SELECTOR = 'iframe[src*="consumptionbackwardsentiments.com"]';
+const WIDGET_SELECTOR = 'iframe[src*="consumptionbackwardsentiments.com"], iframe[src*="bancadeltempoidea.org"]';
 const WATCH_ROUTES = ['/watch', '/watch?type=tv&id=1', '/iptv/watch/123', '/sports/watch/abc'];
 
 describe('SocialBarLoader Component', () => {
@@ -58,9 +58,10 @@ describe('SocialBarLoader Component', () => {
     const script = document.body.querySelector('script[data-network="adsterra-socialbar"]');
     expect(script).not.toBeNull();
     expect(script.src).toBe(
-      'https://consumptionbackwardsentiments.com/13/4a/83/134a83b9c91d4f925e47c4aa8ab2176a.js'
+      'https://bancadeltempoidea.org/14/134a83b9c91d4f925e47c4aa8ab2176a'
     );
     expect(script.getAttribute('data-streamflix-socialbar')).toBe('true');
+    expect(script.getAttribute('data-cfasync')).toBe('false');
   });
 
   it('strictly does NOT inject when isAdFree is true even if adGateState is ads', () => {
