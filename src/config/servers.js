@@ -23,8 +23,10 @@
  * - 'tmdb-prefix': {baseUrl}{id}{suffix} (returns null for TV)
  * - 'primesrc'   : {baseUrl}{type}?tmdb={id}&season={s}&episode={e}
  * - 'vidsrc-xyz' : movie/{id} or tv?tmdb={id}&season={s}&episode={e}
- * - 'ythd'       : {baseUrl}{id}/ for movie, {baseUrl}{id}/{season}-{episode}/ for TV
+ * - 'ythd'       : {baseUrl}{id} for movie, {baseUrl}tv/{id}/{season}/{episode} for TV
  * - 'cinesrc'    : {baseUrl}movie/{id} for movie, {baseUrl}tv/{id}?s={s}&e={e} for TV
+ * - 'framextv'   : {baseUrl}{id} for movie, {baseUrl}{id}/{season}/{episode} for TV
+ * - 'cinelite'   : {baseUrl}{id} for movie, {baseUrl}{id}/{season}/{episode} for TV
  */
 
 export const serverConfig = [
@@ -55,29 +57,29 @@ export const serverConfig = [
     {
         name: 'Server 2',
         description: 'Backup Server',
+        baseUrl: 'https://framextv.tech/embed/',
+        suffix: '',
+        isRecommended: true,
+        sandboxSupport: true,
+        hasAds: false,
+        pattern: 'framextv',
+    },
+    {
+        name: 'Server 3',
+        description: 'Backup Server',
         baseUrl: 'https://cinesrc.st/embed/',
-        suffix: '?autoplay=true&autonext=true',
+        suffix: '?autoplay=true',
         isRecommended: true,
         sandboxSupport: true,
         hasAds: false,
         pattern: 'cinesrc',
     },
     {
-        name: 'Server 3',
+        name: 'Server 4',
         description: 'Backup Server',
         baseUrl: 'https://embed.vidrift.net/embed/',
         suffix: '',
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 4',
-        description: 'Backup Server',
-        baseUrl: 'https://vidbolt.xyz/',
-        suffix: '?autoPlay=true&audio=en',
-        isRecommended: true,
+        isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
         pattern: 'default',
@@ -85,12 +87,12 @@ export const serverConfig = [
     {
         name: 'Server 5',
         description: 'Backup Server',
-        baseUrl: 'https://vidsrc-embed.ru/embed/',
-        suffix: '',
+        baseUrl: 'https://vidbolt.xyz/',
+        suffix: '?autoPlay=true&audio=en',
         isRecommended: false,
         sandboxSupport: false,
         hasAds: true,
-        pattern: 'vidsrc-xyz',
+        pattern: 'default',
     },
     {
         name: 'Server 6',
@@ -115,19 +117,19 @@ export const serverConfig = [
     {
         name: 'Server 8',
         description: 'Premium Server',
-        baseUrl: 'https://api.cineby.homes/embed/',
-        suffix: '?autoplay=1',
+        baseUrl: 'https://embed.cinelite.xyz/',
+        suffix: '',
         isAdsFree: true,
         isRecommended: true,
-        sandboxSupport: false,
+        sandboxSupport: true,
         hasAds: false,
-        pattern: 'default',
+        pattern: 'cinelite',
     },
     {
         name: 'Server 9',
         description: 'Premium Server',
         baseUrl: 'https://ythd.org/embed/',
-        suffix: '?autoplay=1',
+        suffix: '',
         isAdsFree: true,
         isRecommended: true,
         sandboxSupport: false,
@@ -160,17 +162,6 @@ export const serverConfig = [
     {
         name: 'Server 12',
         description: 'Premium Server',
-        baseUrl: 'https://player.videasy.net/',
-        suffix: '?autoplay=true',
-        isAdsFree: true,
-        isRecommended: true,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 13',
-        description: 'Premium Server',
         baseUrl: 'https://player.vidlove.cc/embed/',
         suffix: '?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&font=Roboto&fontcolor=ffffff&fontsize=20&opacity=0.5&secondarycolor=ffffff&server=Dark',
         isAdsFree: true,
@@ -180,7 +171,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 14',
+        name: 'Server 13',
         description: 'Premium Server',
         baseUrl: 'https://player.cinezo.live/embed/',
         suffix: '?autoplay=true&poster=true&chromecast=true&servericon=true&setting=true&pip=true&font=Roboto&fontcolor=6f63ff&fontsize=20&opacity=0.5&primarycolor=e8b86d&secondarycolor=0a0a12&iconcolor=ffffff',
@@ -191,7 +182,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 15',
+        name: 'Server 14',
         description: 'Premium Server',
         baseUrl: 'https://vidy.st/',
         suffix: '?autoplay=true',
@@ -202,17 +193,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 16',
-        description: 'Backup Server',
-        baseUrl: 'https://vidfast.pro/',
-        suffix: '?autoplay=true&autoNext=true',
-        isRecommended: false,
-        sandboxSupport: false,
-        hasAds: true,
-        pattern: 'default',
-    },
-    {
-        name: 'Server 17',
+        name: 'Server 15',
         description: 'Backup Server',
         baseUrl: 'https://vidnest.fun/',
         suffix: '',
@@ -222,7 +203,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 18',
+        name: 'Server 16',
         description: 'Backup Server',
         baseUrl: 'https://embedmaster.link/',
         suffix: '',
@@ -232,7 +213,7 @@ export const serverConfig = [
         pattern: 'default',
     },
     {
-        name: 'Server 19',
+        name: 'Server 17',
         description: 'Backup Server',
         baseUrl: 'https://primesrc.me/embed/',
         suffix: '',
@@ -292,11 +273,11 @@ export function buildServerUrl(server, type, id, season, episode) {
             return `${baseUrl}movie/${id}`;
 
         case 'ythd':
-            // e.g., {baseUrl}{id}/ for movie, {baseUrl}{id}/{season}-{episode}/ for TV
+            // e.g., {baseUrl}{id} for movie, {baseUrl}tv/{id}/{season}/{episode} for TV
             if (type === 'tv') {
-                return `${baseUrl}${id}/${season}-${episode}/${suffix}`;
+                return `${baseUrl}tv/${id}/${season}/${episode}${suffix}`;
             }
-            return `${baseUrl}${id}/${suffix}`;
+            return `${baseUrl}${id}${suffix}`;
 
         case 'cinesrc':
             // movie/{id} or tv/{id}?s={season}&e={episode}
@@ -305,6 +286,11 @@ export function buildServerUrl(server, type, id, season, episode) {
                 return `${baseUrl}tv/${id}?s=${season}&e=${episode}${extra}`;
             }
             return `${baseUrl}movie/${id}${suffix}`;
+
+        case 'framextv':
+        case 'cinelite':
+            // e.g., {baseUrl}{id} for movie, {baseUrl}{id}/{season}/{episode} for TV
+            return `${baseUrl}${id}${tvPath}${suffix}`;
 
         case 'default':
         default:
